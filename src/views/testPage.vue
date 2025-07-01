@@ -28,13 +28,9 @@
         <!-- Progress Bar -->
         <div class="test-progress">
           <span class="progress-text">
-            Question {{ currentPage }} of {{ questions.length }}
+            Question {{ currentPage + 1 }} of {{ questions.length }}
           </span>
-          <progress
-            class="progress-bar"
-            :value="currentPage"
-            :max="questions.length"
-          ></progress>
+          <progress class="progress-bar" :value="currentPage + 1" :max="questions.length"></progress>
         </div>
 
         <!-- Question Text -->
@@ -42,61 +38,35 @@
 
         <!-- Answer Options -->
         <div class="answers">
-          <div
-            v-for="(option, index) in currentQuestion.options"
-            :key="index"
-            class="answer-option"
-          >
-            <input
-              type="radio"
-              :id="'answer' + (index + 1)"
-              :value="index"
-              v-model="selectedAnswer"
-              name="answer"
-            />
+          <div v-for="(option, index) in currentQuestion.options" :key="index" class="answer-option">
+            <input type="radio" :id="'answer' + (index + 1)" :value="index" v-model="selectedAnswer" name="answer" />
             <label :for="'answer' + (index + 1)">{{ option }}</label>
           </div>
         </div>
 
         <!-- Pagination Buttons -->
         <div class="pagination">
-          <button
-            v-for="page in questions.length"
-            :key="page"
-            class="pagination-button"
-            :class="{
-              active: currentPage === page,
-              completed: isQuestionAnswered(page),
-              current: currentPage === page,
-            }"
-            @click="goToPage(page)"
-          >
-            {{ page }}
+          <button v-for="(question, index) in questions" :key="index" class="pagination-button" :class="{
+            active: currentPage === index,
+            completed: isQuestionAnswered(index) && currentPage !== index,
+            current: currentPage === index,
+          }" @click="goToPage(index)">
+            {{ index + 1 }}
           </button>
         </div>
 
         <!-- Submit Answer Button -->
         <button class="button" id="submit-button" @click="submitAnswer">
-          {{ currentPage < questions.length ? 'Next' : 'Finish' }}
-        </button>
+          {{ currentPage < questions.length - 1 ? 'Next' : 'Finish' }} </button>
       </div>
 
       <!-- Navigation Buttons -->
       <div v-if="questions.length > 0" class="navigation-buttons">
-        <button
-          class="button"
-          id="prev-button"
-          @click="goToPage(currentPage - 1)"
-          :disabled="currentPage === 1"
-        >
+        <button class="button" id="prev-button" @click="goToPage(currentPage - 1)" :disabled="currentPage === 0">
           Prev
         </button>
-        <button
-          class="button"
-          id="next-button"
-          @click="goToPage(currentPage + 1)"
-          :disabled="currentPage === questions.length"
-        >
+        <button class="button" id="next-button" @click="goToPage(currentPage + 1)"
+          :disabled="currentPage === questions.length - 1">
           Next
         </button>
       </div>
@@ -111,18 +81,10 @@
               answers.
             </p>
             <div class="modal-actions">
-              <button
-                class="button confirm-btn"
-                @click="finishTest"
-                :disabled="isSubmitting"
-              >
+              <button class="button confirm-btn" @click="finishTest" :disabled="isSubmitting">
                 {{ isSubmitting ? 'Saving...' : 'Yes, finish' }}
               </button>
-              <button
-                class="button cancel-btn"
-                @click="showConfirmModal = false"
-                :disabled="isSubmitting"
-              >
+              <button class="button cancel-btn" @click="showConfirmModal = false" :disabled="isSubmitting">
                 No, go back
               </button>
             </div>
@@ -132,8 +94,6 @@
     </div>
   </div>
 </template>
-
-<!-- === script start === -->
 
 <script>
 import { db } from '@/config/firebase';
@@ -234,18 +194,21 @@ export default {
     retryFetch() {
       this.fetchTests();
     },
-    goToPage(page) {
-      if (page >= 0 && page < this.questions.length) {
+
+    goToPage(pageIndex) {
+      if (pageIndex >= 0 && pageIndex < this.questions.length) {
         this.saveAnswer();
-        this.currentPage = page;
-        this.selectedAnswer = this.userAnswers[page] ?? null;
+        this.currentPage = pageIndex;
+        this.selectedAnswer = this.userAnswers[pageIndex] !== null ? this.userAnswers[pageIndex] : null;
       }
     },
+
     saveAnswer() {
       if (this.selectedAnswer !== null) {
         this.userAnswers[this.currentPage] = Number(this.selectedAnswer);
       }
     },
+
     submitAnswer() {
       if (this.selectedAnswer === null) {
         this.showToast('Please select an answer', 'warning');
@@ -254,13 +217,21 @@ export default {
 
       this.saveAnswer();
 
-      const unansweredIndex = this.userAnswers.findIndex((a) => a === null);
-      if (unansweredIndex !== -1) {
-        this.goToPage(unansweredIndex);
+      // Check if this is the last question
+      if (this.currentPage < this.questions.length - 1) {
+        // Go to next question
+        this.goToPage(this.currentPage + 1);
       } else {
-        this.showConfirmModal = true;
+        // Check if all questions are answered
+        const unansweredIndex = this.userAnswers.findIndex((a) => a === null);
+        if (unansweredIndex !== -1) {
+          this.goToPage(unansweredIndex);
+        } else {
+          this.showConfirmModal = true;
+        }
       }
     },
+
     async finishTest() {
       this.saveAnswer();
       if (this.isSubmitting) return;
@@ -323,6 +294,7 @@ export default {
         this.showConfirmModal = false;
       }
     },
+
     showToast(message, type = 'info', duration = 3000) {
       const id = Date.now();
       this.toasts.push({ id, message, type });
@@ -330,9 +302,11 @@ export default {
         this.toasts = this.toasts.filter((t) => t.id !== id);
       }, duration);
     },
+
     isQuestionAnswered(index) {
       return this.userAnswers[index] !== null;
     },
+
     getRandomQuestions(arr, count) {
       return [...arr].sort(() => Math.random() - 0.5).slice(0, count);
     },
@@ -347,7 +321,6 @@ export default {
   },
 };
 </script>
-
 <!-- === script end -->
 
 <style scoped>

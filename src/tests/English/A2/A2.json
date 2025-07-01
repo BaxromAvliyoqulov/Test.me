@@ -1,0 +1,228 @@
+[
+  {
+    "question": "What time ___ you go to school?",
+    "options": ["do", "does", "is", "are"],
+    "answer": "do"
+  },
+  {
+    "question": "She ___ to the gym every morning.",
+    "options": ["go", "goes", "going", "gone"],
+    "answer": "goes"
+  },
+  {
+    "question": "I ___ a book now.",
+    "options": ["read", "am reading", "reads", "reading"],
+    "answer": "am reading"
+  },
+  {
+    "question": "We ___ to the cinema last night.",
+    "options": ["go", "went", "going", "gone"],
+    "answer": "went"
+  },
+  {
+    "question": "My father ___ in a bank.",
+    "options": ["work", "works", "working", "worked"],
+    "answer": "works"
+  },
+  {
+    "question": "Where ___ you from?",
+    "options": ["is", "are", "do", "does"],
+    "answer": "are"
+  },
+  {
+    "question": "She ___ like coffee.",
+    "options": ["don't", "doesn't", "isn't", "aren't"],
+    "answer": "doesn't"
+  },
+  {
+    "question": "They ___ TV when I arrived.",
+    "options": ["watched", "watch", "were watching", "watching"],
+    "answer": "were watching"
+  },
+  {
+    "question": "He ___ his homework before dinner.",
+    "options": ["finish", "finishes", "finished", "finishing"],
+    "answer": "finished"
+  },
+  {
+    "question": "There ___ some apples on the table.",
+    "options": ["is", "are", "was", "were"],
+    "answer": "are"
+  },
+
+  {
+    "question": "I ___ visit my grandmother tomorrow.",
+    "options": ["will", "shall", "go", "going to"],
+    "answer": "will"
+  },
+  {
+    "question": "You ___ finish your homework before playing.",
+    "options": ["must", "can", "could", "might"],
+    "answer": "must"
+  },
+  {
+    "question": "She ___ be at home now.",
+    "options": ["must", "can", "may", "shall"],
+    "answer": "may"
+  },
+  {
+    "question": "They ___ arrive late because of traffic.",
+    "options": ["might", "can", "shall", "must"],
+    "answer": "might"
+  },
+  {
+    "question": "He ___ drive when he was 18.",
+    "options": ["can", "could", "must", "should"],
+    "answer": "could"
+  },
+  {
+    "question": "You ___ eat more vegetables.",
+    "options": ["should", "must", "can", "could"],
+    "answer": "should"
+  },
+  {
+    "question": "They ___ finish the project by next week.",
+    "options": ["will", "shall", "must", "can"],
+    "answer": "will"
+  },
+  {
+    "question": "We ___ go to the park if it doesn’t rain.",
+    "options": ["will", "shall", "must", "can"],
+    "answer": "will"
+  },
+  {
+    "question": "She ___ be in her office now.",
+    "options": ["must", "can", "might", "should"],
+    "answer": "must"
+  },
+  {
+    "question": "I ___ travel to Japan next year.",
+    "options": ["will", "shall", "must", "can"],
+    "answer": "will"
+  },
+  {
+    "question": "They ___ for two hours when we arrived.",
+    "options": ["had been waiting", "were waiting", "have waited", "waited"],
+    "answer": "had been waiting"
+  },
+  {
+    "question": "She said that she ___ the book already.",
+    "options": ["read", "had read", "was reading", "reads"],
+    "answer": "had read"
+  },
+  {
+    "question": "A new bridge ___ in the city next year.",
+    "options": ["will be built", "build", "built", "is building"],
+    "answer": "will be built"
+  },
+  {
+    "question": "If I ___ you, I would apologize.",
+    "options": ["was", "were", "am", "be"],
+    "answer": "were"
+  },
+  {
+    "question": "The cake ___ by my grandmother.",
+    "options": ["was baked", "baked", "is baking", "was baking"],
+    "answer": "was baked"
+  },
+  {
+    "question": "She ___ her work before the deadline.",
+    "options": ["will finish", "will have finished", "finishes", "finished"],
+    "answer": "will have finished"
+  },
+  {
+    "question": "They ___ the project for six months before launching.",
+    "options": ["will have worked", "have worked", "were working", "work"],
+    "answer": "will have worked"
+  },
+  {
+    "question": "He asked if she ___ the news.",
+    "options": ["heard", "had heard", "hears", "hearing"],
+    "answer": "had heard"
+  },
+  {
+    "question": "We ___ dinner when the phone rang.",
+    "options": ["ate", "were eating", "eat", "eating"],
+    "answer": "were eating"
+  },
+  {
+    "question": "She ___ about her trip when I met her.",
+    "options": ["talks", "was talking", "talked", "is talking"],
+    "answer": "was talking"
+  },
+  {
+    "question": "If he ___ harder, he would succeed.",
+    "options": ["works", "worked", "has worked", "had worked"],
+    "answer": "worked"
+  },
+  {
+    "question": "This book ___ by millions of people.",
+    "options": ["is read", "read", "was reading", "was read"],
+    "answer": "is read"
+  },
+  {
+    "question": "He ___ in London since 2015.",
+    "options": ["lives", "has lived", "lived", "is living"],
+    "answer": "has lived"
+  },
+  {
+    "question": "By next month, I ___ my course.",
+    "options": [
+      "complete",
+      "will complete",
+      "will have completed",
+      "completed"
+    ],
+    "answer": "will have completed"
+  },
+  {
+    "question": "The car ___ when we arrived.",
+    "options": ["was repairing", "was being repaired", "repaired", "repairs"],
+    "answer": "was being repaired"
+  },
+  {
+    "question": "If you ___ more carefully, you wouldn’t make mistakes.",
+    "options": ["listen", "listened", "had listened", "listens"],
+    "answer": "listened"
+  },
+  {
+    "question": "She ___ to the doctor tomorrow.",
+    "options": ["go", "goes", "is going", "has gone"],
+    "answer": "is going"
+  },
+  {
+    "question": "They ___ in the garden when it started to rain.",
+    "options": ["worked", "were working", "work", "working"],
+    "answer": "were working"
+  },
+  {
+    "question": "If he ___ the train, he would be here now.",
+    "options": ["caught", "catches", "had caught", "catch"],
+    "answer": "had caught"
+  },
+  {
+    "question": "She ___ a letter when the lights went out.",
+    "options": ["was writing", "writes", "wrote", "is writing"],
+    "answer": "was writing"
+  },
+  {
+    "question": "The flowers ___ every morning.",
+    "options": ["water", "are watered", "were watered", "watering"],
+    "answer": "are watered"
+  },
+  {
+    "question": "They ___ each other for years.",
+    "options": ["know", "have known", "knew", "knows"],
+    "answer": "have known"
+  },
+  {
+    "question": "He ___ the problem by the time you arrive.",
+    "options": ["solves", "solved", "will have solved", "solve"],
+    "answer": "will have solved"
+  },
+  {
+    "question": "A new law ___ next year.",
+    "options": ["passes", "will pass", "will be passed", "passed"],
+    "answer": "will be passed"
+  }
+]

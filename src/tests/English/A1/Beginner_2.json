@@ -1,0 +1,552 @@
+[
+  {
+    "question": "What is the plural of 'mouse'?",
+    "options": ["mice", "mices", "mouse", "mouses"],
+    "answer": "mice"
+  },
+  {
+    "question": "What is the opposite of 'happy'?",
+    "options": ["joy", "sad", "smile", "laugh"],
+    "answer": "sad"
+  },
+  {
+    "question": "He ___ a dog.",
+    "options": ["having", "have", "had", "has"],
+    "answer": "has"
+  },
+  {
+    "question": "She ___ a pencil.",
+    "options": ["have", "has", "had", "having"],
+    "answer": "has"
+  },
+  {
+    "question": "Which one is a drink?",
+    "options": ["book", "cat", "water", "hat"],
+    "answer": "water"
+  },
+  {
+    "question": "They ___ to school every day.",
+    "options": ["go", "goes", "gone", "going"],
+    "answer": "go"
+  },
+  {
+    "question": "I ___ my homework now.",
+    "options": ["am doing", "is doing", "are doing", "do"],
+    "answer": "am doing"
+  },
+  {
+    "question": "She usually ___ tea in the morning.",
+    "options": ["drink", "drinks", "drinking", "drank"],
+    "answer": "drinks"
+  },
+  {
+    "question": "___ you like pizza?",
+    "options": ["Do", "Does", "Is", "Are"],
+    "answer": "Do"
+  },
+  {
+    "question": "What color is the sky?",
+    "options": ["blue", "green", "yellow", "red"],
+    "answer": "blue"
+  },
+  {
+    "question": "What is the opposite of 'cold'?",
+    "options": ["cool", "hot", "freezing", "warm"],
+    "answer": "hot"
+  },
+  {
+    "question": "We ___ friends.",
+    "options": ["are", "is", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "It ___ raining.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "I ___ hungry.",
+    "options": ["am", "is", "are", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "The cat is ___ the table.",
+    "options": ["on", "in", "under", "beside"],
+    "answer": "on"
+  },
+  {
+    "question": "___ she your sister?",
+    "options": ["Is", "Are", "Am", "Do"],
+    "answer": "Is"
+  },
+  {
+    "question": "The sun ___ in the sky.",
+    "options": ["shine", "shines", "shining", "shone"],
+    "answer": "shines"
+  },
+  {
+    "question": "We ___ to music.",
+    "options": ["listen", "listens", "listening", "listened"],
+    "answer": "listen"
+  },
+  {
+    "question": "They ___ playing football.",
+    "options": ["are", "is", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "The dog ___ loudly.",
+    "options": ["bark", "barks", "barking", "barked"],
+    "answer": "barks"
+  },
+  {
+    "question": "What is the plural of 'mouse'?",
+    "options": ["mice", "mices", "mouse", "mouses"],
+    "answer": "mice"
+  },
+  {
+    "question": "What is the opposite of 'happy'?",
+    "options": ["joy", "sad", "smile", "laugh"],
+    "answer": "sad"
+  },
+  {
+    "question": "He ___ a dog.",
+    "options": ["having", "have", "had", "has"],
+    "answer": "has"
+  },
+  {
+    "question": "She ___ a pencil.",
+    "options": ["have", "has", "had", "having"],
+    "answer": "has"
+  },
+  {
+    "question": "Which one is a drink?",
+    "options": ["book", "cat", "water", "hat"],
+    "answer": "water"
+  },
+  {
+    "question": "They ___ to school every day.",
+    "options": ["go", "goes", "gone", "going"],
+    "answer": "go"
+  },
+  {
+    "question": "I ___ my homework now.",
+    "options": ["am doing", "is doing", "are doing", "do"],
+    "answer": "am doing"
+  },
+  {
+    "question": "She usually ___ tea in the morning.",
+    "options": ["drink", "drinks", "drinking", "drank"],
+    "answer": "drinks"
+  },
+  {
+    "question": "___ you like pizza?",
+    "options": ["Do", "Does", "Is", "Are"],
+    "answer": "Do"
+  },
+  {
+    "question": "What color is the sky?",
+    "options": ["blue", "green", "yellow", "red"],
+    "answer": "blue"
+  },
+  {
+    "question": "What is the opposite of 'cold'?",
+    "options": ["cool", "hot", "freezing", "warm"],
+    "answer": "hot"
+  },
+  {
+    "question": "We ___ friends.",
+    "options": ["are", "is", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "It ___ raining.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "I ___ hungry.",
+    "options": ["am", "is", "are", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "The cat is ___ the table.",
+    "options": ["on", "in", "under", "beside"],
+    "answer": "on"
+  },
+  {
+    "question": "___ she your sister?",
+    "options": ["Is", "Are", "Am", "Do"],
+    "answer": "Is"
+  },
+  {
+    "question": "The sun ___ in the sky.",
+    "options": ["shine", "shines", "shining", "shone"],
+    "answer": "shines"
+  },
+  {
+    "question": "We ___ to music.",
+    "options": ["listen", "listens", "listening", "listened"],
+    "answer": "listen"
+  },
+  {
+    "question": "They ___ playing football.",
+    "options": ["are", "is", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "The dog ___ loudly.",
+    "options": ["bark", "barks", "barking", "barked"],
+    "answer": "barks"
+  },
+  {
+    "question": "What is the plural of 'mouse'?",
+    "options": ["mice", "mices", "mouse", "mouses"],
+    "answer": "mice"
+  },
+  {
+    "question": "What is the opposite of 'happy'?",
+    "options": ["joy", "sad", "smile", "laugh"],
+    "answer": "sad"
+  },
+  {
+    "question": "He ___ a dog.",
+    "options": ["having", "have", "had", "has"],
+    "answer": "has"
+  },
+  {
+    "question": "She ___ a pencil.",
+    "options": ["have", "has", "had", "having"],
+    "answer": "has"
+  },
+  {
+    "question": "Which one is a drink?",
+    "options": ["book", "cat", "water", "hat"],
+    "answer": "water"
+  },
+  {
+    "question": "They ___ to school every day.",
+    "options": ["go", "goes", "gone", "going"],
+    "answer": "go"
+  },
+  {
+    "question": "I ___ my homework now.",
+    "options": ["am doing", "is doing", "are doing", "do"],
+    "answer": "am doing"
+  },
+  {
+    "question": "She usually ___ tea in the morning.",
+    "options": ["drink", "drinks", "drinking", "drank"],
+    "answer": "drinks"
+  },
+  {
+    "question": "___ you like pizza?",
+    "options": ["Do", "Does", "Is", "Are"],
+    "answer": "Do"
+  },
+  {
+    "question": "What color is the sky?",
+    "options": ["blue", "green", "yellow", "red"],
+    "answer": "blue"
+  },
+  {
+    "question": "What is the opposite of 'cold'?",
+    "options": ["cool", "hot", "freezing", "warm"],
+    "answer": "hot"
+  },
+  {
+    "question": "We ___ friends.",
+    "options": ["are", "is", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "It ___ raining.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "I ___ hungry.",
+    "options": ["am", "is", "are", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "The cat is ___ the table.",
+    "options": ["on", "in", "under", "beside"],
+    "answer": "on"
+  },
+  {
+    "question": "___ she your sister?",
+    "options": ["Is", "Are", "Am", "Do"],
+    "answer": "Is"
+  },
+  {
+    "question": "The sun ___ in the sky.",
+    "options": ["shine", "shines", "shining", "shone"],
+    "answer": "shines"
+  },
+  {
+    "question": "We ___ to music.",
+    "options": ["listen", "listens", "listening", "listened"],
+    "answer": "listen"
+  },
+  {
+    "question": "They ___ playing football.",
+    "options": ["are", "is", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "The dog ___ loudly.",
+    "options": ["bark", "barks", "barking", "barked"],
+    "answer": "barks"
+  },
+  {
+    "question": "What is the plural of 'mouse'?",
+    "options": ["mice", "mices", "mouse", "mouses"],
+    "answer": "mice"
+  },
+  {
+    "question": "What is the opposite of 'happy'?",
+    "options": ["joy", "sad", "smile", "laugh"],
+    "answer": "sad"
+  },
+  {
+    "question": "He ___ a dog.",
+    "options": ["having", "have", "had", "has"],
+    "answer": "has"
+  },
+  {
+    "question": "She ___ a pencil.",
+    "options": ["have", "has", "had", "having"],
+    "answer": "has"
+  },
+  {
+    "question": "Which one is a drink?",
+    "options": ["book", "cat", "water", "hat"],
+    "answer": "water"
+  },
+  {
+    "question": "They ___ to school every day.",
+    "options": ["go", "goes", "gone", "going"],
+    "answer": "go"
+  },
+  {
+    "question": "I ___ my homework now.",
+    "options": ["am doing", "is doing", "are doing", "do"],
+    "answer": "am doing"
+  },
+  {
+    "question": "She usually ___ tea in the morning.",
+    "options": ["drink", "drinks", "drinking", "drank"],
+    "answer": "drinks"
+  },
+  {
+    "question": "___ you like pizza?",
+    "options": ["Do", "Does", "Is", "Are"],
+    "answer": "Do"
+  },
+  {
+    "question": "What color is the sky?",
+    "options": ["blue", "green", "yellow", "red"],
+    "answer": "blue"
+  },
+  {
+    "question": "What is the opposite of 'cold'?",
+    "options": ["cool", "hot", "freezing", "warm"],
+    "answer": "hot"
+  },
+  {
+    "question": "We ___ friends.",
+    "options": ["are", "is", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "It ___ raining.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "I ___ hungry.",
+    "options": ["am", "is", "are", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "The cat is ___ the table.",
+    "options": ["on", "in", "under", "beside"],
+    "answer": "on"
+  },
+  {
+    "question": "___ she your sister?",
+    "options": ["Is", "Are", "Am", "Do"],
+    "answer": "Is"
+  },
+  {
+    "question": "The sun ___ in the sky.",
+    "options": ["shine", "shines", "shining", "shone"],
+    "answer": "shines"
+  },
+  {
+    "question": "We ___ to music.",
+    "options": ["listen", "listens", "listening", "listened"],
+    "answer": "listen"
+  },
+  {
+    "question": "They ___ playing football.",
+    "options": ["are", "is", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "The dog ___ loudly.",
+    "options": ["bark", "barks", "barking", "barked"],
+    "answer": "barks"
+  },
+  {
+    "question": "What is the plural of 'mouse'?",
+    "options": ["mice", "mices", "mouse", "mouses"],
+    "answer": "mice"
+  },
+  {
+    "question": "What is the opposite of 'happy'?",
+    "options": ["joy", "sad", "smile", "laugh"],
+    "answer": "sad"
+  },
+  {
+    "question": "He ___ a dog.",
+    "options": ["having", "have", "had", "has"],
+    "answer": "has"
+  },
+  {
+    "question": "She ___ a pencil.",
+    "options": ["have", "has", "had", "having"],
+    "answer": "has"
+  },
+  {
+    "question": "Which one is a drink?",
+    "options": ["book", "cat", "water", "hat"],
+    "answer": "water"
+  },
+  {
+    "question": "They ___ to school every day.",
+    "options": ["go", "goes", "gone", "going"],
+    "answer": "go"
+  },
+  {
+    "question": "I ___ my homework now.",
+    "options": ["am doing", "is doing", "are doing", "do"],
+    "answer": "am doing"
+  },
+  {
+    "question": "She usually ___ tea in the morning.",
+    "options": ["drink", "drinks", "drinking", "drank"],
+    "answer": "drinks"
+  },
+  {
+    "question": "___ you like pizza?",
+    "options": ["Do", "Does", "Is", "Are"],
+    "answer": "Do"
+  },
+  {
+    "question": "What color is the sky?",
+    "options": ["blue", "green", "yellow", "red"],
+    "answer": "blue"
+  },
+  {
+    "question": "What is the opposite of 'cold'?",
+    "options": ["cool", "hot", "freezing", "warm"],
+    "answer": "hot"
+  },
+  {
+    "question": "We ___ friends.",
+    "options": ["are", "is", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "It ___ raining.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "I ___ hungry.",
+    "options": ["am", "is", "are", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "The cat is ___ the table.",
+    "options": ["on", "in", "under", "beside"],
+    "answer": "on"
+  },
+  {
+    "question": "___ she your sister?",
+    "options": ["Is", "Are", "Am", "Do"],
+    "answer": "Is"
+  },
+  {
+    "question": "The sun ___ in the sky.",
+    "options": ["shine", "shines", "shining", "shone"],
+    "answer": "shines"
+  },
+  {
+    "question": "We ___ to music.",
+    "options": ["listen", "listens", "listening", "listened"],
+    "answer": "listen"
+  },
+  {
+    "question": "They ___ playing football.",
+    "options": ["are", "is", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "The dog ___ loudly.",
+    "options": ["bark", "barks", "barking", "barked"],
+    "answer": "barks"
+  },
+  {
+    "question": "What is the opposite of 'happy'?",
+    "options": ["joy", "sad", "smile", "laugh"],
+    "answer": "sad"
+  },
+  {
+    "question": "He ___ a dog.",
+    "options": ["having", "have", "had", "has"],
+    "answer": "has"
+  },
+  {
+    "question": "She ___ a pencil.",
+    "options": ["have", "has", "had", "having"],
+    "answer": "has"
+  },
+  {
+    "question": "Which one is a drink?",
+    "options": ["book", "cat", "water", "hat"],
+    "answer": "water"
+  },
+  {
+    "question": "They ___ to school every day.",
+    "options": ["go", "goes", "gone", "going"],
+    "answer": "go"
+  },
+  {
+    "question": "I ___ my homework now.",
+    "options": ["am doing", "is doing", "are doing", "do"],
+    "answer": "am doing"
+  },
+  {
+    "question": "She usually ___ tea in the morning.",
+    "options": ["drink", "drinks", "drinking", "drank"],
+    "answer": "drinks"
+  },
+  {
+    "question": "___ you like pizza?",
+    "options": ["Do", "Does", "Is", "Are"],
+    "answer": "Do"
+  },
+  {
+    "question": "What color is the sky?",
+    "options": ["blue", "green", "yellow", "red"],
+    "answer": "blue"
+  },
+  {
+    "question": "What is the opposite of 'cold'?",
+    "options": ["cool", "hot", "freezing", "warm"],
+    "answer": "hot"
+  }
+]

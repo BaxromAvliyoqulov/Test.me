@@ -1,0 +1,152 @@
+[
+  {
+    "question": "What is the past tense of 'go'?",
+    "options": ["goed", "went", "goes", "going"],
+    "answer": "went"
+  },
+  {
+    "question": "Choose the correct sentence:",
+    "options": ["He don't like pizza.", "He doesn't likes pizza.", "He doesn't like pizza.", "He not like pizza."],
+    "answer": "He doesn't like pizza."
+  },
+  {
+    "question": "Which word is a noun?",
+    "options": ["Run", "Beautiful", "Happiness", "Quickly"],
+    "answer": "Happiness"
+  },
+  {
+    "question": "Fill in the blank: She _____ TV every evening.",
+    "options": ["watch", "watching", "watches", "watched"],
+    "answer": "watches"
+  },
+  {
+    "question": "Which one is a synonym of 'big'?",
+    "options": ["Tiny", "Huge", "Small", "Little"],
+    "answer": "Huge"
+  },
+  {
+    "question": "Choose the correct form: 'I _____ to the market yesterday.'",
+    "options": ["go", "gone", "went", "going"],
+    "answer": "went"
+  },
+  {
+    "question": "Which sentence is correct?",
+    "options": ["They is happy.", "They are happy.", "They be happy.", "They happy."],
+    "answer": "They are happy."
+  },
+  {
+    "question": "What is the opposite of 'hot'?",
+    "options": ["Warm", "Cold", "Cool", "Spicy"],
+    "answer": "Cold"
+  },
+  {
+    "question": "How do you say 3rd person singular of 'have'?",
+    "options": ["haves", "has", "have", "had"],
+    "answer": "has"
+  },
+  {
+    "question": "Which word is an adjective?",
+    "options": ["Quickly", "Run", "Blue", "Cat"],
+    "answer": "Blue"
+  },
+  {
+    "question": "Choose the correct article: 'I saw ___ elephant at the zoo.'",
+    "options": ["a", "an", "the", "no article"],
+    "answer": "an"
+  },
+  {
+    "question": "What's the plural of 'child'?",
+    "options": ["childs", "children", "childes", "chields"],
+    "answer": "children"
+  },
+  {
+    "question": "Fill in the blank: He _____ working hard lately.",
+    "options": ["has", "have", "having", "had"],
+    "answer": "has"
+  },
+  {
+    "question": "Which is the correct question form?",
+    "options": ["Do she like apples?", "Does she likes apples?", "Does she like apples?", "She does like apples?"],
+    "answer": "Does she like apples?"
+  },
+  {
+    "question": "Choose the correct preposition: 'She is good ___ math.'",
+    "options": ["at", "on", "in", "with"],
+    "answer": "at"
+  },
+  {
+    "question": "Which one is not a verb?",
+    "options": ["Jump", "Run", "Blue", "Swim"],
+    "answer": "Blue"
+  },
+  {
+    "question": "Select the correct sentence:",
+    "options": ["I'm go to school.", "I going to school.", "I am going to school.", "I goes to school."],
+    "answer": "I am going to school."
+  },
+  {
+    "question": "What’s the comparative form of 'good'?",
+    "options": ["gooder", "more good", "better", "best"],
+    "answer": "better"
+  },
+  {
+    "question": "Choose the correct spelling:",
+    "options": ["Definately", "Definetly", "Definitely", "Defanately"],
+    "answer": "Definitely"
+  },
+  {
+    "question": "Which one is a question word?",
+    "options": ["Who", "Very", "Happy", "Blue"],
+    "answer": "Who"
+  },
+  {
+    "question": "What’s the superlative form of 'tall'?",
+    "options": ["tallest", "more tall", "taller", "most tall"],
+    "answer": "tallest"
+  },
+  {
+    "question": "Complete the sentence: 'I have lived here _____ 2010.'",
+    "options": ["since", "for", "at", "from"],
+    "answer": "since"
+  },
+  {
+    "question": "Which of these is an irregular verb?",
+    "options": ["Play", "Work", "Go", "Talk"],
+    "answer": "Go"
+  },
+  {
+    "question": "Choose the correct sentence:",
+    "options": ["There is many cars.", "There are many cars.", "There be many cars.", "There many cars."],
+    "answer": "There are many cars."
+  },
+  {
+    "question": "What is the antonym of 'early'?",
+    "options": ["Soon", "Fast", "Late", "First"],
+    "answer": "Late"
+  },
+  {
+    "question": "Select the correct sentence:",
+    "options": ["She can to sing.", "She cans sing.", "She can sing.", "She sing can."],
+    "answer": "She can sing."
+  },
+  {
+    "question": "Which is the correct past participle of 'eat'?",
+    "options": ["eated", "eaten", "ate", "eats"],
+    "answer": "eaten"
+  },
+  {
+    "question": "Choose the correct word: 'He is taller ___ me.'",
+    "options": ["than", "then", "that", "to"],
+    "answer": "than"
+  },
+  {
+    "question": "What does ‘I’m broke’ mean?",
+    "options": ["I’m rich", "I’m tired", "I have no money", "I’m angry"],
+    "answer": "I have no money"
+  },
+  {
+    "question": "What part of speech is 'quickly'?",
+    "options": ["Adjective", "Noun", "Adverb", "Verb"],
+    "answer": "Adverb"
+  }
+]

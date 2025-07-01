@@ -1,0 +1,307 @@
+[
+  {
+    "question": "She ___ a doctor.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "I ___ from England.",
+    "options": ["am", "is", "are", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "They ___ at school.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "He ___ a student.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "We ___ friends.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "I ___ happy.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "You ___ my teacher.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "They ___ playing football.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "She ___ reading a book.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "I ___ going to the market.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "He ___ cooking dinner.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "They ___ watching TV.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "We ___ studying English.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "I ___ a student.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "You ___ my friend.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "They ___ happy.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "He ___ a teacher.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "She ___ a student.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "I ___ a doctor.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "You ___ my brother.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "They ___ at home.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "We ___ happy today.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "I ___ a teacher.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "You ___ my sister.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "They ___ playing basketball.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "He ___ reading a newspaper.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "She ___ going to the park.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "I ___ cooking lunch.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "am"
+  },
+  {
+    "question": "We ___ studying math.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "We ___ happy today.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "are"
+  },
+  {
+    "question": "He ___ my friend.",
+    "options": ["is", "are", "am", "be"],
+    "answer": "is"
+  },
+  {
+    "question": "She ___ two brothers.",
+    "options": ["have", "has", "having", "had"],
+    "answer": "has"
+  },
+  {
+    "question": "I ___ a new bike.",
+    "options": ["have", "has", "having", "had"],
+    "answer": "have"
+  },
+  {
+    "question": "We ___ a big house.",
+    "options": ["have", "has", "having", "had"],
+    "answer": "have"
+  },
+  {
+    "question": "He ___ a red car.",
+    "options": ["have", "has", "having", "had"],
+    "answer": "has"
+  },
+  {
+    "question": "They ___ a cat.",
+    "options": ["have", "has", "having", "had"],
+    "answer": "have"
+  },
+  {
+    "question": "What is the opposite of 'big'?",
+    "options": ["large", "huge", "small", "giant"],
+    "answer": "small"
+  },
+  {
+    "question": "What is the synonym of 'happy'?",
+    "options": ["sad", "angry", "joyful", "tired"],
+    "answer": "joyful"
+  },
+  {
+    "question": "What is the opposite of 'fast'?",
+    "options": ["quick", "slow", "rapid", "swift"],
+    "answer": "slow"
+  },
+  {
+    "question": "Which word is a color?",
+    "options": ["table", "blue", "chair", "run"],
+    "answer": "blue"
+  },
+  {
+    "question": "Which word is an animal?",
+    "options": ["apple", "dog", "car", "phone"],
+    "answer": "dog"
+  },
+  {
+    "question": "What is the plural of 'child'?",
+    "options": ["childs", "children", "childes", "childies"],
+    "answer": "children"
+  },
+  {
+    "question": "Which one is a fruit?",
+    "options": ["banana", "book", "pen", "chair"],
+    "answer": "banana"
+  },
+  {
+    "question": "Which one is a body part?",
+    "options": ["chair", "leg", "window", "door"],
+    "answer": "leg"
+  },
+  {
+    "question": "Which one is a drink?",
+    "options": ["apple", "car", "juice", "table"],
+    "answer": "juice"
+  },
+  {
+    "question": "What is the opposite of 'hot'?",
+    "options": ["cold", "warm", "cool", "freezing"],
+    "answer": "cold"
+  },
+  {
+    "question": "What is the synonym of 'sad'?",
+    "options": ["happy", "joyful", "unhappy", "excited"],
+    "answer": "unhappy"
+  },
+  {
+    "question": "What is the opposite of 'up'?",
+    "options": ["down", "left", "right", "forward"],
+    "answer": "down"
+  },
+  {
+    "question": "What is the synonym of 'fast'?",
+    "options": ["quick", "slow", "lazy", "tired"],
+    "answer": "quick"
+  },
+  {
+    "question": "What is the opposite of 'light'?",
+    "options": ["dark", "bright", "heavy", "clear"],
+    "answer": "dark"
+  },
+  {
+    "question": "What is the synonym of 'angry'?",
+    "options": ["mad", "happy", "sad", "excited"],
+    "answer": "mad"
+  },
+  {
+    "question": "What is the opposite of 'new'?",
+    "options": ["old", "young", "fresh", "modern"],
+    "answer": "old"
+  },
+  {
+    "question": "What is the synonym of 'tired'?",
+    "options": ["sleepy", "awake", "energetic", "happy"],
+    "answer": "sleepy"
+  },
+  {
+    "question": "What is the opposite of 'easy'?",
+    "options": ["hard", "simple", "difficult", "complicated"],
+    "answer": "hard"
+  },
+  {
+    "question": "What is the synonym of 'beautiful'?",
+    "options": ["pretty", "ugly", "handsome", "plain"],
+    "answer": "pretty"
+  },
+  {
+    "question": "What is the opposite of 'rich'?",
+    "options": ["poor", "wealthy", "affluent", "prosperous"],
+    "answer": "poor"
+  },
+  {
+    "question": "What is the synonym of 'funny'?",
+    "options": ["humorous", "serious", "sad", "boring"],
+    "answer": "humorous"
+  },
+  {
+    "question": "What is the opposite of 'clean'?",
+    "options": ["dirty", "neat", "tidy", "pure"],
+    "answer": "dirty"
+  },
+  {
+    "question": "What is the synonym of 'strong'?",
+    "options": ["powerful", "weak", "fragile", "delicate"],
+    "answer": "powerful"
+  },
+  {
+    "question": "What is the opposite of 'short'?",
+    "options": ["long", "tall", "wide", "narrow"],
+    "answer": "long"
+  },
+  {
+    "question": "What is the synonym of 'quiet'?",
+    "options": ["silent", "loud", "noisy", "talkative"],
+    "answer": "silent"
+  }
+]

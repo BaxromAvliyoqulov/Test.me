@@ -3,46 +3,62 @@
     <div class="test-page">
       <Toast :toasts="toasts" />
 
+      <!-- LOADING STATE -->
       <div v-if="loading" class="status-container loading">
         <div class="spinner"></div>
         <p>Loading tests for {{ subjectId }} - Level {{ levelId }}...</p>
       </div>
 
+      <!-- ERROR STATE -->
       <div v-else-if="error" class="status-container error">
         <i class="fas fa-exclamation-circle"></i>
         <p>{{ error }}</p>
         <button class="button retry-btn" @click="retryFetch">Try Again</button>
       </div>
 
+      <!-- NO QUESTIONS -->
       <div v-else-if="questions.length === 0" class="status-container warning">
         <i class="fas fa-info-circle"></i>
         <p>No questions available for this test.</p>
         <small>Please check the subject and level configuration.</small>
       </div>
 
+      <!-- TEST BODY -->
       <div v-else class="questionScreen">
+        <!-- Progress Bar -->
         <div class="test-progress">
           <span class="progress-text">
             Question {{ currentPage }} of {{ questions.length }}
           </span>
+          <progress
+            class="progress-bar"
+            :value="currentPage"
+            :max="questions.length"
+          ></progress>
         </div>
 
+        <!-- Question Text -->
         <h1 class="question">{{ currentQuestion.question }}</h1>
+
+        <!-- Answer Options -->
         <div class="answers">
-          <div v-for="(option, index) in currentQuestion.options" :key="index">
+          <div
+            v-for="(option, index) in currentQuestion.options"
+            :key="index"
+            class="answer-option"
+          >
             <input
               type="radio"
-              class="answer"
-              name="answer"
               :id="'answer' + (index + 1)"
               :value="index"
               v-model="selectedAnswer"
+              name="answer"
             />
             <label :for="'answer' + (index + 1)">{{ option }}</label>
-            <br />
           </div>
         </div>
 
+        <!-- Pagination Buttons -->
         <div class="pagination">
           <button
             v-for="page in questions.length"
@@ -59,11 +75,13 @@
           </button>
         </div>
 
+        <!-- Submit Answer Button -->
         <button class="button" id="submit-button" @click="submitAnswer">
-          Submit
+          {{ currentPage < questions.length ? 'Next' : 'Finish' }}
         </button>
       </div>
 
+      <!-- Navigation Buttons -->
       <div v-if="questions.length > 0" class="navigation-buttons">
         <button
           class="button"
@@ -83,13 +101,14 @@
         </button>
       </div>
 
+      <!-- Confirm Modal -->
       <transition name="modal">
         <div v-if="showConfirmModal" class="modal-overlay">
           <div class="modal-content">
-            <h3>Testni yakunlashni xohlaysizmi?</h3>
+            <h3>Do you want to finish the test?</h3>
             <p>
-              Testni yakunlagandan so'ng, javoblarni o'zgartirish imkoni
-              bo'lmaydi.
+              After completing the test, you won't be able to change your
+              answers.
             </p>
             <div class="modal-actions">
               <button
@@ -97,14 +116,14 @@
                 @click="finishTest"
                 :disabled="isSubmitting"
               >
-                {{ isSubmitting ? 'Saqlanmoqda...' : 'Ha, yakunlash' }}
+                {{ isSubmitting ? 'Saving...' : 'Yes, finish' }}
               </button>
               <button
                 class="button cancel-btn"
                 @click="showConfirmModal = false"
                 :disabled="isSubmitting"
               >
-                Yo'q, qaytish
+                No, go back
               </button>
             </div>
           </div>
@@ -113,6 +132,8 @@
     </div>
   </div>
 </template>
+
+<!-- === script start === -->
 
 <script>
 import { db } from '@/config/firebase';
@@ -141,9 +162,9 @@ export default {
       loading: true,
       error: null,
       questions: [],
-      currentPage: 1,
+      currentPage: 0,
       selectedAnswer: null,
-      userAnswers: {},
+      userAnswers: [],
       isSubmitting: false,
       showConfirmModal: false,
       toasts: [],
@@ -152,13 +173,17 @@ export default {
   },
   computed: {
     currentQuestion() {
-      return this.questions[this.currentPage - 1] || {};
+      return this.questions[this.currentPage] || {};
     },
     questionCountNumber() {
       return parseInt(this.questionCount);
     },
     isAllAnswered() {
-      return Object.keys(this.userAnswers).length === this.questions.length;
+      return (
+        this.questions.length > 0 &&
+        this.userAnswers.length === this.questions.length &&
+        this.userAnswers.every((a) => a !== null)
+      );
     },
   },
   methods: {
@@ -166,6 +191,9 @@ export default {
       this.loading = true;
       this.error = null;
       this.questions = [];
+      this.userAnswers = [];
+      this.currentPage = 0;
+      this.selectedAnswer = null;
 
       try {
         const subjectRef = doc(db, 'subjects', this.subjectId);
@@ -175,18 +203,17 @@ export default {
 
         let allTests = querySnapshot.docs.map((doc) => {
           const data = doc.data();
-          console.log('Test data:', data);
           return {
             id: doc.id,
             question: data.question,
             options: data.options,
-            correctAnswer: Number(data.answer),
+            correctAnswer: parseInt(data.answer),
           };
         });
 
         if (allTests.length < this.questionCountNumber) {
           throw new Error(
-            `Недостаточно вопросов. Найдено: ${allTests.length}, требуется: ${this.questionCountNumber}`
+            `Questions are not sufficient. Found: ${allTests.length}, required: ${this.questionCountNumber}`
           );
         }
 
@@ -194,9 +221,9 @@ export default {
           allTests,
           this.questionCountNumber
         );
-        console.log('Loaded questions:', this.questions);
+        this.userAnswers = Array(this.questions.length).fill(null);
+        this.selectedAnswer = null;
       } catch (error) {
-        console.error('Error fetching tests:', error);
         this.error = error.message;
         this.showToast(error.message, 'error');
       } finally {
@@ -208,35 +235,34 @@ export default {
       this.fetchTests();
     },
     goToPage(page) {
-      if (page >= 1 && page <= this.questions.length) {
-        if (this.selectedAnswer !== null) {
-          this.userAnswers[this.currentPage] = Number(this.selectedAnswer);
-        }
+      if (page >= 0 && page < this.questions.length) {
+        this.saveAnswer();
         this.currentPage = page;
         this.selectedAnswer = this.userAnswers[page] ?? null;
       }
     },
+    saveAnswer() {
+      if (this.selectedAnswer !== null) {
+        this.userAnswers[this.currentPage] = Number(this.selectedAnswer);
+      }
+    },
     submitAnswer() {
       if (this.selectedAnswer === null) {
-        this.showToast('Пожалуйста, выберите ответ', 'warning');
+        this.showToast('Please select an answer', 'warning');
         return;
       }
 
-      console.log('Submitting answer:', {
-        question: this.currentPage,
-        selected: this.selectedAnswer,
-        correct: this.currentQuestion.correctAnswer,
-      });
+      this.saveAnswer();
 
-      this.userAnswers[this.currentPage] = Number(this.selectedAnswer);
-
-      if (this.currentPage < this.questions.length) {
-        this.goToPage(this.currentPage + 1);
-      } else if (this.isAllAnswered) {
+      const unansweredIndex = this.userAnswers.findIndex((a) => a === null);
+      if (unansweredIndex !== -1) {
+        this.goToPage(unansweredIndex);
+      } else {
         this.showConfirmModal = true;
       }
     },
     async finishTest() {
+      this.saveAnswer();
       if (this.isSubmitting) return;
       this.isSubmitting = true;
 
@@ -244,16 +270,10 @@ export default {
         let correctAnswers = 0;
 
         this.questions.forEach((question, index) => {
-          const userAnswer = this.userAnswers[index + 1];
+          const userAnswer = this.userAnswers[index];
           const correctAnswer = question.correctAnswer;
 
-          console.log(`Question ${index + 1}:`, {
-            userAnswer,
-            correctAnswer,
-            isCorrect: userAnswer === correctAnswer,
-          });
-
-          if (userAnswer === correctAnswer) {
+          if (parseInt(userAnswer) === parseInt(correctAnswer)) {
             correctAnswers++;
           }
         });
@@ -262,7 +282,7 @@ export default {
         const user = auth.currentUser;
 
         if (!user) {
-          throw new Error('Пользователь не авторизован');
+          throw new Error('User is not authenticated');
         }
 
         const resultData = {
@@ -272,6 +292,7 @@ export default {
           test_level: this.levelId,
           score: correctAnswers,
           total: this.questions.length,
+          test_number: Date.now(),
           answers: this.userAnswers,
           timestamp: Timestamp.now(),
         };
@@ -284,7 +305,7 @@ export default {
         this.testCompleted = true;
 
         this.showToast(
-          `Тест завершен! Правильных ответов: ${correctAnswers} из ${this.questions.length} (${percentage}%)`,
+          `Test completed! Correct answers: ${correctAnswers} out of ${this.questions.length} (${percentage}%)`,
           'success'
         );
 
@@ -296,7 +317,6 @@ export default {
           percentage,
         });
       } catch (error) {
-        console.error('Error finishing test:', error);
         this.showToast(error.message, 'error');
       } finally {
         this.isSubmitting = false;
@@ -310,15 +330,12 @@ export default {
         this.toasts = this.toasts.filter((t) => t.id !== id);
       }, duration);
     },
-    isQuestionAnswered(page) {
-      return this.userAnswers[page] !== undefined;
+    isQuestionAnswered(index) {
+      return this.userAnswers[index] !== null;
     },
     getRandomQuestions(arr, count) {
       return [...arr].sort(() => Math.random() - 0.5).slice(0, count);
     },
-  },
-  beforeDestroy() {
-    this.toasts.forEach((toast) => clearTimeout(toast.timeout));
   },
   created() {
     this.fetchTests();
@@ -331,188 +348,118 @@ export default {
 };
 </script>
 
+<!-- === script end -->
+
 <style scoped>
 .test-page {
-  text-align: center;
-  margin-top: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .status-container {
-  margin: 40px auto;
-  padding: 30px;
-  max-width: 500px;
-  border-radius: 8px;
   text-align: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.status-container.loading {
-  background-color: #f8f9fa;
-}
-
-.status-container.error {
-  background-color: #fff5f5;
-  border: 1px solid #feb2b2;
-}
-
-.status-container.warning {
-  background-color: #fffaf0;
-  border: 1px solid #fbd38d;
+  padding: 2rem;
+  font-size: 1.1rem;
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  margin: 0 auto 20px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
+  border: 4px solid #ccc;
+  border-top-color: #2196f3;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-}
-
-.retry-btn {
-  margin-top: 15px;
-  background-color: #4299e1;
+  margin: 0 auto 1rem;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
+  to {
     transform: rotate(360deg);
   }
 }
 
-.error {
-  color: #721c24;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-}
-
-.test-progress {
-  margin-bottom: 15px;
-}
-
-.progress-text {
-  font-size: 16px;
-  color: #666;
-  font-weight: 500;
-}
-
 .question {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .answers {
-  margin-top: 20px;
-  text-align: left;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-bottom: 2rem;
 }
 
-.answers div {
-  margin-bottom: 10px;
+.answer-option {
+  margin: 0.5rem 0;
 }
 
-label {
-  font-size: 18px;
-  margin-left: 10px;
-}
-
-.button {
-  background-color: #007bff;
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 10px 2px;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background-color 0.3s;
-}
-
-.button:hover {
-  background-color: #0056b3;
-}
-
-.button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
-
-.navigation-buttons {
-  margin-top: 30px;
-  display: flex;
-  justify-content: center;
-  gap: 20px;
+.answer-option input[type='radio'] {
+  margin-right: 0.5rem;
 }
 
 .pagination {
-  margin-top: 20px;
+  margin: 1rem 0;
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 0.5rem;
 }
 
 .pagination-button {
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #eee;
   cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
-  position: relative;
+}
+
+.pagination-button.active,
+.pagination-button.current {
+  background-color: #2196f3;
+  color: white;
 }
 
 .pagination-button.completed {
-  background-color: #28a745;
+  background-color: #4caf50;
   color: white;
-  border-color: #28a745;
 }
 
-.pagination-button.completed::after {
-  content: '✓';
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  font-size: 12px;
-  background: #fff;
-  border-radius: 50%;
-  width: 15px;
-  height: 15px;
+.button {
+  padding: 0.6rem 1.2rem;
+  margin: 0.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  background-color: #2196f3;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: #1976d2;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  appearance: none;
+  margin-top: 0.5rem;
+}
+
+progress::-webkit-progress-bar {
+  background-color: #f3f3f3;
+  border-radius: 5px;
+}
+
+progress::-webkit-progress-value {
+  background-color: #2196f3;
+  border-radius: 5px;
+}
+
+.navigation-buttons {
   display: flex;
-  align-items: center;
   justify-content: center;
-  color: #28a745;
-  border: 1px solid #28a745;
-}
-
-.pagination-button.current {
-  background-color: #007bff;
-  color: white;
-  border-color: #0056b3;
-  transform: scale(1.1);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.pagination-button:hover {
-  background-color: #0056b3;
-  color: white;
-  transform: translateY(-2px);
-}
-
-.pagination-button:active {
-  transform: translateY(2px);
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+  margin-top: 1.5rem;
 }
 
 .modal-overlay {
@@ -521,10 +468,10 @@ label {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
 }
 
@@ -532,57 +479,22 @@ label {
   background: white;
   padding: 2rem;
   border-radius: 8px;
-  max-width: 400px;
   width: 90%;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  text-align: center;
 }
 
 .modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
   margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-around;
 }
 
 .confirm-btn {
-  background: #28a745;
+  background-color: #4caf50;
 }
 
 .cancel-btn {
-  background: #dc3545;
-}
-
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-@media (max-width: 768px) {
-  .test-page {
-    margin-top: 10px;
-    padding: 0 5px;
-  }
-
-  .answers {
-    gap: 8px;
-  }
-
-  .navigation-buttons {
-    gap: 5px;
-  }
-
-  .pagination {
-    gap: 5px;
-  }
-
-  .pagination-button {
-    padding: 6px 10px;
-    font-size: 12px;
-  }
+  background-color: #f44336;
 }
 </style>

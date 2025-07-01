@@ -345,8 +345,9 @@ h2 {
 th {
   background: #f0f0f0;
   padding: 0.8rem;
-  text-align: left;
-  font-weight: 600;
+  text-align: le ft;
+  font-size: 1rem;
+  font-weight: 700;
   color: #333;
   cursor: pointer;
   border: 1px solid #e0e0e0;

@@ -169,6 +169,8 @@ export default {
       showConfirmModal: false,
       toasts: [],
       testCompleted: false,
+      correctAnswersCount: null,
+      totalQuestionsCount: null,
     };
   },
   computed: {
@@ -236,14 +238,10 @@ export default {
     },
     goToPage(page) {
       if (page >= 0 && page < this.questions.length) {
-        this.saveAnswer();
+        this.userAnswers[this.currentPage] =
+          this.selectedAnswer !== null ? Number(this.selectedAnswer) : null;
         this.currentPage = page;
         this.selectedAnswer = this.userAnswers[page] ?? null;
-      }
-    },
-    saveAnswer() {
-      if (this.selectedAnswer !== null) {
-        this.userAnswers[this.currentPage] = Number(this.selectedAnswer);
       }
     },
     submitAnswer() {
@@ -252,17 +250,21 @@ export default {
         return;
       }
 
-      this.saveAnswer();
+      this.userAnswers[this.currentPage] = Number(this.selectedAnswer);
 
-      const unansweredIndex = this.userAnswers.findIndex((a) => a === null);
-      if (unansweredIndex !== -1) {
-        this.goToPage(unansweredIndex);
-      } else {
+      if (this.currentPage < this.questions.length - 1) {
+        this.currentPage++;
+        this.selectedAnswer = this.userAnswers[this.currentPage] ?? null;
+      } else if (this.isAllAnswered) {
         this.showConfirmModal = true;
+      } else {
+        this.showToast(
+          'You must answer all questions before finishing.',
+          'warning'
+        );
       }
     },
     async finishTest() {
-      this.saveAnswer();
       if (this.isSubmitting) return;
       this.isSubmitting = true;
 
@@ -303,6 +305,8 @@ export default {
           (correctAnswers / this.questions.length) * 100
         );
         this.testCompleted = true;
+        this.correctAnswersCount = correctAnswers;
+        this.totalQuestionsCount = this.questions.length;
 
         this.showToast(
           `Test completed! Correct answers: ${correctAnswers} out of ${this.questions.length} (${percentage}%)`,

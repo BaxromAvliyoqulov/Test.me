@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import MainLayout from "@/layout/mainLayout.vue";
+import MainLayout from '@/layout/mainLayout.vue';
 export default {
   components: {
     MainLayout,
@@ -17,7 +17,7 @@ export default {
 body {
   margin: 0;
   padding: 0;
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 a {
   text-decoration: none;
@@ -34,9 +34,7 @@ a {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition:
-    background-color 0.3s ease,
-    transform 0.2s ease,
+  transition: background-color 0.3s ease, transform 0.2s ease,
     box-shadow 0.2s ease;
   margin-top: 20px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);

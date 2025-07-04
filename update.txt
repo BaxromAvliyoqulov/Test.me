@@ -1,6 +1,7 @@
 Plans:
-1. We need a good favicon
+1. We need a good favicon ✅
 2. Fix test results
 3. Add subject and level management for admin
 4. Add more tests to subjects and levels
 5. Tests and points should be connected
+6. guard need to fix 

@@ -29,15 +29,15 @@
 export default {
   data() {
     return {
-      username: "",
-      password: "",
-      role: "admin",
+      username: '',
+      password: '',
+      role: 'admin',
     };
   },
   methods: {
     addAdmin() {
       if (!this.username || !this.password) {
-        alert("Please fill in all fields.");
+        alert('Please fill in all fields.');
         return;
       }
 
@@ -48,12 +48,12 @@ export default {
       };
 
       // Simulating an API call
-      alert("Admin added successfully:", newAdmin);
+      alert('Admin added successfully:', newAdmin);
 
       // Reset form fields
-      this.username = "";
-      this.password = "";
-      this.role = "admin";
+      this.username = '';
+      this.password = '';
+      this.role = 'admin';
       console.log(`Adding admin: ${this.username}, Role: ${this.role}`);
     },
   },

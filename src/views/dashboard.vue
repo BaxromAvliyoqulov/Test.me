@@ -196,6 +196,7 @@ export default {
       this.loading = true;
       try {
         const auth = getAuth();
+        // Check if user is authenticated
         const user = auth.currentUser;
         if (!user) {
           this.$router.push('/login');
@@ -203,7 +204,7 @@ export default {
         }
         const q = query(
           collection(db, 'results'),
-          where('user_id', '==', user.uid)
+          where('userId', '==', user.uid)
         );
         const snapshot = await getDocs(q);
         this.items = snapshot.docs.map((doc) => ({

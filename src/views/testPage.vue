@@ -58,7 +58,7 @@
           </div>
         </div>
 
-        <!-- Pagination Buttons -->
+        <!-- !!! Pagination Buttons !!! -->
         <div class="pagination">
           <button
             v-for="(question, index) in questions"
@@ -82,7 +82,7 @@
       </div>
 
       <!-- Navigation Buttons -->
-      <div v-if="questions.length > 0" class="navigation-buttons">
+      <!-- <div v-if="questions.length > 0" class="navigation-buttons">
         <button
           class="button"
           id="prev-button"
@@ -99,7 +99,7 @@
         >
           Next
         </button>
-      </div>
+      </div> -->
 
       <!-- Confirm Modal -->
       <transition name="modal">
@@ -138,9 +138,10 @@ import { db } from '@/config/firebase';
 import {
   collection,
   getDocs,
-  doc,
   addDoc,
   Timestamp,
+  query,
+  where,
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import Toast from '@/components/Toast.vue';
@@ -151,9 +152,18 @@ export default {
     Toast,
   },
   props: {
-    subjectId: String,
-    levelId: String,
-    questionCount: [Number, String],
+    subjectId: {
+      type: String,
+      required: true,
+    },
+    levelId: {
+      type: String,
+      required: true,
+    },
+    questionCount: {
+      type: Number,
+      required: true,
+    },
   },
   data() {
     return {
@@ -161,197 +171,159 @@ export default {
       error: null,
       questions: [],
       currentPage: 0,
+      selectedAnswers: [],
       selectedAnswer: null,
-      userAnswers: [],
-      isSubmitting: false,
       showConfirmModal: false,
+      isSubmitting: false,
       toasts: [],
-      testCompleted: false,
-      correctAnswersCount: null,
-      totalQuestionsCount: null,
     };
   },
   computed: {
     currentQuestion() {
-      return this.questions[this.currentPage] || {};
-    },
-    questionCountNumber() {
-      return parseInt(this.questionCount);
-    },
-    isAllAnswered() {
-      return (
-        this.questions.length > 0 &&
-        this.userAnswers.length === this.questions.length &&
-        this.userAnswers.every((a) => a !== null)
-      );
+      return this.questions[this.currentPage];
     },
   },
   methods: {
-    async fetchTests() {
+    async fetchQuestions() {
       this.loading = true;
       this.error = null;
-      this.questions = [];
-      this.userAnswers = [];
-      this.currentPage = 0;
-      this.selectedAnswer = null;
 
       try {
-        const subjectRef = doc(db, 'subjects', this.subjectId);
-        const levelRef = doc(subjectRef, 'levels', this.levelId);
-        const testsCollection = collection(levelRef, 'tests');
-        const querySnapshot = await getDocs(testsCollection);
+        const testsRef = collection(
+          db,
+          'subjects',
+          this.subjectId,
+          'levels',
+          this.levelId,
+          'tests'
+        );
 
-        let allTests = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            question: data.question,
-            options: data.options,
-            correctAnswer: parseInt(data.answer),
-          };
-        });
+        const snapshot = await getDocs(testsRef);
 
-        if (allTests.length < this.questionCountNumber) {
-          throw new Error(
-            `Questions are not sufficient. Found: ${allTests.length}, required: ${this.questionCountNumber}`
-          );
+        let allQuestions = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        if (allQuestions.length === 0) {
+          this.questions = [];
+          return;
         }
 
-        this.questions = this.getRandomQuestions(
-          allTests,
-          this.questionCountNumber
+        allQuestions = this.shuffleArray(allQuestions).slice(
+          0,
+          this.questionCount
         );
-        this.userAnswers = Array(this.questions.length).fill(null);
-        this.selectedAnswer = null;
-      } catch (error) {
-        this.error = error.message;
-        this.showToast(error.message, 'error');
+        this.questions = allQuestions;
+      } catch (err) {
+        console.error('❌ Fetch error:', err);
+        this.error = 'Could not load test questions.';
       } finally {
         this.loading = false;
       }
     },
 
+    shuffleArray(array) {
+      return array
+        .map((value) => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+    },
+
     retryFetch() {
-      this.fetchTests();
+      this.error = null;
+      this.fetchQuestions();
     },
-    goToPage(page) {
-      if (page >= 0 && page < this.questions.length) {
-        this.saveAnswer();
-        this.currentPage = page;
-        this.selectedAnswer = this.userAnswers[page] ?? null;
+
+    goToPage(index) {
+      if (index >= 0 && index < this.questions.length) {
+        this.currentPage = index;
+        this.selectedAnswer = this.selectedAnswers[index] ?? null;
       }
     },
-    saveAnswer() {
-      if (this.selectedAnswer !== null) {
-        this.userAnswers[this.currentPage] = Number(this.selectedAnswer);
-      }
+
+    isQuestionAnswered(index) {
+      return this.selectedAnswers[index] !== undefined;
     },
+
     submitAnswer() {
       if (this.selectedAnswer === null) {
-        this.showToast('Please select an answer', 'warning');
+        this.showToast('⚠️ Please select an answer first!', 'warning');
         return;
       }
 
-      this.saveAnswer();
+      this.selectedAnswers[this.currentPage] = this.selectedAnswer;
+      this.selectedAnswer = null;
 
-      const unansweredIndex = this.userAnswers.findIndex((a) => a === null);
-      if (unansweredIndex !== -1) {
-        this.goToPage(unansweredIndex);
+      if (this.currentPage < this.questions.length - 1) {
+        this.currentPage++;
+        this.selectedAnswer = this.selectedAnswers[this.currentPage] ?? null;
       } else {
         this.showConfirmModal = true;
       }
     },
 
     async finishTest() {
-      if (this.isSubmitting) return;
       this.isSubmitting = true;
 
       try {
-        let correctAnswers = 0;
-
-        this.questions.forEach((question, index) => {
-          const userAnswer = this.userAnswers[index];
-          const correctAnswer = question.correctAnswer;
-
-          if (parseInt(userAnswer) === parseInt(correctAnswer)) {
-            correctAnswers++;
-          }
-        });
-
         const auth = getAuth();
         const user = auth.currentUser;
 
         if (!user) {
-          throw new Error('User is not authenticated');
+          throw new Error('User not found');
         }
 
-        const resultData = {
-          user_id: user.uid,
-          username: user.displayName || user.email || 'anonymous',
+        let correctCount = 0;
+        this.questions.forEach((q, index) => {
+          const selectedIndex = this.selectedAnswers[index];
+          const selectedOption = q.options[selectedIndex];
+          if (selectedOption === q.answer) correctCount++;
+        });
+
+        const result = {
+          userId: user.uid,
+          username: user.displayName || user.email,
           subject: this.subjectId,
           test_level: this.levelId,
-          score: correctAnswers,
+          test_number: 1,
+          score: correctCount,
           total: this.questions.length,
-          test_number: Date.now(),
-          answers: this.userAnswers,
           timestamp: Timestamp.now(),
         };
 
-        await addDoc(collection(db, 'results'), resultData);
-
-        const percentage = Math.round(
-          (correctAnswers / this.questions.length) * 100
-        );
-        this.testCompleted = true;
-        this.correctAnswersCount = correctAnswers;
-        this.totalQuestionsCount = this.questions.length;
+        await addDoc(collection(db, 'results'), result);
 
         this.showToast(
-          `Test completed! Correct answers: ${correctAnswers} out of ${this.questions.length} (${percentage}%)`,
+          `✅ Test completed! Correct answers: ${correctCount}/${this.questions.length}`,
           'success'
         );
 
         this.$emit('test-completed', {
-          subjectId: this.subjectId,
-          levelId: this.levelId,
-          score: correctAnswers,
-          total: this.questions.length,
-          percentage,
+          correctAnswers: correctCount,
+          totalQuestions: this.questions.length,
         });
-      } catch (error) {
-        this.showToast(error.message, 'error');
+
+        this.showConfirmModal = false;
+      } catch (err) {
+        this.showToast('❌ Error saving results: ' + err.message, 'error');
+        console.error('❌ finishTest error:', err);
       } finally {
         this.isSubmitting = false;
-        this.showConfirmModal = false;
       }
     },
 
-    showToast(message, type = 'info', duration = 3000) {
-      const id = Date.now();
-      this.toasts.push({ id, message, type });
-      setTimeout(() => {
-        this.toasts = this.toasts.filter((t) => t.id !== id);
-      }, duration);
-    },
-
-    isQuestionAnswered(index) {
-      return this.userAnswers[index] !== null;
-    },
-
-    getRandomQuestions(arr, count) {
-      return [...arr].sort(() => Math.random() - 0.5).slice(0, count);
+    showToast(message, type = 'info') {
+      this.toasts.push({ message, type });
     },
   },
-  created() {
-    this.fetchTests();
-  },
-  watch: {
-    subjectId: 'fetchTests',
-    levelId: 'fetchTests',
-    questionCount: 'fetchTests',
+
+  mounted() {
+    this.fetchQuestions();
   },
 };
 </script>
+
 <!-- === script end -->
 
 <style scoped>

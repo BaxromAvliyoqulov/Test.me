@@ -6,22 +6,28 @@
       <form @submit.prevent="startTestWithFilters" class="form">
         <div class="form-group">
           <label>Select Subject</label>
-          <select 
-            v-model="selectedSubject" 
+          <select
+            v-model="selectedSubject"
             @change="fetchLevels"
             :disabled="loading || loadingSubjects"
           >
             <option disabled value="">Choose a subject</option>
-            <option v-for="subject in subjects" :key="subject.id" :value="subject">
+            <option
+              v-for="subject in subjects"
+              :key="subject.id"
+              :value="subject"
+            >
               {{ subject.id }}
             </option>
           </select>
-          <div v-if="loadingSubjects" class="loading-indicator">Loading subjects...</div>
+          <div v-if="loadingSubjects" class="loading-indicator">
+            Loading subjects...
+          </div>
         </div>
 
         <div class="form-group">
           <label>Select Level</label>
-          <select 
+          <select
             v-model="selectedLevel"
             :disabled="loading || !selectedSubject || loadingLevels"
           >
@@ -30,13 +36,15 @@
               {{ level }}
             </option>
           </select>
-          <div v-if="loadingLevels" class="loading-indicator">Loading levels...</div>
+          <div v-if="loadingLevels" class="loading-indicator">
+            Loading levels...
+          </div>
         </div>
 
         <!-- Test Quantity Selection -->
         <div class="form-group">
           <label>Number of Questions</label>
-          <select 
+          <select
             v-model="selectedQuestionCount"
             :disabled="loading || !selectedSubject || !selectedLevel"
           >
@@ -61,13 +69,18 @@
     <!-- Test Component (shown after subject selection) -->
     <div v-else>
       <div class="test-header">
-        <h3>{{ selectedSubject.id }} - {{ selectedLevel }} Test ({{ selectedQuestionCount }} questions)</h3>
+        <h3>
+          {{ selectedSubject.id }} - {{ selectedLevel }} Test ({{
+            selectedQuestionCount
+          }}
+          questions)
+        </h3>
         <button class="back-btn" @click="goBackToSelection">
           ← Back to Selection
         </button>
       </div>
-      
-      <TestPage 
+
+      <TestPage
         :subjectId="selectedSubject.id"
         :levelId="selectedLevel"
         :questionCount="selectedQuestionCount"
@@ -78,131 +91,133 @@
 </template>
 
 <script>
-import { db } from "@/config/firebase"; // Adjust this import to match your Firebase config path
-import { collection, doc, getDocs } from "firebase/firestore";
-import TestPage from './TestPage.vue'; // Import the TestPage component
+import { db } from '@/config/firebase'; // Adjust this import to match your Firebase config path
+import { collection, doc, getDocs } from 'firebase/firestore';
+import TestPage from './testPage.vue'; // Import the TestPage component
 
 export default {
-  name: "SubjectTestSelection",
+  name: 'SubjectTestSelection',
   components: {
-    TestPage
+    TestPage,
   },
   data() {
     return {
-      selectedSubject: "",
-      selectedLevel: "",
-      selectedQuestionCount: "",
-      questionCounts: [5, 10, 15, 20, 25, 30, 35, 40, 45],
+      selectedSubject: '',
+      selectedLevel: '',
+      selectedQuestionCount: '',
+      questionCounts: [5, 10, 15, 20, 25, 30],
       subjects: [],
       levels: [],
       loading: false,
       loadingSubjects: false,
       loadingLevels: false,
       status: null,
-      startTest: false
+      startTest: false,
     };
   },
   computed: {
     canStart() {
-      return this.selectedSubject && 
-             this.selectedLevel && 
-             this.selectedQuestionCount &&
-             !this.loading && 
-             !this.loadingSubjects && 
-             !this.loadingLevels;
-    }
+      return (
+        this.selectedSubject &&
+        this.selectedLevel &&
+        this.selectedQuestionCount &&
+        !this.loading &&
+        !this.loadingSubjects &&
+        !this.loadingLevels
+      );
+    },
   },
   methods: {
     async fetchSubjects() {
       this.loadingSubjects = true;
       this.status = null;
       try {
-        const querySnapshot = await getDocs(collection(db, "subjects"));
-        this.subjects = querySnapshot.docs.map(doc => ({
+        const querySnapshot = await getDocs(collection(db, 'subjects'));
+        this.subjects = querySnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }));
-        
+
         if (this.subjects.length === 0) {
           this.status = {
-            type: "info",
-            message: "⚠️ No subjects found. Please add a subject first."
+            type: 'info',
+            message: '⚠️ No subjects found. Please add a subject first.',
           };
         }
       } catch (error) {
-        console.error("❌ Error fetching subjects:", error);
-        this.status = { 
-          type: "error", 
-          message: `❌ Error fetching subjects: ${error.message}` 
+        console.error('❌ Error fetching subjects:', error);
+        this.status = {
+          type: 'error',
+          message: `❌ Error fetching subjects: ${error.message}`,
         };
       } finally {
         this.loadingSubjects = false;
       }
     },
-    
+
     async fetchLevels() {
       if (!this.selectedSubject) return;
-      
+
       this.loadingLevels = true;
-      this.selectedLevel = "";
+      this.selectedLevel = '';
       this.levels = [];
       this.status = null;
-      
+
       try {
-        const subjectRef = doc(db, "subjects", this.selectedSubject.id);
-        const levelsCollection = await getDocs(collection(subjectRef, "levels"));
-        
-        this.levels = levelsCollection.docs.map(doc => doc.id);
-        
+        const subjectRef = doc(db, 'subjects', this.selectedSubject.id);
+        const levelsCollection = await getDocs(
+          collection(subjectRef, 'levels')
+        );
+
+        this.levels = levelsCollection.docs.map((doc) => doc.id);
+
         if (this.levels.length === 0) {
           this.status = {
-            type: "info",
-            message: "⚠️ No levels found for this subject."
+            type: 'info',
+            message: '⚠️ No levels found for this subject.',
           };
         }
       } catch (error) {
-        console.error("❌ Error fetching levels:", error);
-        this.status = { 
-          type: "error", 
-          message: `❌ Error fetching levels: ${error.message}` 
+        console.error('❌ Error fetching levels:', error);
+        this.status = {
+          type: 'error',
+          message: `❌ Error fetching levels: ${error.message}`,
         };
       } finally {
         this.loadingLevels = false;
       }
     },
-    
+
     clearStatus() {
       this.status = null;
     },
-    
+
     startTestWithFilters() {
       if (!this.canStart) return;
-      
+
       this.startTest = true;
     },
-    
+
     goBackToSelection() {
       this.startTest = false;
     },
-    
+
     handleTestCompletion(results) {
-      console.log("Test completed with results:", results);
+      console.log('Test completed with results:', results);
       // You can handle test completion as needed
       // For example, show results, save to user profile, etc.
-      
-      // Show a message about the results
       this.status = {
-        type: "success",
-        message: `✅ Test completed! You got ${results.correctAnswers} out of ${results.totalQuestions} questions correct.`
+        type: 'success',
+        message: `✅ Test completed! You got ${results.correctAnswers} out of ${results.totalQuestions} questions correct.`,
       };
-      
+
       // Go back to selection
       this.startTest = false;
-    }
+    },
   },
   mounted() {
     this.fetchSubjects();
-  }
+  },
 };
 </script>
 

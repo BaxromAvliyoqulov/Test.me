@@ -26,10 +26,8 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+*.env*
 
 *.tsbuildinfo
 
 
-
-# Firebase Admin secret
-src/config/admin/serviceAccountKey.json

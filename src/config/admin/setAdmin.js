@@ -1,21 +1,19 @@
-import { setAdminRole } from './setAdmin';
+import admin from 'firebase-admin';
+import dotenv from 'dotenv';
+dotenv.config();
 
-async function addAdmin(uid) {
-  try {
-    await setAdminRole(uid);
-    console.log('Admin role has been set for user with UID:', uid);
-  } catch (e) {
-    console.error('Error setting admin role: ', e);
-  }
+const serviceAccount = {
+  type: 'service_account',
+  project_id: process.env.GOOGLE_PROJECT_ID,
+  private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  client_email: process.env.GOOGLE_CLIENT_EMAIL,
+  token_uri: 'https://oauth2.googleapis.com/token',
+};
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
 }
 
-async function addMultipleAdmins() {
-  const adminUIDs = [
-    '4ZNOfiV6WXhR1ApdczBa9qcS6Gp2', // Baxrom
-  ];
-
-  for (const uid of adminUIDs) {
-    await addAdmin(uid);
-  }
-}
-addMultipleAdmins();
+export default admin;

@@ -28,3 +28,5 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+src/config/admin/serviceAccountKey.json
+src/config/admin/setAdmin.js

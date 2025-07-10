@@ -33,7 +33,7 @@
       <!-- Continue with google button -->
       <div class="google-signup">
         <button @click.prevent="handleGoogleSignUp" type="button">
-          <img src="../assets/img/googleicon.svg" alt="Google Icon" />
+          <img src="../assets/img/googleIcon.svg" alt="Google Icon" />
           Continue with Google
         </button>
       </div>

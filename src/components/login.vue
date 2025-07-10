@@ -31,7 +31,7 @@
         <div class="google-login">
           <button @click.prevent="handleGoogleLog" type="button">
             <img
-              src="src/assets/img/googleicon.svg
+              src="../assets/img/googleIcon.svg
 "
               alt="Google Icon"
             />

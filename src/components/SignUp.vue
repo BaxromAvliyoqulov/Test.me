@@ -53,8 +53,8 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { generateReferralCode } from '../utils/generateReferralCode.js';
-import { handleReferral } from '../utils/referral.js';
+import { generateReferralCode } from '@/utils/generateReferralCode';
+import { handleReferral } from '@/utils/referral';
 import { auth } from '@/config/firebase';
 import {
   createUserWithEmailAndPassword,
@@ -64,8 +64,6 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { generateReferralCode } from '@/utils/generateReferralCode';
-import { handleReferral } from '@/utils/referral';
 
 export default {
   name: 'Signup',
@@ -92,17 +90,6 @@ export default {
       errorMessage.value = '';
       successMessage.value = '';
 
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email.value,
-        password.value
-      );
-      await updateProfile(userCredential.user, { displayName: username.value });
-
-      // referralCode query'dan olinadi
-      await generateReferralCode(userCredential.user);
-      await handleReferral(route.query.ref, userCredential.user.uid);
-
       if (!email.value || !password.value || !username.value) {
         errorMessage.value = 'All fields are required.';
         return;
@@ -115,12 +102,14 @@ export default {
           password.value
         );
 
-        await updateProfile(userCredential.user, {
+        const user = userCredential.user;
+
+        await updateProfile(user, {
           displayName: username.value,
         });
 
-        await generateReferralCode(); // Referral kod yaratish
-        await handleReferral(referralCode.value, userCredential.user.uid); // Agar ref bo‘lsa, unga points beriladi
+        await generateReferralCode(user); // Referral code saqlash
+        await handleReferral(referralCode.value, user.uid); // Referral ishlov
 
         successMessage.value = 'Successfully registered!';
         router.push('/');
@@ -134,9 +123,6 @@ export default {
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
-
-        await generateReferralCode(user);
-        await handleReferral(route.query.ref, user.uid);
 
         const referral = route.query.ref || '';
         const referralCode = user.uid.slice(0, 6).toUpperCase();
@@ -152,9 +138,7 @@ export default {
           { merge: true }
         );
 
-        if (referral) {
-          await handleReferral(referral, user.uid);
-        }
+        await handleReferral(referral, user.uid);
 
         successMessage.value = 'Google SignUp successful!';
         router.push('/');

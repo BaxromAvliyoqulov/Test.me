@@ -7,17 +7,35 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Firebase secret file (❗ MUHIM)
+src/config/admin/serviceAccountKey.json
+firebase-config.json
+serviceAccountKey.json
+
+# Environment files
+*.env*
+.env.local
+.env.production
+.env.development
+.env
+.env.*.local
+
+# Dependency directories
 node_modules
-.DS_Store
+
+# Build output
 dist
 dist-ssr
 coverage
-*.local
 
+# macOS
+.DS_Store
+
+# Cypress artifacts
 /cypress/videos/
 /cypress/screenshots/
 
-# Editor directories and files
+# Editor config
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -26,8 +44,6 @@ coverage
 *.njsproj
 *.sln
 *.sw?
-*.env*
 
+# TypeScript
 *.tsbuildinfo
-
-

@@ -1,5 +1,11 @@
 Plans:
+1. Navbar username vs email
+2. Referral code
 3. Add subject and level management for admin
 4. Add more tests to subjects and levels
 5. Tests and points should be connected
 6. Guard need to fix 
+7. Dashboard chart bar 
+8. User img should be dynamic
+9. Points page
+10. Add referral to collect point in profile page

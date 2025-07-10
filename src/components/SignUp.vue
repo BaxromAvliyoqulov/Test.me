@@ -30,6 +30,14 @@
       </div>
 
       <button type="submit" class="signup-button">Sign Up</button>
+      <!-- Continue with google button -->
+      <div class="google-signup">
+        <button @click.prevent="handleGoogleSignUp" type="button">
+          <img src="../assets/img/googleicon.svg" alt="Google Icon" />
+          Continue with Google
+        </button>
+      </div>
+      <!-- Continue with google button  end -->
       <div class="link-button">
         <router-link to="/login">
           Already have an account? <span>Login</span>
@@ -43,10 +51,19 @@
 </template>
 
 <script>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { auth } from '@/config/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '@/config/firebase';
+import { generateReferralCode } from '@/utils/generateReferralCode';
+import { handleReferral } from '@/utils/referral';
 
 export default {
   name: 'Signup',
@@ -57,8 +74,13 @@ export default {
     const showPassword = ref(false);
     const errorMessage = ref('');
     const successMessage = ref('');
-
     const router = useRouter();
+    const route = useRoute();
+    const referralCode = ref('');
+
+    onMounted(() => {
+      referralCode.value = route.query.ref || '';
+    });
 
     const togglePasswordVisibility = () => {
       showPassword.value = !showPassword.value;
@@ -80,15 +102,49 @@ export default {
           password.value
         );
 
-        // Save username as displayName
         await updateProfile(userCredential.user, {
           displayName: username.value,
         });
 
+        await generateReferralCode(); // Referral kod yaratish
+        await handleReferral(referralCode.value, userCredential.user.uid); // Agar ref bo‘lsa, unga points beriladi
+
         successMessage.value = 'Successfully registered!';
-        router.push('/'); // or another page
+        router.push('/');
       } catch (error) {
         errorMessage.value = error.message;
+      }
+    };
+
+    const handleGoogleSignUp = async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        const referral = route.query.ref || '';
+        const referralCode = user.uid.slice(0, 6).toUpperCase();
+
+        await setDoc(
+          doc(db, 'users', user.uid),
+          {
+            email: user.email,
+            displayName: user.displayName,
+            referralCode,
+            points: 0,
+          },
+          { merge: true }
+        );
+
+        if (referral) {
+          await handleReferral(referral, user.uid);
+        }
+
+        successMessage.value = 'Google SignUp successful!';
+        router.push('/');
+      } catch (error) {
+        errorMessage.value = 'Google SignUp error: ' + error.message;
+        console.error(error);
       }
     };
 
@@ -99,6 +155,7 @@ export default {
       showPassword,
       togglePasswordVisibility,
       handleSubmit,
+      handleGoogleSignUp,
       errorMessage,
       successMessage,
     };
@@ -109,6 +166,32 @@ export default {
 <style scoped>
 * {
   box-sizing: border-box;
+}
+
+.google-signup {
+  margin-top: 20px;
+}
+.google-signup button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+.google-signup button:hover {
+  background-color: #f8f8f8;
+  border-color: #999;
+}
+.google-signup img {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
 }
 
 .signup-container {

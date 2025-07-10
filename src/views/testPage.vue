@@ -140,30 +140,21 @@ import {
   getDocs,
   addDoc,
   Timestamp,
-  query,
-  where,
+  doc,
+  updateDoc,
+  increment,
+  setDoc,
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import Toast from '@/components/Toast.vue';
 
 export default {
   name: 'TestPage',
-  components: {
-    Toast,
-  },
+  components: { Toast },
   props: {
-    subjectId: {
-      type: String,
-      required: true,
-    },
-    levelId: {
-      type: String,
-      required: true,
-    },
-    questionCount: {
-      type: Number,
-      required: true,
-    },
+    subjectId: { type: String, required: true },
+    levelId: { type: String, required: true },
+    questionCount: { type: Number, required: true },
   },
   data() {
     return {
@@ -176,6 +167,7 @@ export default {
       showConfirmModal: false,
       isSubmitting: false,
       toasts: [],
+      startTime: null,
     };
   },
   computed: {
@@ -199,7 +191,6 @@ export default {
         );
 
         const snapshot = await getDocs(testsRef);
-
         let allQuestions = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -269,10 +260,11 @@ export default {
       try {
         const auth = getAuth();
         const user = auth.currentUser;
+        if (!user) throw new Error('User not found');
 
-        if (!user) {
-          throw new Error('User not found');
-        }
+        const endTime = Date.now();
+        const durationInSeconds = Math.floor((endTime - this.startTime) / 1000);
+        const allowedTime = this.questions.length * 60;
 
         let correctCount = 0;
         this.questions.forEach((q, index) => {
@@ -290,12 +282,34 @@ export default {
           score: correctCount,
           total: this.questions.length,
           timestamp: Timestamp.now(),
+          durationInSeconds,
         };
 
+        // ⏱ Anti-cheat: Juda tez tugatganmi?
+        if (durationInSeconds < allowedTime * 0.5) {
+          result.suspicious = true;
+          this.showToast(
+            '❗ Juda tez tugatdingiz. Bu test shubhali deb belgilandi.',
+            'error'
+          );
+        }
+
+        // 📝 Save to Firestore
         await addDoc(collection(db, 'results'), result);
 
+        // 🎁 TP ballarni qo‘shish
+        const totalPoints = correctCount * 10;
+        const userRef = doc(db, 'users', user.uid);
+        try {
+          await updateDoc(userRef, {
+            points: increment(totalPoints),
+          });
+        } catch (err) {
+          await setDoc(userRef, { points: totalPoints }, { merge: true });
+        }
+
         this.showToast(
-          `✅ Test completed! Correct answers: ${correctCount}/${this.questions.length}`,
+          `🎉 Test yakunlandi! Siz ${totalPoints} TP yutdingiz!`,
           'success'
         );
 
@@ -316,10 +330,36 @@ export default {
     showToast(message, type = 'info') {
       this.toasts.push({ message, type });
     },
+
+    handleTabSwitch() {
+      if (document.hidden) {
+        this.showToast("⚠️ Siz boshqa tabga o'tdingiz!", 'warning');
+      }
+    },
   },
 
   mounted() {
+    this.startTime = Date.now();
     this.fetchQuestions();
+
+    // Anti-tab va inspect
+    document.addEventListener('visibilitychange', this.handleTabSwitch);
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.addEventListener('keydown', (e) => {
+      if (
+        (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+        (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+        (e.ctrlKey && e.key === 'U') ||
+        e.key === 'F12'
+      ) {
+        e.preventDefault();
+        alert('🚫 Developer Tools bloklangan!');
+      }
+    });
+  },
+
+  beforeUnmount() {
+    document.removeEventListener('visibilitychange', this.handleTabSwitch);
   },
 };
 </script>

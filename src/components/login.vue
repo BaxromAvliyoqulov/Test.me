@@ -30,7 +30,11 @@
         <button type="submit" class="login-button">Login</button>
         <div class="google-login">
           <button @click.prevent="handleGoogleLog" type="button">
-            <img src="" alt="Google Icon" />
+            <img
+              src="src/assets/img/googleicon.svg
+"
+              alt="Google Icon"
+            />
             Continue with Google
           </button>
         </div>

@@ -19,6 +19,10 @@
       <button @click="showReferredUsers = true" class="button">
         View Referred Users
       </button>
+      <button @click="showReferralCodeModal = true" class="button">
+        <i class="fas fa-plus"></i>
+        <!-- yoki icon component -->
+      </button>
     </div>
 
     <div class="table-container">
@@ -41,6 +45,12 @@
         </tbody>
       </table>
     </div>
+    <!-- Points.vue ichida -->
+    <ReferralCodeModal
+      v-if="showReferralCodeModal"
+      @close="showReferralCodeModal = false"
+    />
+
     <!-- referral modal -->
     <ReferralModal
       v-if="showReferralModal"
@@ -59,11 +69,13 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { db } from '@/config/firebase';
-import { onSnapshot, doc, collection, query, where } from 'firebase/firestore';
+import { onSnapshot, doc, collection } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+
 import ReferralModal from './ShareReferralModal.vue';
 import ReferredUsersModal from './ReferralListModal.vue';
 import BuyPointsModal from './BuyPoints.vue';
+import ReferralCodeModal from './ReferralCodeModal.vue';
 
 export default {
   name: 'PointsWallet',
@@ -71,6 +83,7 @@ export default {
     ReferralModal,
     ReferredUsersModal,
     BuyPointsModal,
+    ReferralCodeModal,
   },
 
   setup() {
@@ -79,6 +92,7 @@ export default {
     const showReferralModal = ref(false);
     const showReferredUsers = ref(false);
     const showBuyModal = ref(false);
+    const showReferralCodeModal = ref(false); // ✅ Bu yo‘q edi, qo‘shildi
 
     const auth = getAuth();
     const user = auth.currentUser;
@@ -119,6 +133,7 @@ export default {
       showReferralModal,
       showReferredUsers,
       showBuyModal,
+      showReferralCodeModal, // ✅ Bu return qismida ham kerak
     };
   },
 };

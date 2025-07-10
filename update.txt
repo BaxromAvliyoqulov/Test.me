@@ -10,3 +10,4 @@ Plans:
 9. Points page
 10. Add referral to collect point in profile page
 11. Dashboard need to fix test number should be count test's number 
+12. point ni local ga saqlash kerak point ishlamayapti saxifa yangilansa xam 

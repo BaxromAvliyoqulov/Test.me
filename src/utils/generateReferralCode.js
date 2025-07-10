@@ -1,21 +1,15 @@
-import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export const generateReferralCode = async (user) => {
-  if (!user) return null;
+  const randomCode = user.uid.slice(0, 8).toUpperCase();
+  const referralDoc = doc(db, 'referralCodes', randomCode);
 
-  const referralCode = user.uid.slice(0, 6).toUpperCase();
+  await setDoc(referralDoc, {
+    code: randomCode,
+    userId: user.uid,
+    createdAt: new Date(),
+  });
 
-  await setDoc(
-    doc(db, 'users', user.uid),
-    {
-      displayName: user.displayName || 'No Name',
-      email: user.email,
-      referralCode,
-      points: 0,
-    },
-    { merge: true }
-  );
-
-  return referralCode;
+  return randomCode;
 };

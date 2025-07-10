@@ -1,23 +1,16 @@
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { getAuth } from 'firebase/auth';
 
-export const generateReferralCode = async () => {
-  const user = getAuth().currentUser;
+export const generateReferralCode = async (user) => {
   if (!user) return null;
 
-  const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-  const userRef = doc(db, 'users', user.uid);
-  const existingDoc = await getDoc(userRef);
-
-  if (existingDoc.exists() && existingDoc.data().referralCode) {
-    return existingDoc.data().referralCode;
-  }
+  const referralCode = user.uid.slice(0, 6).toUpperCase();
 
   await setDoc(
-    userRef,
+    doc(db, 'users', user.uid),
     {
+      displayName: user.displayName || 'No Name',
+      email: user.email,
       referralCode,
       points: 0,
     },

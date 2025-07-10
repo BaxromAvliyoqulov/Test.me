@@ -9,3 +9,4 @@ Plans:
 8. User img should be dynamic
 9. Points page
 10. Add referral to collect point in profile page
+11. Dashboard need to fix test number should be count test's number 

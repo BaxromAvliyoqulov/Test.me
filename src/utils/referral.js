@@ -8,35 +8,28 @@ import {
   doc,
 } from 'firebase/firestore';
 
-export const handleReferral = async (referralCode, newUserId) => {
-  try {
-    const q = query(
-      collection(db, 'users'),
-      where('referralCode', '==', referralCode)
-    );
+export const handleReferral = async (referralCode, invitedUid) => {
+  if (!referralCode) return;
 
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      const referrerDoc = querySnapshot.docs[0];
-      const referrerId = referrerDoc.id;
+  const q = query(
+    collection(db, 'users'),
+    where('referralCode', '==', referralCode)
+  );
+  const snapshot = await getDocs(q);
 
-      // Referrerga 50 point qo‘shish
-      await updateDoc(doc(db, 'users', referrerId), {
-        points: (referrerDoc.data().points || 0) + 50,
-      });
+  if (!snapshot.empty) {
+    const referrerDoc = snapshot.docs[0];
+    const referrerId = referrerDoc.id;
+    const currentPoints = referrerDoc.data().points || 0;
 
-      // Yangi userga 100 point va kim uni taklif qilganini yozib qo‘yamiz
-      await updateDoc(doc(db, 'users', newUserId), {
-        points: 100,
-        invitedBy: referrerId,
-      });
+    // Referentga points beriladi (masalan 20 ball)
+    await updateDoc(doc(db, 'users', referrerId), {
+      points: currentPoints + 20,
+    });
 
-      return true;
-    }
-
-    return false;
-  } catch (error) {
-    console.error('Referral error:', error);
-    return false;
+    // Optional: invited foydalanuvchiga ham points
+    await updateDoc(doc(db, 'users', invitedUid), {
+      points: 10,
+    });
   }
 };

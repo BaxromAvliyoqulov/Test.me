@@ -30,7 +30,7 @@
         <button type="submit" class="login-button">Login</button>
         <div class="google-login">
           <button @click.prevent="handleGoogleLog" type="button">
-            <img src="../assets/img/googleicon.svg" alt="Google Icon" />
+            <img src="../assets/img/googleIcon.svg" alt="Google Icon" />
             Continue with Google
           </button>
         </div>
@@ -48,20 +48,20 @@
 </template>
 
 <script>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { auth } from "../config/firebase";
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { auth } from '../config/firebase';
 import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
-} from "firebase/auth";
+} from 'firebase/auth';
 
 export default {
   setup() {
     const router = useRouter();
-    const errorMessage = ref("");
-    const successMessage = ref("");
+    const errorMessage = ref('');
+    const successMessage = ref('');
 
     return {
       errorMessage,
@@ -72,8 +72,8 @@ export default {
   data() {
     return {
       form: {
-        username: "",
-        password: "",
+        username: '',
+        password: '',
       },
       showPassword: false,
     };
@@ -87,15 +87,15 @@ export default {
         .then((userCredential) => {
           // Login muvaffaqiyatli
           const user = userCredential.user;
-          console.log("Login successful:", user);
+          console.log('Login successful:', user);
           // Redirect to the home page
-          this.router.push("/");
+          this.router.push('/');
         })
         .catch((error) => {
           // Xatolik yuz bersa, xato xabarini ko'rsatish
           this.errorMessage =
-            "Username or password is incorrect. Please try again.";
-          console.error("Login failed:", error.message);
+            'Username or password is incorrect. Please try again.';
+          console.error('Login failed:', error.message);
         });
     },
     togglePasswordVisibility() {
@@ -110,15 +110,15 @@ export default {
         const result = await signInWithPopup(auth, provider);
 
         // Agar login muvaffaqiyatli bo'lsa
-        console.log("Google Log In successful:", result.user);
+        console.log('Google Log In successful:', result.user);
         // Success xabarini ko'rsatish
-        this.successMessage = "Google login successful!";
+        this.successMessage = 'Google login successful!';
         // Home sahifasiga yo'naltirish
-        this.router.push("/");
+        this.router.push('/');
       } catch (error) {
         // Xatolik yuz bersa
-        console.error("Google LogIn failed:", error.message);
-        this.errorMessage = "Google login error. Please try again.";
+        console.error('Google LogIn failed:', error.message);
+        this.errorMessage = 'Google login error. Please try again.';
       }
     },
   },
@@ -171,9 +171,7 @@ export default {
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 16px;
-  transition:
-    border 0.3s ease-in-out,
-    box-shadow 0.3s ease-in-out;
+  transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 }
 
 .input-group input:focus {
@@ -227,9 +225,7 @@ export default {
   border-radius: 4px;
   font-size: 16px;
   cursor: pointer;
-  transition:
-    background-color 0.3s,
-    border-color 0.3s;
+  transition: background-color 0.3s, border-color 0.3s;
 }
 
 .google-login button:hover {

@@ -53,6 +53,8 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { generateReferralCode } from '../utils/generateReferralCode.js';
+import { handleReferral } from '../utils/referral.js';
 import { auth } from '@/config/firebase';
 import {
   createUserWithEmailAndPassword,
@@ -90,6 +92,17 @@ export default {
       errorMessage.value = '';
       successMessage.value = '';
 
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email.value,
+        password.value
+      );
+      await updateProfile(userCredential.user, { displayName: username.value });
+
+      // referralCode query'dan olinadi
+      await generateReferralCode(userCredential.user);
+      await handleReferral(route.query.ref, userCredential.user.uid);
+
       if (!email.value || !password.value || !username.value) {
         errorMessage.value = 'All fields are required.';
         return;
@@ -121,6 +134,9 @@ export default {
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
+
+        await generateReferralCode(user);
+        await handleReferral(route.query.ref, user.uid);
 
         const referral = route.query.ref || '';
         const referralCode = user.uid.slice(0, 6).toUpperCase();

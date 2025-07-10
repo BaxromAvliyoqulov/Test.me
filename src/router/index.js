@@ -8,7 +8,7 @@ const admin = () => import('@/views/admin/index.vue');
 const about = () => import('@/views/about.vue');
 const contactUs = () => import('@/views/contactUs.vue');
 const dashboard = () => import('@/views/dashboard.vue');
-const points = () => import('@/views/points.vue');
+const points = () => import('@/views/Points/points.vue');
 const NotFound = () => import('@/views/404.vue');
 const EditProfile = () => import('@/views/editProfile/editProfile.vue');
 

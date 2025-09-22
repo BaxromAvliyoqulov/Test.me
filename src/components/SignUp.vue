@@ -30,14 +30,14 @@
       </div>
 
       <button type="submit" class="signup-button">Sign Up</button>
-      <!-- Continue with google button -->
+
       <div class="google-signup">
         <button @click.prevent="handleGoogleSignUp" type="button">
           <img src="../assets/img/googleIcon.svg" alt="Google Icon" />
           Continue with Google
         </button>
       </div>
-      <!-- Continue with google button  end -->
+
       <div class="link-button">
         <router-link to="/login">
           Already have an account? <span>Login</span>
@@ -51,11 +51,9 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { generateReferralCode } from '@/utils/generateReferralCode';
-import { handleReferral } from '@/utils/referral';
-import { auth } from '@/config/firebase';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { auth, db } from '@/config/firebase';
 import {
   createUserWithEmailAndPassword,
   updateProfile,
@@ -63,7 +61,6 @@ import {
   signInWithPopup,
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/config/firebase';
 
 export default {
   name: 'Signup',
@@ -75,12 +72,6 @@ export default {
     const errorMessage = ref('');
     const successMessage = ref('');
     const router = useRouter();
-    const route = useRoute();
-    const referralCode = ref('');
-
-    onMounted(() => {
-      referralCode.value = route.query.ref || '';
-    });
 
     const togglePasswordVisibility = () => {
       showPassword.value = !showPassword.value;
@@ -101,44 +92,40 @@ export default {
           email.value,
           password.value
         );
-
         const user = userCredential.user;
 
         await updateProfile(user, {
           displayName: username.value,
         });
 
-        await generateReferralCode(user); // Referral code saqlash
-        await handleReferral(referralCode.value, user.uid); // Referral ishlov
+        await setDoc(doc(db, 'users', user.uid), {
+          displayName: username.value,
+          email: user.email,
+          points: 0,
+        });
 
         successMessage.value = 'Successfully registered!';
         router.push('/');
       } catch (error) {
         errorMessage.value = error.message;
       }
+      console.log('Firebase Auth User ID:', user.uid);
     };
 
     const handleGoogleSignUp = async () => {
+      errorMessage.value = '';
+      successMessage.value = '';
+
       try {
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
-        const referral = route.query.ref || '';
-        const referralCode = user.uid.slice(0, 6).toUpperCase();
-
-        await setDoc(
-          doc(db, 'users', user.uid),
-          {
-            email: user.email,
-            displayName: user.displayName,
-            referralCode,
-            points: 0,
-          },
-          { merge: true }
-        );
-
-        await handleReferral(referral, user.uid);
+        await setDoc(doc(db, 'users', user.uid), {
+          displayName: user.displayName || 'Anonymous',
+          email: user.email,
+          points: 0,
+        });
 
         successMessage.value = 'Google SignUp successful!';
         router.push('/');

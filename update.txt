@@ -1,13 +1,17 @@
 Plans:
 1. Navbar username vs email
-2. Referral code
+2. Referral code ✅
 3. Add subject and level management for admin
 4. Add more tests to subjects and levels
-5. Tests and points should be connected
+5. Tests and points should be connected ✅
 6. Guard need to fix 
 7. Dashboard chart bar 
 8. User img should be dynamic
-9. Points page
+9. Points page ✅
 10. Add referral to collect point in profile page
 11. Dashboard need to fix test number should be count test's number 
 12. point ni local ga saqlash kerak point ishlamayapti saxifa yangilansa xam 
+13. test page ni xam o'zgartirish kerak oxirda modal testda timer  timer pulse 
+14. navbar login sign up ga vue-toastifyni qo'yish kerak 
+15. toast.vue ni vue toastga mosalashi kerak o'zgartirish kerak
+16. 3 ta tilda ishlaydigan qilish --->> ENG RUS UZB

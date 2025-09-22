@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import home from '@/views/home.vue';
 const Login = () => import('@/components/login.vue');
 const SignUP = () => import('@/components/SignUp.vue');
-const testPage = () => import('@/views/testPage.vue');
+const testPage = () => import('@/views/testPage/testPage.vue');
 const admin = () => import('@/views/admin/index.vue');
 const about = () => import('@/views/about.vue');
 const contactUs = () => import('@/views/contactUs.vue');

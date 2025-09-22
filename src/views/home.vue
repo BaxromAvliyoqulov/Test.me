@@ -81,6 +81,7 @@
       </div>
 
       <TestPage
+        ref="testPage"
         :subjectId="selectedSubject.id"
         :levelId="selectedLevel"
         :questionCount="selectedQuestionCount"
@@ -91,9 +92,9 @@
 </template>
 
 <script>
-import { db } from '@/config/firebase'; // Adjust this import to match your Firebase config path
-import { collection, doc, getDocs } from 'firebase/firestore';
-import TestPage from './testPage.vue'; // Import the TestPage component
+import { db } from '@/config/firebase';
+import { collection, doc, getDocs, addDoc } from 'firebase/firestore';
+import TestPage from './testPage/testPage.vue';
 
 export default {
   name: 'SubjectTestSelection',
@@ -192,10 +193,48 @@ export default {
       this.status = null;
     },
 
-    startTestWithFilters() {
+    async startTestWithFilters() {
       if (!this.canStart) return;
 
-      this.startTest = true;
+      this.loading = true;
+
+      try {
+        // Сохраняем выбранные параметры в базу данных
+        const testSession = {
+          subjectId: this.selectedSubject.id,
+          levelId: this.selectedLevel,
+          questionCount: this.selectedQuestionCount,
+          userId: this.$store.state.user?.uid, // если используете Vuex
+          startedAt: new Date(),
+          status: 'in-progress',
+        };
+
+        // Добавляем сессию в Firestore
+        const sessionsRef = collection(db, 'testSessions');
+        const docRef = await addDoc(sessionsRef, testSession);
+
+        // Сохраняем ID сессии
+        const sessionId = docRef.id;
+
+        // Активируем тестовую страницу
+        this.startTest = true;
+
+        // Передаем все необходимые параметры в TestPage
+        this.$nextTick(() => {
+          this.$refs.testPage?.initializeTest({
+            sessionId,
+            ...testSession,
+          });
+        });
+      } catch (error) {
+        console.error('Error starting test:', error);
+        this.status = {
+          type: 'error',
+          message: '❌ Error starting test: ' + error.message,
+        };
+      } finally {
+        this.loading = false;
+      }
     },
 
     goBackToSelection() {
@@ -350,6 +389,7 @@ select:disabled {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

@@ -8,15 +8,11 @@
         :src="profileImage"
         @click="toggleDropdown"
         class="profile-image"
-        alt="User Avatar"
+        alt="User"
       />
       <div v-if="dropdownOpen" class="dropdown-content">
         <div class="user-info" v-if="username">
-          <img
-            :src="profileImage"
-            class="dropdown-profile-image"
-            alt="User Avatar"
-          />
+          <img :src="profileImage" class="dropdown-profile-image" alt="User" />
           <router-link to="/editProfile" class="dropdown-username">{{
             username
           }}</router-link>

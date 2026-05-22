@@ -14,10 +14,16 @@ const NotFound = () => import('@/views/404.vue');
 const EditProfile = () => import('@/views/editProfile/editProfile.vue');
 const Badges = () => import('@/views/badges.vue');
 const Certificates = () => import('@/views/certificates.vue');
+const AiTestSetup = () => import('@/views/testPage/aiTestSetup.vue');
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    {
+      path: '/ai-setup',
+      name: 'aiSetup',
+      component: AiTestSetup,
+    },
     {
       path: '/',
       name: 'home',

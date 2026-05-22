@@ -99,15 +99,16 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
 import { db } from '@/config/firebase';
-import { collection, getDocs, addDoc, Timestamp, query, where } from 'firebase/firestore';
+import { collection, getDocs, addDoc, Timestamp, query, where, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import ReviewAnswers from '@/views/testPage/reviewModal.vue';
 import ProgressBar from '@/views/testPage/progressBar.vue';
 import QuestionComponent from '@/views/testPage/question.vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 // Инициализация
 const router = useRouter();
+const route = useRoute();
 
 // Props
 const props = defineProps({
@@ -166,6 +167,31 @@ const fetchQuestions = async (options) => {
   try {
     state.loading = true;
     state.error = null;
+
+    // Check if it is an AI test (from route query or props)
+    const isAi = props.subjectId === 'ai' || (route && route.query && route.query.subjectId === 'ai');
+
+    if (isAi) {
+      const aiTestId = route?.query?.aiTestId;
+      if (!aiTestId) {
+        throw new Error('AI Test ID ko\'rsatilmagan');
+      }
+
+      const docRef = doc(db, 'ai_tests', aiTestId);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        throw new Error('AI Test savollari topilmadi');
+      }
+
+      const testData = docSnap.data();
+      state.questions = testData.questions;
+      state.selectedAnswers = Array(state.questions.length).fill(null);
+      state.currentPage = 0;
+      state.selectedAnswer = null;
+      state.testFinished = false;
+      return;
+    }
 
     const testsRef = collection(
       db,

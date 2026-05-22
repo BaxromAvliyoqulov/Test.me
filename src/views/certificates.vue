@@ -150,7 +150,7 @@
 
 <script>
 import { db, auth } from '@/config/firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useI18n } from '@/utils/i18n';
 
@@ -164,6 +164,7 @@ export default {
     return {
       userDisplayName: '',
       results: [],
+      issuedCertificates: [],
       elementaryCount: 0,
       intermediateCount: 0,
       advancedCount: 0,
@@ -180,11 +181,20 @@ export default {
       return this.certificates.filter(c => c.unlocked).length;
     },
     certId() {
-      if (!auth.currentUser) return 'CERT-XXXX-XXXX';
-      const uidPart = auth.currentUser.uid.substring(0, 8).toUpperCase();
-      return `CERT-${uidPart}-${this.selectedCert ? this.selectedCert.id.toUpperCase() : 'NONE'}`;
+      if (!this.selectedCert) return 'CERT-XXXX-XXXX';
+      const issued = this.issuedCertificates.find(c => c.certType === this.selectedCert.id);
+      return issued ? issued.certId : 'CERT-PENDING';
     },
     formattedDate() {
+      if (!this.selectedCert) return '';
+      const issued = this.issuedCertificates.find(c => c.certType === this.selectedCert.id);
+      if (issued && issued.issuedAt) {
+        const date = issued.issuedAt.toDate ? issued.issuedAt.toDate() : new Date(issued.issuedAt);
+        const dd = String(date.getDate()).padStart(2, '0');
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const yyyy = date.getFullYear();
+        return `${dd}.${mm}.${yyyy}`;
+      }
       const now = new Date();
       const dd = String(now.getDate()).padStart(2, '0');
       const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -202,7 +212,7 @@ export default {
           icon: 'fas fa-award',
           color: '#3b82f6',
           unlockRate: 82,
-          unlocked: this.elementaryCount >= 3,
+          unlocked: this.issuedCertificates.some(ic => ic.certType === 'elementary_graduate'),
           progress: true,
           currentVal: this.elementaryCount,
           targetVal: 3
@@ -216,7 +226,7 @@ export default {
           icon: 'fas fa-graduation-cap',
           color: '#10b981',
           unlockRate: 34,
-          unlocked: this.intermediateCount >= 5,
+          unlocked: this.issuedCertificates.some(ic => ic.certType === 'intermediate_expert'),
           progress: true,
           currentVal: this.intermediateCount,
           targetVal: 5
@@ -230,7 +240,7 @@ export default {
           icon: 'fas fa-crown',
           color: '#fbbf24',
           unlockRate: 12,
-          unlocked: this.advancedCount >= 3,
+          unlocked: this.issuedCertificates.some(ic => ic.certType === 'advanced_professional'),
           progress: true,
           currentVal: this.advancedCount,
           targetVal: 3
@@ -244,7 +254,7 @@ export default {
           icon: 'fas fa-magic',
           color: '#a855f7',
           unlockRate: 55,
-          unlocked: this.totalCount >= 5,
+          unlocked: this.issuedCertificates.some(ic => ic.certType === 'ai_enthusiast'),
           progress: true,
           currentVal: this.totalCount,
           targetVal: 5
@@ -258,7 +268,7 @@ export default {
         if (user) {
           this.userDisplayName = user.displayName || user.email.split('@')[0];
           try {
-            // Fetch results
+            // Fetch test results
             const resultsRef = collection(db, 'results');
             const q = query(resultsRef, where('userId', '==', user.uid));
             const querySnapshot = await getDocs(q);
@@ -266,10 +276,16 @@ export default {
             this.results = querySnapshot.docs.map(doc => doc.data());
             this.totalCount = this.results.length;
 
-            // Calculate level-specific completed counts
+            // Calculate level completion metrics
             this.elementaryCount = this.results.filter(r => r.test_level && r.test_level.toLowerCase().includes('elem')).length;
             this.intermediateCount = this.results.filter(r => r.test_level && r.test_level.toLowerCase().includes('inter')).length;
             this.advancedCount = this.results.filter(r => r.test_level && r.test_level.toLowerCase().includes('adv')).length;
+
+            // Fetch secure certificates from Firestore
+            const certsRef = collection(db, 'certificates');
+            const certsQ = query(certsRef, where('userId', '==', user.uid));
+            const certsSnapshot = await getDocs(certsQ);
+            this.issuedCertificates = certsSnapshot.docs.map(doc => doc.data());
           } catch (e) {
             console.error('Error fetching statistics:', e);
           } finally {

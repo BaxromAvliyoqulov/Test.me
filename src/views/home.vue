@@ -164,6 +164,18 @@
               </p>
             </div>
           </div>
+
+          <!-- AI Test Generator widget -->
+          <div class="sidebar-card ai-generator-widget">
+            <div class="ai-gen-header">
+              <i class="fas fa-magic gen-icon"></i>
+              <h4>{{ isRus ? 'AI Конструктор Тестов' : 'AI Test Konstruktori' }}</h4>
+            </div>
+            <p class="ai-gen-desc">{{ isRus ? 'Создайте персональный тест на любую тему с помощью искусственного интеллекта!' : 'Istagan mavzuingiz bo\'yicha sun\'iy intellekt yordamida shaxsiy test yarating!' }}</p>
+            <router-link to="/ai-setup" class="ai-gen-btn">
+              <i class="fas fa-cog"></i> {{ isRus ? 'Настроить AI Тест' : 'AI Testni Sozlash' }}
+            </router-link>
+          </div>
         </div>
       </div>
 
@@ -1160,6 +1172,61 @@ export default {
   background: #f0f9ff;
   border: 1px solid #bae6fd;
   color: #075985;
+}
+
+.ai-generator-widget {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(59, 130, 246, 0.05));
+  border: 1.5px solid rgba(168, 85, 247, 0.15) !important;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ai-gen-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ai-gen-header h4 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+.gen-icon {
+  color: #a855f7;
+  font-size: 1.2rem;
+  animation: pulse-icon 2s infinite ease-in-out;
+}
+.ai-gen-desc {
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.4;
+  margin: 0;
+}
+.ai-gen-btn {
+  background: linear-gradient(135deg, #a855f7, #3b82f6);
+  color: white !important;
+  text-decoration: none;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
+  transition: all 0.2s ease;
+}
+.ai-gen-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(168, 85, 247, 0.25);
+}
+@keyframes pulse-icon {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
 }
 
 @media (max-width: 900px) {

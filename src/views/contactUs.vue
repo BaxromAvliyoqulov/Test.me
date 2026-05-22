@@ -1,110 +1,215 @@
 <template>
-  <div class="contact-container">
-    <h2>
-      If you have Some problems Please
-      <span class="gradient-text">Contact Us</span>
-    </h2>
-    <p class="subtitle">
-      Hamkorlik yoki biror bir muammo yuzasidan bizga yozing
-    </p>
+  <div class="contact-wrapper">
+    <!-- Glowing background elements -->
+    <div class="glow-bg glow-bg-1"></div>
+    <div class="glow-bg glow-bg-2"></div>
 
-    <form class="contact-form" @submit.prevent="handleSubmit">
-      <div class="form-group">
-        <label for="name">Ismingiz</label>
-        <input
-          type="text"
-          id="name"
-          v-model="formData.name"
-          required
-          placeholder="Ismingizni kiriting"
-        />
+    <div class="contact-container">
+      <div class="contact-hero">
+        <h1 class="contact-title" v-html="isRus ? 'Есть вопросы? <span class=\'gradient-text\'>Свяжитесь с нами</span>' : 'Savol bormi? <span class=\'gradient-text\'>Biz bilan bog\'laning</span>'"></h1>
+        <p class="contact-subtitle">
+          {{ isRus ? 'Напишите нам по вопросам сотрудничества или любых возникших проблем' : 'Hamkorlik yoki biror bir muammo yuzasidan bizga yozing' }}
+        </p>
       </div>
 
-      <div class="form-group">
-        <label for="phone">Telefon raqamingiz</label>
-        <input
-          type="tel"
-          id="phone"
-          v-model="formData.phone"
-          required
-          placeholder="+998 90 123 45 67"
-        />
-      </div>
+      <div class="contact-content-grid">
+        <!-- Left Side: Contact Information Cards -->
+        <div class="contact-info-panel">
+          <div class="info-intro-card">
+            <h3>{{ isRus ? 'Наши контакты' : 'Bizning kontaktlar' }}</h3>
+            <p>{{ isRus ? 'Отправьте сообщение через форму или свяжитесь с нами напрямую по указанным каналам.' : 'Murojaatingizni form orqali yuboring yoki quyidagi kanallar orqali to\'g\'ridan-to\'g\'ri biz bilan bog\'laning.' }}</p>
+          </div>
 
-      <div class="form-group">
-        <label for="requestType">Murojaat turi</label>
-        <select
-          id="requestType"
-          v-model="formData.requestType"
-          required
-          @change="handleRequestTypeChange"
-        >
-          <option value="">Tanlang</option>
-          <option value="partnership">Hamkorlik taklifi</option>
-          <option value="test">Test bo'yicha muammo</option>
-          <option value="platform">Platforma bo'yicha muammo</option>
-        </select>
-      </div>
+          <div class="info-cards">
+            <!-- Telegram link card -->
+            <a href="https://t.me/Testme_Support_bot" target="_blank" class="info-item-card">
+              <div class="info-icon tg-icon">
+                <i class="fab fa-telegram-plane"></i>
+              </div>
+              <div class="info-details">
+                <span>Telegram Support</span>
+                <strong>@Testme_Support_bot</strong>
+              </div>
+              <i class="fas fa-external-link-alt info-arrow"></i>
+            </a>
 
-      <div class="form-group" v-if="formData.requestType === 'test'">
-        <label for="subject">Fan</label>
-        <select id="subject" v-model="formData.subject" required>
-          <option value="English">Ingliz Tili</option>
-          <option value="">Fanni tanlang</option>
-          <option value="math">Matematika</option>
-          <option value="physics">Fizika</option>
-          <option value="chemistry">Kimyo</option>
-        </select>
-      </div>
+            <!-- Email copy card -->
+            <div class="info-item-card" @click="copyEmail">
+              <div class="info-icon email-icon">
+                <i class="far fa-envelope"></i>
+              </div>
+              <div class="info-details">
+                <span>{{ isRus ? 'Электронная почта' : 'Elektron pochta' }}</span>
+                <strong>avliyoqulovbaxrom99@gmail.com</strong>
+              </div>
+              <i class="far fa-copy info-arrow"></i>
+            </div>
 
-      <div class="form-group">
-        <label for="message">Xabar</label>
-        <textarea
-          id="message"
-          v-model="formData.message"
-          required
-          placeholder="Xabaringizni yozing"
-          rows="4"
-        ></textarea>
-      </div>
+            <!-- Support Time Card -->
+            <div class="info-item-card no-click">
+              <div class="info-icon time-icon">
+                <i class="far fa-clock"></i>
+              </div>
+              <div class="info-details">
+                <span>{{ isRus ? 'Время работы' : 'Ish vaqti' }}</span>
+                <strong>{{ isRus ? '24/7 - Круглосуточно' : '24/7 - Istalgan vaqtda' }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <button type="submit" class="button">Yuborish</button>
-    </form>
+        <!-- Right Side: Contact Form -->
+        <div class="contact-form-panel">
+          <form class="contact-form" @submit.prevent="handleSubmit">
+            <div class="form-group">
+              <label for="name">{{ isRus ? 'Ваше имя' : 'Ismingiz' }}</label>
+              <div class="input-wrapper">
+                <i class="far fa-user input-icon"></i>
+                <input
+                  type="text"
+                  id="name"
+                  v-model="formData.name"
+                  required
+                  :placeholder="isRus ? 'Введите ваше имя' : 'Ismingizni kiriting'"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="phone">{{ isRus ? 'Номер телефона' : 'Telefon raqamingiz' }}</label>
+              <div class="input-wrapper">
+                <i class="fas fa-phone-alt input-icon"></i>
+                <input
+                  type="tel"
+                  id="phone"
+                  v-model="formData.phone"
+                  required
+                  placeholder="+998 90 123 45 67"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="requestType">{{ isRus ? 'Тип обращения' : 'Murojaat turi' }}</label>
+              <div class="input-wrapper">
+                <i class="far fa-comment-dots input-icon"></i>
+                <select
+                  id="requestType"
+                  v-model="formData.requestType"
+                  required
+                  @change="handleRequestTypeChange"
+                >
+                  <option value="">{{ isRus ? 'Выберите' : 'Tanlang' }}</option>
+                  <option value="partnership">{{ isRus ? 'Предложение о сотрудничестве' : 'Hamkorlik taklifi' }}</option>
+                  <option value="test">{{ isRus ? 'Проблема с тестом' : 'Test bo\'yicha muammo' }}</option>
+                  <option value="platform">{{ isRus ? 'Проблема с платформой' : 'Platforma bo\'yicha muammo' }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group" v-if="formData.requestType === 'test'">
+              <label for="subject">{{ isRus ? 'Предмет' : 'Fan' }}</label>
+              <div class="input-wrapper">
+                <i class="fas fa-book-open input-icon"></i>
+                <select id="subject" v-model="formData.subject" required>
+                  <option value="">{{ isRus ? 'Выберите предмет' : 'Fanni tanlang' }}</option>
+                  <option value="English">Ingliz Tili</option>
+                  <option value="math">Matematika</option>
+                  <option value="physics">Fizika</option>
+                  <option value="chemistry">Kimyo</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="message">{{ isRus ? 'Сообщение' : 'Xabar' }}</label>
+              <div class="input-wrapper textarea-wrapper">
+                <i class="far fa-edit input-icon"></i>
+                <textarea
+                  id="message"
+                  v-model="formData.message"
+                  required
+                  :placeholder="isRus ? 'Напишите ваше сообщение...' : 'Xabaringizni yozing...'"
+                  rows="4"
+                ></textarea>
+              </div>
+            </div>
+
+            <button type="submit" class="submit-button" :disabled="submitting">
+              <span v-if="!submitting">{{ isRus ? 'Отправить сообщение' : 'Yuborish' }}</span>
+              <span v-else>{{ isRus ? 'Отправка...' : 'Yuborilmoqda...' }}</span>
+              <i class="fas fa-paper-plane" v-if="!submitting"></i>
+              <i class="fas fa-circle-notch fa-spin" v-else></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-const TELEGRAM_BOT_TOKEN = "7070027279:AAGSDOhfMkri0MTn9iFxuYqyCuskZtUw1aI";
+import { ref, computed } from "vue";
+import { useToast } from "vue-toastification";
+import { useI18n } from "@/utils/i18n";
+
+const TELEGRAM_BOT_TOKEN = "8767460705:AAGzfj1cxyHbU3L2-e-xKE7yeCp4Idj-ZG0";
 const TELEGRAM_CHAT_ID = "587788509";
 
 export default {
-  data() {
-    return {
-      formData: {
+  name: "ContactUs",
+  setup() {
+    const toast = useToast();
+    const { locale } = useI18n();
+
+    const isRus = computed(() => locale.value === "RUS");
+
+    const formData = ref({
+      name: "",
+      phone: "",
+      requestType: "",
+      subject: "",
+      message: "",
+    });
+
+    const submitting = ref(false);
+
+    const handleRequestTypeChange = () => {
+      if (formData.value.requestType !== "test") {
+        formData.value.subject = "";
+      }
+    };
+
+    const copyEmail = () => {
+      navigator.clipboard.writeText("avliyoqulovbaxrom99@gmail.com");
+      toast.success(
+        isRus.value
+          ? "Email скопирован в буфер обмена!"
+          : "Elektron pochta nusxalandi!"
+      );
+    };
+
+    const resetForm = () => {
+      formData.value = {
         name: "",
         phone: "",
         requestType: "",
         subject: "",
         message: "",
-      },
+      };
     };
-  },
-  methods: {
-    handleRequestTypeChange() {
-      if (this.formData.requestType !== "test") {
-        this.formData.subject = "";
-      }
-    },
-    async handleSubmit() {
+
+    const handleSubmit = async () => {
+      submitting.value = true;
       try {
         const messageText = `
-        🆕 Yangi murojaat:
+🆕 Yangi murojaat:
 
-        👤 Ismi: ${this.formData.name}
-        📞 Telefon: ${this.formData.phone}
-        📝 Murojaat turi: ${this.formData.requestType}
-        ${this.formData.subject ? `📚 Fan: ${this.formData.subject}` : ""}
-        💬 Xabar: ${this.formData.message}`;
+👤 Ismi: ${formData.value.name}
+📞 Telefon: ${formData.value.phone}
+📝 Murojaat turi: ${formData.value.requestType}
+${formData.value.subject ? `📚 Fan: ${formData.value.subject}` : ""}
+💬 Xabar: ${formData.value.message}`;
 
         const response = await fetch(
           `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
@@ -118,66 +223,247 @@ export default {
               text: messageText,
               parse_mode: "HTML",
             }),
-          },
+          }
         );
 
         if (response.ok) {
-          alert("Xabaringiz muvaffaqiyatli yuborildi!");
-          this.resetForm();
+          toast.success(
+            isRus.value
+              ? "Ваше сообщение успешно отправлено!"
+              : "Xabaringiz muvaffaqiyatli yuborildi!"
+          );
+          resetForm();
         } else {
           throw new Error("Xabar yuborishda xatolik yuz berdi");
         }
       } catch (error) {
         console.error("Error:", error);
-        alert("Xatolik yuz berdi. Iltimos qayta urinib ko'ring");
+        toast.error(
+          isRus.value
+            ? "Произошла ошибка при отправке сообщения."
+            : "Xatolik yuz berdi. Iltimos qayta urinib ko'ring"
+        );
+      } finally {
+        submitting.value = false;
       }
-    },
-    resetForm() {
-      this.formData = {
-        name: "",
-        phone: "",
-        requestType: "",
-        subject: "",
-        message: "",
-      };
-    },
+    };
+
+    return {
+      formData,
+      isRus,
+      submitting,
+      handleRequestTypeChange,
+      copyEmail,
+      handleSubmit,
+    };
   },
 };
 </script>
 
 <style scoped>
-* {
-  transition: all 0.3s ease-in-out;
-  box-sizing: border-box;
+.contact-wrapper {
+  position: relative;
+  min-height: 90vh;
+  padding: 4rem 1.5rem;
+  overflow: hidden;
+  background: #f8fafc;
+  font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+.glow-bg {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.35;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.glow-bg-1 {
+  top: 10%;
+  left: 5%;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, #3b82f6 0%, #60a5fa 100%);
+}
+
+.glow-bg-2 {
+  bottom: 10%;
+  right: 5%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #10b981 0%, #34d399 100%);
 }
 
 .contact-container {
-  width: 100%;
-  max-width: 650px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid #f0f0f0;
+  position: relative;
+  z-index: 1;
+  max-width: 1050px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3.5rem;
 }
 
-h2 {
+.contact-hero {
   text-align: center;
-  font-size: 1.8rem;
-  margin-bottom: 0.5rem;
 }
-.subtitle {
-  text-align: center;
-  color: #666;
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
+
+.contact-title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -1px;
+  margin: 0 0 1rem 0;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.contact-subtitle {
+  font-size: 1.15rem;
+  color: #64748b;
+  max-width: 650px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.contact-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+/* Left Panel Style */
+.contact-info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.info-intro-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.02);
+}
+
+.info-intro-card h3 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.5rem 0;
+}
+
+.info-intro-card p {
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.info-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-item-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 20px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.02);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.info-item-card:hover:not(.no-click) {
+  transform: translateX(4px);
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+}
+
+.info-item-card.no-click {
+  cursor: default;
+}
+
+.info-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.tg-icon { background: #eff6ff; color: #3b82f6; }
+.email-icon { background: #fdf2f8; color: #db2777; }
+.time-icon { background: #f0fdf4; color: #10b981; }
+
+.info-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-grow: 1;
+}
+
+.info-details span {
+  font-size: 0.72rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.info-details strong {
+  font-size: 0.95rem;
+  color: #0f172a;
+  word-break: break-all;
+}
+
+.info-arrow {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.info-item-card:hover .info-arrow {
+  color: #3b82f6;
+}
+
+/* Right Panel Style (Form) */
+.contact-form-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 28px;
+  padding: 2.5rem;
+  box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.05);
 }
 
 .contact-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .form-group {
@@ -186,98 +472,123 @@ h2 {
   gap: 0.5rem;
 }
 
-label {
-  font-weight: 600;
-  color: #2c3e50;
-  font-size: 1rem;
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Input, select, textarea styling */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  font-size: 1rem;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
 input,
 select,
 textarea {
   width: 100%;
-  padding: 12px;
-  border: 2px solid #e1e8ed;
-  border-radius: 10px;
-  font-size: 1rem;
-  background: #fff;
-  color: #2c3e50;
-  transition: border 0.3s ease;
+  padding: 12px 14px 12px 42px;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
 }
+
 textarea {
+  padding-top: 14px;
   resize: vertical;
   min-height: 120px;
 }
+
+.textarea-wrapper {
+  align-items: start;
+}
+
+.textarea-wrapper .input-icon {
+  top: 16px;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #007bff;
-  outline: none;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
-/* Button styles */
-.button {
-  width: 100%;
-  padding: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  background: linear-gradient(145deg, #0056b3, #007bff);
+input:focus + .input-icon,
+select:focus + .input-icon,
+textarea:focus + .input-icon {
+  color: #3b82f6;
+}
+
+.submit-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
   border: none;
-  border-radius: 10px;
+  padding: 1.1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
-}
-.button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 123, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 25px -5px rgba(37, 99, 235, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 0.5rem;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .contact-container {
-    padding: 1.5rem;
-    margin: 1rem;
-  }
-  h2 {
-    font-size: 1.5rem;
-  }
-  .subtitle {
-    font-size: 0.9rem;
-  }
-  input,
-  select,
-  textarea {
-    font-size: 0.9rem;
-    padding: 10px;
-  }
-  .button {
-    font-size: 0.9rem;
-    padding: 10px;
-  }
+.submit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -5px rgba(37, 99, 235, 0.6);
 }
-@media (max-width: 480px) {
+
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 868px) {
+  .contact-wrapper {
+    padding: 2.5rem 1rem;
+  }
+
   .contact-container {
-    padding: 1rem;
-    margin: 0.5rem;
+    gap: 2.5rem;
   }
-  h2 {
-    font-size: 1.3rem;
+
+  .contact-title {
+    font-size: 2.2rem;
   }
-  .subtitle {
-    font-size: 0.85rem;
+
+  .contact-subtitle {
+    font-size: 1rem;
   }
-  input,
-  select,
-  textarea {
-    font-size: 0.85rem;
-    padding: 8px;
+
+  .contact-content-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
   }
-  .button {
-    font-size: 0.85rem;
-    padding: 10px;
+
+  .contact-form-panel {
+    padding: 1.75rem;
   }
 }
 </style>

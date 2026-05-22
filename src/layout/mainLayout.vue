@@ -1,6 +1,6 @@
 <template>
   <div class="mainLayout">
-    <Navbar />
+    <Navbar v-if="showNavbar" />
     <div class="content">
       <slot />
     </div>
@@ -13,6 +13,12 @@ import Navbar from "../components/navbar.vue";
 export default {
   components: {
     Navbar,
+  },
+  computed: {
+    showNavbar() {
+      const hideOnPaths = ['/login', '/signup', '/SignUp'];
+      return !hideOnPaths.includes(this.$route.path);
+    }
   },
   methods: {
     showSuccessToast() {

@@ -4,13 +4,6 @@
       <h1 @click="navigateTo('/')">Test.me</h1>
     </div>
 
-    <!-- Language Selector -->
-    <div class="lang-selector">
-      <select v-model="currentLocale" @change="changeLocale" class="lang-select">
-        <option v-for="lang in locales" :key="lang" :value="lang">{{ lang }}</option>
-      </select>
-    </div>
-
     <div class="profile">
       <img
         :src="profileImage"
@@ -19,27 +12,58 @@
         alt="User"
       />
       <div v-if="dropdownOpen" class="dropdown-content">
+        <!-- User Info header inside dropdown -->
         <div class="user-info" v-if="username">
           <img :src="profileImage" class="dropdown-profile-image" alt="User" />
-          <router-link to="/editProfile" class="dropdown-username">{{
-            username
-          }}</router-link>
+          <router-link to="/editProfile" class="dropdown-username">{{ username }}</router-link>
         </div>
-        
+
+        <!-- Language toggle group inside dropdown (UZB and RUS only) -->
+        <div class="dropdown-lang-section">
+          <span class="lang-label">
+            <i class="fas fa-globe"></i> 
+            {{ currentLocale === 'UZB' ? 'Til' : 'Язык' }}
+          </span>
+          <div class="lang-toggle-group">
+            <button 
+              type="button" 
+              @click.prevent="changeLocale('UZB')" 
+              :class="{ active: currentLocale === 'UZB' }"
+            >
+              UZB
+            </button>
+            <button 
+              type="button" 
+              @click.prevent="changeLocale('RUS')" 
+              :class="{ active: currentLocale === 'RUS' }"
+            >
+              RUS
+            </button>
+          </div>
+        </div>
+
         <!-- Logged In Links -->
         <template v-if="username">
-          <router-link to="/">
-            <i class="fas fa-home"></i>
-            {{ t('home') }}
-          </router-link>
           <div class="dropdown-links">
+            <router-link to="/">
+              <i class="fas fa-home"></i>
+              {{ t('home') }}
+            </router-link>
             <router-link to="/points">
               <img
                 src="../assets/img/tpCoin.png"
                 alt="TP Coin"
-                style="width: 16px; height: 16px; margin-right: 5px"
+                style="width: 16px; height: 16px; margin-right: 8px"
               />
               {{ t('points') }}
+            </router-link>
+            <router-link to="/badges">
+              <i class="fas fa-award"></i>
+              {{ currentLocale === 'RUS' ? 'Достижения' : 'Yutuqlar' }}
+            </router-link>
+            <router-link to="/certificates">
+              <i class="fas fa-certificate"></i>
+              {{ currentLocale === 'RUS' ? 'Сертификаты' : 'Sertifikatlar' }}
             </router-link>
             <router-link to="/about">
               <i class="fas fa-info-circle"></i>
@@ -95,12 +119,11 @@ import { useI18n } from '@/utils/i18n';
 
 export default {
   setup() {
-    const { locale, t, setLocale, locales } = useI18n();
+    const { locale, t, setLocale } = useI18n();
     return {
       currentLocale: locale,
       t,
       setLocale,
-      locales,
     };
   },
   data() {
@@ -124,8 +147,8 @@ export default {
   },
 
   methods: {
-    changeLocale() {
-      this.setLocale(this.currentLocale);
+    changeLocale(lang) {
+      this.setLocale(lang);
     },
 
     initializeAuth() {
@@ -202,53 +225,31 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 30px;
+  padding: 0 24px;
   max-width: 1200px;
   width: 90%;
-  height: 70px;
-  margin: 15px auto;
-  background: linear-gradient(145deg, #0056b3, #007bff);
-  color: white;
-  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3),
-    -4px -4px 10px rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-}
-
-.lang-selector {
-  margin-left: auto;
-  margin-right: 15px;
-}
-
-.lang-select {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.3s ease;
-}
-
-.lang-select:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.lang-select option {
-  color: #333;
-  background: white;
+  height: 64px;
+  margin: 16px auto;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.25);
+  position: relative;
+  z-index: 999;
 }
 
 .navbar h1 {
   margin: 0;
-  font-size: 26px;
-  font-weight: bold;
-  color: white;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: #ffffff;
   cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.navbar h1:hover {
+  opacity: 0.9;
 }
 
 .profile {
@@ -256,188 +257,174 @@ export default {
 }
 
 .profile-image {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: cover;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .profile-image:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+  border-color: #ffffff;
 }
 
 .dropdown-content {
   position: absolute;
-  top: 50px;
+  top: 48px;
   right: 0;
-  min-width: 220px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  min-width: 240px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+  z-index: 10000;
   overflow: hidden;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  padding: 15px;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #eee;
+  padding: 14px 16px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .dropdown-profile-image {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
   margin-right: 10px;
+  border: 1px solid #e2e8f0;
 }
 
 .dropdown-username {
-  font-weight: 600;
-  color: #333;
-  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.95rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
+  text-decoration: none;
+}
+
+.dropdown-username:hover {
+  color: #2563eb;
+}
+
+/* Language Toggle Styling */
+.dropdown-lang-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.lang-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lang-toggle-group {
+  display: flex;
+  gap: 3px;
+  background-color: #f1f5f9;
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.lang-toggle-group button {
+  border: none;
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #64748b;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lang-toggle-group button.active {
+  background-color: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
 .dropdown-links {
-  padding: 10px 0;
+  padding: 6px 0;
 }
 
 .dropdown-content a {
-  display: block;
-  padding: 10px 15px;
-  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: #334155;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 0.9rem;
   font-weight: 500;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: all 0.2s ease;
+}
+
+.dropdown-content a i {
+  width: 16px;
+  text-align: center;
+  color: #64748b;
 }
 
 .dropdown-content a:hover {
-  background-color: #f8f9fa;
-  color: #007bff;
+  background-color: #f8fafc;
+  color: #2563eb;
+}
+
+.dropdown-content a:hover i {
+  color: #2563eb;
 }
 
 .custom-hr {
   border: none;
-  border-top: 1px solid #ddd;
-  margin: 5px 0;
-}
-
-.custom-hr::after {
-  content: '';
-  display: block;
-  height: 1px;
-  background: linear-gradient(to right, #007bff, #0056b3);
-  margin-top: -1px;
+  border-top: 1px solid #f1f5f9;
+  margin: 6px 0;
 }
 
 /* Media Queries */
 @media screen and (max-width: 768px) {
   .navbar {
-    padding: 0 15px;
-    height: 60px;
-    width: 95%;
-    margin: 0 auto;
-  }
-
-  .navbar h1 {
-    font-size: 22px;
-  }
-
-  .profile-image {
-    width: 35px;
-    height: 35px;
-  }
-
-  .dropdown-content {
-    right: 0;
-    min-width: 200px;
-  }
-
-  .dropdown-username {
-    font-size: 14px;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .navbar {
-    padding: 0 10px;
-    height: 50px;
-    width: 90%;
-    margin: 10px auto;
-  }
-
-  .navbar h1 {
-    font-size: 18px;
-  }
-
-  .profile-image {
-    width: 30px;
-    height: 30px;
-  }
-
-  .dropdown-content {
-    right: -10px;
-    min-width: 180px;
-  }
-
-  .dropdown-content a {
-    font-size: 14px;
-    padding: 8px 12px;
-  }
-
-  .user-info {
-    padding: 10px;
-  }
-
-  .dropdown-profile-image {
-    width: 30px;
-    height: 30px;
-  }
-}
-
-@media screen and (max-width: 320px) {
-  .navbar {
-    padding: 0 8px;
-    height: 45px;
+    padding: 0 16px;
+    height: 56px;
     width: 95%;
   }
 
   .navbar h1 {
-    font-size: 16px;
+    font-size: 1.3rem;
   }
 
   .profile-image {
-    width: 28px;
-    height: 28px;
-  }
-
-  .dropdown-content {
-    right: -15px;
-    min-width: 160px;
-  }
-
-  .dropdown-content a {
-    font-size: 13px;
-    padding: 6px 10px;
-  }
-
-  .dropdown-profile-image {
-    width: 24px;
-    height: 24px;
-  }
-
-  .dropdown-username {
-    font-size: 13px;
+    width: 34px;
+    height: 34px;
   }
 }
 </style>

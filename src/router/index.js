@@ -12,6 +12,8 @@ const dashboard = () => import('@/views/dashboard.vue');
 const points = () => import('@/views/Points/points.vue');
 const NotFound = () => import('@/views/404.vue');
 const EditProfile = () => import('@/views/editProfile/editProfile.vue');
+const Badges = () => import('@/views/badges.vue');
+const Certificates = () => import('@/views/certificates.vue');
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -70,6 +72,16 @@ const router = createRouter({
       path: '/editProfile',
       name: 'editProfile',
       component: EditProfile,
+    },
+    {
+      path: '/badges',
+      name: 'badges',
+      component: Badges,
+    },
+    {
+      path: '/certificates',
+      name: 'certificates',
+      component: Certificates,
     },
   ],
 });

@@ -18,6 +18,9 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Poppins', sans-serif;
+  background-color: #f8fafc;
+  background-image: radial-gradient(rgba(37, 99, 235, 0.025) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
 }
 a {
   text-decoration: none;

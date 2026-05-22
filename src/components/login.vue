@@ -92,6 +92,7 @@ export default {
           // Login muvaffaqiyatli
           const user = userCredential.user;
           console.log('Login successful:', user);
+          this.$toast.success('Successfully logged in!');
           // Redirect to the home page
           this.router.push('/');
         })
@@ -99,6 +100,7 @@ export default {
           // Xatolik yuz bersa, xato xabarini ko'rsatish
           this.errorMessage =
             'Username or password is incorrect. Please try again.';
+          this.$toast.error(this.errorMessage);
           console.error('Login failed:', error.message);
         });
     },
@@ -115,14 +117,14 @@ export default {
 
         // Agar login muvaffaqiyatli bo'lsa
         console.log('Google Log In successful:', result.user);
-        // Success xabarini ko'rsatish
-        this.successMessage = 'Google login successful!';
+        this.$toast.success('Google login successful!');
         // Home sahifasiga yo'naltirish
         this.router.push('/');
       } catch (error) {
         // Xatolik yuz bersa
         console.error('Google LogIn failed:', error.message);
         this.errorMessage = 'Google login error. Please try again.';
+        this.$toast.error(this.errorMessage);
       }
     },
   },

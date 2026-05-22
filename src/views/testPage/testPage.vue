@@ -27,6 +27,7 @@
         :currentPage="state.currentPage"
         :total="state.questions.length"
         :formattedTime="formattedTime"
+        :timeLow="state.timer < 60"
       />
 
       <QuestionComponent
@@ -96,17 +97,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useStore } from 'vuex';
+import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
 import { db } from '@/config/firebase';
-import { collection, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, addDoc, Timestamp, query, where } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import ReviewAnswers from '@/views/testPage/reviewModal.vue';
 import ProgressBar from '@/views/testPage/progressBar.vue';
 import QuestionComponent from '@/views/testPage/question.vue';
 import { useRouter } from 'vue-router';
 
 // Инициализация
-const store = useStore();
 const router = useRouter();
 
 // Props
@@ -116,36 +116,37 @@ const props = defineProps({
   questionCount: { type: Number, default: 10 },
 });
 
-// State
-const state = {
-  loading: ref(true),
-  error: ref(null),
-  questions: ref([]),
-  selectedAnswers: ref([]),
-  selectedAnswer: ref(null),
-  currentPage: ref(0),
-  testFinished: ref(false),
-  showReviewModal: ref(false),
-  timer: ref(900),
-  sessionId: ref(null),
-};
+// State (reactive)
+const state = reactive({
+  loading: true,
+  error: null,
+  questions: [],
+  selectedAnswers: [],
+  selectedAnswer: null,
+  currentPage: 0,
+  testFinished: false,
+  showReviewModal: false,
+  timer: 900,
+  sessionId: null,
+});
 
 // Таймер
 let intervalId;
 
 // Computed
 const currentQuestion = computed(
-  () => state.questions.value[state.currentPage.value]
+  () => state.questions[state.currentPage]
 );
 const formattedTime = computed(() => {
-  const m = Math.floor(state.timer.value / 60);
-  const s = state.timer.value % 60;
+  const m = Math.floor(state.timer / 60);
+  const s = state.timer % 60;
   return `${m}:${s < 10 ? '0' + s : s}`;
 });
 
 const score = computed(() => {
-  return state.questions.value.reduce((acc, q, i) => {
-    return state.selectedAnswers.value[i] === q.answer ? acc + 1 : acc;
+  return state.questions.reduce((acc, q, i) => {
+    const selectedIdx = state.selectedAnswers[i];
+    return selectedIdx !== null && selectedIdx !== undefined && q.options[selectedIdx] === q.answer ? acc + 1 : acc;
   }, 0);
 });
 
@@ -154,10 +155,17 @@ const shuffleArray = (array) => {
   return [...array].sort(() => Math.random() - 0.5);
 };
 
-const fetchQuestions = async () => {
+const isQuestionAnswered = (index) => {
+  return state.selectedAnswers[index] !== null && state.selectedAnswers[index] !== undefined;
+};
+
+const fetchQuestions = async (options) => {
+  if (options && options.sessionId) {
+    state.sessionId = options.sessionId;
+  }
   try {
-    state.loading.value = true;
-    state.error.value = null;
+    state.loading = true;
+    state.error = null;
 
     const testsRef = collection(
       db,
@@ -178,40 +186,35 @@ const fetchQuestions = async () => {
     }
 
     const randomTest = allTests[Math.floor(Math.random() * allTests.length)];
-    state.questions.value = shuffleArray(randomTest.questions).slice(
+    state.questions = shuffleArray(randomTest.questions).slice(
       0,
       props.questionCount
     );
-    state.selectedAnswers.value = Array(state.questions.value.length).fill(
+    state.selectedAnswers = Array(state.questions.length).fill(
       null
     );
-    state.currentPage.value = 0;
-    state.selectedAnswer.value = null;
-    state.testFinished.value = false;
+    state.currentPage = 0;
+    state.selectedAnswer = null;
+    state.testFinished = false;
   } catch (err) {
     console.error('Ошибка при загрузке вопросов:', err);
-    state.error.value = err.message;
+    state.error = err.message;
   } finally {
-    state.loading.value = false;
+    state.loading = false;
   }
 };
 
 const submitAnswer = () => {
-  if (state.selectedAnswer.value === null) {
+  if (state.selectedAnswer === null) {
     return alert('Пожалуйста, выберите ответ');
   }
 
-  state.selectedAnswers.value[state.currentPage.value] =
-    state.questions.value[state.currentPage.value].options[
-      state.selectedAnswer.value
-    ];
+  state.selectedAnswers[state.currentPage] = state.selectedAnswer;
 
-  if (state.currentPage.value < state.questions.value.length - 1) {
-    state.currentPage.value++;
-    const prev = state.selectedAnswers.value[state.currentPage.value];
-    state.selectedAnswer.value = prev
-      ? state.questions.value[state.currentPage.value].options.indexOf(prev)
-      : null;
+  if (state.currentPage < state.questions.length - 1) {
+    state.currentPage++;
+    const prev = state.selectedAnswers[state.currentPage];
+    state.selectedAnswer = prev !== null && prev !== undefined ? prev : null;
   } else {
     finishTest();
   }
@@ -219,27 +222,36 @@ const submitAnswer = () => {
 
 const finishTest = async () => {
   try {
-    state.testFinished.value = true;
+    state.testFinished = true;
     clearInterval(intervalId);
 
-    const user = store.state.user;
+    const auth = getAuth();
+    const user = auth.currentUser;
     if (!user) throw new Error('Пользователь не авторизован');
+
+    // Get count of user's previous test results for test_number
+    const resultsRef = collection(db, 'results');
+    const q = query(resultsRef, where('userId', '==', user.uid));
+    const snapshot = await getDocs(q);
+    const testNumber = snapshot.size + 1;
 
     const resultData = {
       userId: user.uid,
-      sessionId: state.sessionId.value,
-      subjectId: props.subjectId,
-      levelId: props.levelId,
+      username: user.displayName || user.email || 'User',
+      sessionId: state.sessionId,
+      subject: props.subjectId,
+      test_level: props.levelId,
       score: score.value,
-      totalQuestions: state.questions.value.length,
-      answers: state.selectedAnswers.value,
-      completedAt: Timestamp.now(),
+      total: state.questions.length,
+      answers: state.selectedAnswers.map((idx, i) => idx !== null && idx !== undefined ? state.questions[i].options[idx] : null),
+      timestamp: Timestamp.now(),
+      test_number: testNumber,
     };
 
     await addDoc(collection(db, 'results'), resultData);
   } catch (err) {
     console.error('Ошибка при сохранении результатов:', err);
-    state.error.value = err.message;
+    state.error = err.message;
   }
 };
 
@@ -247,7 +259,7 @@ const finishTest = async () => {
 onMounted(() => {
   fetchQuestions();
   intervalId = setInterval(() => {
-    if (state.timer.value > 0) state.timer.value--;
+    if (state.timer > 0) state.timer--;
     else finishTest();
   }, 1000);
 });

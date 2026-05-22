@@ -25,7 +25,11 @@
           }"
         >
           <label>
-            <span v-if="selectedAnswers[index] === optIndex"> ✅ </span>
+            <span v-if="selectedAnswers[index] === optIndex">
+              <span v-if="isCorrectAnswer(index, optIndex)">✅ </span>
+              <span v-else>❌ </span>
+            </span>
+            <span v-else-if="isCorrectAnswer(index, optIndex)">👉 </span>
             {{ option }}
           </label>
         </div>

@@ -3,6 +3,14 @@
     <div class="logo">
       <h1 @click="navigateTo('/')">Test.me</h1>
     </div>
+
+    <!-- Language Selector -->
+    <div class="lang-selector">
+      <select v-model="currentLocale" @change="changeLocale" class="lang-select">
+        <option v-for="lang in locales" :key="lang" :value="lang">{{ lang }}</option>
+      </select>
+    </div>
+
     <div class="profile">
       <img
         :src="profileImage"
@@ -17,37 +25,64 @@
             username
           }}</router-link>
         </div>
-        <router-link to="/">
-          <i class="fas fa-home"></i>
-          Home
-        </router-link>
-        <div class="dropdown-links">
-          <router-link to="/points">
-            <img
-              src="../assets/img/tpCoin.png"
-              alt="TP Coin"
-              style="width: 16px; height: 16px; margin-right: 5px"
-            />
-            Points
+        
+        <!-- Logged In Links -->
+        <template v-if="username">
+          <router-link to="/">
+            <i class="fas fa-home"></i>
+            {{ t('home') }}
           </router-link>
-          <router-link to="/about">
-            <i class="fas fa-info-circle"></i>
-            About Us
-          </router-link>
-          <router-link to="/contactUs">
-            <i class="fas fa-envelope"></i>
-            Contact Us
-          </router-link>
-          <router-link to="/dashboard">
-            <i class="fas fa-chart-line"></i>
-            Dashboard
-          </router-link>
-          <hr class="custom-hr" />
-          <router-link to="/login" @click="logout">
-            <i class="fas fa-sign-out-alt"></i>
-            Log Out
-          </router-link>
-        </div>
+          <div class="dropdown-links">
+            <router-link to="/points">
+              <img
+                src="../assets/img/tpCoin.png"
+                alt="TP Coin"
+                style="width: 16px; height: 16px; margin-right: 5px"
+              />
+              {{ t('points') }}
+            </router-link>
+            <router-link to="/about">
+              <i class="fas fa-info-circle"></i>
+              {{ t('about') }}
+            </router-link>
+            <router-link to="/contactUs">
+              <i class="fas fa-envelope"></i>
+              {{ t('contact') }}
+            </router-link>
+            <router-link to="/dashboard">
+              <i class="fas fa-chart-line"></i>
+              {{ t('dashboard') }}
+            </router-link>
+            <hr class="custom-hr" />
+            <a href="#" @click.prevent="logout">
+              <i class="fas fa-sign-out-alt"></i>
+              {{ t('logout') }}
+            </a>
+          </div>
+        </template>
+        
+        <!-- Logged Out Links -->
+        <template v-else>
+          <div class="dropdown-links">
+            <router-link to="/about">
+              <i class="fas fa-info-circle"></i>
+              {{ t('about') }}
+            </router-link>
+            <router-link to="/contactUs">
+              <i class="fas fa-envelope"></i>
+              {{ t('contact') }}
+            </router-link>
+            <hr class="custom-hr" />
+            <router-link to="/login">
+              <i class="fas fa-sign-in-alt"></i>
+              {{ t('login') }}
+            </router-link>
+            <router-link to="/signup">
+              <i class="fas fa-user-plus"></i>
+              {{ t('signup') }}
+            </router-link>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -56,8 +91,18 @@
 <script>
 import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import defaultUserImage from '../assets/img/user.png';
+import { useI18n } from '@/utils/i18n';
 
 export default {
+  setup() {
+    const { locale, t, setLocale, locales } = useI18n();
+    return {
+      currentLocale: locale,
+      t,
+      setLocale,
+      locales,
+    };
+  },
   data() {
     return {
       dropdownOpen: false,
@@ -79,6 +124,10 @@ export default {
   },
 
   methods: {
+    changeLocale() {
+      this.setLocale(this.currentLocale);
+    },
+
     initializeAuth() {
       const auth = getAuth();
       onAuthStateChanged(auth, (user) => {
@@ -163,6 +212,34 @@ export default {
   box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3),
     -4px -4px 10px rgba(255, 255, 255, 0.1);
   border-radius: 10px;
+}
+
+.lang-selector {
+  margin-left: auto;
+  margin-right: 15px;
+}
+
+.lang-select {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.lang-select:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.lang-select option {
+  color: #333;
+  background: white;
 }
 
 .navbar h1 {

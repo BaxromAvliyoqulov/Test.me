@@ -196,12 +196,8 @@ export default {
       this.loading = true;
       try {
         const auth = getAuth();
-        // Check if user is authenticated
         const user = auth.currentUser;
-        if (!user) {
-          this.$router.push('/login');
-          return;
-        }
+        if (!user) return;
         const q = query(
           collection(db, 'results'),
           where('userId', '==', user.uid)
@@ -273,7 +269,14 @@ export default {
     },
   },
   mounted() {
-    this.fetchResults();
+    const auth = getAuth();
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        this.fetchResults();
+      } else {
+        this.$router.push('/login');
+      }
+    });
   },
   watch: {
     filteredItems() {
@@ -346,7 +349,7 @@ h2 {
 th {
   background: #f0f0f0;
   padding: 0.8rem;
-  text-align: le ft;
+  text-align: left;
   font-size: 1rem;
   font-weight: 700;
   color: #333;

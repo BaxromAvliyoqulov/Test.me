@@ -69,7 +69,7 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { db } from '@/config/firebase';
-import { onSnapshot, doc, collection } from 'firebase/firestore';
+import { onSnapshot, doc, collection, updateDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 import ReferralModal from './ShareReferralModal.vue';
@@ -92,32 +92,44 @@ export default {
     const showReferralModal = ref(false);
     const showReferredUsers = ref(false);
     const showBuyModal = ref(false);
-    const showReferralCodeModal = ref(false); // ✅ Bu yo‘q edi, qo‘shildi
+    const showReferralCodeModal = ref(false);
 
     const auth = getAuth();
-    const user = auth.currentUser;
 
     onMounted(() => {
-      if (user) {
-        const userDoc = doc(db, 'users', user.uid);
-        const txRef = collection(userDoc, 'transactions');
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          const userDoc = doc(db, 'users', user.uid);
+          const txRef = collection(userDoc, 'transactions');
 
-        onSnapshot(userDoc, (docSnap) => {
-          if (docSnap.exists()) {
-            points.value = docSnap.data().points || 0;
-          }
-        });
+          onSnapshot(userDoc, async (docSnap) => {
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              points.value = data.points || 0;
+              
+              if (!data.referralCode) {
+                await updateDoc(userDoc, {
+                  referralCode: user.uid.slice(0, 8).toUpperCase()
+                });
+              }
+            }
+          });
 
-        onSnapshot(txRef, (querySnapshot) => {
-          transactions.value = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-        });
-      }
+          onSnapshot(txRef, (querySnapshot) => {
+            transactions.value = querySnapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
+          });
+        }
+      });
     });
 
     const formatDate = (timestamp) => {
+      if (!timestamp) return '';
+      if (typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().toLocaleDateString();
+      }
       return new Date(timestamp).toLocaleDateString();
     };
 
@@ -133,7 +145,7 @@ export default {
       showReferralModal,
       showReferredUsers,
       showBuyModal,
-      showReferralCodeModal, // ✅ Bu return qismida ham kerak
+      showReferralCodeModal,
     };
   },
 };

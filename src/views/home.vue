@@ -2,16 +2,16 @@
   <div class="test-container">
     <!-- Subject Selection Component -->
     <div v-if="!startTest" class="subject-container">
-      <h3>Select Subject for Tests</h3>
+      <h3>{{ t('selectSubject') }}</h3>
       <form @submit.prevent="startTestWithFilters" class="form">
         <div class="form-group">
-          <label>Select Subject</label>
+          <label>{{ t('chooseSubject') }}</label>
           <select
             v-model="selectedSubject"
             @change="fetchLevels"
             :disabled="loading || loadingSubjects"
           >
-            <option disabled value="">Choose a subject</option>
+            <option disabled value="">{{ t('chooseSubject') }}</option>
             <option
               v-for="subject in subjects"
               :key="subject.id"
@@ -21,42 +21,42 @@
             </option>
           </select>
           <div v-if="loadingSubjects" class="loading-indicator">
-            Loading subjects...
+            {{ t('loadingSubjects') }}
           </div>
         </div>
 
         <div class="form-group">
-          <label>Select Level</label>
+          <label>{{ t('selectLevel') }}</label>
           <select
             v-model="selectedLevel"
             :disabled="loading || !selectedSubject || loadingLevels"
           >
-            <option disabled value="">Choose a level</option>
+            <option disabled value="">{{ t('chooseLevel') }}</option>
             <option v-for="level in levels" :key="level" :value="level">
               {{ level }}
             </option>
           </select>
           <div v-if="loadingLevels" class="loading-indicator">
-            Loading levels...
+            {{ t('loadingLevels') }}
           </div>
         </div>
 
         <!-- Test Quantity Selection -->
         <div class="form-group">
-          <label>Number of Questions</label>
+          <label>{{ t('questionCount') }}</label>
           <select
             v-model="selectedQuestionCount"
             :disabled="loading || !selectedSubject || !selectedLevel"
           >
-            <option disabled value="">Select number of questions</option>
+            <option disabled value="">{{ t('selectQuestionCount') }}</option>
             <option v-for="count in questionCounts" :key="count" :value="count">
-              {{ count }} questions
+              {{ count }} {{ t('questions') }}
             </option>
           </select>
         </div>
 
         <button type="submit" class="btn" :disabled="!canStart">
-          <span v-if="!loading">Start Test</span>
+          <span v-if="!loading">{{ t('startTest') }}</span>
           <span v-else class="loader"></span>
         </button>
       </form>
@@ -73,10 +73,10 @@
           {{ selectedSubject.id }} - {{ selectedLevel }} Test ({{
             selectedQuestionCount
           }}
-          questions)
+          {{ t('questions') }})
         </h3>
         <button class="back-btn" @click="goBackToSelection">
-          ← Back to Selection
+          ← {{ t('backToSelection') }}
         </button>
       </div>
 
@@ -92,14 +92,19 @@
 </template>
 
 <script>
-import { db } from '@/config/firebase';
+import { db, auth } from '@/config/firebase';
 import { collection, doc, getDocs, addDoc } from 'firebase/firestore';
 import TestPage from './testPage/testPage.vue';
+import { useI18n } from '@/utils/i18n';
 
 export default {
   name: 'SubjectTestSelection',
   components: {
     TestPage,
+  },
+  setup() {
+    const { t } = useI18n();
+    return { t };
   },
   data() {
     return {
@@ -204,7 +209,7 @@ export default {
           subjectId: this.selectedSubject.id,
           levelId: this.selectedLevel,
           questionCount: this.selectedQuestionCount,
-          userId: this.$store.state.user?.uid, // если используете Vuex
+          userId: auth.currentUser?.uid, // get user ID from firebase auth directly
           startedAt: new Date(),
           status: 'in-progress',
         };

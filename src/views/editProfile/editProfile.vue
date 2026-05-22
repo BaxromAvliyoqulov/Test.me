@@ -64,7 +64,7 @@ export default {
         const docSnap = await getDoc(doc(db, 'users', user.uid));
         if (docSnap.exists()) {
           const data = docSnap.data();
-          this.profile.username = data.username || '';
+          this.profile.username = data.displayName || data.username || '';
         }
       }
     } catch (error) {
@@ -102,6 +102,7 @@ export default {
           doc(db, 'users', user.uid),
           {
             username: this.profile.username,
+            displayName: this.profile.username,
             updatedAt: new Date(),
           },
           { merge: true }

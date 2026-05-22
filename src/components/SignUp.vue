@@ -61,6 +61,7 @@ import {
   signInWithPopup,
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { useToast } from 'vue-toastification';
 
 export default {
   name: 'Signup',
@@ -72,6 +73,7 @@ export default {
     const errorMessage = ref('');
     const successMessage = ref('');
     const router = useRouter();
+    const toast = useToast();
 
     const togglePasswordVisibility = () => {
       showPassword.value = !showPassword.value;
@@ -83,6 +85,7 @@ export default {
 
       if (!email.value || !password.value || !username.value) {
         errorMessage.value = 'All fields are required.';
+        toast.error('All fields are required.');
         return;
       }
 
@@ -102,14 +105,18 @@ export default {
           displayName: username.value,
           email: user.email,
           points: 0,
+          referralCode: user.uid.slice(0, 8).toUpperCase(),
+          createdAt: new Date(),
         });
 
         successMessage.value = 'Successfully registered!';
+        toast.success('Successfully registered!');
+        console.log('Firebase Auth User ID:', user.uid);
         router.push('/');
       } catch (error) {
         errorMessage.value = error.message;
+        toast.error(error.message);
       }
-      console.log('Firebase Auth User ID:', user.uid);
     };
 
     const handleGoogleSignUp = async () => {
@@ -125,12 +132,16 @@ export default {
           displayName: user.displayName || 'Anonymous',
           email: user.email,
           points: 0,
+          referralCode: user.uid.slice(0, 8).toUpperCase(),
+          createdAt: new Date(),
         });
 
         successMessage.value = 'Google SignUp successful!';
+        toast.success('Google SignUp successful!');
         router.push('/');
       } catch (error) {
         errorMessage.value = 'Google SignUp error: ' + error.message;
+        toast.error(errorMessage.value);
         console.error(error);
       }
     };

@@ -10,7 +10,7 @@ export const authGuard = async (to, from, next) => {
   });
 
   const user = auth.currentUser;
-  const publicPages = ['/login', '/register'];
+  const publicPages = ['/login', '/signup', '/about', '/contactUs'];
   const authRequired = !publicPages.includes(to.path);
 
   // Если требуется авторизация и пользователь не авторизован
@@ -20,7 +20,8 @@ export const authGuard = async (to, from, next) => {
   }
 
   // Если пользователь авторизован и пытается зайти на страницы логина/регистрации
-  if (user && publicPages.includes(to.path)) {
+  const loginSignupPages = ['/login', '/signup'];
+  if (user && loginSignupPages.includes(to.path)) {
     next('/');
     return;
   }

@@ -44,6 +44,9 @@
 <script setup>
 import { ref } from 'vue';
 import { useToast } from 'vue-toastification';
+import { getAuth } from 'firebase/auth';
+import { db } from '@/config/firebase';
+import { doc, updateDoc, increment, collection, addDoc, Timestamp } from 'firebase/firestore';
 
 const emit = defineEmits(['close']);
 const toast = useToast();
@@ -61,9 +64,38 @@ const selectOption = (option) => {
   selected.value = option;
 };
 
-const simulatePurchase = () => {
-  toast.success(`You purchased ${selected.value.points} TP Coins!`);
-  emit('close');
+const simulatePurchase = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    toast.error("You must be logged in to purchase points.");
+    return;
+  }
+
+  try {
+    const userDocRef = doc(db, 'users', user.uid);
+    const bonusMultiplier = 1 + (selected.value.bonus / 100);
+    const earnedPoints = Math.round(selected.value.points * bonusMultiplier);
+
+    // Update user points
+    await updateDoc(userDocRef, {
+      points: increment(earnedPoints)
+    });
+
+    // Record transaction
+    const txRef = collection(userDocRef, 'transactions');
+    await addDoc(txRef, {
+      action: `Purchased ${selected.value.points} TP Coins (+${selected.value.bonus}% Bonus)`,
+      points: earnedPoints,
+      timestamp: Timestamp.now()
+    });
+
+    toast.success(`You purchased ${earnedPoints} TP Coins successfully!`);
+    emit('close');
+  } catch (error) {
+    console.error("Purchase error:", error);
+    toast.error("Failed to process simulated payment: " + error.message);
+  }
 };
 </script>
 

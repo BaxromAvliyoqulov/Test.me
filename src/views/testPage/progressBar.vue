@@ -4,7 +4,7 @@
             Question {{ currentPage + 1 }} of {{ total }}
         </span>
         <progress class="progress-bar" :value="currentPage + 1" :max="total"></progress>
-        <span class="timer">⏱ Time left: {{ formattedTime }}</span>
+        <span :class="['timer', { pulse: timeLow }]">⏱ Time left: {{ formattedTime }}</span>
     </div>
 </template>
 
@@ -12,7 +12,8 @@
 const props = defineProps({
     currentPage: Number,
     total: Number,
-    formattedTime: String
+    formattedTime: String,
+    timeLow: Boolean
 });
 </script>
 
@@ -42,5 +43,21 @@ const props = defineProps({
     font-family: monospace;
     color: #444;
     white-space: nowrap;
+    transition: color 0.3s ease;
+}
+
+.timer.pulse {
+    color: #dc3545;
+    font-weight: bold;
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.05);
+    }
 }
 </style>

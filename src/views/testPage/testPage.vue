@@ -170,6 +170,27 @@
           </div>
         </div>
 
+        <!-- TP Coin Reward Panel -->
+        <div class="coin-reward-card" v-if="score > 0">
+          <div class="coin-gold-wrapper">
+            <img src="../../assets/img/tpCoin.png" alt="TP Coin" class="coin-gold-img animate-spin-slow" />
+            <span class="reward-plus-badge">+{{ score * 10 }}</span>
+          </div>
+          <div class="reward-text-container">
+            <h4>{{ isRus ? 'Вы заработали' : 'Siz qo\'lga kiritdingiz' }}</h4>
+            <p>{{ score * 10 }} TP Coins</p>
+          </div>
+        </div>
+        <div class="coin-reward-card empty-reward" v-else>
+          <div class="coin-gold-wrapper opacity-50">
+            <img src="../../assets/img/tpCoin.png" alt="TP Coin" class="coin-gold-img" />
+          </div>
+          <div class="reward-text-container">
+            <h4>{{ isRus ? 'Коины не начислены' : 'Coinlar taqdim etilmadi' }}</h4>
+            <p>{{ isRus ? 'Ответьте правильно хотя бы на 1 вопрос' : 'Kamida 1 ta savolga to\'g\'ri javob bering' }}</p>
+          </div>
+        </div>
+
         <div class="success-actions">
           <button class="action-btn review-trigger" @click="state.showReviewModal = true">
             <i class="fas fa-search-plus"></i> {{ isRus ? 'Анализ ответов' : 'Javoblar tahlili' }}
@@ -242,7 +263,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
 import { db } from '@/config/firebase';
-import { collection, getDocs, addDoc, Timestamp, query, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, Timestamp, query, where, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from '@/utils/i18n';
@@ -481,6 +502,30 @@ const finishTest = async () => {
     };
 
     await addDoc(collection(db, 'results'), resultData);
+
+    // Reward TP Coins for correct answers (10 coins per correct answer)
+    const coinsEarned = score.value * 10;
+    if (coinsEarned > 0) {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, {
+          points: increment(coinsEarned)
+        });
+
+        // Record transaction
+        const txRef = collection(userDocRef, 'transactions');
+        await addDoc(txRef, {
+          action: isRus.value
+            ? `Награда за тест (${displaySubject.value} - ${displayLevel.value})`
+            : `Test yechish mukofoti (${displaySubject.value} - ${displayLevel.value})`,
+          points: coinsEarned,
+          timestamp: Timestamp.now()
+        });
+        console.log(`Successfully rewarded ${coinsEarned} TP Coins to user.`);
+      } catch (coinErr) {
+        console.error("Error rewarding TP Coins:", coinErr);
+      }
+    }
 
     // Client-side fallback for certificate evaluation
     if (score.value / state.questions.length >= 0.8) {
@@ -1236,6 +1281,81 @@ defineExpose({ initializeTest: fetchQuestions });
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+.coin-reward-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(217, 119, 6, 0.08));
+  border: 1.5px solid rgba(245, 158, 11, 0.25);
+  border-radius: 24px;
+  padding: 1.25rem 2rem;
+  width: 100%;
+  max-width: 340px;
+  margin: 1.25rem 0;
+  box-shadow: 0 10px 20px -8px rgba(245, 158, 11, 0.1);
+  text-align: left;
+}
+.coin-reward-card.empty-reward {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.06), rgba(100, 116, 139, 0.06));
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: none;
+}
+.coin-gold-wrapper {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.coin-gold-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.reward-plus-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #10b981;
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 8px;
+  border: 1.5px solid white;
+}
+.reward-text-container h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+.reward-text-container p {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #d97706;
+  margin: 0;
+}
+.coin-reward-card.empty-reward .reward-text-container p {
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.opacity-50 {
+  opacity: 0.5;
 }
 
 @media (max-width: 600px) {

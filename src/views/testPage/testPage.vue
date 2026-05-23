@@ -27,7 +27,7 @@
         <button class="action-btn retry-btn" @click="fetchQuestions">
           <i class="fas fa-redo"></i> {{ isRus ? 'Попробовать снова' : 'Qaytadan urinish' }}
         </button>
-        <button class="action-btn home-btn secondary" @click="router.push('/')">
+        <button class="action-btn home-btn secondary" @click="goHome">
           <i class="fas fa-home"></i> {{ isRus ? 'На главную' : 'Bosh sahifaga' }}
         </button>
       </div>
@@ -39,7 +39,7 @@
         </div>
         <h3>{{ isRus ? 'Тесты не найдены' : 'Testlar topilmadi' }}</h3>
         <p>{{ isRus ? 'В этой категории пока нет загруженных тестов.' : 'Ushbu yo\'nalishda hozircha testlar mavjud emas.' }}</p>
-        <button class="action-btn home-btn" @click="router.push('/')">
+        <button class="action-btn home-btn" @click="goHome">
           <i class="fas fa-arrow-left"></i> {{ isRus ? 'Назад к выбору' : 'Orqaga qaytish' }}
         </button>
       </div>
@@ -161,12 +161,19 @@
 
         <div class="stats-overview">
           <div class="stat-box">
+            <i class="fas fa-bullseye stat-icon accuracy"></i>
             <span class="stat-val">{{ Math.round((score / state.questions.length) * 100) }}%</span>
-            <span class="stat-lbl">{{ isRus ? 'Точность' : 'Anliqlik' }}</span>
+            <span class="stat-lbl">{{ isRus ? 'Точность' : 'Aniqlik' }}</span>
           </div>
           <div class="stat-box">
+            <i class="fas fa-times-circle stat-icon errors"></i>
             <span class="stat-val">{{ state.questions.length - score }}</span>
             <span class="stat-lbl">{{ isRus ? 'Ошибки' : 'Xatolar' }}</span>
+          </div>
+          <div class="stat-box">
+            <i class="fas fa-hourglass-half stat-icon duration"></i>
+            <span class="stat-val">{{ timeSpent }}</span>
+            <span class="stat-lbl">{{ isRus ? 'Время' : 'Vaqt' }}</span>
           </div>
         </div>
 
@@ -195,7 +202,7 @@
           <button class="action-btn review-trigger" @click="state.showReviewModal = true">
             <i class="fas fa-search-plus"></i> {{ isRus ? 'Анализ ответов' : 'Javoblar tahlili' }}
           </button>
-          <button class="action-btn home-btn" @click="router.push('/')">
+          <button class="action-btn home-btn" @click="goHome">
             <i class="fas fa-home"></i> {{ isRus ? 'Bosh sahifaga' : 'Bosh sahifaga' }}
           </button>
         </div>
@@ -329,6 +336,19 @@ const formattedTime = computed(() => {
   const s = state.timer % 60;
   return `${m}:${s < 10 ? '0' + s : s}`;
 });
+
+// Time spent computed property
+const timeSpent = computed(() => {
+  const elapsed = 900 - state.timer;
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  return `${m}:${s < 10 ? '0' + s : s}`;
+});
+
+// Helper to navigate home securely
+const goHome = () => {
+  router.push('/');
+};
 
 // Correct answers score
 const score = computed(() => {
@@ -993,7 +1013,11 @@ defineExpose({ initializeTest: fetchQuestions });
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 6px;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.pagination-scroller::-webkit-scrollbar {
+  display: none;
 }
 
 .pag-dot {
@@ -1082,7 +1106,17 @@ defineExpose({ initializeTest: fetchQuestions });
   color: #64748b;
 }
 
+.success-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  gap: 12px;
+}
+
 .success-badge {
+  margin: 0 auto;
   width: 75px;
   height: 75px;
   background: linear-gradient(135deg, #f59e0b, #d97706);
@@ -1105,11 +1139,11 @@ defineExpose({ initializeTest: fetchQuestions });
 
 .stats-overview {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
   width: 100%;
-  max-width: 320px;
-  margin: 0.5rem 0;
+  max-width: 460px;
+  margin: 1.5rem 0;
 }
 .stat-box {
   background: #f8fafc;
@@ -1120,6 +1154,28 @@ defineExpose({ initializeTest: fetchQuestions });
   flex-direction: column;
   align-items: center;
   gap: 4px;
+}
+.stat-icon {
+  font-size: 1.25rem;
+  margin-bottom: 2px;
+}
+.stat-icon.accuracy {
+  color: #3b82f6;
+}
+.stat-icon.errors {
+  color: #ef4444;
+}
+.stat-icon.duration {
+  color: #f59e0b;
+}
+
+.success-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-top: 1rem;
 }
 .stat-val {
   font-size: 1.2rem;
@@ -1359,23 +1415,83 @@ defineExpose({ initializeTest: fetchQuestions });
 }
 
 @media (max-width: 600px) {
+  .test-page-wrapper {
+    padding: 1.5rem 0.75rem;
+  }
   .quiz-glass-card {
-    padding: 1.5rem;
+    padding: 1.5rem 1.25rem;
   }
   .quiz-header {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    margin-bottom: 1.5rem;
+  }
+  .header-left {
+    display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+  }
+  .subject-title {
+    font-size: 1.25rem !important;
+    margin-bottom: 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+  .level-badge {
+    padding: 3px 8px !important;
+    font-size: 0.65rem !important;
   }
   .header-right {
-    width: 100%;
+    width: auto !important;
   }
   .timer-badge {
-    width: 100%;
+    width: auto !important;
+    padding: 6px 12px !important;
+    font-size: 0.88rem !important;
+    border-radius: 12px !important;
     justify-content: center;
   }
   .option-card {
     padding: 14px 18px;
+    gap: 12px;
+  }
+  .footer-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+    width: 100%;
+  }
+  .footer-actions .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .success-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+  .success-actions .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .stats-overview {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .stat-box {
+    padding: 8px;
+  }
+  .stat-val {
+    font-size: 1rem;
+  }
+  .stat-lbl {
+    font-size: 0.65rem;
   }
 }
 </style>

@@ -12,8 +12,7 @@
         </h1>
         <p class="dashboard-subtitle">
           {{ currentLocale === 'RUS' ? 'Просматривайте результаты тестов и отслеживайте свой прогресс' : 
-             currentLocale === 'UZB' ? 'Test natijalaringizni ko\'ring va rivojlanishingizni kuzatib boring' :
-             'View your test results and track your progress details' }}
+             'Test natijalaringizni ko\'ring va rivojlanishingizni kuzatib boring' }}
         </p>
       </div>
 

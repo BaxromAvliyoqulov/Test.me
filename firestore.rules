@@ -15,6 +15,13 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow write: if isOwner(userId);
+
+      // User transactions sub-collection (test rewards)
+      match /transactions/{txId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if false;
+      }
     }
 
     // Subjects and nested collections read-only for authenticated users
@@ -52,10 +59,11 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
     }
 
-    // Certificates rules - read-only for users (written by admin SDK/cloud functions)
+    // Certificates rules - users can read their own, written by testPage client-side
     match /certificates/{certId} {
       allow read: if isAuthenticated();
-      allow write: if false;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
     }
   }
 }

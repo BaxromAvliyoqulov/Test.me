@@ -178,10 +178,18 @@ export default {
         });
 
         await setDoc(doc(db, 'users', user.uid), {
+          username: username.value,
           displayName: username.value,
           email: user.email,
+          photoURL: '',
           points: 0,
           referralCode: user.uid.slice(0, 8).toUpperCase(),
+          preferences: {
+            defaultSubject: '',
+            defaultLevel: '',
+            dailyGoal: 10,
+            defaultLocale: 'UZB',
+          },
           createdAt: new Date(),
         });
 
@@ -205,10 +213,18 @@ export default {
         const user = result.user;
 
         await setDoc(doc(db, 'users', user.uid), {
+          username: user.displayName || 'Anonymous',
           displayName: user.displayName || 'Anonymous',
           email: user.email,
+          photoURL: user.photoURL || '',
           points: 0,
           referralCode: user.uid.slice(0, 8).toUpperCase(),
+          preferences: {
+            defaultSubject: '',
+            defaultLevel: '',
+            dailyGoal: 10,
+            defaultLocale: 'UZB',
+          },
           createdAt: new Date(),
         });
 

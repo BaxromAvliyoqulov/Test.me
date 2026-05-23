@@ -122,7 +122,7 @@
             <p class="ai-advice">
               <span v-if="aiAdviceLoading" class="ai-loading-text">
                 <i class="fas fa-circle-notch fa-spin"></i>
-                {{ currentLocale === 'RUS' ? 'ИИ-Наставник анализирует результаты...' : (currentLocale === 'ENG' ? 'AI Tutor is analyzing your results...' : 'AI Ustozingiz natijalarni tahlil qilmoqda...') }}
+                {{ currentLocale === 'RUS' ? 'ИИ-Наставник анализирует результаты...' : 'AI Ustozingiz natijalarni tahlil qilmoqda...' }}
               </span>
               <span v-else>
                 "{{ aiAdvice.text }}"
@@ -157,11 +157,11 @@
                   :key="badge.id"
                   class="mini-badge-item"
                   :style="{ background: badge.color + '15', color: badge.color, borderColor: badge.color + '30' }"
-                  :title="currentLocale === 'RUS' ? badge.nameRu : (currentLocale === 'ENG' ? badge.nameEn || badge.nameUz : badge.nameUz)"
+                  :title="currentLocale === 'RUS' ? badge.nameRu : badge.nameUz"
                 >
                   <i :class="badge.icon"></i>
                 </div>
-                <router-link to="/badges" class="all-badges-link" :title="currentLocale === 'RUS' ? 'Все награды' : (currentLocale === 'ENG' ? 'All awards' : 'Barcha yutuqlar')">
+                <router-link to="/badges" class="all-badges-link" :title="currentLocale === 'RUS' ? 'Все награды' : 'Barcha yutuqlar'">
                   <i class="fas fa-arrow-right"></i>
                 </router-link>
               </div>
@@ -428,10 +428,14 @@ export default {
         if (user) {
           self.userDisplayName = user.displayName || user.email.split('@')[0];
           try {
-            // Fetch user points
+            // Fetch user points and preferences
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.exists()) {
-              self.userPoints = userDoc.data().points || 0;
+              const userData = userDoc.data();
+              self.userPoints = userData.points || 0;
+              if (userData.preferences) {
+                self.applyUserPreferences(userData.preferences);
+              }
             }
 
             // Fetch test results
@@ -471,6 +475,44 @@ export default {
           }
         }
       });
+    },
+
+    applyUserPreferences(prefs) {
+      if (prefs.defaultSubject && !this.selectedSubject) {
+        const trySelect = () => {
+          const sub = this.subjects.find(s => s.id === prefs.defaultSubject);
+          if (sub) {
+            this.selectSubjectCard(sub);
+            
+            this.$nextTick(() => {
+              const checkLevels = () => {
+                if (this.levels.length > 0) {
+                  if (prefs.defaultLevel) {
+                    this.selectedLevel = prefs.defaultLevel;
+                  }
+                  if (prefs.dailyGoal) {
+                    this.selectedQuestionCount = prefs.dailyGoal;
+                  }
+                } else {
+                  setTimeout(checkLevels, 100);
+                }
+              };
+              checkLevels();
+            });
+          }
+        };
+
+        if (this.subjects.length > 0) {
+          trySelect();
+        } else {
+          const unwatch = this.$watch('subjects', (newVal) => {
+            if (newVal && newVal.length > 0) {
+              trySelect();
+              unwatch();
+            }
+          });
+        }
+      }
     },
 
     calculateStreak(results) {
@@ -546,17 +588,15 @@ export default {
       if (!results || results.length === 0) {
         const textMap = {
           UZB: "Salom! Siz hali birorta ham test topshirmadingiz. Math yoki English fanlaridan Beginner darajasida test topshirishni tavsiya qilaman.",
-          RUS: "Привет! Вы еще не прошли ни одного теста. Рекомендуем начать с диагностического теста по Math или English на уровне Beginner.",
-          ENG: "Hello! You haven't taken any tests yet. We recommend starting with a diagnostic test in Math or English at the Beginner level."
+          RUS: "Привет! Вы еще не прошли ни одного теста. Рекомендуем начать с диагностического теста по Math или English на уровне Beginner."
         };
         const badgeMap = {
           UZB: "Birinchi test",
-          RUS: "Начать тест",
-          ENG: "Start first test"
+          RUS: "Начать тест"
         };
         return {
-          text: textMap[this.currentLocale] || textMap['ENG'],
-          badge: badgeMap[this.currentLocale] || badgeMap['ENG'],
+          text: textMap[this.currentLocale] || textMap['UZB'],
+          badge: badgeMap[this.currentLocale] || badgeMap['UZB'],
           recommendedSubject: 'English',
           recommendedLevel: 'Beginner'
         };
@@ -627,29 +667,7 @@ export default {
             recommendedLevel: lastTest.level
           };
         }
-      } else if (this.currentLocale === 'ENG') {
-        if (overallAvg < 60) {
-          return {
-            text: `Hello, ${this.userDisplayName}. Your overall accuracy is ${overallAvg}%. Your weakest subject is currently ${weakestSubject} (${weakestPct}%). We recommend practicing at Beginner level.`,
-            badge: "Reinforce base",
-            recommendedSubject: weakestSubject,
-            recommendedLevel: 'Beginner'
-          };
-        } else if (overallAvg >= 85) {
-          return {
-            text: `Great score, ${this.userDisplayName}! Your average accuracy is ${overallAvg}%. You excel at ${strongestSubject} (${strongestPct}%). Try Advanced level!`,
-            badge: "Try Advanced",
-            recommendedSubject: strongestSubject,
-            recommendedLevel: 'Advanced'
-          };
-        } else {
-          return {
-            text: `Nice progress, ${this.userDisplayName}! Your average accuracy is ${overallAvg}%. In your latest ${lastTest.subject} test, you scored ${lastPct}%. Check your mistakes to improve!`,
-            badge: "Work on mistakes",
-            recommendedSubject: lastTest.subject,
-            recommendedLevel: lastTest.level
-          };
-        }
+
       } else {
         if (overallAvg < 60) {
           return {
@@ -717,7 +735,7 @@ Analyze the student's history stats and generate a tailored recommendation.
 
 Student Profile:
 Name: ${name}
-Language Locale: ${locale} (CRITICAL: You MUST write the "text" and "badge" values in this language! If locale is 'UZB', use Uzbek. If 'RUS', use Russian. If 'ENG', use English).
+Language Locale: ${locale} (CRITICAL: You MUST write the "text" and "badge" values in this language! If locale is 'UZB', use Uzbek. If 'RUS', use Russian).
 Total tests taken: ${results.length}
 Overall average accuracy: ${overallAvg}%
 Subject breakdowns: [${subjectSummary}]
@@ -732,7 +750,7 @@ Otherwise, recommend standard practice.
 Return a valid JSON object matching this schema exactly (no markdown formatting, no code block backticks):
 {
   "text": "Your highly personalized advice here in ${locale}. Max 2-3 sentences. Reference their stats (e.g. 'average of ${overallAvg}%') and latest test to be authentic. Avoid generic statements.",
-  "badge": "Action label for button in ${locale} (max 3 words, e.g. 'Mathni boshlash' or 'Начать тест' or 'Practice English')",
+  "badge": "Action label for button in ${locale} (max 3 words, e.g. 'Mathni boshlash' or 'Начать тест')",
   "recommendedSubject": "Exact subject ID from available subjects list (must match one of [${subjectsList}])",
   "recommendedLevel": "Exact recommended level (e.g. 'Beginner', 'Elementary', 'Intermediate', 'Advanced', 'Easy', 'Medium', 'Hard')"
 }`;
@@ -830,7 +848,6 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 
     getStreakText(streak) {
       if (this.currentLocale === 'UZB') return `${streak} kun`;
-      if (this.currentLocale === 'ENG') return `${streak} day${streak !== 1 ? 's' : ''}`;
       
       // Russian pluralization rules
       const lastDigit = streak % 10;

@@ -1,6 +1,10 @@
 import { ref } from 'vue';
 
-const currentLocale = ref(localStorage.getItem('locale') || 'UZB');
+const savedLocale = localStorage.getItem('locale');
+const currentLocale = ref(savedLocale === 'ENG' ? 'UZB' : (savedLocale || 'UZB'));
+if (savedLocale === 'ENG') {
+  localStorage.setItem('locale', 'UZB');
+}
 
 const translations = {
   UZB: {
@@ -61,6 +65,21 @@ const translations = {
     badges: 'Yutuqlar',
     certificates: 'Sertifikatlar',
     language: 'Til',
+    editProfile: 'Profilni tahrirlash',
+    password: 'Parol',
+    save: 'Saqlash',
+    saving: 'Saqlanmoqda...',
+    passwordHint: "* Parol faqat kiritilgandagina o'zgaradi",
+    passwordLengthError: "Parol kamida 6 ta belgidan iborat bo'lishi kerak",
+    usernameLabel: 'Foydalanuvchi nomi',
+    avatarSelect: 'Avatarni tanlang',
+    customAvatar: 'Rasm yuklash',
+    profileUpdated: 'Profil muvaffaqiyatli yangilandi!',
+    profileError: 'Profilni yangilashda xatolik yuz berdi',
+    memberSince: "A'zo bo'lgan sana",
+    studentId: 'TALABA ID',
+    livePreview: "Jonli ko'rinish",
+    emailLabel: 'Elektron pochta',
   },
   RUS: {
     home: 'Главная',
@@ -120,71 +139,27 @@ const translations = {
     badges: 'Достижения',
     certificates: 'Сертификаты',
     language: 'Язык',
-  },
-  ENG: {
-    home: 'Home',
-    points: 'Points',
-    about: 'About Us',
-    contact: 'Contact Us',
-    dashboard: 'Dashboard',
-    logout: 'Log Out',
-    login: 'Log In',
-    signup: 'Sign Up',
-    selectSubject: 'Select Subject for Tests',
-    chooseSubject: 'Choose a subject',
-    selectLevel: 'Select Level',
-    chooseLevel: 'Choose a level',
-    questionCount: 'Number of Questions',
-    selectQuestionCount: 'Select number of questions',
-    startTest: 'Start Test',
-    backToSelection: 'Back to Selection',
-    loadingSubjects: 'Loading subjects...',
-    loadingLevels: 'Loading levels...',
-    questions: 'questions',
-    // Dashboard translations
-    testResults: 'Test Results',
-    searchPlaceholder: 'Search...',
-    allSubjects: 'All Subjects',
-    allLevels: 'All Levels',
-    exportExcel: 'Export to Excel',
-    totalTests: 'Total Tests',
-    averageScore: 'Average Score',
-    highestScore: 'Highest Score',
-    bestSubject: 'Best Subject',
-    noResults: 'No results found',
-    loading: 'Loading...',
-    username: 'Username',
-    subject: 'Subject',
-    testNumber: 'Test Number',
-    level: 'Level',
-    score: 'Score',
-    date: 'Date',
-    actions: 'Actions',
-    deleteConfirm: 'Are you sure you want to delete this result?',
-    prev: 'Previous',
-    next: 'Next',
-    pageOf: 'of',
-    welcomeTitle: 'Hello, {name}! 👋',
-    welcomeSubtitle: 'Which area would you like to test your knowledge in today? Select a subject below.',
-    testsReady: 'Tests ready',
-    activityAndAwards: 'Activity & Awards',
-    streakStreak: 'Daily Streak',
-    latestAwards: 'Latest Awards',
-    noBadgesYet: 'You have no unlocked achievements yet. Take a test!',
-    aiTestBuilder: 'AI Test Builder',
-    aiTestBuilderDesc: 'Create a personalized test on any topic with the help of AI!',
-    setupAiTest: 'Configure AI Test',
-    aiTutor: 'Your AI Tutor',
-    activeInSystem: 'Active',
-    badges: 'Achievements',
-    certificates: 'Certificates',
-    language: 'Language',
+    editProfile: 'Редактировать профиль',
+    password: 'Пароль',
+    save: 'Сохранить',
+    saving: 'Сохранение...',
+    passwordHint: '* Пароль изменится только при вводе',
+    passwordLengthError: 'Пароль должен содержать не менее 6 символов',
+    usernameLabel: 'Имя пользователя',
+    avatarSelect: 'Выберите аватар',
+    customAvatar: 'Загрузить фото',
+    profileUpdated: 'Профиль успешно обновлен!',
+    profileError: 'Ошибка при обновлении профиля',
+    memberSince: 'На сайте с',
+    studentId: 'СТУДЕНЧЕСКИЙ ID',
+    livePreview: 'Предпросмотр',
+    emailLabel: 'Электронная почта',
   }
 };
 
 export const useI18n = () => {
   const t = (key, params = {}) => {
-    let text = translations[currentLocale.value]?.[key] || translations['ENG']?.[key] || key;
+    let text = translations[currentLocale.value]?.[key] || translations['UZB']?.[key] || key;
     Object.keys(params).forEach(p => {
       text = text.replace(`{${p}}`, params[p]);
     });
@@ -202,6 +177,6 @@ export const useI18n = () => {
     locale: currentLocale,
     t,
     setLocale,
-    locales: ['UZB', 'RUS', 'ENG']
+    locales: ['UZB', 'RUS']
   };
 };

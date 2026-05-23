@@ -5,10 +5,6 @@
     </div>
 
     <div class="navbar-right">
-      <button class="theme-toggle-btn" @click="toggleTheme" :title="isDarkMode ? 'Light Mode' : 'Dark Mode'">
-        <i :class="isDarkMode ? 'fas fa-sun' : 'fas fa-moon'"></i>
-      </button>
-      
       <div class="profile">
         <img
           :src="profileImage"
@@ -24,7 +20,7 @@
         </div>
 
         <!-- Language toggle group inside dropdown (UZB and RUS only) -->
-        <!-- Language toggle group inside dropdown (UZB, RUS, ENG) -->
+        <!-- Language toggle group inside dropdown (UZB, RUS only) -->
         <div class="dropdown-lang-section">
           <span class="lang-label">
             <i class="fas fa-globe"></i> 
@@ -44,13 +40,6 @@
               :class="{ active: currentLocale === 'RUS' }"
             >
               RUS
-            </button>
-            <button 
-              type="button" 
-              @click.prevent="changeLocale('ENG')" 
-              :class="{ active: currentLocale === 'ENG' }"
-            >
-              ENG
             </button>
           </div>
         </div>
@@ -145,27 +134,37 @@ export default {
       dropdownOpen: false,
       username: null,
       profileImage: null,
-      isDarkMode: false,
     };
   },
 
   created() {
     this.initializeAuth();
     document.addEventListener('click', this.handleClickOutside);
+    window.addEventListener('profile-updated', this.handleProfileUpdated);
 
     // Default rasmni o'rnatish
     this.profileImage = defaultUserImage;
 
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    this.isDarkMode = savedTheme === 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
+    // Reset and clear theme variables to default (light)
+    localStorage.removeItem('theme');
+    document.documentElement.removeAttribute('data-theme');
   },
 
   beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside);
+    window.removeEventListener('profile-updated', this.handleProfileUpdated);
   },
 
   methods: {
+    handleProfileUpdated(event) {
+      const { displayName, photoURL } = event.detail;
+      if (displayName) {
+        this.username = displayName;
+      }
+      if (photoURL) {
+        this.profileImage = photoURL;
+      }
+    },
     changeLocale(lang) {
       this.setLocale(lang);
     },
@@ -231,14 +230,6 @@ export default {
         console.error('Logout error:', error);
       }
     },
-
-    toggleTheme() {
-      this.isDarkMode = !this.isDarkMode;
-      const theme = this.isDarkMode ? 'dark' : 'light';
-      localStorage.setItem('theme', theme);
-      document.documentElement.setAttribute('data-theme', theme);
-      window.dispatchEvent(new CustomEvent('theme-changed', { detail: theme }));
-    },
   },
 };
 </script>
@@ -252,73 +243,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.theme-toggle-btn {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 0.95rem;
-}
-
-.theme-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: rotate(15deg) scale(1.05);
-}
-
-.theme-toggle-btn i {
-  transition: transform 0.5s ease;
-}
-
-.theme-toggle-btn:hover i {
-  transform: rotate(45deg);
-}
-
-[data-theme="dark"] .dropdown-content {
-  background: rgba(19, 26, 43, 0.98) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4) !important;
-}
-
-[data-theme="dark"] .user-info {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
-}
-
-[data-theme="dark"] .dropdown-username {
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] .dropdown-links a {
-  color: #e2e8f0 !important;
-}
-
-[data-theme="dark"] .dropdown-links a:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] .lang-toggle-group {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-[data-theme="dark"] .lang-toggle-group button {
-  color: #94a3b8 !important;
-}
-
-[data-theme="dark"] .lang-toggle-group button.active {
-  background: #ffffff !important;
-  color: #0b0f19 !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
 .navbar {

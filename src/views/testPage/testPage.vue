@@ -174,11 +174,11 @@
         <div class="coin-reward-card" v-if="score > 0">
           <div class="coin-gold-wrapper">
             <img src="../../assets/img/tpCoin.png" alt="TP Coin" class="coin-gold-img animate-spin-slow" />
-            <span class="reward-plus-badge">+{{ score * 10 }}</span>
+            <span class="reward-plus-badge">+{{ score }}</span>
           </div>
           <div class="reward-text-container">
             <h4>{{ isRus ? 'Вы заработали' : 'Siz qo\'lga kiritdingiz' }}</h4>
-            <p>{{ score * 10 }} TP Coins</p>
+            <p>{{ score }} TP Coins</p>
           </div>
         </div>
         <div class="coin-reward-card empty-reward" v-else>
@@ -503,8 +503,8 @@ const finishTest = async () => {
 
     await addDoc(collection(db, 'results'), resultData);
 
-    // Reward TP Coins for correct answers (10 coins per correct answer)
-    const coinsEarned = score.value * 10;
+    // Reward TP Coins for correct answers (1 coin per correct answer)
+    const coinsEarned = score.value;
     if (coinsEarned > 0) {
       try {
         const userDocRef = doc(db, 'users', user.uid);

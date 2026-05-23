@@ -120,9 +120,15 @@
               </div>
             </div>
             <p class="ai-advice">
-              "{{ aiAdvice.text }}"
+              <span v-if="aiAdviceLoading" class="ai-loading-text">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                {{ currentLocale === 'RUS' ? 'ИИ-Наставник анализирует результаты...' : (currentLocale === 'ENG' ? 'AI Tutor is analyzing your results...' : 'AI Ustozingiz natijalarni tahlil qilmoqda...') }}
+              </span>
+              <span v-else>
+                "{{ aiAdvice.text }}"
+              </span>
             </p>
-            <div class="ai-action-badge" v-if="aiAdvice.badge" @click="handleAiBadgeClick">
+            <div class="ai-action-badge" v-if="!aiAdviceLoading && aiAdvice.badge" @click="handleAiBadgeClick">
               <i class="fas fa-lightbulb"></i> {{ aiAdvice.badge }}
             </div>
           </div>
@@ -247,6 +253,7 @@ export default {
       userDisplayName: '',
       userPoints: 0,
       aiAdvice: { text: '', badge: '' },
+      aiAdviceLoading: false,
       userStreak: 0,
       unlockedBadges: [],
       weakestSubject: '',
@@ -439,7 +446,7 @@ export default {
               });
 
             // Set dynamic AI advice
-            this.aiAdvice = this.generateAIAdvice(results);
+            this.fetchAiAdviceFromGemini(results);
 
             // Calculate streak
             this.userStreak = this.calculateStreak(results);
@@ -520,18 +527,40 @@ export default {
       return streak;
     },
 
-    generateAIAdvice(results) {
+    determineAdviceType(results) {
+      if (!results || results.length === 0) return 'first_test';
+      let totalCorrect = 0;
+      let totalQuestions = 0;
+      results.forEach((res) => {
+        totalCorrect += res.score;
+        totalQuestions += res.total;
+      });
+      const overallAvg = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+      if (overallAvg < 60) return 'weak';
+      if (overallAvg >= 85) return 'strong';
+      return 'normal';
+    },
+
+    getFallbackAdvice(results) {
       if (!results || results.length === 0) {
-        this.aiAdviceType = 'first_test';
+        const textMap = {
+          UZB: "Salom! Siz hali birorta ham test topshirmadingiz. Math yoki English fanlaridan Beginner darajasida test topshirishni tavsiya qilaman.",
+          RUS: "Привет! Вы еще не прошли ни одного теста. Рекомендуем начать с диагностического теста по Math или English на уровне Beginner.",
+          ENG: "Hello! You haven't taken any tests yet. We recommend starting with a diagnostic test in Math or English at the Beginner level."
+        };
+        const badgeMap = {
+          UZB: "Birinchi test",
+          RUS: "Начать тест",
+          ENG: "Start first test"
+        };
         return {
-          text: this.currentLocale === 'RUS'
-            ? "Привет! Вы еще не прошли ни одного теста. Рекомендуем начать с диагностического теста по предмету Math или English на уровне Beginner, чтобы оценить свой стартовый уровень."
-            : "Salom! Siz hali birorta ham test yechmadingiz. Bilim darajangizni aniqlash uchun Math yoki English fanlaridan Beginner darajasida diagnostik test topshirishni tavsiya qilaman.",
-          badge: this.currentLocale === 'RUS' ? "Начать первый тест" : "Birinchi testni boshlash"
+          text: textMap[this.currentLocale] || textMap['ENG'],
+          badge: badgeMap[this.currentLocale] || badgeMap['ENG'],
+          recommendedSubject: 'English',
+          recommendedLevel: 'Beginner'
         };
       }
 
-      // Calculate statistics
       let totalCorrect = 0;
       let totalQuestions = 0;
       const subjectStats = {};
@@ -549,7 +578,6 @@ export default {
 
       const overallAvg = Math.round((totalCorrect / totalQuestions) * 100);
 
-      // Find weakest and strongest subjects
       let weakestSubject = '';
       let weakestPct = 101;
       let strongestSubject = '';
@@ -577,103 +605,224 @@ export default {
 
       if (this.currentLocale === 'RUS') {
         if (overallAvg < 60) {
-          this.aiAdviceType = 'weak';
           return {
-            text: `Привет, ${this.userDisplayName}. Сейчас ваш средний балл составляет ${overallAvg}%. Наибольшие трудности вызывает предмет ${weakestSubject} (${weakestPct}%). Советуем пройти тест на уровне Beginner/Elementary по этому предмету, чтобы укрепить базу.`,
-            badge: "Укрепить базу знаний"
+            text: `Привет, ${this.userDisplayName}. Ваш средний балл составляет ${overallAvg}%. Самым сложным предметом является ${weakestSubject} (${weakestPct}%). Рекомендуем начать с уровня Beginner по этому предмету.`,
+            badge: "Закрепить базу",
+            recommendedSubject: weakestSubject,
+            recommendedLevel: 'Beginner'
           };
         } else if (overallAvg >= 85) {
-          this.aiAdviceType = 'strong';
           return {
-            text: `Отличный результат, ${this.userDisplayName}! Средний балл — ${overallAvg}%. Особенно впечатляют ваши успехи в ${strongestSubject} (${strongestPct}%). Попробуйте перейти на более сложный уровень Advanced по этому предмету!`,
-            badge: "Сложные уровни"
+            text: `Отличный результат, ${this.userDisplayName}! Средний балл — ${overallAvg}%. Особенно хороши успехи в ${strongestSubject} (${strongestPct}%). Попробуйте Advanced уровень!`,
+            badge: "Сложный уровень",
+            recommendedSubject: strongestSubject,
+            recommendedLevel: 'Advanced'
           };
         } else {
-          this.aiAdviceType = 'normal';
           return {
-            text: `Хороший темп, ${this.userDisplayName}! Средний балл — ${overallAvg}%. В последнем тесте по ${lastTest.subject} вы набрали ${lastPct}%. Проанализируйте свои ошибки, чтобы довести этот результат до идеала.`,
-            badge: "Работа над ошибками"
+            text: `Хороший темп, ${this.userDisplayName}! Средний балл — ${overallAvg}%. В последнем тесте по ${lastTest.subject} вы набрали ${lastPct}%. Проанализируйте ошибки.`,
+            badge: "Работа над ошибками",
+            recommendedSubject: lastTest.subject,
+            recommendedLevel: lastTest.level
+          };
+        }
+      } else if (this.currentLocale === 'ENG') {
+        if (overallAvg < 60) {
+          return {
+            text: `Hello, ${this.userDisplayName}. Your overall accuracy is ${overallAvg}%. Your weakest subject is currently ${weakestSubject} (${weakestPct}%). We recommend practicing at Beginner level.`,
+            badge: "Reinforce base",
+            recommendedSubject: weakestSubject,
+            recommendedLevel: 'Beginner'
+          };
+        } else if (overallAvg >= 85) {
+          return {
+            text: `Great score, ${this.userDisplayName}! Your average accuracy is ${overallAvg}%. You excel at ${strongestSubject} (${strongestPct}%). Try Advanced level!`,
+            badge: "Try Advanced",
+            recommendedSubject: strongestSubject,
+            recommendedLevel: 'Advanced'
+          };
+        } else {
+          return {
+            text: `Nice progress, ${this.userDisplayName}! Your average accuracy is ${overallAvg}%. In your latest ${lastTest.subject} test, you scored ${lastPct}%. Check your mistakes to improve!`,
+            badge: "Work on mistakes",
+            recommendedSubject: lastTest.subject,
+            recommendedLevel: lastTest.level
           };
         }
       } else {
-        // Uzbek (default)
         if (overallAvg < 60) {
-          this.aiAdviceType = 'weak';
           return {
-            text: `Salom, ${this.userDisplayName}. Hozirda o'rtacha ballingiz ${overallAvg}%. Eng ko'p qiynalayotgan faningiz ${weakestSubject} bo'lib, undagi ko'rsatkichingiz ${weakestPct}%. Ushbu fandan Beginner yoki Elementary darajasida test yechib, bazani mustahkamlashni tavsiya qilaman.`,
-            badge: "Bazani mustahkamlash"
+            text: `Salom, ${this.userDisplayName}. Hozirda o'rtacha ballingiz ${overallAvg}%. Eng ko'p qiynalayotgan faningiz ${weakestSubject} (${weakestPct}%). Ushbu fandan Beginner darajasida test yechishni tavsiya qilaman.`,
+            badge: "Bazani mustahkamlash",
+            recommendedSubject: weakestSubject,
+            recommendedLevel: 'Beginner'
           };
         } else if (overallAvg >= 85) {
-          this.aiAdviceType = 'strong';
           return {
-            text: `Ajoyib ko'rsatkich, ${this.userDisplayName}! O'rtacha natijangiz juda yuqori (${overallAvg}%). Ayniqsa ${strongestSubject} fanidan natijangiz a'lo darajada (${strongestPct}%). Ushbu fanning murakkab Advanced darajalarida o'zingizni sinab ko'ring!`,
-            badge: "Murakkab darajalar"
+            text: `Ajoyib ko'rsatkich, ${this.userDisplayName}! O'rtacha natijangiz juda yuqori (${overallAvg}%). Ayniqsa ${strongestSubject} fanidan natijangiz a'lo darajada (${strongestPct}%). Advanced darajasida urinib ko'ring!`,
+            badge: "Murakkab darajalar",
+            recommendedSubject: strongestSubject,
+            recommendedLevel: 'Advanced'
           };
         } else {
-          this.aiAdviceType = 'normal';
           return {
-            text: `Yaxshi natija, ${this.userDisplayName}! Umumiy bilim ko'rsatkichingiz o'rtacha ${overallAvg}% ni tashkil etmoqda. Oxirgi topshirgan ${lastTest.subject} testingizda natijangiz ${lastPct}% bo'ldi. Xatolar ustida ishlab, natijani a'loga yetkazing.`,
-            badge: "Xatolar ustida ishlash"
+            text: `Yaxshi natija, ${this.userDisplayName}! Bilim ko'rsatkichingiz o'rtacha ${overallAvg}%. Oxirgi topshirgan ${lastTest.subject} testingizda natijangiz ${lastPct}% bo'ldi.`,
+            badge: "Xatolar ustida ishlash",
+            recommendedSubject: lastTest.subject,
+            recommendedLevel: lastTest.level
           };
         }
       }
     },
 
+    async fetchAiAdviceFromGemini(results) {
+      this.aiAdviceLoading = true;
+      
+      const fallback = this.getFallbackAdvice(results);
+      this.aiAdvice = fallback;
+      this.aiAdviceType = this.determineAdviceType(results);
+      
+      try {
+        const name = this.userDisplayName || 'User';
+        const locale = this.currentLocale || 'UZB';
+        
+        let totalCorrect = 0;
+        let totalQuestions = 0;
+        const subjectStats = {};
+        
+        results.forEach((res) => {
+          totalCorrect += res.score;
+          totalQuestions += res.total;
+          if (!subjectStats[res.subject]) {
+            subjectStats[res.subject] = { score: 0, total: 0 };
+          }
+          subjectStats[res.subject].score += res.score;
+          subjectStats[res.subject].total += res.total;
+        });
+        
+        const overallAvg = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+        const subjectSummary = Object.keys(subjectStats).map(sub => {
+          const pct = Math.round((subjectStats[sub].score / subjectStats[sub].total) * 100);
+          return `${sub}: ${pct}%`;
+        }).join(', ');
+        
+        const latestTest = results.length > 0 ? results[0] : null;
+        const latestInfo = latestTest ? `${latestTest.subject} (${latestTest.level}) with score ${Math.round((latestTest.score / latestTest.total)*100)}%` : 'None';
+        
+        const subjectsList = this.subjects.map(s => s.id).join(', ');
+        
+        const prompt = `You are the expert personalized AI Advisor for the Test.me platform.
+Analyze the student's history stats and generate a tailored recommendation.
+
+Student Profile:
+Name: ${name}
+Language Locale: ${locale} (CRITICAL: You MUST write the "text" and "badge" values in this language! If locale is 'UZB', use Uzbek. If 'RUS', use Russian. If 'ENG', use English).
+Total tests taken: ${results.length}
+Overall average accuracy: ${overallAvg}%
+Subject breakdowns: [${subjectSummary}]
+Latest test: [${latestInfo}]
+Available subjects on platform: [${subjectsList}]
+
+Recommend one subject and one difficulty level to practice next.
+For students with low average accuracy (< 65%), recommend a beginner level (e.g. 'Beginner' or 'Elementary' or 'Easy') for their weakest subject.
+For students with high average accuracy (>= 85%), recommend a higher level (e.g. 'Advanced' or 'Intermediate' or 'Hard') for their strongest subject.
+Otherwise, recommend standard practice.
+
+Return a valid JSON object matching this schema exactly (no markdown formatting, no code block backticks):
+{
+  "text": "Your highly personalized advice here in ${locale}. Max 2-3 sentences. Reference their stats (e.g. 'average of ${overallAvg}%') and latest test to be authentic. Avoid generic statements.",
+  "badge": "Action label for button in ${locale} (max 3 words, e.g. 'Mathni boshlash' or 'Начать тест' or 'Practice English')",
+  "recommendedSubject": "Exact subject ID from available subjects list (must match one of [${subjectsList}])",
+  "recommendedLevel": "Exact recommended level (e.g. 'Beginner', 'Elementary', 'Intermediate', 'Advanced', 'Easy', 'Medium', 'Hard')"
+}`;
+
+        const GEMINI_API_KEY = "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: prompt }
+                  ]
+                }
+              ],
+              generationConfig: {
+                responseMimeType: "application/json"
+              }
+            })
+          }
+        );
+        
+        if (response.ok) {
+          const resData = await response.json();
+          const resText = resData.candidates[0].content.parts[0].text;
+          const adviceData = JSON.parse(resText.trim());
+          
+          if (adviceData.text && adviceData.badge) {
+            this.aiAdvice = {
+              text: adviceData.text,
+              badge: adviceData.badge,
+              recommendedSubject: adviceData.recommendedSubject,
+              recommendedLevel: adviceData.recommendedLevel
+            };
+            this.aiAdviceType = 'gemini';
+          }
+        }
+      } catch (err) {
+        console.error("Failed to generate dynamic AI advice with Gemini:", err);
+      } finally {
+        this.aiAdviceLoading = false;
+      }
+    },
+
     handleAiBadgeClick() {
+      if (this.aiAdvice.recommendedSubject && this.aiAdvice.recommendedLevel) {
+        const target = this.subjects.find(
+          (s) => s.id.toLowerCase() === this.aiAdvice.recommendedSubject.toLowerCase() ||
+                 s.nameEn?.toLowerCase() === this.aiAdvice.recommendedSubject.toLowerCase() ||
+                 s.nameUz?.toLowerCase() === this.aiAdvice.recommendedSubject.toLowerCase() ||
+                 s.nameRu?.toLowerCase() === this.aiAdvice.recommendedSubject.toLowerCase()
+        );
+        if (target) {
+          this.selectSubjectCard(target);
+          setTimeout(() => {
+            const recLvl = this.aiAdvice.recommendedLevel.toLowerCase();
+            const foundLvl = this.levels.find(l => l.toLowerCase() === recLvl);
+            if (foundLvl) {
+              this.selectedLevel = foundLvl;
+            } else if (this.levels.length > 0) {
+              // Try to find approximate match
+              const approx = this.levels.find(l => l.toLowerCase().startsWith(recLvl.substring(0, 3)));
+              if (approx) {
+                this.selectedLevel = approx;
+              } else {
+                this.selectedLevel = this.levels[0];
+              }
+            }
+            this.selectedQuestionCount = 10;
+            this.$nextTick(() => {
+              document.querySelector('.start-test-btn')?.scrollIntoView({ behavior: 'smooth' });
+            });
+          }, 600);
+          return;
+        }
+      }
+
+      // Fallback handlers
       if (this.aiAdviceType === 'first_test') {
-        // Select first available subject
         if (this.subjects.length > 0) {
           this.selectSubjectCard(this.subjects[0]);
           this.$nextTick(() => {
             document.querySelector('.selection-panel')?.scrollIntoView({ behavior: 'smooth' });
           });
         }
-      } else if (this.aiAdviceType === 'weak') {
-        // Find weakest subject
-        const target = this.subjects.find(
-          (s) => s.id.toLowerCase() === this.weakestSubject.toLowerCase()
-        );
-        if (target) {
-          this.selectSubjectCard(target);
-          // Pre-select Beginner or Elementary level
-          setTimeout(() => {
-            if (this.levels.includes('Beginner')) {
-              this.selectedLevel = 'Beginner';
-            } else if (this.levels.includes('Elementary')) {
-              this.selectedLevel = 'Elementary';
-            } else if (this.levels.length > 0) {
-              this.selectedLevel = this.levels[0];
-            }
-            this.selectedQuestionCount = 10; // Default count
-            this.$nextTick(() => {
-              document.querySelector('.start-test-btn')?.scrollIntoView({ behavior: 'smooth' });
-            });
-          }, 600);
-        }
-      } else if (this.aiAdviceType === 'strong') {
-        // Find strongest subject
-        const target = this.subjects.find(
-          (s) => s.id.toLowerCase() === this.strongestSubject.toLowerCase()
-        );
-        if (target) {
-          this.selectSubjectCard(target);
-          // Pre-select Advanced or Intermediate level
-          setTimeout(() => {
-            if (this.levels.includes('Advanced')) {
-              this.selectedLevel = 'Advanced';
-            } else if (this.levels.includes('Intermediate')) {
-              this.selectedLevel = 'Intermediate';
-            } else if (this.levels.length > 0) {
-              this.selectedLevel = this.levels[this.levels.length - 1];
-            }
-            this.selectedQuestionCount = 15; // Default count
-            this.$nextTick(() => {
-              document.querySelector('.start-test-btn')?.scrollIntoView({ behavior: 'smooth' });
-            });
-          }, 600);
-        }
-      } else if (this.aiAdviceType === 'normal') {
-        // Just scroll to subject selection
+      } else {
         document.querySelector('.selection-panel')?.scrollIntoView({ behavior: 'smooth' });
       }
     },
@@ -1050,6 +1199,20 @@ export default {
   line-height: 1.6;
   font-style: italic;
   margin: 0 0 1rem 0;
+}
+
+.ai-loading-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.ai-loading-text i {
+  color: #3b82f6;
+  font-size: 1rem;
 }
 
 .ai-action-badge {

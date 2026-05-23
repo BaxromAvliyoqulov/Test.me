@@ -275,6 +275,82 @@ const finishTest = async () => {
     };
 
     await addDoc(collection(db, 'results'), resultData);
+
+    // Client-side fallback for certificate evaluation (in case Cloud Functions aren't deployed on Spark Plan)
+    if (score.value / state.questions.length >= 0.8) {
+      try {
+        const prevResults = snapshot.docs.map(doc => doc.data());
+        prevResults.push(resultData);
+
+        const elementaryCount = prevResults.filter(r => r.test_level && r.test_level.toLowerCase().includes('elem')).length;
+        const intermediateCount = prevResults.filter(r => r.test_level && r.test_level.toLowerCase().includes('inter')).length;
+        const advancedCount = prevResults.filter(r => r.test_level && r.test_level.toLowerCase().includes('adv')).length;
+        const totalCount = prevResults.length;
+
+        const certsToCheck = [
+          {
+            id: 'elementary_graduate',
+            condition: elementaryCount >= 3,
+            nameUz: 'Boshlang\'ich Savodxon',
+            nameRu: 'Начальный Грамотей',
+            descUz: 'Elementary darajasida kamida 3 ta test yechganda beriladi.',
+            descRu: 'Выдается за решение не менее 3 тестов на уровне Elementary.'
+          },
+          {
+            id: 'intermediate_expert',
+            condition: intermediateCount >= 5,
+            nameUz: 'O\'rta darajali Mutaxassis',
+            nameRu: 'Средний Эксперт',
+            descUz: 'Intermediate darajasida kamida 5 ta test yechganda beriladi.',
+            descRu: 'Выдается за решение не менее 5 тестов на уровне Intermediate.'
+          },
+          {
+            id: 'advanced_professional',
+            condition: advancedCount >= 3,
+            nameUz: 'Professional Bilimdon',
+            nameRu: 'Продвинутый Профи',
+            descUz: 'Advanced darajasida kamida 3 ta test yechganda beriladi.',
+            descRu: 'Выдается за решение не менее 3 тестов на уровне Advanced.'
+          },
+          {
+            id: 'ai_enthusiast',
+            condition: totalCount >= 5,
+            nameUz: 'Aktiv Bilim Oluvchi',
+            nameRu: 'Активный Ученик',
+            descUz: 'Platformada jami 5 tadan ortiq test yechganingizda beriladi.',
+            descRu: 'Выдается за прохождение более 5 тестов на платформе.'
+          }
+        ];
+
+        for (const cert of certsToCheck) {
+          if (cert.condition) {
+            const certsRef = collection(db, 'certificates');
+            const certQ = query(certsRef, where('userId', '==', user.uid), where('certType', '==', cert.id));
+            const certSnap = await getDocs(certQ);
+
+            if (certSnap.empty) {
+              const uidPart = user.uid.substring(0, 8).toUpperCase();
+              const certCode = `CERT-${uidPart}-${cert.id.substring(0, 4).toUpperCase()}`;
+
+              await addDoc(collection(db, 'certificates'), {
+                certId: certCode,
+                userId: user.uid,
+                userName: user.displayName || user.email || 'Foydalanuvchi',
+                certType: cert.id,
+                nameUz: cert.nameUz,
+                nameRu: cert.nameRu,
+                descUz: cert.descUz,
+                descRu: cert.descRu,
+                issuedAt: Timestamp.now(),
+              });
+              console.log(`Issued cert ${cert.id} client-side`);
+            }
+          }
+        }
+      } catch (certErr) {
+        console.error("Error evaluating client-side certificate issuance:", certErr);
+      }
+    }
   } catch (err) {
     console.error('Ошибка при сохранении результатов:', err);
     state.error = err.message;

@@ -1,93 +1,236 @@
 <template>
-  <div class="test-page">
-    <div v-if="state.loading" class="status-container loading">
-      <div class="spinner" />
-      <p>
-        Loading tests for {{ props.subjectId }} - Level {{ props.levelId }}...
-      </p>
-    </div>
+  <div class="test-page-wrapper">
+    <!-- Neon glow lights -->
+    <div class="glow-bg glow-bg-1"></div>
+    <div class="glow-bg glow-bg-2"></div>
 
-    <div v-else-if="state.error" class="status-container error">
-      <p>{{ state.error }}</p>
-      <button class="button retry-btn" @click="fetchQuestions">
-        🔄 Try Again
-      </button>
-    </div>
+    <div class="test-page-container">
+      <!-- Loading Screen -->
+      <div v-if="state.loading" class="glass-status-card loading-card">
+        <div class="orbital-spinner">
+          <div class="orbit orbit-1"></div>
+          <div class="orbit orbit-2"></div>
+          <div class="orbit orbit-3"></div>
+          <i class="fas fa-file-signature text-purple"></i>
+        </div>
+        <h3>{{ isRus ? 'Загрузка теста...' : 'Test yuklanmoqda...' }}</h3>
+        <p>{{ isRus ? 'Пожалуйста, подождите, пока мы подготавливаем вопросы.' : 'Iltimos kuting, savollar tayyorlanmoqda.' }}</p>
+      </div>
 
-    <div
-      v-else-if="state.questions.length === 0"
-      class="status-container warning"
-    >
-      <p>No questions available for this test.</p>
-      <small>Please check subject and level configuration.</small>
-    </div>
-
-    <div v-else-if="!state.testFinished" class="question-screen">
-      <ProgressBar
-        :currentPage="state.currentPage"
-        :total="state.questions.length"
-        :formattedTime="formattedTime"
-        :timeLow="state.timer < 60"
-      />
-
-      <QuestionComponent
-        :question="currentQuestion"
-        :selectedAnswer="state.selectedAnswer"
-        @selectAnswer="(val) => (state.selectedAnswer = val)"
-      />
-
-      <div class="pagination">
-        <button
-          v-for="(q, index) in state.questions"
-          :key="index"
-          :class="{
-            'pagination-button': true,
-            active: state.currentPage === index,
-            completed: isQuestionAnswered(index) && state.currentPage !== index,
-          }"
-          @click="state.currentPage = index"
-        >
-          {{ index + 1 }}
+      <!-- Error Screen -->
+      <div v-else-if="state.error" class="glass-status-card error-card">
+        <div class="error-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3>{{ isRus ? 'Ошибка загрузки' : 'Yuklashda xatolik' }}</h3>
+        <p>{{ state.error }}</p>
+        <button class="action-btn retry-btn" @click="fetchQuestions">
+          <i class="fas fa-redo"></i> {{ isRus ? 'Попробовать снова' : 'Qaytadan urinish' }}
+        </button>
+        <button class="action-btn home-btn secondary" @click="router.push('/')">
+          <i class="fas fa-home"></i> {{ isRus ? 'На главную' : 'Bosh sahifaga' }}
         </button>
       </div>
 
-      <button
-        class="button"
-        :class="{
-          'finish-button': state.currentPage === state.questions.length - 1,
-        }"
-        @click="submitAnswer"
-      >
-        {{
-          state.currentPage < state.questions.length - 1
-            ? 'Next'
-            : 'Finish Test'
-        }}
-      </button>
-    </div>
-
-    <div v-else class="status-container success">
-      <p>🎉 You finished the test!</p>
-      <p>✅ Score: {{ score }}/{{ state.questions.length }}</p>
-
-      <div class="actions">
-        <button class="button" @click="state.showReviewModal = true">
-          🔍 Review Answers
+      <!-- Warning/Empty Screen -->
+      <div v-else-if="state.questions.length === 0" class="glass-status-card warning-card">
+        <div class="warning-icon">
+          <i class="fas fa-folder-open"></i>
+        </div>
+        <h3>{{ isRus ? 'Тесты не найдены' : 'Testlar topilmadi' }}</h3>
+        <p>{{ isRus ? 'В этой категории пока нет загруженных тестов.' : 'Ushbu yo\'nalishda hozircha testlar mavjud emas.' }}</p>
+        <button class="action-btn home-btn" @click="router.push('/')">
+          <i class="fas fa-arrow-left"></i> {{ isRus ? 'Назад к выбору' : 'Orqaga qaytish' }}
         </button>
-        <button class="button" @click="router.push('/')">🏠 Go Home</button>
+      </div>
+
+      <!-- Active Quiz Interface -->
+      <div v-else-if="!state.testFinished" class="quiz-glass-card">
+        <!-- Header Info -->
+        <div class="quiz-header">
+          <div class="header-left">
+            <h2 class="subject-title">
+              {{ displaySubject }}
+            </h2>
+            <span class="level-badge" :class="displayLevel.toLowerCase()">
+              {{ displayLevel }}
+            </span>
+          </div>
+          <div class="header-right">
+            <!-- Elegant Timer Badge -->
+            <div class="timer-badge" :class="{ danger: state.timer < 60 }">
+              <i class="far fa-clock"></i>
+              <span>{{ formattedTime }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Styled Progress Bar -->
+        <div class="progress-section">
+          <div class="progress-meta">
+            <span class="progress-text">
+              {{ isRus ? 'Вопрос' : 'Savol' }} <strong>{{ state.currentPage + 1 }}</strong> {{ isRus ? 'из' : 'dan' }} <strong>{{ state.questions.length }}</strong>
+            </span>
+            <span class="progress-pct">{{ Math.round(((state.currentPage + 1) / state.questions.length) * 100) }}%</span>
+          </div>
+          <div class="glass-progress-bar">
+            <div class="progress-fill" :style="{ width: ((state.currentPage + 1) / state.questions.length) * 100 + '%' }"></div>
+          </div>
+        </div>
+
+        <!-- Question Box -->
+        <div class="question-container">
+          <h3 class="question-title">
+            {{ currentQuestion?.question }}
+          </h3>
+
+          <!-- Premium Custom Answer Options -->
+          <div class="options-grid">
+            <button
+              v-for="(option, index) in currentQuestion?.options"
+              :key="index"
+              class="option-card"
+              :class="{ selected: state.selectedAnswer === index }"
+              @click="selectOption(index)"
+            >
+              <div class="option-marker">
+                <span class="letter-marker">{{ ['A', 'B', 'C', 'D'][index] }}</span>
+                <span class="check-marker"><i class="fas fa-check"></i></span>
+              </div>
+              <span class="option-text">{{ option }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Footer Control & Pagination -->
+        <div class="quiz-footer">
+          <!-- Pagination List -->
+          <div class="pagination-scroller">
+            <button
+              v-for="(q, index) in state.questions"
+              :key="index"
+              class="pag-dot"
+              :class="{
+                active: state.currentPage === index,
+                answered: isQuestionAnswered(index) && state.currentPage !== index
+              }"
+              @click="goToPage(index)"
+            >
+              {{ index + 1 }}
+            </button>
+          </div>
+
+          <!-- Bottom Action Buttons -->
+          <div class="footer-actions">
+            <button class="action-btn secondary back-btn" @click="goToPrev" :disabled="state.currentPage === 0">
+              <i class="fas fa-chevron-left"></i> {{ isRus ? 'Назад' : 'Oldingisi' }}
+            </button>
+            
+            <button
+              class="action-btn next-btn"
+              :class="{ finish: state.currentPage === state.questions.length - 1 }"
+              @click="submitAnswer"
+            >
+              <span>{{ state.currentPage < state.questions.length - 1 ? (isRus ? 'Далее' : 'Keyingisi') : (isRus ? 'Завершить' : 'Yakunlash') }}</span>
+              <i class="fas" :class="state.currentPage < state.questions.length - 1 ? 'fa-chevron-right' : 'fa-flag-checkered'"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Success / Results Card -->
+      <div v-else class="glass-status-card success-card">
+        <div class="success-header">
+          <div class="success-badge">
+            <i class="fas fa-trophy trophy-anim"></i>
+          </div>
+          <h2>{{ isRus ? 'Тест Завершен!' : 'Test yakunlandi!' }}</h2>
+          <p>{{ isRus ? 'Поздравляем с отличной попыткой! Ваши результаты:' : 'Ajoyib urinish! Sizning natijalaringiz:' }}</p>
+        </div>
+
+        <!-- Score Presentation -->
+        <div class="score-ring-container">
+          <div class="score-ring" :style="scoreRingStyle">
+            <div class="score-ring-inner">
+              <span class="score-number">{{ score }}</span>
+              <span class="score-divider">/</span>
+              <span class="score-total">{{ state.questions.length }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-overview">
+          <div class="stat-box">
+            <span class="stat-val">{{ Math.round((score / state.questions.length) * 100) }}%</span>
+            <span class="stat-lbl">{{ isRus ? 'Точность' : 'Anliqlik' }}</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-val">{{ state.questions.length - score }}</span>
+            <span class="stat-lbl">{{ isRus ? 'Ошибки' : 'Xatolar' }}</span>
+          </div>
+        </div>
+
+        <div class="success-actions">
+          <button class="action-btn review-trigger" @click="state.showReviewModal = true">
+            <i class="fas fa-search-plus"></i> {{ isRus ? 'Анализ ответов' : 'Javoblar tahlili' }}
+          </button>
+          <button class="action-btn home-btn" @click="router.push('/')">
+            <i class="fas fa-home"></i> {{ isRus ? 'Bosh sahifaga' : 'Bosh sahifaga' }}
+          </button>
+        </div>
       </div>
     </div>
 
-    <transition name="modal">
-      <div v-if="state.showReviewModal" class="modal-overlay review">
-        <div class="modal-review-wrapper">
-          <ReviewAnswers
-            :questions="state.questions"
-            :selectedAnswers="state.selectedAnswers"
-          />
-          <div class="modal-actions">
-            <button class="button" @click="state.showReviewModal = false">
-              Close Review
+    <!-- Stunning Review Answers Overlay -->
+    <transition name="fade">
+      <div v-if="state.showReviewModal" class="modal-overlay" @click.self="state.showReviewModal = false">
+        <div class="modal-glass-card review-modal-card">
+          <div class="modal-header">
+            <h3><i class="fas fa-tasks text-purple"></i> {{ isRus ? 'Анализ ответов' : 'Javoblar Tahlili' }}</h3>
+            <button class="close-modal-btn" @click="state.showReviewModal = false">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <div class="modal-body review-list-scroller">
+            <div
+              v-for="(question, index) in state.questions"
+              :key="index"
+              class="review-question-card"
+              :class="{
+                correct: isCorrectAnswer(index),
+                incorrect: !isCorrectAnswer(index)
+              }"
+            >
+              <h4 class="review-q-title">
+                {{ index + 1 }}. {{ question.question }}
+              </h4>
+
+              <div class="review-options">
+                <div
+                  v-for="(option, optIndex) in question.options"
+                  :key="optIndex"
+                  class="review-opt"
+                  :class="{
+                    'user-selected': state.selectedAnswers[index] === optIndex,
+                    'is-correct': question.answer === option,
+                    'is-incorrect': state.selectedAnswers[index] === optIndex && question.answer !== option
+                  }"
+                >
+                  <div class="review-marker">
+                    <i v-if="question.answer === option" class="fas fa-check-circle text-emerald"></i>
+                    <i v-else-if="state.selectedAnswers[index] === optIndex" class="fas fa-times-circle text-rose"></i>
+                    <span v-else class="letter-marker">{{ ['A', 'B', 'C', 'D'][optIndex] }}</span>
+                  </div>
+                  <span class="review-text">{{ option }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="action-btn secondary close-btn" @click="state.showReviewModal = false">
+              {{ isRus ? 'Закрыть' : 'Yopish' }}
             </button>
           </div>
         </div>
@@ -101,23 +244,49 @@ import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
 import { db } from '@/config/firebase';
 import { collection, getDocs, addDoc, Timestamp, query, where, doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import ReviewAnswers from '@/views/testPage/reviewModal.vue';
-import ProgressBar from '@/views/testPage/progressBar.vue';
-import QuestionComponent from '@/views/testPage/question.vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useI18n } from '@/utils/i18n';
 
-// Инициализация
+// Router and Locale
 const router = useRouter();
 const route = useRoute();
+const { locale } = useI18n();
 
-// Props
+// Props definition
 const props = defineProps({
-  subjectId: { type: String, required: true },
-  levelId: { type: String, required: true },
+  subjectId: { type: String, default: '' },
+  levelId: { type: String, default: '' },
   questionCount: { type: Number, default: 10 },
 });
 
-// State (reactive)
+const isRus = computed(() => locale.value === 'RUS');
+
+// Compute active params dynamically (from props or route query)
+const activeSubjectId = computed(() => {
+  return props.subjectId || (route && route.query && route.query.subjectId) || '';
+});
+
+const activeLevelId = computed(() => {
+  return props.levelId || (route && route.query && route.query.levelId) || '';
+});
+
+const activeQuestionCount = computed(() => {
+  const queryCount = route && route.query && route.query.questionCount ? parseInt(route.query.questionCount) : null;
+  return props.questionCount || queryCount || 10;
+});
+
+// Display names for subject and level
+const displaySubject = computed(() => {
+  const subj = activeSubjectId.value;
+  return subj === 'ai' ? (isRus.value ? 'AI Конструктор' : 'AI Testi') : subj;
+});
+
+const displayLevel = computed(() => {
+  const lvl = activeLevelId.value;
+  return lvl === 'ai' ? (isRus.value ? 'Сгенерированный' : 'AI yaratgan') : lvl;
+});
+
+// State
 const state = reactive({
   loading: true,
   error: null,
@@ -131,24 +300,36 @@ const state = reactive({
   sessionId: null,
 });
 
-// Таймер
-let intervalId;
+let intervalId = null;
 
-// Computed
-const currentQuestion = computed(
-  () => state.questions[state.currentPage]
-);
+// Formatted timer
 const formattedTime = computed(() => {
   const m = Math.floor(state.timer / 60);
   const s = state.timer % 60;
   return `${m}:${s < 10 ? '0' + s : s}`;
 });
 
+// Correct answers score
 const score = computed(() => {
   return state.questions.reduce((acc, q, i) => {
     const selectedIdx = state.selectedAnswers[i];
     return selectedIdx !== null && selectedIdx !== undefined && q.options[selectedIdx] === q.answer ? acc + 1 : acc;
   }, 0);
+});
+
+// Dynamic circle border style for score ring
+const scoreRingStyle = computed(() => {
+  const ratio = state.questions.length ? score.value / state.questions.length : 0;
+  const degrees = ratio * 360;
+  return {
+    background: `conic-gradient(from 0deg, #a855f7 0deg ${degrees}deg, rgba(255, 255, 255, 0.1) ${degrees}deg 360deg)`
+  };
+});
+
+const currentQuestion = computed(() => {
+  return state.questions && state.questions.length > state.currentPage
+    ? state.questions[state.currentPage]
+    : null;
 });
 
 // Methods
@@ -160,6 +341,42 @@ const isQuestionAnswered = (index) => {
   return state.selectedAnswers[index] !== null && state.selectedAnswers[index] !== undefined;
 };
 
+const selectOption = (index) => {
+  state.selectedAnswer = index;
+  state.selectedAnswers[state.currentPage] = index;
+};
+
+const goToPage = (index) => {
+  state.currentPage = index;
+  state.selectedAnswer = state.selectedAnswers[index];
+};
+
+const goToPrev = () => {
+  if (state.currentPage > 0) {
+    goToPage(state.currentPage - 1);
+  }
+};
+
+const submitAnswer = () => {
+  if (state.selectedAnswer === null) {
+    alert(isRus.value ? 'Пожалуйста, выберите ответ' : 'Iltimos, javoblardan birini tanlang');
+    return;
+  }
+
+  if (state.currentPage < state.questions.length - 1) {
+    goToPage(state.currentPage + 1);
+  } else {
+    finishTest();
+  }
+};
+
+const isCorrectAnswer = (qIndex) => {
+  const selected = state.selectedAnswers[qIndex];
+  const q = state.questions[qIndex];
+  return selected !== null && selected !== undefined && q.options[selected] === q.answer;
+};
+
+// Fetch questions safely supporting both individual docs and packaging
 const fetchQuestions = async (options) => {
   if (options && options.sessionId) {
     state.sessionId = options.sessionId;
@@ -168,20 +385,19 @@ const fetchQuestions = async (options) => {
     state.loading = true;
     state.error = null;
 
-    // Check if it is an AI test (from route query or props)
-    const isAi = props.subjectId === 'ai' || (route && route.query && route.query.subjectId === 'ai');
+    const isAi = activeSubjectId.value === 'ai';
 
     if (isAi) {
       const aiTestId = route?.query?.aiTestId;
       if (!aiTestId) {
-        throw new Error('AI Test ID ko\'rsatilmagan');
+        throw new Error(isRus.value ? "Идентификатор AI теста не указан" : "AI Test ID ko'rsatilmagan");
       }
 
       const docRef = doc(db, 'ai_tests', aiTestId);
       const docSnap = await getDoc(docRef);
 
       if (!docSnap.exists()) {
-        throw new Error('AI Test savollari topilmadi');
+        throw new Error(isRus.value ? "Тесты AI не найдены" : "AI Test savollari topilmadi");
       }
 
       const testData = docSnap.data();
@@ -193,56 +409,45 @@ const fetchQuestions = async (options) => {
       return;
     }
 
+    // Standard local tests query
     const testsRef = collection(
       db,
       'subjects',
-      props.subjectId,
+      activeSubjectId.value,
       'levels',
-      props.levelId,
+      activeLevelId.value,
       'tests'
     );
     const snapshot = await getDocs(testsRef);
 
-    const allTests = snapshot.docs
-      .map((doc) => doc.data())
-      .filter((doc) => Array.isArray(doc.questions));
+    // Support both document lists containing questions directly and package document formats
+    const questionsList = [];
+    snapshot.docs.forEach((doc) => {
+      const data = doc.data();
+      if (Array.isArray(data.questions)) {
+        questionsList.push(...data.questions);
+      } else if (data.question && Array.isArray(data.options)) {
+        questionsList.push(data);
+      }
+    });
 
-    if (!allTests.length) {
-      throw new Error('Тесты не найдены');
+    if (!questionsList.length) {
+      throw new Error(isRus.value ? 'Тесты не найдены' : 'Testlar topilmadi');
     }
 
-    const randomTest = allTests[Math.floor(Math.random() * allTests.length)];
-    state.questions = shuffleArray(randomTest.questions).slice(
+    state.questions = shuffleArray(questionsList).slice(
       0,
-      props.questionCount
+      activeQuestionCount.value
     );
-    state.selectedAnswers = Array(state.questions.length).fill(
-      null
-    );
+    state.selectedAnswers = Array(state.questions.length).fill(null);
     state.currentPage = 0;
     state.selectedAnswer = null;
     state.testFinished = false;
   } catch (err) {
-    console.error('Ошибка при загрузке вопросов:', err);
+    console.error('Error fetching questions:', err);
     state.error = err.message;
   } finally {
     state.loading = false;
-  }
-};
-
-const submitAnswer = () => {
-  if (state.selectedAnswer === null) {
-    return alert('Пожалуйста, выберите ответ');
-  }
-
-  state.selectedAnswers[state.currentPage] = state.selectedAnswer;
-
-  if (state.currentPage < state.questions.length - 1) {
-    state.currentPage++;
-    const prev = state.selectedAnswers[state.currentPage];
-    state.selectedAnswer = prev !== null && prev !== undefined ? prev : null;
-  } else {
-    finishTest();
   }
 };
 
@@ -253,7 +458,7 @@ const finishTest = async () => {
 
     const auth = getAuth();
     const user = auth.currentUser;
-    if (!user) throw new Error('Пользователь не авторизован');
+    if (!user) throw new Error(isRus.value ? 'Пользователь не авторизован' : 'Foydalanuvchi tizimga kirmagan');
 
     // Get count of user's previous test results for test_number
     const resultsRef = collection(db, 'results');
@@ -261,12 +466,13 @@ const finishTest = async () => {
     const snapshot = await getDocs(q);
     const testNumber = snapshot.size + 1;
 
+    // Build results object without undefined keys
     const resultData = {
       userId: user.uid,
       username: user.displayName || user.email || 'User',
-      sessionId: state.sessionId,
-      subject: props.subjectId,
-      test_level: props.levelId,
+      sessionId: state.sessionId || 'fallback_local',
+      subject: activeSubjectId.value || 'General',
+      test_level: activeLevelId.value || 'General',
       score: score.value,
       total: state.questions.length,
       answers: state.selectedAnswers.map((idx, i) => idx !== null && idx !== undefined ? state.questions[i].options[idx] : null),
@@ -276,7 +482,7 @@ const finishTest = async () => {
 
     await addDoc(collection(db, 'results'), resultData);
 
-    // Client-side fallback for certificate evaluation (in case Cloud Functions aren't deployed on Spark Plan)
+    // Client-side fallback for certificate evaluation
     if (score.value / state.questions.length >= 0.8) {
       try {
         const prevResults = snapshot.docs.map(doc => doc.data());
@@ -352,7 +558,7 @@ const finishTest = async () => {
       }
     }
   } catch (err) {
-    console.error('Ошибка при сохранении результатов:', err);
+    console.error('Error saving result:', err);
     state.error = err.message;
   }
 };
@@ -368,50 +574,688 @@ onMounted(() => {
 
 onUnmounted(() => clearInterval(intervalId));
 
-// Expose
 defineExpose({ initializeTest: fetchQuestions });
 </script>
 
 <style scoped>
-.test-page {
-  padding: 2rem;
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+.test-page-wrapper {
+  position: relative;
+  min-height: calc(100vh - 100px);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  overflow: hidden;
+  padding: 3rem 1.5rem;
 }
 
-.status-container {
-  text-align: center;
-  margin-top: 3rem;
-}
-
-.spinner {
-  margin: 1rem auto;
-  border: 5px solid #ccc;
-  border-top: 5px solid #333;
+/* Background glowing elements */
+.glow-bg {
+  position: absolute;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 0.8s linear infinite;
+  filter: blur(130px);
+  z-index: 0;
+  opacity: 0.08;
+}
+.glow-bg-1 {
+  width: 500px;
+  height: 500px;
+  background: #a855f7;
+  top: -10%;
+  left: -5%;
+}
+.glow-bg-2 {
+  width: 500px;
+  height: 500px;
+  background: #3b82f6;
+  bottom: -10%;
+  right: -5%;
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+.test-page-container {
+  position: relative;
+  z-index: 10;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.button {
-  margin-top: 1rem;
-  padding: 0.6rem 1.2rem;
-  border: none;
-  background-color: #333;
+/* Glass Status Cards (Loading, Error, Warning, Success) */
+.glass-status-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 30px;
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.glass-status-card h3 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.glass-status-card p {
+  color: #64748b;
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 450px;
+}
+
+/* Actions */
+.action-btn {
+  background: linear-gradient(135deg, #a855f7, #3b82f6);
   color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 28px;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 10px 25px -8px rgba(168, 85, 247, 0.4);
+}
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px -8px rgba(168, 85, 247, 0.5);
+}
+.action-btn.secondary {
+  background: #f1f5f9;
+  color: #475569;
+  box-shadow: none;
+}
+.action-btn.secondary:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  transform: translateY(-2px);
+}
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
-.button:hover {
-  background-color: #555;
+/* Spinner */
+.orbital-spinner {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+.orbit {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+.orbit-1 {
+  width: 90px;
+  height: 90px;
+  border-top-color: #a855f7;
+  animation: rotate 1.5s linear infinite;
+}
+.orbit-2 {
+  width: 72px;
+  height: 72px;
+  border-right-color: #3b82f6;
+  animation: rotate-reverse 1.2s linear infinite;
+}
+.orbit-3 {
+  width: 54px;
+  height: 54px;
+  border-bottom-color: #10b981;
+  animation: rotate 0.9s linear infinite;
+}
+.orbital-spinner i {
+  font-size: 1.5rem;
+}
+.text-purple {
+  color: #a855f7;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes rotate-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+/* Error & Warning Icons */
+.error-icon {
+  width: 70px;
+  height: 70px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+.warning-icon {
+  width: 70px;
+  height: 70px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+/* Quiz Interface Card */
+.quiz-glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 30px;
+  padding: 2.5rem;
+  box-shadow: 0 20px 45px -15px rgba(15, 23, 42, 0.05);
+}
+
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1.5px solid rgba(226, 232, 240, 0.8);
+  padding-bottom: 1.25rem;
+}
+
+.subject-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.level-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+}
+.level-badge.advanced {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+.level-badge.intermediate {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.timer-badge {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 10px 18px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+.timer-badge.danger {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  animation: pulse-timer 1s infinite alternate;
+}
+
+@keyframes pulse-timer {
+  from { transform: scale(1); }
+  to { transform: scale(1.03); }
+}
+
+/* Progress Section */
+.progress-section {
+  margin-bottom: 2.25rem;
+}
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+.glass-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #3b82f6);
+  border-radius: 99px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Question Section */
+.question-container {
+  margin-bottom: 2.5rem;
+}
+.question-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.5;
+  margin-bottom: 1.75rem;
+}
+
+/* Options Grid */
+.options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.option-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  cursor: pointer;
+  outline: none;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.option-card:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.option-marker {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.check-marker {
+  display: none;
+}
+
+.option-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  line-height: 1.4;
+}
+
+/* Selected option states */
+.option-card.selected {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.05);
+}
+.option-card.selected .option-marker {
+  background: #a855f7;
+  color: white;
+}
+.option-card.selected .letter-marker {
+  display: none;
+}
+.option-card.selected .check-marker {
+  display: inline;
+}
+.option-card.selected .option-text {
+  color: #a855f7;
+}
+
+/* Quiz Footer */
+.quiz-footer {
+  border-top: 1.5px solid rgba(226, 232, 240, 0.8);
+  padding-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pagination-scroller {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.pag-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.pag-dot:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+.pag-dot.active {
+  background: linear-gradient(135deg, #a855f7, #3b82f6);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35);
+}
+.pag-dot.answered:not(.active) {
+  border-color: #a855f7;
+  color: #a855f7;
+  background: rgba(168, 85, 247, 0.04);
+}
+
+.footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.next-btn.finish {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.4);
+}
+
+/* Success Card Ring */
+.score-ring-container {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+.score-ring {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.2);
+}
+.score-ring-inner {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  gap: 2px;
+}
+.score-number {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #a855f7;
+}
+.score-divider {
+  font-size: 1.2rem;
+  color: #94a3b8;
+  margin: 0 2px;
+}
+.score-total {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.success-badge {
+  width: 75px;
+  height: 75px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  font-size: 2.2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px -8px rgba(245, 158, 11, 0.5);
+}
+.trophy-anim {
+  animation: bounce-trophy 2s infinite alternate;
+}
+
+@keyframes bounce-trophy {
+  from { transform: translateY(0); }
+  to { transform: translateY(-6px); }
+}
+
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  width: 100%;
+  max-width: 320px;
+  margin: 0.5rem 0;
+}
+.stat-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.stat-val {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.stat-lbl {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.modal-glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 28px;
+  width: 100%;
+  max-width: 650px;
+  max-height: 85vh;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1.5px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.close-modal-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.close-modal-btn:hover {
+  color: #0f172a;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.modal-footer {
+  padding: 1.25rem;
+  border-top: 1.5px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Review List */
+.review-question-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 1.25rem;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.review-question-card.correct {
+  border-left: 5px solid #10b981;
+}
+.review-question-card.incorrect {
+  border-left: 5px solid #ef4444;
+}
+
+.review-q-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+}
+
+.review-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: #475569;
+}
+.review-opt.is-correct {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.03);
+  color: #065f46;
+  font-weight: 600;
+}
+.review-opt.is-incorrect {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.03);
+  color: #991b1b;
+}
+
+.review-marker {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.review-marker i {
+  font-size: 1.1rem;
+}
+.text-emerald {
+  color: #10b981;
+}
+.text-rose {
+  color: #ef4444;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+@media (max-width: 600px) {
+  .quiz-glass-card {
+    padding: 1.5rem;
+  }
+  .quiz-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .header-right {
+    width: 100%;
+  }
+  .timer-badge {
+    width: 100%;
+    justify-content: center;
+  }
+  .option-card {
+    padding: 14px 18px;
+  }
 }
 </style>

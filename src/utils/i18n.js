@@ -58,6 +58,9 @@ const translations = {
     setupAiTest: 'AI Testni Sozlash',
     aiTutor: 'AI Ustozingiz',
     activeInSystem: 'Tizimda faol',
+    badges: 'Yutuqlar',
+    certificates: 'Sertifikatlar',
+    language: 'Til',
   },
   RUS: {
     home: 'Главная',
@@ -114,6 +117,9 @@ const translations = {
     setupAiTest: 'Настроить AI Тест',
     aiTutor: 'Ваш ИИ-Наставник',
     activeInSystem: 'В сети',
+    badges: 'Достижения',
+    certificates: 'Сертификаты',
+    language: 'Язык',
   },
   ENG: {
     home: 'Home',
@@ -170,6 +176,9 @@ const translations = {
     setupAiTest: 'Configure AI Test',
     aiTutor: 'Your AI Tutor',
     activeInSystem: 'Active',
+    badges: 'Achievements',
+    certificates: 'Certificates',
+    language: 'Language',
   }
 };
 

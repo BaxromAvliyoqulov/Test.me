@@ -19,10 +19,11 @@
         </div>
 
         <!-- Language toggle group inside dropdown (UZB and RUS only) -->
+        <!-- Language toggle group inside dropdown (UZB, RUS, ENG) -->
         <div class="dropdown-lang-section">
           <span class="lang-label">
             <i class="fas fa-globe"></i> 
-            {{ currentLocale === 'UZB' ? 'Til' : 'Язык' }}
+            {{ t('language') }}
           </span>
           <div class="lang-toggle-group">
             <button 
@@ -38,6 +39,13 @@
               :class="{ active: currentLocale === 'RUS' }"
             >
               RUS
+            </button>
+            <button 
+              type="button" 
+              @click.prevent="changeLocale('ENG')" 
+              :class="{ active: currentLocale === 'ENG' }"
+            >
+              ENG
             </button>
           </div>
         </div>
@@ -59,11 +67,11 @@
             </router-link>
             <router-link to="/badges">
               <i class="fas fa-award"></i>
-              {{ currentLocale === 'RUS' ? 'Достижения' : 'Yutuqlar' }}
+              {{ t('badges') }}
             </router-link>
             <router-link to="/certificates">
               <i class="fas fa-certificate"></i>
-              {{ currentLocale === 'RUS' ? 'Сертификаты' : 'Sertifikatlar' }}
+              {{ t('certificates') }}
             </router-link>
             <router-link to="/about">
               <i class="fas fa-info-circle"></i>
@@ -78,7 +86,7 @@
               {{ t('dashboard') }}
             </router-link>
             <hr class="custom-hr" />
-            <a href="#" @click.prevent="logout">
+            <a href="#" @click.prevent="logout" class="logout-link">
               <i class="fas fa-sign-out-alt"></i>
               {{ t('logout') }}
             </a>
@@ -275,20 +283,21 @@ export default {
   position: absolute;
   top: 48px;
   right: 0;
-  min-width: 240px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+  min-width: 250px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
   z-index: 10000;
   overflow: hidden;
-  animation: slideIn 0.2s ease;
+  animation: slideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -299,18 +308,19 @@ export default {
 .user-info {
   display: flex;
   align-items: center;
-  padding: 14px 16px;
-  background-color: #f8fafc;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(139, 92, 246, 0.04) 100%);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .dropdown-profile-image {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  margin-right: 10px;
-  border: 1px solid #e2e8f0;
+  margin-right: 12px;
+  border: 2px solid rgba(37, 99, 235, 0.15);
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1);
 }
 
 .dropdown-username {
@@ -322,6 +332,7 @@ export default {
   white-space: nowrap;
   cursor: pointer;
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .dropdown-username:hover {
@@ -333,26 +344,29 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .lang-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.lang-label i {
+  color: #3b82f6;
 }
 
 .lang-toggle-group {
   display: flex;
-  gap: 3px;
+  gap: 4px;
   background-color: #f1f5f9;
-  padding: 2px;
-  border-radius: 6px;
+  padding: 4px;
+  border-radius: 8px;
 }
 
 .lang-toggle-group button {
@@ -361,53 +375,77 @@ export default {
   font-size: 0.72rem;
   font-weight: 800;
   color: #64748b;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .lang-toggle-group button.active {
   background-color: #ffffff;
   color: #2563eb;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
 }
 
 .dropdown-links {
-  padding: 6px 0;
+  padding: 8px 10px;
 }
 
 .dropdown-content a {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  color: #334155;
+  gap: 12px;
+  padding: 10px 14px;
+  color: #475569;
   text-decoration: none;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .dropdown-content a i {
-  width: 16px;
+  width: 20px;
   text-align: center;
   color: #64748b;
+  font-size: 1.05rem;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-content a img {
+  transition: transform 0.2s ease;
 }
 
 .dropdown-content a:hover {
-  background-color: #f8fafc;
+  background-color: rgba(37, 99, 235, 0.06);
   color: #2563eb;
 }
 
 .dropdown-content a:hover i {
   color: #2563eb;
+  transform: scale(1.1);
+}
+
+.dropdown-content a:hover img {
+  transform: scale(1.1);
+}
+
+.logout-link {
+  color: #ef4444 !important;
+}
+
+.logout-link i {
+  color: #ef4444 !important;
+}
+
+.logout-link:hover {
+  background-color: rgba(239, 68, 68, 0.06) !important;
 }
 
 .custom-hr {
   border: none;
-  border-top: 1px solid #f1f5f9;
-  margin: 6px 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  margin: 8px 0;
 }
 
 /* Media Queries */

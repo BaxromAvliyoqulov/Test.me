@@ -423,14 +423,15 @@ export default {
     },
 
     fetchUserStats() {
+      const self = this;
       onAuthStateChanged(auth, async (user) => {
         if (user) {
-          this.userDisplayName = user.displayName || user.email.split('@')[0];
+          self.userDisplayName = user.displayName || user.email.split('@')[0];
           try {
             // Fetch user points
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.exists()) {
-              this.userPoints = userDoc.data().points || 0;
+              self.userPoints = userDoc.data().points || 0;
             }
 
             // Fetch test results
@@ -446,10 +447,10 @@ export default {
               });
 
             // Set dynamic AI advice
-            this.fetchAiAdviceFromGemini(results);
+            self.fetchAiAdviceFromGemini(results);
 
             // Calculate streak
-            this.userStreak = this.calculateStreak(results);
+            self.userStreak = self.calculateStreak(results);
 
             // Compute unlocked badges list
             const totalTests = results.length;
@@ -460,11 +461,11 @@ export default {
               { id: 'persistent', nameUz: 'Tirishqoq', nameRu: 'Упорный', nameEn: 'Persistent', icon: 'fas fa-fire', color: '#f97316', unlocked: totalTests >= 5 },
               { id: 'scholar', nameUz: 'Bilimdon', nameRu: 'Эрудит', nameEn: 'Scholar', icon: 'fas fa-book-reader', color: '#10b981', unlocked: totalTests >= 15 },
               { id: 'perfect_score', nameUz: 'A\'lochi', nameRu: 'Отличник', nameEn: 'Perfect Score', icon: 'fas fa-star', color: '#fbbf24', unlocked: perfectCount >= 1 },
-              { id: 'coin_king', nameUz: 'Koin Qiroli', nameRu: 'Король Коинов', nameEn: 'Coin King', icon: 'fas fa-coins', color: '#a855f7', unlocked: this.userPoints >= 500 },
+              { id: 'coin_king', nameUz: 'Koin Qiroli', nameRu: 'Король Коинов', nameEn: 'Coin King', icon: 'fas fa-coins', color: '#a855f7', unlocked: self.userPoints >= 500 },
               { id: 'super_brain', nameUz: 'Super Aql', nameRu: 'Супер Мозг', nameEn: 'Super Brain', icon: 'fas fa-brain', color: '#ec4899', unlocked: perfectCount >= 3 }
             ];
 
-            this.unlockedBadges = badgesConfig.filter(b => b.unlocked);
+            self.unlockedBadges = badgesConfig.filter(b => b.unlocked);
           } catch (e) {
             console.error('Error fetching user stats:', e);
           }
@@ -1343,51 +1344,80 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 /* Test view styles */
 .test-view-container {
   max-width: 900px;
-  margin: 20px auto;
+  margin: 30px auto;
   padding: 0 16px;
   position: relative;
   z-index: 10;
 }
 
+.test-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 26px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-primary);
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+}
+
+.test-title-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .test-title-info h3 {
-  font-size: 1.4rem;
+  font-size: 1.45rem;
   font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 4px 0;
+  color: var(--card-title-color);
+  margin: 0;
 }
 
 .questions-count-tag {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: #64748b;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  background: rgba(59, 130, 246, 0.08);
+  padding: 4px 12px;
+  border-radius: 20px;
+  width: max-content;
 }
 
 .test-body-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 24px;
   padding: 2rem;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.03);
+  box-shadow: var(--shadow-primary);
 }
 
 .back-btn {
-  padding: 8px 16px;
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  font-weight: 600;
-  color: #475569;
+  padding: 10px 18px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  font-weight: 700;
+  color: var(--text-color);
   cursor: pointer;
-  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .back-btn:hover {
-  background-color: #f8fafc;
-  border-color: #94a3b8;
-  color: #0f172a;
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff !important;
+  transform: translateX(-4px);
+  box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.25);
 }
 
 /* Loading animations */

@@ -280,6 +280,8 @@ const router = useRouter();
 const route = useRoute();
 const { locale } = useI18n();
 
+const emit = defineEmits(['test-completed']);
+
 // Props definition
 const props = defineProps({
   subjectId: { type: String, default: '' },
@@ -347,6 +349,10 @@ const timeSpent = computed(() => {
 
 // Helper to navigate home securely
 const goHome = () => {
+  emit('test-completed', {
+    correctAnswers: score.value,
+    totalQuestions: state.questions.length
+  });
   router.push('/');
 };
 

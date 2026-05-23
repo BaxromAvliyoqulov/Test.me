@@ -8,8 +8,8 @@
       <!-- Welcome Banner -->
       <div class="welcome-banner">
         <div class="welcome-text">
-          <h1>Salom, {{ userDisplayName || 'Foydalanuvchi' }}! 👋</h1>
-          <p>Bugun qaysi yo'nalishda bilimingizni sinab ko'rmoqchisiz? Quyidan fanni tanlang.</p>
+          <h1>{{ t('welcomeTitle', { name: userDisplayName || t('username') }) }}</h1>
+          <p>{{ t('welcomeSubtitle') }}</p>
         </div>
         <div class="welcome-stat-chip">
           <img src="../assets/img/tpCoin.png" alt="TP Coin" class="coin-icon" />
@@ -46,7 +46,7 @@
                 </div>
                 <div class="subject-card-details">
                   <h4>{{ subject.id }}</h4>
-                  <span class="subject-badge">Testlar tayyor</span>
+                  <span class="subject-badge">{{ t('testsReady') }}</span>
                 </div>
               </div>
             </div>
@@ -115,8 +115,8 @@
                 <i class="fas fa-robot"></i>
               </div>
               <div>
-                <h4>AI Ustozingiz</h4>
-                <span class="status-online">Tizimda faol</span>
+                <h4>{{ t('aiTutor') }}</h4>
+                <span class="status-online">{{ t('activeInSystem') }}</span>
               </div>
             </div>
             <p class="ai-advice">
@@ -129,7 +129,7 @@
 
           <!-- Daily Streak & Achievements Widget -->
           <div class="sidebar-card streak-widget-card">
-            <h4>{{ isRus ? 'Активность и Награды' : 'Faollik va Yutuqlar' }}</h4>
+            <h4>{{ t('activityAndAwards') }}</h4>
             
             <!-- Streak counter -->
             <div class="streak-badge-container">
@@ -137,30 +137,30 @@
                 <i class="fas fa-fire"></i>
               </div>
               <div class="streak-details">
-                <span class="streak-num">{{ userStreak }} {{ isRus ? 'дней' : 'kun' }}</span>
-                <span class="streak-lbl">{{ isRus ? 'Ударный темп' : 'Ketma-ket faollik' }}</span>
+                <span class="streak-num">{{ getStreakText(userStreak) }}</span>
+                <span class="streak-lbl">{{ t('streakStreak') }}</span>
               </div>
             </div>
 
             <!-- Mini Badges preview -->
             <div class="badges-preview-sec">
-              <h5>{{ isRus ? 'Последние награды' : 'So\'nggi yutuqlar' }}</h5>
+              <h5>{{ t('latestAwards') }}</h5>
               <div class="mini-badges-list" v-if="unlockedBadges.length > 0">
                 <div 
                   v-for="badge in unlockedBadges.slice(0, 3)"
                   :key="badge.id"
                   class="mini-badge-item"
                   :style="{ background: badge.color + '15', color: badge.color, borderColor: badge.color + '30' }"
-                  :title="isRus ? badge.nameRu : badge.nameUz"
+                  :title="currentLocale === 'RUS' ? badge.nameRu : (currentLocale === 'ENG' ? badge.nameEn || badge.nameUz : badge.nameUz)"
                 >
                   <i :class="badge.icon"></i>
                 </div>
-                <router-link to="/badges" class="all-badges-link" :title="isRus ? 'Все награды' : 'Barcha yutuqlar'">
+                <router-link to="/badges" class="all-badges-link" :title="currentLocale === 'RUS' ? 'Все награды' : (currentLocale === 'ENG' ? 'All awards' : 'Barcha yutuqlar')">
                   <i class="fas fa-arrow-right"></i>
                 </router-link>
               </div>
               <p class="no-badges-text" v-else>
-                {{ isRus ? 'У вас пока нет открытых наград. Пройдите тест!' : 'Sizda hali ochilgan yutuqlar yo\'q. Test yeching!' }}
+                {{ t('noBadgesYet') }}
               </p>
             </div>
           </div>
@@ -169,11 +169,11 @@
           <div class="sidebar-card ai-generator-widget">
             <div class="ai-gen-header">
               <i class="fas fa-magic gen-icon"></i>
-              <h4>{{ isRus ? 'AI Конструктор Тестов' : 'AI Test Konstruktori' }}</h4>
+              <h4>{{ t('aiTestBuilder') }}</h4>
             </div>
-            <p class="ai-gen-desc">{{ isRus ? 'Создайте персональный тест на любую тему с помощью искусственного интеллекта!' : 'Istagan mavzuingiz bo\'yicha sun\'iy intellekt yordamida shaxsiy test yarating!' }}</p>
+            <p class="ai-gen-desc">{{ t('aiTestBuilderDesc') }}</p>
             <router-link to="/ai-setup" class="ai-gen-btn">
-              <i class="fas fa-cog"></i> {{ isRus ? 'Настроить AI Тест' : 'AI Testni Sozlash' }}
+              <i class="fas fa-cog"></i> {{ t('setupAiTest') }}
             </router-link>
           </div>
         </div>
@@ -449,12 +449,12 @@ export default {
             const perfectCount = results.filter(r => r.score === r.total).length;
             
             const badgesConfig = [
-              { id: 'first_step', nameUz: 'Birinchi qadam', nameRu: 'Первый шаг', icon: 'fas fa-walking', color: '#3b82f6', unlocked: totalTests >= 1 },
-              { id: 'persistent', nameUz: 'Tirishqoq', nameRu: 'Упорный', icon: 'fas fa-fire', color: '#f97316', unlocked: totalTests >= 5 },
-              { id: 'scholar', nameUz: 'Bilimdon', nameRu: 'Эрудит', icon: 'fas fa-book-reader', color: '#10b981', unlocked: totalTests >= 15 },
-              { id: 'perfect_score', nameUz: 'A\'lochi', nameRu: 'Отличник', icon: 'fas fa-star', color: '#fbbf24', unlocked: perfectCount >= 1 },
-              { id: 'coin_king', nameUz: 'Koin Qiroli', nameRu: 'Король Коинов', icon: 'fas fa-coins', color: '#a855f7', unlocked: this.userPoints >= 500 },
-              { id: 'super_brain', nameUz: 'Super Aql', nameRu: 'Супер Мозг', icon: 'fas fa-brain', color: '#ec4899', unlocked: perfectCount >= 3 }
+              { id: 'first_step', nameUz: 'Birinchi qadam', nameRu: 'Первый шаг', nameEn: 'First Step', icon: 'fas fa-walking', color: '#3b82f6', unlocked: totalTests >= 1 },
+              { id: 'persistent', nameUz: 'Tirishqoq', nameRu: 'Упорный', nameEn: 'Persistent', icon: 'fas fa-fire', color: '#f97316', unlocked: totalTests >= 5 },
+              { id: 'scholar', nameUz: 'Bilimdon', nameRu: 'Эрудит', nameEn: 'Scholar', icon: 'fas fa-book-reader', color: '#10b981', unlocked: totalTests >= 15 },
+              { id: 'perfect_score', nameUz: 'A\'lochi', nameRu: 'Отличник', nameEn: 'Perfect Score', icon: 'fas fa-star', color: '#fbbf24', unlocked: perfectCount >= 1 },
+              { id: 'coin_king', nameUz: 'Koin Qiroli', nameRu: 'Король Коинов', nameEn: 'Coin King', icon: 'fas fa-coins', color: '#a855f7', unlocked: this.userPoints >= 500 },
+              { id: 'super_brain', nameUz: 'Super Aql', nameRu: 'Супер Мозг', nameEn: 'Super Brain', icon: 'fas fa-brain', color: '#ec4899', unlocked: perfectCount >= 3 }
             ];
 
             this.unlockedBadges = badgesConfig.filter(b => b.unlocked);
@@ -676,6 +676,25 @@ export default {
         // Just scroll to subject selection
         document.querySelector('.selection-panel')?.scrollIntoView({ behavior: 'smooth' });
       }
+    },
+
+    getStreakText(streak) {
+      if (this.currentLocale === 'UZB') return `${streak} kun`;
+      if (this.currentLocale === 'ENG') return `${streak} day${streak !== 1 ? 's' : ''}`;
+      
+      // Russian pluralization rules
+      const lastDigit = streak % 10;
+      const lastTwoDigits = streak % 100;
+      if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+        return `${streak} дней`;
+      }
+      if (lastDigit === 1) {
+        return `${streak} день`;
+      }
+      if (lastDigit >= 2 && lastDigit <= 4) {
+        return `${streak} дня`;
+      }
+      return `${streak} дней`;
     },
   },
   mounted() {

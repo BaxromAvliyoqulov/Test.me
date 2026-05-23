@@ -46,6 +46,18 @@ const translations = {
     prev: 'Oldingi',
     next: 'Keyingi',
     pageOf: 'sahifadan',
+    welcomeTitle: 'Salom, {name}! 👋',
+    welcomeSubtitle: "Bugun qaysi yo'nalishda bilimingizni sinab ko'rmoqchisiz? Quyidan fanni tanlang.",
+    testsReady: 'Testlar tayyor',
+    activityAndAwards: 'Faollik va Yutuqlar',
+    streakStreak: 'Ketma-ket faollik',
+    latestAwards: "So'nggi yutuqlar",
+    noBadgesYet: "Sizda hali ochilgan yutuqlar yo'q. Test yeching!",
+    aiTestBuilder: 'AI Test Konstruktori',
+    aiTestBuilderDesc: "Istagan mavzuingiz bo'yicha sun'iy intellekt yordamida shaxsiy test yarating!",
+    setupAiTest: 'AI Testni Sozlash',
+    aiTutor: 'AI Ustozingiz',
+    activeInSystem: 'Tizimda faol',
   },
   RUS: {
     home: 'Главная',
@@ -90,6 +102,18 @@ const translations = {
     prev: 'Предыдущий',
     next: 'Следующий',
     pageOf: 'из',
+    welcomeTitle: 'Привет, {name}! 👋',
+    welcomeSubtitle: 'В какой области вы хотите проверить свои знания сегодня? Выберите предмет ниже.',
+    testsReady: 'Тесты готовы',
+    activityAndAwards: 'Активность и Награды',
+    streakStreak: 'Ударный темп',
+    latestAwards: 'Последние награды',
+    noBadgesYet: 'У вас пока нет открытых наград. Пройдите тест!',
+    aiTestBuilder: 'AI Конструктор Тестов',
+    aiTestBuilderDesc: 'Создайте персональный тест на любую тему с помощью искусственного интеллекта!',
+    setupAiTest: 'Настроить AI Тест',
+    aiTutor: 'Ваш ИИ-Наставник',
+    activeInSystem: 'В сети',
   },
   ENG: {
     home: 'Home',
@@ -134,12 +158,28 @@ const translations = {
     prev: 'Previous',
     next: 'Next',
     pageOf: 'of',
+    welcomeTitle: 'Hello, {name}! 👋',
+    welcomeSubtitle: 'Which area would you like to test your knowledge in today? Select a subject below.',
+    testsReady: 'Tests ready',
+    activityAndAwards: 'Activity & Awards',
+    streakStreak: 'Daily Streak',
+    latestAwards: 'Latest Awards',
+    noBadgesYet: 'You have no unlocked achievements yet. Take a test!',
+    aiTestBuilder: 'AI Test Builder',
+    aiTestBuilderDesc: 'Create a personalized test on any topic with the help of AI!',
+    setupAiTest: 'Configure AI Test',
+    aiTutor: 'Your AI Tutor',
+    activeInSystem: 'Active',
   }
 };
 
 export const useI18n = () => {
-  const t = (key) => {
-    return translations[currentLocale.value]?.[key] || translations['ENG']?.[key] || key;
+  const t = (key, params = {}) => {
+    let text = translations[currentLocale.value]?.[key] || translations['ENG']?.[key] || key;
+    Object.keys(params).forEach(p => {
+      text = text.replace(`{${p}}`, params[p]);
+    });
+    return text;
   };
 
   const setLocale = (locale) => {

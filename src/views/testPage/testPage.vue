@@ -203,7 +203,7 @@
             <i class="fas fa-search-plus"></i> {{ isRus ? 'Анализ ответов' : 'Javoblar tahlili' }}
           </button>
           <button class="action-btn home-btn" @click="goHome">
-            <i class="fas fa-home"></i> {{ isRus ? 'Bosh sahifaga' : 'Bosh sahifaga' }}
+            <i class="fas fa-home"></i> {{ isRus ? 'На главную' : 'Bosh sahifaga' }}
           </button>
         </div>
       </div>

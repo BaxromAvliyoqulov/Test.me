@@ -1,108 +1,209 @@
 <template>
-  <div class="dashboard-container">
-    <div class="table-header">
-      <h2>Test Results</h2>
-      <div class="search-filter">
+  <div class="dashboard-wrapper">
+    <!-- Glowing background blobs matching the premium theme -->
+    <div class="glow-bg glow-bg-1"></div>
+    <div class="glow-bg glow-bg-2"></div>
+
+    <div class="dashboard-container">
+      <!-- Hero Header Section -->
+      <div class="dashboard-hero">
+        <h1 class="dashboard-title">
+          <span class="gradient-text">{{ t('dashboard') }}</span>
+        </h1>
+        <p class="dashboard-subtitle">
+          {{ currentLocale === 'RUS' ? 'Просматривайте результаты тестов и отслеживайте свой прогресс' : 
+             currentLocale === 'UZB' ? 'Test natijalaringizni ko\'ring va rivojlanishingizni kuzatib boring' :
+             'View your test results and track your progress details' }}
+        </p>
+      </div>
+
+      <!-- Quick Statistics Summary Cards -->
+      <div class="stats-grid">
+        <div class="stats-card">
+          <div class="stats-icon-wrapper total-tests-icon">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <div class="stats-info">
+            <span class="stats-label">{{ t('totalTests') }}</span>
+            <h3 class="stats-value">{{ items.length }}</h3>
+          </div>
+        </div>
+
+        <div class="stats-card">
+          <div class="stats-icon-wrapper avg-score-icon">
+            <i class="fas fa-percentage"></i>
+          </div>
+          <div class="stats-info">
+            <span class="stats-label">{{ t('averageScore') }}</span>
+            <h3 class="stats-value">{{ averageScorePercent }}%</h3>
+          </div>
+        </div>
+
+        <div class="stats-card">
+          <div class="stats-icon-wrapper max-score-icon">
+            <i class="fas fa-trophy"></i>
+          </div>
+          <div class="stats-info">
+            <span class="stats-label">{{ t('highestScore') }}</span>
+            <h3 class="stats-value">{{ highestScorePercent }}%</h3>
+          </div>
+        </div>
+
+        <div class="stats-card">
+          <div class="stats-icon-wrapper best-subject-icon">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <div class="stats-info">
+            <span class="stats-label">{{ t('bestSubject') }}</span>
+            <h3 class="stats-value text-truncate" :title="bestSubjectName">{{ bestSubjectName }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Controls & Search -->
+      <div class="filter-card">
         <div class="search-box">
+          <i class="fas fa-search search-icon"></i>
           <input
             v-model="search"
             type="text"
-            placeholder="Search..."
+            :placeholder="t('searchPlaceholder')"
             class="search-input"
           />
         </div>
-        <select v-model="filterSubject" class="filter-select">
-          <option value="">All Subjects</option>
-          <option
-            v-for="subject in uniqueSubjects"
-            :key="subject"
-            :value="subject"
-          >
-            {{ subject }}
-          </option>
-        </select>
-        <select v-model="filterLevel" class="filter-select">
-          <option value="">All Levels</option>
-          <option v-for="level in uniqueLevels" :key="level" :value="level">
-            {{ level }}
-          </option>
-        </select>
-        <button @click="exportToExcel" class="export-btn excel">
-          <i class="fas fa-file-excel"></i> Export to Excel
-        </button>
-      </div>
-    </div>
-
-    <!-- Loading state -->
-    <div v-if="loading" class="loading-state">Loading results...</div>
-
-    <!-- No results state -->
-    <div v-else-if="items.length === 0" class="no-results">
-      <p>No results found</p>
-    </div>
-
-    <!-- Results table -->
-    <div v-else class="table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th
-              v-for="header in headers"
-              :key="header.value"
-              @click="sortBy(header.value)"
-              :class="{ 'active-sort': sortKey === header.value }"
-            >
-              {{ header.text }}
-              <span v-if="sortKey === header.value" class="sort-indicator">
-                {{ sortOrder === 'asc' ? '▲' : '▼' }}
-              </span>
-            </th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in paginatedAndFilteredItems" :key="item.id">
-            <td>{{ item.username }}</td>
-            <td>{{ item.subject }}</td>
-            <td>{{ item.test_number }}</td>
-            <td>{{ item.test_level }}</td>
-            <td :class="getScoreClass(item.score, item.total)">
-              {{ getScorePercent(item.score, item.total) }}%
-            </td>
-            <td>{{ formatDate(item.timestamp) }}</td>
-            <td class="actions">
-              <i
-                class="fa-solid fa-trash-can action-icon delete"
-                @click="deleteItem(item)"
-                title="Delete"
-                id="delete"
+        
+        <div class="filter-controls">
+          <div class="select-wrapper">
+            <i class="fas fa-book select-icon"></i>
+            <select v-model="filterSubject" class="filter-select">
+              <option value="">{{ t('allSubjects') }}</option>
+              <option
+                v-for="subject in uniqueSubjects"
+                :key="subject"
+                :value="subject"
               >
-              </i>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+                {{ subject }}
+              </option>
+            </select>
+          </div>
 
-    <!-- Pagination -->
-    <div class="pagination" v-if="items.length > 0">
-      <button
-        :disabled="currentPage === 1"
-        @click="currentPage--"
-        class="pagination-btn"
-      >
-        Previous
-      </button>
-      <span class="page-info">
-        Page {{ currentPage }} of {{ totalPages }}
-      </span>
-      <button
-        :disabled="currentPage === totalPages"
-        @click="currentPage++"
-        class="pagination-btn"
-      >
-        Next
-      </button>
+          <div class="select-wrapper">
+            <i class="fas fa-layer-group select-icon"></i>
+            <select v-model="filterLevel" class="filter-select">
+              <option value="">{{ t('allLevels') }}</option>
+              <option v-for="level in uniqueLevels" :key="level" :value="level">
+                {{ level }}
+              </option>
+            </select>
+          </div>
+
+          <button @click="exportToExcel" class="export-btn" id="export-btn">
+            <i class="fas fa-file-excel"></i>
+            <span>{{ t('exportExcel') }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="state-card">
+        <div class="spinner"></div>
+        <p class="state-text">{{ t('loading') }}</p>
+      </div>
+
+      <!-- No Results State -->
+      <div v-else-if="items.length === 0" class="state-card">
+        <div class="state-icon error-icon">
+          <i class="fas fa-folder-open"></i>
+        </div>
+        <p class="state-text">{{ t('noResults') }}</p>
+      </div>
+
+      <!-- Table Card Section -->
+      <div v-else class="table-card">
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th
+                  v-for="header in headers"
+                  :key="header.value"
+                  @click="sortBy(header.value)"
+                  :class="{ 'active-sort': sortKey === header.value }"
+                >
+                  <div class="header-content">
+                    <span>{{ header.text }}</span>
+                    <span v-if="sortKey === header.value" class="sort-indicator">
+                      {{ sortOrder === 'asc' ? ' ▲' : ' ▼' }}
+                    </span>
+                  </div>
+                </th>
+                <th>{{ t('actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in paginatedAndFilteredItems" :key="item.id">
+                <td class="username-cell">
+                  <div class="user-avatar-mini">
+                    {{ item.username ? item.username.charAt(0).toUpperCase() : 'U' }}
+                  </div>
+                  <span class="user-name-text">{{ item.username }}</span>
+                </td>
+                <td class="subject-cell">
+                  <span class="subject-badge">{{ item.subject }}</span>
+                </td>
+                <td class="text-center font-semibold">{{ item.test_number }}</td>
+                <td>
+                  <span :class="['level-badge', getLevelClass(item.test_level)]">
+                    {{ item.test_level }}
+                  </span>
+                </td>
+                <td>
+                  <div class="score-container">
+                    <span :class="['score-pill', getScoreClass(item.score, item.total)]">
+                      {{ getScorePercent(item.score, item.total) }}%
+                    </span>
+                    <span class="score-ratio">{{ item.score }}/{{ item.total }}</span>
+                  </div>
+                </td>
+                <td class="date-cell">{{ formatDate(item.timestamp) }}</td>
+                <td class="actions-cell">
+                  <button 
+                    class="action-btn delete-btn" 
+                    @click="deleteItem(item)" 
+                    :title="currentLocale === 'RUS' ? 'Удалить результат' : 'Natijani o\'chirish'"
+                    id="delete"
+                  >
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination">
+          <button
+            :disabled="currentPage === 1"
+            @click="currentPage--"
+            class="pagination-btn"
+          >
+            <i class="fas fa-chevron-left"></i>
+            <span>{{ t('prev') }}</span>
+          </button>
+          <span class="page-info">
+            {{ currentPage }} / {{ totalPages }}
+          </span>
+          <button
+            :disabled="currentPage === totalPages"
+            @click="currentPage++"
+            class="pagination-btn"
+          >
+            <span>{{ t('next') }}</span>
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -120,11 +221,16 @@ import {
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import * as XLSX from 'xlsx';
+import { useI18n } from '@/utils/i18n';
 
 export default {
   name: 'Dashboard',
   setup() {
-    // ... ваш существующий код setup ...
+    const { locale, t } = useI18n();
+    return {
+      currentLocale: locale,
+      t,
+    };
   },
   data() {
     return {
@@ -137,22 +243,53 @@ export default {
       sortKey: 'timestamp',
       sortOrder: 'desc',
       loading: true,
-      headers: [
-        { text: 'Username', value: 'username' },
-        { text: 'Subject', value: 'subject' },
-        { text: 'Test Number', value: 'test_number' },
-        { text: 'Level', value: 'test_level' },
-        { text: 'Score', value: 'score' },
-        { text: 'Date', value: 'timestamp' },
-      ],
     };
   },
   computed: {
+    headers() {
+      return [
+        { text: this.t('username'), value: 'username' },
+        { text: this.t('subject'), value: 'subject' },
+        { text: this.t('testNumber'), value: 'test_number' },
+        { text: this.t('level'), value: 'test_level' },
+        { text: this.t('score'), value: 'score' },
+        { text: this.t('date'), value: 'timestamp' },
+      ];
+    },
     uniqueSubjects() {
       return [...new Set(this.items.map((item) => item.subject))];
     },
     uniqueLevels() {
       return [...new Set(this.items.map((item) => item.test_level))];
+    },
+    averageScorePercent() {
+      if (this.items.length === 0) return 0;
+      const sum = this.items.reduce((acc, item) => acc + this.getScorePercent(item.score, item.total), 0);
+      return Math.round(sum / this.items.length);
+    },
+    highestScorePercent() {
+      if (this.items.length === 0) return 0;
+      return Math.max(...this.items.map(item => this.getScorePercent(item.score, item.total)));
+    },
+    bestSubjectName() {
+      if (this.items.length === 0) return '—';
+      const subjectSums = {};
+      const subjectCounts = {};
+      this.items.forEach(item => {
+        const percent = this.getScorePercent(item.score, item.total);
+        subjectSums[item.subject] = (subjectSums[item.subject] || 0) + percent;
+        subjectCounts[item.subject] = (subjectCounts[item.subject] || 0) + 1;
+      });
+      let bestSub = '—';
+      let bestAvg = -1;
+      for (const sub in subjectSums) {
+        const avg = subjectSums[sub] / subjectCounts[sub];
+        if (avg > bestAvg) {
+          bestAvg = avg;
+          bestSub = sub;
+        }
+      }
+      return bestSub;
     },
     filteredItems() {
       return this.items.filter((item) => {
@@ -170,6 +307,15 @@ export default {
       return [...this.filteredItems].sort((a, b) => {
         let aVal = a[this.sortKey];
         let bVal = b[this.sortKey];
+        
+        // Handle firestore Timestamp conversion for sorting
+        if (aVal && typeof aVal.toDate === 'function') {
+          aVal = aVal.toDate().getTime();
+        }
+        if (bVal && typeof bVal.toDate === 'function') {
+          bVal = bVal.toDate().getTime();
+        }
+
         if (typeof aVal === 'string') {
           aVal = aVal.toLowerCase();
           bVal = bVal.toLowerCase();
@@ -188,7 +334,7 @@ export default {
       return this.sortedItems.slice(start, start + this.itemsPerPage);
     },
     totalPages() {
-      return Math.ceil(this.filteredItems.length / this.itemsPerPage);
+      return Math.ceil(this.filteredItems.length / this.itemsPerPage) || 1;
     },
   },
   methods: {
@@ -214,16 +360,31 @@ export default {
       }
     },
     formatDate(timestamp) {
-      return timestamp.toDate().toLocaleString();
+      if (!timestamp) return '—';
+      if (typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().toLocaleString();
+      }
+      return new Date(timestamp).toLocaleString();
     },
     getScorePercent(score, total) {
+      if (!total || total === 0) return 0;
       return Math.round((score / total) * 100);
     },
     getScoreClass(score, total) {
       const percent = this.getScorePercent(score, total);
-      if (percent >= 90) return 'score-excellent';
-      if (percent >= 70) return 'score-good';
+      if (percent >= 85) return 'score-excellent';
+      if (percent >= 60) return 'score-good';
       return 'score-poor';
+    },
+    getLevelClass(level) {
+      const l = String(level).toLowerCase();
+      if (l.includes('oson') || l.includes('easy') || l.includes('легко') || l.includes('low')) {
+        return 'level-easy';
+      }
+      if (l.includes('orta') || l.includes('o\'rtacha') || l.includes('medium') || l.includes('средне') || l.includes('middle')) {
+        return 'level-medium';
+      }
+      return 'level-hard';
     },
     sortBy(key) {
       if (this.sortKey === key) {
@@ -234,34 +395,37 @@ export default {
       }
     },
     async deleteItem(item) {
-      if (!confirm('Are you sure you want to delete this result?')) return;
-      await deleteDoc(doc(db, 'results', item.id));
-      this.fetchResults();
+      if (!confirm(this.t('deleteConfirm'))) return;
+      try {
+        await deleteDoc(doc(db, 'results', item.id));
+        this.fetchResults();
+      } catch (error) {
+        console.error('Error deleting result:', error);
+      }
     },
     async exportToExcel() {
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(
         this.sortedItems.map((item) => ({
-          Username: item.username,
-          Subject: item.subject,
-          'Test Number': item.test_number,
-          Level: item.test_level,
-          'Score (%)': this.getScorePercent(item.score, item.total),
-          Date: this.formatDate(item.timestamp),
+          [this.t('username')]: item.username,
+          [this.t('subject')]: item.subject,
+          [this.t('testNumber')]: item.test_number,
+          [this.t('level')]: item.test_level,
+          [`${this.t('score')} (%)`]: this.getScorePercent(item.score, item.total),
+          [this.t('date')]: this.formatDate(item.timestamp),
         }))
       );
 
-      // Style configuration
       ws['!cols'] = [
         { width: 20 }, // Username
         { width: 15 }, // Subject
         { width: 12 }, // Test Number
         { width: 12 }, // Level
         { width: 15 }, // Score
-        { width: 20 }, // Date
+        { width: 22 }, // Date
       ];
 
-      XLSX.utils.book_append_sheet(wb, ws, 'Test Results');
+      XLSX.utils.book_append_sheet(wb, ws, this.t('testResults'));
       XLSX.writeFile(
         wb,
         `test_results_${new Date().toLocaleDateString()}.xlsx`
@@ -287,188 +451,641 @@ export default {
 </script>
 
 <style scoped>
-.dashboard-container {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+.dashboard-wrapper {
+  position: relative;
+  min-height: 90vh;
+  padding: 3rem 1.5rem;
+  overflow: hidden;
+  background: #f8fafc;
+  font-family: 'Outfit', 'Inter', sans-serif;
 }
 
-.table-header {
+.glow-bg {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.25;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.glow-bg-1 {
+  top: 5%;
+  left: 5%;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, #3b82f6 0%, #60a5fa 100%);
+}
+
+.glow-bg-2 {
+  bottom: 5%;
+  right: 5%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #10b981 0%, #34d399 100%);
+}
+
+.dashboard-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.dashboard-hero {
+  text-align: center;
+}
+
+.dashboard-title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -1px;
+  margin: 0 0 0.5rem 0;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dashboard-subtitle {
+  font-size: 1.1rem;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* Statistics Grid cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.stats-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.02);
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 20px 30px -15px rgba(15, 23, 42, 0.06);
+}
+
+.stats-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.total-tests-icon {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  color: #4f46e5;
+}
+
+.avg-score-icon {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #2563eb;
+}
+
+.max-score-icon {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  color: #d97706;
+}
+
+.best-subject-icon {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #059669;
+}
+
+.stats-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.stats-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+}
+
+.stats-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 4px 0 0 0;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Modern Filter Card */
+.filter-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 20px;
+  padding: 1.25rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-}
-
-h2 {
-  font-size: 1.8rem;
-  color: #2c3e50;
-  margin: 0;
-}
-
-.search-filter {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.02);
 }
 
 .search-box {
   position: relative;
+  flex-grow: 1;
+  max-width: 350px;
+  min-width: 200px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.95rem;
 }
 
 .search-input {
-  padding: 0.5rem 1rem 0.5rem 2rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  width: 100%;
+  padding: 0.7rem 1rem 0.7rem 2.6rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  background-color: #ffffff;
+  color: #0f172a;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.select-wrapper {
+  position: relative;
+  min-width: 160px;
+}
+
+.select-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
   font-size: 0.9rem;
-  width: 200px;
 }
 
 .filter-select {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  min-width: 120px;
+  width: 100%;
+  padding: 0.7rem 1rem 0.7rem 2.4rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  background-color: #ffffff;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.filter-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.7rem 1.4rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.35);
+}
+
+.export-btn:active {
+  transform: translateY(0);
+}
+
+/* Loading & Empty States */
+.state-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 20px;
+  padding: 4rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(59, 130, 246, 0.1);
+  border-left-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.state-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.error-icon {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+}
+
+.state-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Data Table Layout */
+.table-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.02);
 }
 
 .table-wrapper {
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  border: 1px solid #e0e0e0;
+  overflow-x: auto;
 }
 
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-th {
-  background: #f0f0f0;
-  padding: 0.8rem;
   text-align: left;
-  font-size: 1rem;
+  font-size: 0.95rem;
+}
+
+.data-table th {
+  background-color: rgba(248, 250, 252, 0.6);
+  padding: 1.1rem 1.25rem;
   font-weight: 700;
-  color: #333;
+  color: #475569;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e2e8f0;
   cursor: pointer;
-  border: 1px solid #e0e0e0;
-  position: relative;
+  user-select: none;
+  transition: background-color 0.2s;
 }
 
-td {
-  padding: 0.8rem;
-  border: 1px solid #e0e0e0;
+.data-table th:hover {
+  background-color: #f1f5f9;
 }
 
-tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-tr:hover {
-  background-color: #f0f4f8;
-}
-
-.export-btn {
+.header-content {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  gap: 4px;
+}
+
+.sort-indicator {
+  color: #3b82f6;
+  font-size: 0.8rem;
+}
+
+.data-table td {
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.data-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.data-table tbody tr:hover {
+  background-color: rgba(248, 250, 252, 0.8);
+}
+
+/* Row-specific cells styling */
+.username-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar-mini {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+}
+
+.user-name-text {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.subject-badge {
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: 1px solid #e2e8f0;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Level Badges */
+.level-badge {
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.level-easy {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.level-medium {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.level-hard {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Score Pills */
+.score-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-pill {
+  padding: 0.3rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.score-excellent {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.score-good {
+  background-color: #eff6ff;
+  color: #1e40af;
+}
+
+.score-poor {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.score-ratio {
+  font-size: 0.85rem;
+  color: #64748b;
   font-weight: 500;
 }
 
-.export-btn.excel {
-  background: #1e874d;
-  color: white;
+.date-cell {
+  font-size: 0.88rem;
+  color: #64748b;
 }
 
-.export-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+/* Actions */
+.actions-cell {
+  text-align: center;
 }
 
-.pagination {
-  display: flex;
-  justify-content: center;
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  display: inline-flex;
   align-items: center;
-  margin-top: 2rem;
-  gap: 1rem;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-btn {
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.delete-btn:hover {
+  background-color: #ef4444;
+  color: white;
+  transform: scale(1.08);
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+/* Pagination Section */
+.pagination {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(248, 250, 252, 0.4);
+  border-top: 1px solid #e2e8f0;
 }
 
 .pagination-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  gap: 8px;
+  padding: 0.5rem 1.1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   background: white;
+  color: #475569;
+  font-size: 0.88rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s;
+  font-family: inherit;
 }
 
 .pagination-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .pagination-btn:not(:disabled):hover {
-  background: #f8f9fa;
-  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
 .page-info {
-  font-weight: 500;
-  color: #666;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #475569;
+  background-color: #f1f5f9;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
 }
 
-.loading-state,
-.no-results {
-  text-align: center;
-  padding: 3rem;
-  color: #666;
-}
-
-.loading-state i,
-.no-results i {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #007bff;
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
-  .table-header {
-    flex-direction: column;
-    gap: 1rem;
+  .dashboard-wrapper {
+    padding: 2rem 1rem;
   }
 
-  .search-filter {
-    flex-wrap: wrap;
+  .dashboard-title {
+    font-size: 2.2rem;
+  }
+
+  .filter-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.25rem;
+  }
+
+  .search-box {
+    max-width: 100%;
+  }
+
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .select-wrapper {
+    width: 100%;
+  }
+
+  .export-btn {
     justify-content: center;
   }
 
-  .data-table {
-    display: block;
-    overflow-x: auto;
+  .pagination {
+    padding: 1rem;
   }
+  
+  .pagination-btn span {
+    display: none;
+  }
+  
+  .pagination-btn {
+    padding: 0.5rem 0.8rem;
+  }
+}
 
-  .search-input,
-  .filter-select {
-    width: 100%;
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
-}
-#export-btn {
-  font-size: 0.9rem;
-}
-#delete {
-  cursor: pointer;
-  font-size: 1rem;
-  color: red;
 }
 </style>

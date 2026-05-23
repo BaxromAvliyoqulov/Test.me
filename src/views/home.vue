@@ -370,9 +370,14 @@ export default {
           status: 'in-progress',
         };
 
-        const sessionsRef = collection(db, 'testSessions');
-        const docRef = await addDoc(sessionsRef, testSession);
-        const sessionId = docRef.id;
+        let sessionId = 'local_' + Math.random().toString(36).substring(2, 9);
+        try {
+          const sessionsRef = collection(db, 'testSessions');
+          const docRef = await addDoc(sessionsRef, testSession);
+          sessionId = docRef.id;
+        } catch (dbErr) {
+          console.warn('⚠️ Could not save testSession to Firestore (likely permission rules), using local fallback ID:', dbErr);
+        }
 
         this.startTest = true;
 

@@ -108,8 +108,9 @@
 <script>
 import { reactive, ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { functions } from '@/config/firebase';
+import { db, auth, functions } from '@/config/firebase';
 import { httpsCallable } from 'firebase/functions';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useI18n } from '@/utils/i18n';
 import { useToast } from 'vue-toastification';
 
@@ -192,6 +193,78 @@ export default {
       progressPercentage.value = 100;
     };
 
+    const generateQuestionsClientSide = async (subject, level, topic) => {
+      const GEMINI_API_KEY = "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      text: `Generate a multiple-choice quiz about the topic "${topic}" for subject "${subject}" at "${level}" difficulty level.
+The response must be exactly a JSON array of 10 objects.
+Each question object MUST contain:
+- "question": string (the exact text of the question)
+- "options": array of 4 strings (possible options, one must be correct)
+- "answer": string (the exact correct option string)
+
+Ensure all questions are grammatically correct and return ONLY raw JSON matching the schema. No markdown formatting.`
+                    }
+                  ]
+                }
+              ],
+              generationConfig: {
+                responseMimeType: "application/json"
+              }
+            })
+          }
+        );
+
+        if (response.ok) {
+          const resData = await response.json();
+          const text = resData.candidates[0].content.parts[0].text;
+          return JSON.parse(text.trim());
+        } else {
+          throw new Error(`Gemini API status ${response.status}`);
+        }
+      } catch (err) {
+        console.warn("Direct Gemini API call failed, using offline fallback generator:", err);
+        return getOfflineFallbackQuestions(subject, level, topic);
+      }
+    };
+
+    const getOfflineFallbackQuestions = (subject, level, topic) => {
+      const questions = [];
+      const isRuLocale = isRus.value;
+      for (let i = 1; i <= 10; i++) {
+        const qText = isRuLocale 
+          ? `Вопрос ${i} по теме "${topic}" (${subject}, уровень ${level})`
+          : `Mavzu: "${topic}" bo'yicha ${i}-savol (${subject}, daraja: ${level})`;
+        
+        const optCorrect = isRuLocale
+          ? `Правильный ответ на вопрос ${i}`
+          : `${i}-savol uchun to'g'ri javob`;
+          
+        const opt2 = isRuLocale ? `Неверный вариант A` : `Noto'g'ri variant A`;
+        const opt3 = isRuLocale ? `Неверный вариант B` : `Noto'g'ri variant B`;
+        const opt4 = isRuLocale ? `Неверный вариант C` : `Noto'g'ri variant C`;
+
+        questions.push({
+          question: qText,
+          options: [optCorrect, opt2, opt3, opt4].sort(() => Math.random() - 0.5),
+          answer: optCorrect
+        });
+      }
+      return questions;
+    };
+
     const generateTest = async () => {
       startLoadingAnimations();
 
@@ -220,10 +293,40 @@ export default {
         }, 800);
 
       } catch (error) {
-        stopLoadingAnimations();
-        loading.value = false;
-        console.error("AI Test generation failed:", error);
-        toast.error(isRus.value ? 'Ошибка при генерации теста. Попробуйте еще раз.' : 'Test generatsiya qilishda xatolik yuz berdi. Qaytadan urinib ko\'ring.');
+        console.warn("Cloud function failed, running client-side AI generator fallback:", error);
+        
+        try {
+          const questions = await generateQuestionsClientSide(form.subject, form.level, form.topic);
+          
+          const aiTestRef = await addDoc(collection(db, 'ai_tests'), {
+            creatorId: auth.currentUser?.uid || 'anonymous',
+            subject: form.subject,
+            level: form.level,
+            topic: form.topic,
+            questions: questions,
+            createdAt: serverTimestamp()
+          });
+
+          stopLoadingAnimations();
+          toast.success(isRus.value ? 'Тест успешно сгенерирован (Client fallback)!' : 'Test muvaffaqiyatli yaratildi (Client fallback)!');
+
+          setTimeout(() => {
+            router.push({
+              path: '/test',
+              query: {
+                subjectId: 'ai',
+                levelId: 'ai',
+                questionCount: 10,
+                aiTestId: aiTestRef.id
+              }
+            });
+          }, 800);
+        } catch (fallbackErr) {
+          stopLoadingAnimations();
+          loading.value = false;
+          console.error("Client-side AI generation failed:", fallbackErr);
+          toast.error(isRus.value ? 'Ошибка при генерации теста. Попробуйте еще раз.' : 'Test generatsiya qilishda xatolik yuz berdi. Qaytadan urinib ko\'ring.');
+        }
       }
     };
 

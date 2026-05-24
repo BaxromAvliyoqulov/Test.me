@@ -991,9 +991,10 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 .test-container {
   position: relative;
   z-index: 10;
-  max-width: 1100px;
+  max-width: 1400px;
+  width: 95%;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 2rem 0;
 }
 
 /* Welcome Banner */
@@ -1058,8 +1059,8 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 /* Dashboard Grid */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: 2rem;
+  grid-template-columns: 2fr 1fr;
+  gap: 3rem;
 }
 
 .selection-panel {
@@ -1071,9 +1072,9 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 .panel-section {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  padding: 1.5rem;
-  border-radius: 20px;
-  box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.02);
+  padding: 2rem;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05);
 }
 
 .section-header {
@@ -1107,18 +1108,18 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 /* Subject Grid Cards */
 .subject-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
 }
 
 .subject-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 1rem;
+  gap: 16px;
+  padding: 1.2rem;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border-radius: 18px;
   cursor: pointer;
   transition: all 0.25s ease;
 }
@@ -1140,12 +1141,12 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 50px;
+  height: 50px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 1.2rem;
+  border-radius: 12px;
+  font-size: 1.5rem;
   color: #3b82f6;
   transition: all 0.25s ease;
 }
@@ -1157,14 +1158,14 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 }
 
 .subject-card-details h4 {
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #0f172a;
-  margin: 0 0 2px 0;
+  margin: 0 0 4px 0;
 }
 
 .subject-badge {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: #64748b;
   font-weight: 500;
 }
@@ -1242,9 +1243,9 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 .sidebar-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.02);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05);
 }
 
 .ai-coach-card {

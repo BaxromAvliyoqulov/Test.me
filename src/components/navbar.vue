@@ -282,8 +282,8 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 0 24px;
-  max-width: 1200px;
-  width: 90%;
+  max-width: 1400px;
+  width: 95%;
   height: 64px;
   margin: 16px auto;
   background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);

@@ -14,12 +14,16 @@ service cloud.firestore {
     // Users collection rules
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow write: if isOwner(userId);
+      allow create, delete: if isOwner(userId);
+      allow update: if isOwner(userId) || 
+        (isAuthenticated() && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['points']) && 
+         request.resource.data.points == resource.data.points + 50);
 
       // User transactions sub-collection (test rewards & purchases)
       match /transactions/{txId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId);
+        allow create: if isOwner(userId) || (isAuthenticated() && request.resource.data.points == 50);
         allow update, delete: if false;
       }
 

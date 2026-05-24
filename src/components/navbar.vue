@@ -47,42 +47,50 @@
         <!-- Logged In Links -->
         <template v-if="username">
           <div class="dropdown-links">
-            <router-link to="/">
-              <i class="fas fa-home"></i>
-              {{ t('home') }}
+            <router-link to="/" class="nav-link home-link">
+              <div class="nav-icon"><i class="fas fa-home"></i></div>
+              <span class="nav-text">{{ t('home') }}</span>
             </router-link>
-            <router-link to="/points">
-              <img
-                src="../assets/img/tpCoin.png"
-                alt="TP Coin"
-                style="width: 16px; height: 16px; margin-right: 8px"
-              />
-              {{ t('points') }}
+            
+            <router-link to="/points" class="nav-link points-link">
+              <div class="nav-icon">
+                <img src="../assets/img/tpCoin.png" alt="TP Coin" />
+              </div>
+              <span class="nav-text">{{ t('points') }}</span>
             </router-link>
-            <router-link to="/badges">
-              <i class="fas fa-award"></i>
-              {{ t('badges') }}
+
+            <router-link to="/badges" class="nav-link badges-link">
+              <div class="nav-icon"><i class="fas fa-award"></i></div>
+              <span class="nav-text">{{ t('badges') }}</span>
             </router-link>
-            <router-link to="/certificates">
-              <i class="fas fa-certificate"></i>
-              {{ t('certificates') }}
+
+            <router-link to="/certificates" class="nav-link certs-link">
+              <div class="nav-icon"><i class="fas fa-certificate"></i></div>
+              <span class="nav-text">{{ t('certificates') }}</span>
             </router-link>
-            <router-link to="/about">
-              <i class="fas fa-info-circle"></i>
-              {{ t('about') }}
+
+            <router-link to="/dashboard" class="nav-link dash-link">
+              <div class="nav-icon"><i class="fas fa-chart-pie"></i></div>
+              <span class="nav-text">{{ t('dashboard') }}</span>
             </router-link>
-            <router-link to="/contactUs">
-              <i class="fas fa-envelope"></i>
-              {{ t('contact') }}
-            </router-link>
-            <router-link to="/dashboard">
-              <i class="fas fa-chart-line"></i>
-              {{ t('dashboard') }}
-            </router-link>
+
             <hr class="custom-hr" />
-            <a href="#" @click.prevent="logout" class="logout-link">
-              <i class="fas fa-sign-out-alt"></i>
-              {{ t('logout') }}
+
+            <router-link to="/about" class="nav-link about-link">
+              <div class="nav-icon"><i class="fas fa-info"></i></div>
+              <span class="nav-text">{{ t('about') }}</span>
+            </router-link>
+
+            <router-link to="/contactUs" class="nav-link contact-link">
+              <div class="nav-icon"><i class="fas fa-headset"></i></div>
+              <span class="nav-text">{{ t('contact') }}</span>
+            </router-link>
+
+            <hr class="custom-hr" />
+
+            <a href="#" @click.prevent="logout" class="nav-link logout-link">
+              <div class="nav-icon"><i class="fas fa-sign-out-alt"></i></div>
+              <span class="nav-text">{{ t('logout') }}</span>
             </a>
           </div>
         </template>
@@ -90,22 +98,26 @@
         <!-- Logged Out Links -->
         <template v-else>
           <div class="dropdown-links">
-            <router-link to="/about">
-              <i class="fas fa-info-circle"></i>
-              {{ t('about') }}
+            <router-link to="/about" class="nav-link about-link">
+              <div class="nav-icon"><i class="fas fa-info"></i></div>
+              <span class="nav-text">{{ t('about') }}</span>
             </router-link>
-            <router-link to="/contactUs">
-              <i class="fas fa-envelope"></i>
-              {{ t('contact') }}
+
+            <router-link to="/contactUs" class="nav-link contact-link">
+              <div class="nav-icon"><i class="fas fa-headset"></i></div>
+              <span class="nav-text">{{ t('contact') }}</span>
             </router-link>
+
             <hr class="custom-hr" />
-            <router-link to="/login">
-              <i class="fas fa-sign-in-alt"></i>
-              {{ t('login') }}
+
+            <router-link to="/login" class="nav-link login-link">
+              <div class="nav-icon"><i class="fas fa-sign-in-alt"></i></div>
+              <span class="nav-text">{{ t('login') }}</span>
             </router-link>
-            <router-link to="/signup">
-              <i class="fas fa-user-plus"></i>
-              {{ t('signup') }}
+
+            <router-link to="/signup" class="nav-link signup-link">
+              <div class="nav-icon"><i class="fas fa-user-plus"></i></div>
+              <span class="nav-text">{{ t('signup') }}</span>
             </router-link>
           </div>
         </template>
@@ -424,64 +436,114 @@ export default {
 }
 
 .dropdown-links {
-  padding: 8px 10px;
+  padding: 8px;
 }
 
-.dropdown-content a {
+.nav-link {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
-  color: #475569;
+  padding: 10px 12px;
   text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: 12px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.dropdown-content a i {
-  width: 20px;
-  text-align: center;
+.nav-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #f1f5f9;
   color: #64748b;
-  font-size: 1.05rem;
-  transition: transform 0.2s ease, color 0.2s ease;
 }
 
-.dropdown-content a img {
-  transition: transform 0.2s ease;
+.nav-icon img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
 }
 
-.dropdown-content a:hover {
-  background-color: rgba(37, 99, 235, 0.06);
-  color: #2563eb;
+.nav-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #334155;
+  transition: color 0.2s;
 }
 
-.dropdown-content a:hover i {
-  color: #2563eb;
-  transform: scale(1.1);
+/* Hover effect */
+.nav-link:hover {
+  background: #f8fafc;
+  transform: translateX(4px);
 }
 
-.dropdown-content a:hover img {
-  transform: scale(1.1);
+.nav-link:hover .nav-icon {
+  transform: scale(1.1) rotate(-5deg);
 }
 
-.logout-link {
-  color: #ef4444 !important;
-}
+/* Individual Colors */
+.home-link:hover { background: #eff6ff; }
+.home-link .nav-icon { background: #eff6ff; color: #3b82f6; }
+.home-link:hover .nav-text { color: #2563eb; }
+.home-link:hover .nav-icon { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
 
-.logout-link i {
-  color: #ef4444 !important;
-}
+.points-link:hover { background: #fefce8; }
+.points-link .nav-icon { background: #fefce8; }
+.points-link:hover .nav-text { color: #ca8a04; }
+.points-link:hover .nav-icon { background: #eab308; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3); }
+.points-link:hover .nav-icon img { filter: brightness(0) invert(1); }
 
-.logout-link:hover {
-  background-color: rgba(239, 68, 68, 0.06) !important;
-}
+.badges-link:hover { background: #faf5ff; }
+.badges-link .nav-icon { background: #faf5ff; color: #a855f7; }
+.badges-link:hover .nav-text { color: #9333ea; }
+.badges-link:hover .nav-icon { background: #a855f7; color: white; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3); }
+
+.certs-link:hover { background: #f0fdf4; }
+.certs-link .nav-icon { background: #f0fdf4; color: #22c55e; }
+.certs-link:hover .nav-text { color: #16a34a; }
+.certs-link:hover .nav-icon { background: #22c55e; color: white; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
+
+.dash-link:hover { background: #fff1f2; }
+.dash-link .nav-icon { background: #fff1f2; color: #f43f5e; }
+.dash-link:hover .nav-text { color: #e11d48; }
+.dash-link:hover .nav-icon { background: #f43f5e; color: white; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3); }
+
+.about-link:hover { background: #f8fafc; }
+.about-link .nav-icon { background: #f8fafc; color: #64748b; }
+.about-link:hover .nav-text { color: #475569; }
+.about-link:hover .nav-icon { background: #64748b; color: white; box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3); }
+
+.contact-link:hover { background: #f0fdfa; }
+.contact-link .nav-icon { background: #f0fdfa; color: #14b8a6; }
+.contact-link:hover .nav-text { color: #0d9488; }
+.contact-link:hover .nav-icon { background: #14b8a6; color: white; box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3); }
+
+.login-link:hover { background: #eff6ff; }
+.login-link .nav-icon { background: #eff6ff; color: #3b82f6; }
+.login-link:hover .nav-text { color: #2563eb; }
+.login-link:hover .nav-icon { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+
+.signup-link:hover { background: #f0fdf4; }
+.signup-link .nav-icon { background: #f0fdf4; color: #22c55e; }
+.signup-link:hover .nav-text { color: #16a34a; }
+.signup-link:hover .nav-icon { background: #22c55e; color: white; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
+
+.logout-link:hover { background: #fef2f2 !important; }
+.logout-link .nav-icon { background: #fef2f2; color: #ef4444; }
+.logout-link:hover .nav-text { color: #dc2626 !important; }
+.logout-link:hover .nav-icon { background: #ef4444; color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
 
 .custom-hr {
   border: none;
-  border-top: 1px solid rgba(15, 23, 42, 0.06);
-  margin: 8px 0;
+  border-top: 1px dashed rgba(15, 23, 42, 0.08);
+  margin: 6px 12px;
 }
 
 /* Media Queries */

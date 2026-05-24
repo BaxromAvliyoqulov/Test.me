@@ -498,7 +498,6 @@ export default {
 .points-link .nav-icon { background: #fefce8; }
 .points-link:hover .nav-text { color: #ca8a04; }
 .points-link:hover .nav-icon { background: #eab308; box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3); }
-.points-link:hover .nav-icon img { filter: brightness(0) invert(1); }
 
 .badges-link:hover { background: #faf5ff; }
 .badges-link .nav-icon { background: #faf5ff; color: #a855f7; }

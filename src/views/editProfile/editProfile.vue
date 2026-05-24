@@ -47,7 +47,7 @@
                 
                 <div :class="['rank-badge', getRankClass(userPoints)]">
                   <i :class="getRankIcon(userPoints)"></i>
-                  <span>{{ getRankName(userPoints) }}</span>
+                  <span>{{ getRankName(userPoints, currentLocale) }}</span>
                 </div>
               </div>
             </div>
@@ -71,19 +71,19 @@
           <div class="progress-card-header">
             <span>{{ currentLocale === 'RUS' ? 'Прогресс Ранга' : 'Rang Progressi' }}</span>
             <span class="progress-target-text">
-              → {{ getNextRankInfo(userPoints).nextRankName }}
+              → {{ getNextRankInfo(userPoints, currentLocale).nextRankName }}
             </span>
           </div>
           <div class="progress-bar-container">
             <div 
               class="progress-bar-fill" 
-              :style="{ width: getNextRankInfo(userPoints).progressPercent + '%' }"
+              :style="{ width: getNextRankInfo(userPoints, currentLocale).progressPercent + '%' }"
             ></div>
           </div>
           <div class="progress-footer-stats">
-            <span>{{ getNextRankInfo(userPoints).label }}</span>
-            <span v-if="getNextRankInfo(userPoints).pointsNeeded > 0">
-              {{ currentLocale === 'RUS' ? `Нужно еще ${getNextRankInfo(userPoints).pointsNeeded} TP` : `Yana ${getNextRankInfo(userPoints).pointsNeeded} TP kerak` }}
+            <span>{{ getNextRankInfo(userPoints, currentLocale).label }}</span>
+            <span v-if="getNextRankInfo(userPoints, currentLocale).pointsNeeded > 0">
+              {{ currentLocale === 'RUS' ? `Нужно еще ${getNextRankInfo(userPoints, currentLocale).pointsNeeded} TP` : `Yana ${getNextRankInfo(userPoints, currentLocale).pointsNeeded} TP kerak` }}
             </span>
             <span v-else>{{ currentLocale === 'RUS' ? 'Максимальный Ранг' : 'Maksimal Rang' }}</span>
           </div>
@@ -430,6 +430,7 @@ import { getAuth, updatePassword, updateProfile, onAuthStateChanged } from 'fire
 import { doc, getDoc, getDocs, setDoc, query, where, collection } from 'firebase/firestore';
 import { db } from '../../config/firebase.js';
 import { useI18n } from '@/utils/i18n';
+import { getRankName, getRankClass, getRankIcon, getNextRankInfo } from '@/utils/ranks.js';
 import defaultUserImage from '../../assets/img/user.png';
 
 export default {
@@ -854,6 +855,12 @@ export default {
         this.loading = false;
       }
     },
+    
+    // External Rank Helpers wrapper
+    getRankName(pts, loc) { return getRankName(pts, loc); },
+    getRankClass(pts) { return getRankClass(pts); },
+    getRankIcon(pts) { return getRankIcon(pts); },
+    getNextRankInfo(pts, loc) { return getNextRankInfo(pts, loc); },
 
     // Parallax 3D Card tilt logic
     handleMouseMove(e) {
@@ -873,66 +880,6 @@ export default {
       card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
     },
 
-    // Tier/Rank calculations helper functions
-    getRankName(points) {
-      if (points >= 1000) return 'Grandmaster Scholar';
-      if (points >= 600) return 'Gold Scholar';
-      if (points >= 300) return 'Silver Scholar';
-      if (points >= 100) return 'Bronze Scholar';
-      return 'Newbie Scholar';
-    },
-    getRankClass(points) {
-      if (points >= 1000) return 'rank-grandmaster';
-      if (points >= 600) return 'rank-gold';
-      if (points >= 300) return 'rank-silver';
-      if (points >= 100) return 'rank-bronze';
-      return 'rank-newbie';
-    },
-    getRankIcon(points) {
-      if (points >= 1000) return 'fas fa-crown';
-      if (points >= 600) return 'fas fa-medal';
-      if (points >= 300) return 'fas fa-award';
-      if (points >= 100) return 'fas fa-shield-halved';
-      return 'fas fa-seedling';
-    },
-    getNextRankInfo(points) {
-      if (points >= 1000) {
-        return {
-          nextRankName: 'Max Rank',
-          pointsNeeded: 0,
-          progressPercent: 100,
-          label: `${points} TP`
-        };
-      }
-      let currentRankMin = 0;
-      let nextRankMax = 100;
-      let nextRankName = 'Bronze Scholar';
-      
-      if (points >= 600) {
-        currentRankMin = 600;
-        nextRankMax = 1000;
-        nextRankName = 'Grandmaster Scholar';
-      } else if (points >= 300) {
-        currentRankMin = 300;
-        nextRankMax = 600;
-        nextRankName = 'Gold Scholar';
-      } else if (points >= 100) {
-        currentRankMin = 100;
-        nextRankMax = 300;
-        nextRankName = 'Silver Scholar';
-      }
-      
-      const range = nextRankMax - currentRankMin;
-      const progress = points - currentRankMin;
-      const progressPercent = Math.min(Math.round((progress / range) * 100), 100);
-      
-      return {
-        nextRankName,
-        pointsNeeded: nextRankMax - points,
-        progressPercent,
-        label: `${points} / ${nextRankMax} TP`
-      };
-    },
     getMemberSince(creationTime) {
       if (!creationTime) return '—';
       const date = new Date(creationTime);

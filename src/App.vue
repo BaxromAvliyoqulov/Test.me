@@ -78,6 +78,30 @@ a {
   color: transparent;
 }
 
+/* Global Rank Badge Styles */
+.nav-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.70rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+.rank-newbie { background: #f1f5f9; color: #475569; }
+.rank-bronze { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+.rank-silver { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
+.rank-gold { background: #fefce8; color: #ca8a04; border: 1px solid #fef08a; }
+.rank-grandmaster {
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+}
+
 @media (max-width: 768px) {
   button {
     max-width: 100%;

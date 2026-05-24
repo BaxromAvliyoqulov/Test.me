@@ -16,7 +16,13 @@
         <!-- User Info header inside dropdown -->
         <div class="user-info" v-if="username">
           <img :src="profileImage" class="dropdown-profile-image" alt="User" />
-          <router-link to="/editProfile" class="dropdown-username">{{ username }}</router-link>
+          <div class="user-info-text">
+            <router-link to="/editProfile" class="dropdown-username">{{ username }}</router-link>
+            <div :class="['nav-rank-badge', getRankClass(userPoints)]">
+              <i :class="getRankIcon(userPoints)"></i>
+              <span>{{ getRankName(userPoints, currentLocale) }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- Language toggle group inside dropdown (UZB and RUS only) -->
@@ -133,6 +139,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import defaultUserImage from '../assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
+import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
 
 export default {
   setup() {
@@ -148,6 +155,7 @@ export default {
       dropdownOpen: false,
       username: null,
       profileImage: null,
+      userPoints: 0,
     };
   },
 
@@ -215,6 +223,7 @@ export default {
           if (data.displayName) {
             this.username = data.displayName;
           }
+          this.userPoints = data.points || 0;
         }
       } catch (e) {
         // Firestore read failed, keep Firebase Auth values
@@ -262,6 +271,11 @@ export default {
         console.error('Logout error:', error);
       }
     },
+    
+    // Rank wrappers
+    getRankName(pts, loc) { return getRankName(pts, loc); },
+    getRankClass(pts) { return getRankClass(pts); },
+    getRankIcon(pts) { return getRankIcon(pts); },
   },
 };
 </script>
@@ -359,6 +373,11 @@ export default {
   padding: 16px 20px;
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(139, 92, 246, 0.04) 100%);
   border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.user-info-text {
+  display: flex;
+  flex-direction: column;
 }
 
 .dropdown-profile-image {

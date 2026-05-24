@@ -61,7 +61,7 @@
                   @click="selectSubjectCard(subject)"
                 >
                   <div class="subject-card-bg">
-                    <i class="fas fa-layer-group"></i>
+                    <i :class="getSubjectIcon(subject.id)"></i>
                   </div>
                   <div class="subject-card-icon">
                     <i :class="getSubjectIcon(subject.id)"></i>

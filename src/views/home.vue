@@ -60,10 +60,12 @@
                   :class="['subject-card premium', { selected: selectedSubject && selectedSubject.id === subject.id }]"
                   @click="selectSubjectCard(subject)"
                 >
-                  <div class="subject-card-bg">
+                  <div class="subject-card-bg" :style="{ color: getSubjectColor(subject.id) }">
                     <i :class="getSubjectIcon(subject.id)"></i>
                   </div>
-                  <div class="subject-card-icon">
+                  <div class="subject-card-icon" :style="selectedSubject && selectedSubject.id === subject.id 
+                      ? { backgroundColor: getSubjectColor(subject.id), color: '#ffffff', borderColor: getSubjectColor(subject.id) }
+                      : { color: getSubjectColor(subject.id), backgroundColor: getSubjectColor(subject.id) + '1A', borderColor: getSubjectColor(subject.id) + '33' }">
                     <i :class="getSubjectIcon(subject.id)"></i>
                   </div>
                   <div class="subject-card-details">
@@ -344,6 +346,21 @@ export default {
       if (lower.includes('geografiya') || lower.includes('geography')) return 'fas fa-globe-americas';
       if (lower.includes('adabiyot') || lower.includes('literature')) return 'fas fa-feather-alt';
       return 'fas fa-graduation-cap';
+    },
+
+    getSubjectColor(name) {
+      const lower = name.toLowerCase();
+      if (lower.includes('matem') || lower.includes('math')) return '#8b5cf6'; // Purple
+      if (lower.includes('fizik') || lower.includes('physics')) return '#f59e0b'; // Amber
+      if (lower.includes('ingliz') || lower.includes('english')) return '#ef4444'; // Red
+      if (lower.includes('ona tili') || lower.includes('uzbek')) return '#3b82f6'; // Blue
+      if (lower.includes('kimyo') || lower.includes('chemistry')) return '#10b981'; // Green
+      if (lower.includes('biolog') || lower.includes('biology')) return '#84cc16'; // Lime
+      if (lower.includes('informatika') || lower.includes('computer')) return '#06b6d4'; // Cyan
+      if (lower.includes('tarix') || lower.includes('history')) return '#d97706'; // Dark Amber
+      if (lower.includes('geografiya') || lower.includes('geography')) return '#14b8a6'; // Teal
+      if (lower.includes('adabiyot') || lower.includes('literature')) return '#ec4899'; // Pink
+      return '#3b82f6'; // Default Blue
     },
 
     selectSubjectCard(subject) {

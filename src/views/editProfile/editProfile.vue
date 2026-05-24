@@ -296,11 +296,13 @@
                 </label>
                 <div class="input-wrapper select-wrapper">
                   <i class="fas fa-signal select-icon"></i>
-                  <select id="pref-level" v-model="preferences.defaultLevel" class="styled-input select-input">
-                    <option value="">{{ currentLocale === 'RUS' ? '-- Выберите сложность --' : '-- Qiyinchilikni tanlang --' }}</option>
-                    <option value="Oson">{{ currentLocale === 'RUS' ? 'Легкий (Oson)' : 'Oson (Easy)' }}</option>
-                    <option value="O'rtacha">{{ currentLocale === 'RUS' ? 'Средний (O\'rtacha)' : "O'rtacha (Medium)" }}</option>
-                    <option value="Qiyin">{{ currentLocale === 'RUS' ? 'Сложный (Qiyin)' : 'Qiyin (Hard)' }}</option>
+                  <select id="pref-level" v-model="preferences.defaultLevel" class="styled-input select-input" :disabled="!preferences.defaultSubject || loadingLevels">
+                    <option value="">
+                      {{ loadingLevels ? (currentLocale === 'RUS' ? 'Загрузка...' : 'Yuklanmoqda...') : (currentLocale === 'RUS' ? '-- Выберите сложность --' : '-- Qiyinchilikni tanlang --') }}
+                    </option>
+                    <option v-for="level in levelsList" :key="level.id" :value="level.id">
+                      {{ level.id }}
+                    </option>
                   </select>
                 </div>
               </div>
@@ -471,6 +473,8 @@ export default {
         defaultLocale: '',
       },
       subjectsList: [], // List of subjects fetched from db
+      levelsList: [], // List of levels for the selected subject
+      loadingLevels: false,
 
       // Academic metrics
       stats: {
@@ -584,6 +588,16 @@ export default {
       ];
     }
   },
+  watch: {
+    'preferences.defaultSubject'(newSub, oldSub) {
+      if (newSub && newSub !== oldSub) {
+        this.fetchLevelsForSubject(newSub);
+      } else if (!newSub) {
+        this.levelsList = [];
+        this.preferences.defaultLevel = '';
+      }
+    }
+  },
   created() {
     this.initializeProfileData();
     this.fetchSubjects();
@@ -613,6 +627,10 @@ export default {
                 this.preferences.defaultLevel = data.preferences.defaultLevel || '';
                 this.preferences.dailyGoal = data.preferences.dailyGoal || 10;
                 this.preferences.defaultLocale = data.preferences.defaultLocale || this.currentLocale;
+                
+                if (this.preferences.defaultSubject) {
+                  this.fetchLevelsForSubject(this.preferences.defaultSubject, this.preferences.defaultLevel);
+                }
               } else {
                 this.preferences.defaultLocale = this.currentLocale;
               }
@@ -641,6 +659,25 @@ export default {
         }));
       } catch (err) {
         console.error('Error fetching subjects list:', err);
+      }
+    },
+    async fetchLevelsForSubject(subjectId, preserveLevel = null) {
+      if (!subjectId) return;
+      this.loadingLevels = true;
+      try {
+        const querySnapshot = await getDocs(collection(db, `subjects/${subjectId}/levels`));
+        this.levelsList = querySnapshot.docs.map(doc => ({ id: doc.id }));
+        
+        const currentSelected = preserveLevel || this.preferences.defaultLevel;
+        if (currentSelected && !this.levelsList.find(l => l.id === currentSelected)) {
+          this.preferences.defaultLevel = '';
+        } else if (preserveLevel) {
+          this.preferences.defaultLevel = preserveLevel;
+        }
+      } catch (err) {
+        console.error('Error fetching levels:', err);
+      } finally {
+        this.loadingLevels = false;
       }
     },
     async fetchUserResults(userId) {

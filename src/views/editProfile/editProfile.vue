@@ -178,6 +178,7 @@
                     required
                     placeholder="Enter username"
                     maxlength="16"
+                    autocomplete="off"
                   />
                   <span class="char-count">{{ profile.username.length }}/16</span>
                 </div>
@@ -216,6 +217,7 @@
                     :class="['styled-input', { error: passwordError }]"
                     @input="validatePassword"
                     placeholder="••••••••"
+                    autocomplete="new-password"
                   />
                   <i
                     :class="['toggle-eye-icon', showPassword ? 'fas fa-eye-slash' : 'fas fa-eye']"

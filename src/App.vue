@@ -102,6 +102,54 @@ a {
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
 }
 
+/* Global Rank Progress Card Styles */
+.rank-progress-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  padding: 1.25rem;
+  box-shadow: 0 10px 25px -10px rgba(15, 23, 42, 0.05);
+}
+
+.progress-card-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 0.6rem;
+}
+
+.progress-target-text {
+  color: #3b82f6;
+  font-weight: 800;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #a855f7 100%);
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+.progress-footer-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
 @media (max-width: 768px) {
   button {
     max-width: 100%;

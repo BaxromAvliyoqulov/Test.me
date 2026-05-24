@@ -166,6 +166,32 @@
 
         <!-- Right Side: Sidebar Info & AI Coach -->
         <div class="sidebar-panel">
+          
+          <!-- Rank Progress Card -->
+          <div class="sidebar-card rank-progress-card" style="margin-bottom: 1.5rem;">
+            <div class="progress-card-header">
+              <span class="nav-rank-badge" :class="getRankClass(userPoints)" style="margin:0; padding: 2px 8px; font-size: 0.70rem;">
+                <i :class="getRankIcon(userPoints)"></i> {{ getRankName(userPoints, currentLocale) }}
+              </span>
+              <span class="progress-target-text">
+                → {{ getNextRankInfo(userPoints, currentLocale).nextRankName }}
+              </span>
+            </div>
+            <div class="progress-bar-container">
+              <div 
+                class="progress-bar-fill" 
+                :style="{ width: getNextRankInfo(userPoints, currentLocale).progressPercent + '%' }"
+              ></div>
+            </div>
+            <div class="progress-footer-stats">
+              <span>{{ getNextRankInfo(userPoints, currentLocale).label }}</span>
+              <span v-if="getNextRankInfo(userPoints, currentLocale).pointsNeeded > 0">
+                {{ currentLocale === 'RUS' ? `Нужно еще ${getNextRankInfo(userPoints, currentLocale).pointsNeeded} TP` : `Yana ${getNextRankInfo(userPoints, currentLocale).pointsNeeded} TP` }}
+              </span>
+              <span v-else>{{ currentLocale === 'RUS' ? 'Максимальный Ранг' : 'Maksimal Rang' }}</span>
+            </div>
+          </div>
+
           <!-- AI Coach Card -->
           <div class="sidebar-card ai-coach-card">
             <div class="ai-header">
@@ -271,8 +297,11 @@
 import { db, auth } from '@/config/firebase';
 import { collection, doc, getDocs, addDoc, getDoc, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import TestPage from './testPage/testPage.vue';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import defaultUserImage from '../assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
+import { getRankName, getRankClass, getRankIcon, getNextRankInfo } from '@/utils/ranks';
+import TestPage from './testPage/testPage.vue';
 
 export default {
   name: 'SubjectTestSelection',
@@ -464,6 +493,12 @@ export default {
     clearStatus() {
       this.status = null;
     },
+    
+    // Rank wrappers
+    getRankName(pts, loc) { return getRankName(pts, loc); },
+    getRankClass(pts) { return getRankClass(pts); },
+    getRankIcon(pts) { return getRankIcon(pts); },
+    getNextRankInfo(pts, loc) { return getNextRankInfo(pts, loc); },
 
     async startTestWithFilters() {
       if (!this.canStart) return;

@@ -41,7 +41,9 @@
               <div class="card-holder-row">
                 <div class="card-holder">
                   <span>{{ isRus ? 'ВЛАДЕЛЕЦ' : 'EGA' }}</span>
-                  <strong>TP MEMBER</strong>
+                  <strong>
+                    <i :class="getRankIcon(points)"></i> {{ getRankName(points, locale) }}
+                  </strong>
                 </div>
                 <div class="card-brand">
                   <div class="brand-circle left"></div>
@@ -279,6 +281,7 @@ import ReferralModal from './ShareReferralModal.vue';
 import ReferredUsersModal from './ReferralListModal.vue';
 import BuyPointsModal from './BuyPoints.vue';
 import ReferralCodeModal from './ReferralCodeModal.vue';
+import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
 
 export default {
   name: 'PointsWallet',
@@ -466,6 +469,12 @@ export default {
       rewardItems,
       exchangeItem,
       isRus,
+      
+      // Rank wrappers
+      getRankName,
+      getRankIcon,
+      getRankClass,
+      locale,
     };
   },
 };

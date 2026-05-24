@@ -16,8 +16,15 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isOwner(userId);
 
-      // User transactions sub-collection (test rewards)
+      // User transactions sub-collection (test rewards & purchases)
       match /transactions/{txId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if false;
+      }
+
+      // Referral activity log sub-collection
+      match /referral-logs/{logId} {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId);
         allow update, delete: if false;

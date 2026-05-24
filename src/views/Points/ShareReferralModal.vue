@@ -34,7 +34,7 @@
       </div>
 
       <p class="info-text">
-        {{ isRus ? 'Ваш друг получит 20 TP Coins при регистрации, а вы — 50 TP Coins после активации его кода.' : 'Do\'stingiz ro\'yxatdan o\'tganda 20 TP Coins oladi, kod faollashtirilgach esa sizga 50 TP Coins taqdim etiladi.' }}
+        {{ isRus ? 'Ваш друг получит 50 TP Coins, а вы — 50 TP Coins после активации кода.' : 'Do\'stingiz ro\'yxatdan o\'tib kodni faollashtirgach, har ikkingizga 50 TP Coins taqdim etiladi.' }}
       </p>
     </div>
   </div>

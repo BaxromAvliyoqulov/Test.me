@@ -427,10 +427,11 @@
 
 <script>
 import { getAuth, updatePassword, updateProfile, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, getDocs, setDoc, query, where, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { db } from '../../config/firebase.js';
 import { useI18n } from '@/utils/i18n';
 import { getRankName, getRankClass, getRankIcon, getNextRankInfo } from '@/utils/ranks.js';
+import { sortLevels } from '@/utils/sorters';
 import defaultUserImage from '../../assets/img/user.png';
 
 export default {
@@ -667,7 +668,12 @@ export default {
       this.loadingLevels = true;
       try {
         const querySnapshot = await getDocs(collection(db, `subjects/${subjectId}/levels`));
-        this.levelsList = querySnapshot.docs.map(doc => ({ id: doc.id }));
+        const fetchedLevels = querySnapshot.docs.map(doc => ({ id: doc.id }));
+        
+        // Use our sort logic which handles strings. We extract IDs, sort them, then reconstruct objects
+        const rawIds = fetchedLevels.map(l => l.id);
+        const sortedIds = sortLevels(rawIds);
+        this.levelsList = sortedIds.map(id => ({ id }));
         
         const currentSelected = preserveLevel || this.preferences.defaultLevel;
         if (currentSelected && !this.levelsList.find(l => l.id === currentSelected)) {

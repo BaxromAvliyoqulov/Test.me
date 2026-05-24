@@ -301,6 +301,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import defaultUserImage from '../assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
 import { getRankName, getRankClass, getRankIcon, getNextRankInfo } from '@/utils/ranks';
+import { sortLevels } from '@/utils/sorters';
 import TestPage from './testPage/testPage.vue';
 
 export default {
@@ -471,7 +472,8 @@ export default {
           collection(subjectRef, 'levels')
         );
 
-        this.levels = levelsCollection.docs.map((doc) => doc.id);
+        const fetchedLevels = levelsCollection.docs.map((doc) => doc.id);
+        this.levels = sortLevels(fetchedLevels);
 
         if (this.levels.length === 0) {
           this.status = {

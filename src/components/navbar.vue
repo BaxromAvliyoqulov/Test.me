@@ -117,6 +117,8 @@
 
 <script>
 import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/config/firebase';
 import defaultUserImage from '../assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
 
@@ -180,20 +182,38 @@ export default {
       });
     },
 
-    handleUserAuthenticated(user) {
+    async handleUserAuthenticated(user) {
       this.username = user.displayName || user.email || 'User';
 
+      // First set Firebase Auth photoURL as fallback
       if (user.photoURL) {
         this.profileImage = user.photoURL;
       } else {
         this.profileImage = defaultUserImage;
       }
 
+      // Then try Firestore for full photoURL (includes Base64 custom images)
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          if (data.photoURL) {
+            this.profileImage = data.photoURL;
+          }
+          if (data.displayName) {
+            this.username = data.displayName;
+          }
+        }
+      } catch (e) {
+        // Firestore read failed, keep Firebase Auth values
+        console.warn('Navbar: could not load user doc from Firestore', e);
+      }
+
       const userData = {
         uid: user.uid,
         email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
+        displayName: this.username,
+        photoURL: this.profileImage,
       };
       localStorage.setItem('user', JSON.stringify(userData));
     },

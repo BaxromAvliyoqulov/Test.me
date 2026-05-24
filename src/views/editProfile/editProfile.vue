@@ -749,13 +749,20 @@ export default {
           return;
         }
 
-        // 1. Update firestore users collection doc (with username & preferences)
+        // Determine if photoURL is a Base64 string (too long for Firebase Auth)
+        // Firebase Auth only accepts HTTP/HTTPS URLs for photoURL, not Base64 data URIs
+        const isBase64Photo = this.selectedPhotoURL && this.selectedPhotoURL.startsWith('data:');
+        
+        // The URL to pass to Firebase Auth (only if it's a real URL, not Base64)
+        const authPhotoURL = isBase64Photo ? (user.photoURL || '') : (this.selectedPhotoURL || '');
+
+        // 1. Update Firestore users document — stores full photoURL including Base64
         await setDoc(
           doc(db, 'users', user.uid),
           {
             username: this.profile.username,
             displayName: this.profile.username,
-            photoURL: this.selectedPhotoURL,
+            photoURL: this.selectedPhotoURL,  // Full Base64 or URL stored here
             preferences: {
               defaultSubject: this.preferences.defaultSubject,
               defaultLevel: this.preferences.defaultLevel,
@@ -767,10 +774,10 @@ export default {
           { merge: true }
         );
 
-        // 2. Update Firebase Auth Profile
+        // 2. Update Firebase Auth Profile — only pass short HTTP URLs, NOT Base64
         await updateProfile(user, {
           displayName: this.profile.username,
-          photoURL: this.selectedPhotoURL,
+          photoURL: authPhotoURL,
         });
 
         // 3. Update Password if specified
@@ -782,6 +789,7 @@ export default {
         this.profile.password = '';
         
         // Triggers UI navbar updates instantly using a global CustomEvent
+        // Use the full selectedPhotoURL (even Base64) for the live preview
         window.dispatchEvent(new CustomEvent('profile-updated', {
           detail: {
             displayName: this.profile.username,

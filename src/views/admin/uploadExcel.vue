@@ -1,0 +1,549 @@
+<template>
+  <div class="upload-container">
+    <div class="card-header">
+      <h2><i class="fas fa-file-excel"></i> Excel Test Yuklash</h2>
+      <p>Oddiy va Maxsus (DTM, Prezident) testlarni bittada yuklash</p>
+    </div>
+
+    <!-- AI Prompt Section -->
+    <div class="prompt-section">
+      <h3><i class="fas fa-robot"></i> AI uchun tayyor Prompt</h3>
+      <p>Sun'iy intellektga (Gemini, ChatGPT) ushbu matnni berib tayyor Excel fayl yaratib olishingiz mumkin:</p>
+      
+      <div class="prompt-box">
+        <textarea readonly v-model="aiPrompt"></textarea>
+        <button class="copy-btn" @click="copyPrompt">
+          <i :class="copied ? 'fas fa-check' : 'fas fa-copy'"></i> 
+          {{ copied ? 'Nusxa olindi!' : 'Nusxa Olish' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="upload-box" @dragover.prevent @drop.prevent="handleDrop">
+      <input 
+        type="file" 
+        id="fileInput" 
+        accept=".xlsx, .xls" 
+        @change="handleFileUpload" 
+        class="hidden-input"
+      />
+      <label for="fileInput" class="upload-label">
+        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+        <h3>Excel faylni shu yerga tashlang yoki ustiga bosing</h3>
+        <p>Faqat .xlsx yoki .xls formatidagi fayllar qabul qilinadi.</p>
+      </label>
+      <div v-if="selectedFile" class="file-name">
+        <i class="fas fa-file-excel text-emerald"></i> {{ selectedFile.name }}
+      </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div v-if="parsedData.length > 0" class="preview-section">
+      <div class="preview-header">
+        <h3><i class="fas fa-eye"></i> Ma'lumotlar tekshiruvi (Preview)</h3>
+        <span class="badge">{{ parsedData.length }} ta savol topildi</span>
+      </div>
+
+      <div class="table-container">
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th>Tur</th>
+              <th>Test Nomi</th>
+              <th>Fan / Blok</th>
+              <th>Sinf / Daraja</th>
+              <th>Savol</th>
+              <th>To'g'ri Javob</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, idx) in parsedData.slice(0, 5)" :key="idx">
+              <td>
+                <span :class="['type-badge', (row.TestCategory || 'Standard').toLowerCase()]">
+                  {{ row.TestCategory || 'Standard' }}
+                </span>
+              </td>
+              <td>{{ row.TestName || '-' }}</td>
+              <td>{{ row.Subject }}</td>
+              <td>{{ row.Level }}</td>
+              <td class="truncate">{{ row.Question }}</td>
+              <td class="text-emerald font-bold">{{ row.Answer }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="table-footer" v-if="parsedData.length > 5">
+          ... va yana {{ parsedData.length - 5 }} ta savol.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button class="btn secondary" @click="clearData" :disabled="loading">
+          <i class="fas fa-times"></i> Bekor qilish
+        </button>
+        <button class="btn primary" @click="uploadToDatabase" :disabled="loading">
+          <span v-if="!loading"><i class="fas fa-database"></i> Bazaga Yuklash</span>
+          <i v-else class="fas fa-circle-notch fa-spin"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import * as XLSX from 'xlsx';
+import { db } from '@/config/firebase';
+import { collection, writeBatch, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
+
+const aiPrompt = ref(`Menga quyidagi qoidalarga qat'iy amal qilgan holda O'zbekiston maktab darsliklariga asoslangan 10 ta test savolini Excel (yoki CSV jadval) formatida tuzib ber. 
+
+QAT'IY USTUNLAR (COLUMNS) KETMA-KETLIGI:
+1. TestCategory (Faqat bittasi: Standard, DTM, Prezident)
+2. TestName (Agar Standard bo'lsa bo'sh qoldir, maxsus bo'lsa nomini yoz. Masalan: DTM 2024 Blok)
+3. Subject (Fan nomi: Matematika, Tarix va hk.)
+4. Level (Sinf: 8-sinf, yoki DTM uchun: Asosiy blok)
+5. ScoreWeight (Ball: Standard uchun 1, DTM Asosiy uchun 3.1)
+6. Question (Savol matni)
+7. Option A (Variant A)
+8. Option B (Variant B)
+9. Option C (Variant C)
+10. Option D (Variant D)
+11. Answer (To'g'ri javob matni. U albatta variantlardan biri bilan aynan bir xil yozilgan bo'lishi shart)
+
+Qoshimcha talab: Fan "Tarix", Sinf "7-sinf" bo'yicha tuz. Hech qanday ortiqcha matnsiz faqat jadvalni taqdim et!`);
+
+const copied = ref(false);
+const selectedFile = ref(null);
+const parsedData = ref([]);
+const loading = ref(false);
+
+const copyPrompt = () => {
+  navigator.clipboard.writeText(aiPrompt.value);
+  copied.value = true;
+  setTimeout(() => copied.value = false, 2000);
+};
+
+const handleDrop = (e) => {
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+};
+
+const handleFileUpload = (e) => {
+  const file = e.target.files[0];
+  if (file) processFile(file);
+};
+
+const processFile = (file) => {
+  const validExts = ['.xlsx', '.xls'];
+  const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+  
+  if (!validExts.includes(fileExt)) {
+    toast.error("Faqat Excel fayllar qo'llab quvvatlanadi!");
+    return;
+  }
+
+  selectedFile.value = file;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const firstSheet = workbook.SheetNames[0];
+    
+    // Convert to JSON
+    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+    
+    // Basic validation
+    if (jsonData.length === 0) {
+      toast.error("Fayl bo'sh!");
+      return;
+    }
+    
+    const firstRow = jsonData[0];
+    if (!firstRow.Subject || !firstRow.Question || !firstRow.Answer) {
+      toast.error("Ustunlar xato! Fayl strukturasi to'g'riligiga ishonch hosil qiling.");
+      return;
+    }
+
+    parsedData.value = jsonData;
+    toast.success(`${jsonData.length} ta savol o'qildi.`);
+  };
+  
+  reader.readAsArrayBuffer(file);
+};
+
+const clearData = () => {
+  parsedData.value = [];
+  selectedFile.value = null;
+  document.getElementById('fileInput').value = '';
+};
+
+const uploadToDatabase = async () => {
+  loading.value = true;
+  try {
+    const batch = writeBatch(db);
+    
+    // Group tests
+    const standardTests = [];
+    const specialTestsMap = {}; // Grouped by TestName
+
+    for (const row of parsedData.value) {
+      const category = (row.TestCategory || 'Standard').trim().toLowerCase();
+      
+      const questionObj = {
+        question: String(row.Question),
+        options: [
+          String(row['Option A']),
+          String(row['Option B']),
+          String(row['Option C']),
+          String(row['Option D'])
+        ],
+        answer: String(row.Answer),
+        scoreWeight: Number(row.ScoreWeight) || 1,
+        createdAt: serverTimestamp()
+      };
+
+      if (category === 'standard') {
+        const subjectId = String(row.Subject).trim();
+        const levelId = String(row.Level).trim();
+        
+        // Add to array
+        standardTests.push({ subjectId, levelId, data: questionObj });
+
+        // Ensure Subject and Level docs exist
+        const subjRef = doc(db, 'subjects', subjectId);
+        batch.set(subjRef, { 
+          id: subjectId, 
+          name: subjectId, 
+          updatedAt: serverTimestamp() 
+        }, { merge: true });
+
+        const levelRef = doc(db, `subjects/${subjectId}/levels`, levelId);
+        batch.set(levelRef, { 
+          id: levelId, 
+          name: levelId, 
+          updatedAt: serverTimestamp() 
+        }, { merge: true });
+
+        // Add question to subcollection
+        const testRef = doc(collection(db, `subjects/${subjectId}/levels/${levelId}/tests`));
+        batch.set(testRef, questionObj);
+
+      } else {
+        // Special Tests (DTM, Prezident)
+        const testName = String(row.TestName).trim();
+        const testCategory = String(row.TestCategory).trim();
+        
+        if (!testName) {
+          throw new Error("Maxsus testlar uchun 'TestName' ustuni to'ldirilishi shart!");
+        }
+
+        if (!specialTestsMap[testName]) {
+          specialTestsMap[testName] = {
+            title: testName,
+            category: testCategory,
+            sectionsMap: {}, // Intermediate grouping map
+          };
+        }
+
+        const sectionKey = `${row.Subject}_${row.Level}`;
+        if (!specialTestsMap[testName].sectionsMap[sectionKey]) {
+          specialTestsMap[testName].sectionsMap[sectionKey] = {
+            subject: String(row.Subject).trim(),
+            level: String(row.Level).trim(),
+            scoreWeight: Number(row.ScoreWeight) || 1,
+            questions: []
+          };
+        }
+
+        specialTestsMap[testName].sectionsMap[sectionKey].questions.push(questionObj);
+      }
+    }
+
+    // Process Special Tests into the batch
+    for (const testName in specialTestsMap) {
+      const t = specialTestsMap[testName];
+      const sectionsArray = Object.values(t.sectionsMap);
+      
+      const specialDocRef = doc(collection(db, 'special_tests'));
+      batch.set(specialDocRef, {
+        title: t.title,
+        category: t.category,
+        sections: sectionsArray,
+        createdAt: serverTimestamp()
+      });
+    }
+
+    // Execute Batch
+    await batch.commit();
+    toast.success("Barcha savollar muvaffaqiyatli bazaga saqlandi!");
+    clearData();
+
+  } catch (err) {
+    console.error(err);
+    toast.error(`Xatolik: ${err.message}`);
+  } finally {
+    loading.value = false;
+  }
+};
+
+</script>
+
+<style scoped>
+.upload-container {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  text-align: left;
+}
+
+.card-header {
+  margin-bottom: 2rem;
+}
+.card-header h2 {
+  font-size: 1.5rem;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.card-header h2 i {
+  color: #10b981;
+}
+.card-header p {
+  color: #64748b;
+  margin-top: 5px;
+}
+
+.prompt-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+.prompt-section h3 {
+  font-size: 1.1rem;
+  color: #3b82f6;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prompt-section p {
+  font-size: 0.9rem;
+  color: #475569;
+  margin-bottom: 1rem;
+}
+
+.prompt-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.prompt-box textarea {
+  width: 100%;
+  height: 120px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 1rem;
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #334155;
+  resize: none;
+}
+.copy-btn {
+  align-self: flex-end;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.copy-btn:hover {
+  background: #2563eb;
+}
+
+.upload-box {
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: #fafafa;
+  transition: all 0.3s;
+  position: relative;
+  margin-bottom: 2rem;
+}
+.upload-box:hover {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+.hidden-input {
+  display: none;
+}
+.upload-label {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+.upload-icon {
+  font-size: 3rem;
+  color: #94a3b8;
+  transition: color 0.3s;
+}
+.upload-box:hover .upload-icon {
+  color: #10b981;
+}
+.upload-label h3 {
+  color: #0f172a;
+  font-size: 1.2rem;
+}
+.upload-label p {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+.file-name {
+  margin-top: 20px;
+  font-weight: 600;
+  color: #0f172a;
+  background: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: inline-block;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.preview-section {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.preview-header h3 {
+  font-size: 1.2rem;
+  color: #0f172a;
+}
+.badge {
+  background: #dbeafe;
+  color: #2563eb;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 2rem;
+}
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.preview-table th {
+  background: #f8fafc;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-bottom: 2px solid #e2e8f0;
+}
+.preview-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  color: #334155;
+}
+.truncate {
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.text-emerald {
+  color: #10b981;
+}
+.font-bold {
+  font-weight: bold;
+}
+.table-footer {
+  text-align: center;
+  padding: 10px;
+  color: #64748b;
+  font-size: 0.9rem;
+  background: #f8fafc;
+  border-radius: 0 0 12px 12px;
+}
+
+.type-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.type-badge.standard { background: #e0f2fe; color: #0369a1; }
+.type-badge.dtm { background: #fef08a; color: #854d0e; }
+.type-badge.prezident { background: #f3e8ff; color: #7e22ce; }
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+.btn {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  border: none;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn.secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+.btn.secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+.btn.primary {
+  background: #10b981;
+  color: white;
+}
+.btn.primary:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+}
+</style>

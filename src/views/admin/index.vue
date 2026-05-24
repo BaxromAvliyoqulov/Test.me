@@ -12,6 +12,9 @@
       <button class="button" @click="currentView = 'addProduct'">
         Add Product
       </button>
+      <button class="button" @click="currentView = 'uploadExcel'">
+        <i class="fas fa-file-excel"></i> Upload Tests
+      </button>
       <button class="button" @click="logout">
         <i class="fas fa-sign-out-alt"></i>
         Logout
@@ -20,6 +23,7 @@
       <AddSubjectComponent v-if="currentView === 'addSubject'" />
       <AddAdminComponent v-if="currentView === 'addAdmin'" />
       <AddProductComponent v-if="currentView === 'addProduct'" />
+      <UploadExcelComponent v-if="currentView === 'uploadExcel'" />
     </div>
   </div>
 </template>
@@ -29,6 +33,7 @@ import LoginModal from "./loginModal.vue";
 import AddAdminComponent from "./addAdmin.vue";
 import AddSubjectComponent from "./addSubject.vue";
 import AddProductComponent from "./addProduct.vue";
+import UploadExcelComponent from "./uploadExcel.vue";
 
 export default {
   components: {
@@ -36,6 +41,7 @@ export default {
     AddAdminComponent,
     AddSubjectComponent,
     AddProductComponent,
+    UploadExcelComponent,
   },
   data() {
     return {

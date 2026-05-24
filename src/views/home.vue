@@ -339,6 +339,10 @@ export default {
       if (lower.includes('ona tili') || lower.includes('uzbek')) return 'fas fa-book';
       if (lower.includes('kimyo') || lower.includes('chemistry')) return 'fas fa-flask';
       if (lower.includes('biolog') || lower.includes('biology')) return 'fas fa-dna';
+      if (lower.includes('informatika') || lower.includes('computer')) return 'fas fa-laptop-code';
+      if (lower.includes('tarix') || lower.includes('history')) return 'fas fa-landmark';
+      if (lower.includes('geografiya') || lower.includes('geography')) return 'fas fa-globe-americas';
+      if (lower.includes('adabiyot') || lower.includes('literature')) return 'fas fa-feather-alt';
       return 'fas fa-graduation-cap';
     },
 

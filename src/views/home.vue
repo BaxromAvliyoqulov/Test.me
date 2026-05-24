@@ -23,86 +23,142 @@
       <div class="dashboard-grid">
         <!-- Left Side: Interactive Selection Panel -->
         <div class="selection-panel">
-          <div class="panel-section">
-            <div class="section-header">
-              <span class="step-badge">1</span>
-              <h3>{{ t('chooseSubject') }}</h3>
-            </div>
-            
-            <div v-if="loadingSubjects" class="loading-container">
-              <span class="mini-loader"></span>
-              <p>{{ t('loadingSubjects') }}</p>
-            </div>
+          
+          <!-- Test Type Tabs -->
+          <div class="test-type-tabs">
+            <button 
+              :class="['tab-btn', { active: currentTab === 'standard' }]" 
+              @click="currentTab = 'standard'"
+            >
+              <i class="fas fa-book-open"></i> {{ t('chooseSubject') || 'Asosiy Fanlar' }}
+            </button>
+            <button 
+              :class="['tab-btn', { active: currentTab === 'special' }]" 
+              @click="currentTab = 'special'"
+            >
+              <i class="fas fa-star"></i> Maxsus Testlar
+            </button>
+          </div>
 
-            <div class="subject-cards-grid" v-else>
-              <div
-                v-for="subject in subjects"
-                :key="subject.id"
-                :class="['subject-card', { selected: selectedSubject && selectedSubject.id === subject.id }]"
-                @click="selectSubjectCard(subject)"
-              >
-                <div class="subject-card-icon">
-                  <i :class="getSubjectIcon(subject.id)"></i>
-                </div>
-                <div class="subject-card-details">
-                  <h4>{{ subject.id }}</h4>
-                  <span class="subject-badge">{{ t('testsReady') }}</span>
+          <!-- STANDARD TAB -->
+          <div class="tab-content" v-if="currentTab === 'standard'">
+            <div class="panel-section">
+              <div class="section-header">
+                <span class="step-badge">1</span>
+                <h3>{{ t('chooseSubject') }}</h3>
+              </div>
+              
+              <div v-if="loadingSubjects" class="loading-container">
+                <span class="mini-loader"></span>
+                <p>{{ t('loadingSubjects') }}</p>
+              </div>
+
+              <div class="subject-cards-grid premium-cards" v-else>
+                <div
+                  v-for="subject in subjects"
+                  :key="subject.id"
+                  :class="['subject-card premium', { selected: selectedSubject && selectedSubject.id === subject.id }]"
+                  @click="selectSubjectCard(subject)"
+                >
+                  <div class="subject-card-bg">
+                    <i class="fas fa-layer-group"></i>
+                  </div>
+                  <div class="subject-card-icon">
+                    <i :class="getSubjectIcon(subject.id)"></i>
+                  </div>
+                  <div class="subject-card-details">
+                    <h4>{{ subject.id }}</h4>
+                    <span class="subject-badge">{{ t('testsReady') }}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Level selection -->
-          <div class="panel-section" v-if="selectedSubject">
-            <div class="section-header">
-              <span class="step-badge">2</span>
-              <h3>{{ t('selectLevel') }}</h3>
+            <!-- Level selection -->
+            <div class="panel-section" v-if="selectedSubject">
+              <div class="section-header">
+                <span class="step-badge">2</span>
+                <h3>{{ t('selectLevel') }}</h3>
+              </div>
+
+              <div v-if="loadingLevels" class="loading-container">
+                <span class="mini-loader"></span>
+                <p>{{ t('loadingLevels') }}</p>
+              </div>
+
+              <div class="pills-grid" v-else>
+                <button
+                  type="button"
+                  v-for="level in levels"
+                  :key="level"
+                  :class="['pill-btn', { active: selectedLevel === level }]"
+                  @click="selectedLevel = level"
+                >
+                  {{ level }}
+                </button>
+              </div>
             </div>
 
-            <div v-if="loadingLevels" class="loading-container">
-              <span class="mini-loader"></span>
-              <p>{{ t('loadingLevels') }}</p>
+            <!-- Question count selection -->
+            <div class="panel-section" v-if="selectedLevel">
+              <div class="section-header">
+                <span class="step-badge">3</span>
+                <h3>{{ t('questionCount') }}</h3>
+              </div>
+
+              <div class="pills-grid">
+                <button
+                  type="button"
+                  v-for="count in questionCounts"
+                  :key="count"
+                  :class="['pill-btn', { active: selectedQuestionCount === count }]"
+                  @click="selectedQuestionCount = count"
+                >
+                  {{ count }} {{ t('questions') }}
+                </button>
+              </div>
             </div>
 
-            <div class="pills-grid" v-else>
-              <button
-                type="button"
-                v-for="level in levels"
-                :key="level"
-                :class="['pill-btn', { active: selectedLevel === level }]"
-                @click="selectedLevel = level"
-              >
-                {{ level }}
+            <!-- Start Button -->
+            <div class="action-section" v-if="selectedQuestionCount">
+              <button @click="startTestWithFilters" class="start-test-btn" :disabled="!canStart">
+                <span v-if="!loading">{{ t('startTest') }}</span>
+                <span v-else class="loader"></span>
               </button>
             </div>
           </div>
 
-          <!-- Question count selection -->
-          <div class="panel-section" v-if="selectedLevel">
-            <div class="section-header">
-              <span class="step-badge">3</span>
-              <h3>{{ t('questionCount') }}</h3>
+          <!-- SPECIAL TESTS TAB -->
+          <div class="tab-content" v-else-if="currentTab === 'special'">
+            <div class="panel-section">
+              <div class="section-header">
+                <span class="step-badge"><i class="fas fa-crown"></i></span>
+                <h3>DTM va Maxsus Imtihonlar</h3>
+              </div>
+              
+              <div v-if="loadingSpecial" class="loading-container">
+                <span class="mini-loader"></span>
+                <p>Maxsus testlar yuklanmoqda...</p>
+              </div>
+              
+              <div class="special-tests-list" v-else-if="specialTests.length > 0">
+                <div v-for="test in specialTests" :key="test.id" class="special-test-card" @click="startSpecialTest(test)">
+                  <div class="st-icon" :class="test.category.toLowerCase()">
+                    <i class="fas fa-graduation-cap"></i>
+                  </div>
+                  <div class="st-details">
+                    <h4>{{ test.title }}</h4>
+                    <span class="st-category">{{ test.category }}</span>
+                  </div>
+                  <button class="st-start-btn"><i class="fas fa-play"></i> Boshlash</button>
+                </div>
+              </div>
+              
+              <div class="no-tests-banner" v-else>
+                <i class="fas fa-folder-open"></i>
+                <p>Hozircha maxsus testlar yo'q.</p>
+              </div>
             </div>
-
-            <div class="pills-grid">
-              <button
-                type="button"
-                v-for="count in questionCounts"
-                :key="count"
-                :class="['pill-btn', { active: selectedQuestionCount === count }]"
-                @click="selectedQuestionCount = count"
-              >
-                {{ count }} {{ t('questions') }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Start Button -->
-          <div class="action-section" v-if="selectedQuestionCount">
-            <button @click="startTestWithFilters" class="start-test-btn" :disabled="!canStart">
-              <span v-if="!loading">{{ t('startTest') }}</span>
-              <span v-else class="loader"></span>
-            </button>
           </div>
         </div>
 
@@ -171,17 +227,7 @@
             </div>
           </div>
 
-          <!-- AI Test Generator widget -->
-          <div class="sidebar-card ai-generator-widget">
-            <div class="ai-gen-header">
-              <i class="fas fa-magic gen-icon"></i>
-              <h4>{{ t('aiTestBuilder') }}</h4>
-            </div>
-            <p class="ai-gen-desc">{{ t('aiTestBuilderDesc') }}</p>
-            <router-link to="/ai-setup" class="ai-gen-btn">
-              <i class="fas fa-cog"></i> {{ t('setupAiTest') }}
-            </router-link>
-          </div>
+          <!-- Removed AI Widget to focus on Academics -->
         </div>
       </div>
 
@@ -248,6 +294,9 @@ export default {
       loadingLevels: false,
       status: null,
       startTest: false,
+      currentTab: 'standard',
+      specialTests: [],
+      loadingSpecial: false,
 
       // User details
       userDisplayName: '',
@@ -326,6 +375,36 @@ export default {
       } finally {
         this.loadingSubjects = false;
       }
+    },
+
+    async fetchSpecialTests() {
+      this.loadingSpecial = true;
+      try {
+        const querySnapshot = await getDocs(collection(db, 'special_tests'));
+        this.specialTests = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })).sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
+      } catch (error) {
+        console.error('Error fetching special tests:', error);
+      } finally {
+        this.loadingSpecial = false;
+      }
+    },
+
+    startSpecialTest(test) {
+      this.loading = true;
+      this.startTest = true;
+      this.$nextTick(() => {
+        this.$refs.testPage?.initializeTest({
+          sessionId: 'special_' + Math.random().toString(36).substring(2, 9),
+          subjectId: 'special',
+          levelId: test.category,
+          specialTestId: test.id,
+          title: test.title
+        });
+        this.loading = false;
+      });
     },
 
     async fetchLevels() {
@@ -866,6 +945,7 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   },
   mounted() {
     this.fetchSubjects();
+    this.fetchSpecialTests();
     this.fetchUserStats();
   },
 };
@@ -1435,6 +1515,147 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   color: #ffffff !important;
   transform: translateX(-4px);
   box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.25);
+}
+
+/* New Premium UI Styles */
+.test-type-tabs {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 15px 20px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background: var(--card-bg);
+  color: var(--text-color);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+.tab-btn:hover {
+  background: var(--bg-color);
+  transform: translateY(-2px);
+}
+.tab-btn.active {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border-color: #60a5fa;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+}
+
+.premium-cards {
+  gap: 20px !important;
+}
+.subject-card.premium {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+.subject-card.premium.selected {
+  background: linear-gradient(145deg, #eff6ff, #dbeafe);
+  border-color: #3b82f6;
+}
+.subject-card-bg {
+  position: absolute;
+  right: -20px;
+  bottom: -20px;
+  font-size: 100px;
+  opacity: 0.03;
+  transform: rotate(-15deg);
+  pointer-events: none;
+}
+.subject-card.premium:hover .subject-card-bg {
+  opacity: 0.06;
+  transform: rotate(0deg) scale(1.1);
+  transition: all 0.5s;
+}
+
+/* Special Tests */
+.special-tests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.special-test-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+.special-test-card:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.15);
+  transform: translateY(-2px);
+}
+.st-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+.st-icon.dtm { background: #fef08a; color: #854d0e; }
+.st-icon.prezident { background: #f3e8ff; color: #7e22ce; }
+.st-details {
+  flex: 1;
+  margin: 0 20px;
+}
+.st-details h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 5px 0;
+}
+.st-category {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.st-start-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.special-test-card:hover .st-start-btn {
+  background: #059669;
+}
+.no-tests-banner {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+}
+.no-tests-banner i {
+  font-size: 3rem;
+  margin-bottom: 15px;
 }
 
 /* Loading animations */

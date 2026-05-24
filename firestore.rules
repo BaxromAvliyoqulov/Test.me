@@ -38,17 +38,23 @@ service cloud.firestore {
     // Subjects and nested collections read-only for authenticated users
     match /subjects/{subjectId} {
       allow read: if isAuthenticated();
-      allow write: if false;
+      allow write: if isAuthenticated();
       
       match /levels/{levelId} {
         allow read: if isAuthenticated();
-        allow write: if false;
+        allow write: if isAuthenticated();
         
         match /tests/{testId} {
           allow read: if isAuthenticated();
-          allow write: if false;
+          allow write: if isAuthenticated();
         }
       }
+    }
+
+    // Special Tests rules
+    match /special_tests/{testId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
 
     // Test Sessions rules

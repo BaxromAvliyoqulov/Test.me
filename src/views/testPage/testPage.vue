@@ -287,6 +287,8 @@ const props = defineProps({
   subjectId: { type: String, default: '' },
   levelId: { type: String, default: '' },
   questionCount: { type: Number, default: 10 },
+  specialTestId: { type: String, default: '' },
+  title: { type: String, default: '' }
 });
 
 const isRus = computed(() => locale.value === 'RUS');
@@ -308,12 +310,15 @@ const activeQuestionCount = computed(() => {
 // Display names for subject and level
 const displaySubject = computed(() => {
   const subj = activeSubjectId.value;
-  return subj === 'ai' ? (isRus.value ? 'AI Конструктор' : 'AI Testi') : subj;
+  if (subj === 'ai') return isRus.value ? 'AI Конструктор' : 'AI Testi';
+  if (subj === 'special') return props.title || 'Maxsus Imtihon';
+  return subj;
 });
 
 const displayLevel = computed(() => {
   const lvl = activeLevelId.value;
-  return lvl === 'ai' ? (isRus.value ? 'Сгенерированный' : 'AI yaratgan') : lvl;
+  if (lvl === 'ai') return isRus.value ? 'Сгенерированный' : 'AI yaratgan';
+  return lvl;
 });
 
 // State
@@ -358,10 +363,14 @@ const goHome = () => {
 
 // Correct answers score
 const score = computed(() => {
-  return state.questions.reduce((acc, q, i) => {
+  const totalRaw = state.questions.reduce((acc, q, i) => {
     const selectedIdx = state.selectedAnswers[i];
-    return selectedIdx !== null && selectedIdx !== undefined && q.options[selectedIdx] === q.answer ? acc + 1 : acc;
+    if (selectedIdx !== null && selectedIdx !== undefined && q.options[selectedIdx] === q.answer) {
+      return acc + (q.scoreWeight || 1);
+    }
+    return acc;
   }, 0);
+  return Math.round(totalRaw * 10) / 10;
 });
 
 // Dynamic circle border style for score ring
@@ -456,6 +465,40 @@ const fetchQuestions = async (options) => {
       return;
     }
 
+    const isSpecial = activeSubjectId.value === 'special';
+    if (isSpecial) {
+      const specialId = props.specialTestId || route?.query?.specialTestId;
+      if (!specialId) throw new Error("Maxsus test ID topilmadi");
+
+      const docRef = doc(db, 'special_tests', specialId);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) throw new Error("Maxsus test bazadan topilmadi");
+
+      const testData = docSnap.data();
+      const flatQuestions = [];
+      if (testData.sections) {
+        testData.sections.forEach(section => {
+          if (section.questions) {
+            section.questions.forEach(q => {
+              flatQuestions.push({
+                ...q,
+                scoreWeight: section.scoreWeight || 1
+              });
+            });
+          }
+        });
+      }
+
+      if (flatQuestions.length === 0) throw new Error("Testda savollar yo'q");
+
+      state.questions = flatQuestions;
+      state.selectedAnswers = Array(state.questions.length).fill(null);
+      state.currentPage = 0;
+      state.selectedAnswer = null;
+      state.testFinished = false;
+      return;
+    }
+
     // Standard local tests query
     const testsRef = collection(
       db,
@@ -529,8 +572,10 @@ const finishTest = async () => {
 
     await addDoc(collection(db, 'results'), resultData);
 
-    // Reward TP Coins for correct answers (1 coin per correct answer)
-    const coinsEarned = score.value;
+    // Reward TP Coins
+    const isSpecial = activeSubjectId.value === 'special';
+    const coinsEarned = isSpecial ? 50 : Math.round(score.value);
+    
     if (coinsEarned > 0) {
       try {
         const userDocRef = doc(db, 'users', user.uid);

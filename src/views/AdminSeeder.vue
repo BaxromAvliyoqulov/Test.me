@@ -120,9 +120,9 @@ export default {
   data() {
     return {
       geminiApiKey: localStorage.getItem('geminiApiKey') || '',
-      subjectId: '',
+      subjectId: localStorage.getItem('adminSeederSubjectId') || '',
       subjects: [],
-      globalTargetCount: 1000,
+      globalTargetCount: parseInt(localStorage.getItem('adminSeederTargetCount')) || 1000,
       isRunning: false,
       isPaused: false,
       shouldStop: false,
@@ -138,6 +138,12 @@ export default {
   watch: {
     geminiApiKey(newKey) {
       localStorage.setItem('geminiApiKey', newKey);
+    },
+    subjectId(newVal) {
+      localStorage.setItem('adminSeederSubjectId', newVal || '');
+    },
+    globalTargetCount(newVal) {
+      localStorage.setItem('adminSeederTargetCount', newVal || 1000);
     }
   },
   methods: {
@@ -148,6 +154,13 @@ export default {
           id: doc.id,
           ...doc.data(),
         }));
+        
+        // Auto-load previously selected subject if it still exists
+        if (this.subjectId && this.subjects.some(s => s.id === this.subjectId)) {
+          await this.onSubjectChange();
+        } else {
+          this.subjectId = '';
+        }
       } catch (error) {
         console.error('Error fetching subjects:', error);
         this.errorMessage = 'Failed to load subjects.';

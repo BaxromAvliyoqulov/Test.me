@@ -398,7 +398,13 @@ Each object must have this exact structure:
             console.error(`Error generating for ${level.id}:`, err);
             
             const errMsg = err.message || "";
-            if (errMsg.includes('429') || errMsg.includes('quota')) {
+            if (errMsg.includes('PerDay') || errMsg.includes('GenerateRequestsPerDay')) {
+              this.logActivity(`FATAL: Daily API Limit Reached! Limit is exhausted for today.`, 'error');
+              this.errorMessage = `KUNLIK LIMIT TUGADI! Google API ushbu kalit uchun kunlik limitni (Daily Quota) tugatdi. Iltimos, boshqa Google akkauntdan yangi API Key oling yoki ertagacha kuting.`;
+              this.shouldStop = true; // Stop everything
+              this.isRunning = false;
+              break;
+            } else if (errMsg.includes('429') || errMsg.includes('quota')) {
               this.logActivity(`API Quota reached. Halting for 60 seconds to clear 1-minute limit...`, 'error');
               // Visible countdown so the user doesn't think it's frozen
               for (let i = 60; i > 0; i--) {

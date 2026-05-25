@@ -361,8 +361,13 @@ Each object must have this exact structure:
             
             const errMsg = err.message || "";
             if (errMsg.includes('429') || errMsg.includes('quota')) {
-              this.errorMessage = `API Limit (Free Tier) reached for ${level.id.toUpperCase()}. Automatically waiting 15 seconds before retrying...`;
-              await new Promise(r => setTimeout(r, 15000));
+              // Visible countdown so the user doesn't think it's frozen
+              for (let i = 30; i > 0; i--) {
+                if (this.shouldStop) break;
+                this.errorMessage = `API Limit (Free Tier) reached for ${level.id.toUpperCase()}. Retrying in ${i} seconds...`;
+                await new Promise(r => setTimeout(r, 1000));
+              }
+              this.errorMessage = `Retrying ${level.id.toUpperCase()} now...`;
             } else {
               this.errorMessage = `Error in ${level.id.toUpperCase()}: ${errMsg}`;
               await new Promise(r => setTimeout(r, 4000));

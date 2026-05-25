@@ -17,19 +17,22 @@
       </div>
       <div class="form-group">
         <label><i class="fas fa-book"></i> Subject ID</label>
-        <input v-model="subjectId" type="text" placeholder="e.g. Ingliz tili" />
+        <select v-model="subjectId" @change="onSubjectChange" class="subject-select" :disabled="isRunning || subjects.length === 0">
+          <option value="" disabled>Select a subject</option>
+          <option v-for="sub in subjects" :key="sub.id" :value="sub.id">{{ sub.title || sub.id }}</option>
+        </select>
       </div>
       <div class="form-group">
-        <label><i class="fas fa-bullseye"></i> Target Count</label>
-        <input v-model.number="targetCount" type="number" />
+        <label><i class="fas fa-bullseye"></i> Target Count (All)</label>
+        <input v-model.number="globalTargetCount" type="number" @input="updateAllTargets" class="no-spinners" />
       </div>
       <button 
         @click="startSeeding" 
         class="start-btn" 
-        :disabled="isRunning"
+        :disabled="isRunning || !subjectId || levels.length === 0"
       >
         <i class="fas" :class="isRunning ? 'fa-spinner fa-spin' : 'fa-play'"></i>
-        {{ isRunning ? 'Generation in Progress...' : 'Start Generating 1000 Tests' }}
+        {{ isRunning ? 'Generation in Progress...' : 'Start Generating Tests' }}
       </button>
       <button v-if="isRunning" @click="stopSeeding" class="stop-btn">
         <i class="fas fa-stop"></i> Stop
@@ -43,8 +46,8 @@
 
     <div class="db-status-card">
       <div class="status-header">
-        <h3><i class="fas fa-database"></i> Database Status ({{ subjectId }})</h3>
-        <button @click="fetchDbStats" class="refresh-btn" title="Refresh DB Stats">
+        <h3><i class="fas fa-database"></i> Database Status <span v-if="subjectId">({{ subjectId }})</span></h3>
+        <button @click="fetchDbStats" class="refresh-btn" title="Refresh DB Stats" :disabled="!subjectId">
           <i class="fas fa-sync-alt" :class="{ 'fa-spin': isFetchingStats }"></i> Refresh
         </button>
       </div>
@@ -59,6 +62,9 @@
           <span class="stat-count">{{ stat.count }} tests</span>
         </div>
       </div>
+      <div v-else class="empty-stats">
+        Please select a subject to see database status.
+      </div>
     </div>
 
     <div class="progress-grid">
@@ -69,17 +75,22 @@
             {{ level.status }}
           </span>
         </div>
-        <p class="description">{{ level.desc }}</p>
+        
+        <div class="level-target-input">
+          <label>Target for {{ level.id.toUpperCase() }}:</label>
+          <input v-model.number="level.targetCount" type="number" class="no-spinners" :disabled="isRunning" />
+        </div>
+
         <div class="progress-wrapper">
           <div class="progress-stats">
-            <span>{{ level.current }} / {{ targetCount }} generated</span>
-            <span>{{ Math.round((level.current / targetCount) * 100) }}%</span>
+            <span>{{ level.current }} / {{ level.targetCount }} generated</span>
+            <span>{{ Math.round((level.current / Math.max(1, level.targetCount)) * 100) }}%</span>
           </div>
           <div class="progress-bar-bg">
             <div 
               class="progress-bar-fill" 
-              :style="{ width: `${Math.min((level.current / targetCount) * 100, 100)}%` }"
-              :class="{ 'finished': level.current >= targetCount }"
+              :style="{ width: `${Math.min((level.current / Math.max(1, level.targetCount)) * 100, 100)}%` }"
+              :class="{ 'finished': level.current >= level.targetCount }"
             ></div>
           </div>
         </div>
@@ -92,47 +103,84 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { db } from '@/config/firebase';
 import { collection, doc, writeBatch, getDocs, getCountFromServer } from 'firebase/firestore';
+import { sortLevels } from '@/utils/sorters';
 
 export default {
   name: 'AdminSeeder',
   data() {
     return {
       geminiApiKey: localStorage.getItem('geminiApiKey') || '',
-      subjectId: 'Ingliz tili',
-      targetCount: 1000,
+      subjectId: '',
+      subjects: [],
+      globalTargetCount: 1000,
       isRunning: false,
       shouldStop: false,
       isFetchingStats: false,
       errorMessage: '',
       dbStats: [],
-      levels: [
-        { id: 'a1', status: 'pending', current: 0, desc: 'Basic vocab, to be, simple present.' },
-        { id: 'a2', status: 'pending', current: 0, desc: 'Past simple, future, comparatives.' },
-        { id: 'b1', status: 'pending', current: 0, desc: 'Present perfect, modals, 1st conditional.' },
-        { id: 'b2', status: 'pending', current: 0, desc: 'Passives, 2nd/3rd conditionals.' },
-        { id: 'c1', status: 'pending', current: 0, desc: 'Complex clauses, idioms, nuance.' },
-        { id: 'c2', status: 'pending', current: 0, desc: 'Native-like idioms, literary terms.' },
-      ]
+      levels: []
     };
   },
-  mounted() {
-    this.fetchDbStats();
+  async mounted() {
+    await this.fetchSubjects();
   },
   watch: {
-    subjectId() {
-      this.fetchDbStats();
-    },
     geminiApiKey(newKey) {
       localStorage.setItem('geminiApiKey', newKey);
     }
   },
   methods: {
+    async fetchSubjects() {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'subjects'));
+        this.subjects = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+        this.errorMessage = 'Failed to load subjects.';
+      }
+    },
+    async onSubjectChange() {
+      if (!this.subjectId) return;
+      this.levels = [];
+      this.dbStats = [];
+      
+      try {
+        const subjectRef = doc(db, 'subjects', this.subjectId);
+        const levelsCollection = await getDocs(collection(subjectRef, 'levels'));
+        
+        const fetchedLevels = levelsCollection.docs.map((doc) => doc.id);
+        const sorted = sortLevels(fetchedLevels);
+        
+        this.levels = sorted.map(id => ({
+          id: id,
+          status: 'pending',
+          current: 0,
+          targetCount: this.globalTargetCount
+        }));
+        
+        this.fetchDbStats();
+      } catch (error) {
+        console.error('Error fetching levels:', error);
+        this.errorMessage = 'Failed to load levels for subject.';
+      }
+    },
+    updateAllTargets() {
+      if (!this.globalTargetCount) return;
+      this.levels.forEach(level => {
+        level.targetCount = this.globalTargetCount;
+      });
+    },
     getStatColor(count) {
       if (count < 100) return 'status-red';
       if (count < 500) return 'status-yellow';
       return 'status-green';
     },
     async fetchDbStats() {
+      if (!this.subjectId || this.levels.length === 0) return;
+      
       this.isFetchingStats = true;
       const stats = [];
       for (let level of this.levels) {
@@ -155,6 +203,10 @@ export default {
         this.errorMessage = "Please enter your Gemini API Key first!";
         return;
       }
+      if (!this.subjectId) {
+        this.errorMessage = "Please select a subject!";
+        return;
+      }
 
       this.isRunning = true;
       this.shouldStop = false;
@@ -165,18 +217,30 @@ export default {
 
       for (let level of this.levels) {
         if (this.shouldStop) break;
-        if (level.current >= this.targetCount) continue;
+        if (level.current >= level.targetCount) continue;
 
         level.status = 'generating';
         
-        while (level.current < this.targetCount && !this.shouldStop) {
-          const batchSize = Math.min(30, this.targetCount - level.current);
+        // 1. Fetch all existing questions for deduplication
+        const seenQuestions = new Set();
+        try {
+          const existingDocs = await getDocs(collection(db, 'subjects', this.subjectId, 'levels', level.id, 'tests'));
+          existingDocs.forEach(doc => {
+            if (doc.data().question) {
+              // Normalize string to avoid capitalization/spacing false negatives
+              seenQuestions.add(doc.data().question.trim().toLowerCase());
+            }
+          });
+        } catch(e) {
+          console.warn("Could not fetch existing docs for deduplication:", e);
+        }
+        
+        while (level.current < level.targetCount && !this.shouldStop) {
+          const batchSize = Math.min(30, level.targetCount - level.current);
           
-          const prompt = `You are an expert Cambridge English examiner. 
-Generate exactly ${batchSize} high-quality, strictly leveled multiple-choice questions for English proficiency level ${level.id.toUpperCase()}.
-Level guidelines: ${level.desc}
+          const prompt = `You are an expert examiner for the subject: ${this.subjectId}.
+Generate exactly ${batchSize} high-quality, strictly leveled multiple-choice questions for proficiency/academic level ${level.id.toUpperCase()}.
 Make sure the difficulty is EXACTLY tailored for ${level.id.toUpperCase()}.
-A1 must be extremely easy ("I am a boy"). C2 must be extremely hard.
 
 Return ONLY a valid JSON array of objects. Do not include markdown \`\`\`json wrappers.
 Each object must have this exact structure:
@@ -209,7 +273,19 @@ Each object must have this exact structure:
             const batch = writeBatch(db);
             const testsRef = collection(db, 'subjects', this.subjectId, 'levels', level.id, 'tests');
             
+            let insertedCount = 0;
+            
             questions.forEach(q => {
+              const normalizedQ = q.question.trim().toLowerCase();
+              if (seenQuestions.has(normalizedQ)) {
+                // Deduplication: skip duplicate question
+                console.log('Skipping duplicate:', q.question);
+                return;
+              }
+              
+              seenQuestions.add(normalizedQ);
+              insertedCount++;
+              
               const docRef = doc(testsRef);
               batch.set(docRef, {
                 question: q.question,
@@ -220,15 +296,22 @@ Each object must have this exact structure:
               });
             });
 
-            await batch.commit();
+            if (insertedCount > 0) {
+              await batch.commit();
+            }
             
-            level.current += questions.length;
+            level.current += insertedCount;
             this.errorMessage = ''; // clear error on success
             
             // Update dbStats dynamically
             const statObj = this.dbStats.find(s => s.id === level.id);
             if (statObj) {
-              statObj.count += questions.length;
+              statObj.count += insertedCount;
+            }
+            
+            // If we generated 30 but inserted 0 due to duplicates, we shouldn't infinitely spin instantly
+            if (insertedCount === 0) {
+              await new Promise(r => setTimeout(r, 1000));
             }
             
           } catch (err) {
@@ -239,7 +322,7 @@ Each object must have this exact structure:
           }
         }
         
-        if (level.current >= this.targetCount) {
+        if (level.current >= level.targetCount) {
           level.status = 'done';
         }
       }
@@ -329,18 +412,29 @@ Each object must have this exact structure:
   color: #3b82f6;
 }
 
-.form-group input {
+.form-group input, .subject-select {
   padding: 0.75rem 1rem;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 1rem;
   outline: none;
   transition: all 0.2s;
+  background: white;
 }
 
-.form-group input:focus {
+.form-group input:focus, .subject-select:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Hide spin buttons for all browsers */
+.no-spinners::-webkit-outer-spin-button,
+.no-spinners::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.no-spinners {
+  -moz-appearance: textfield;
 }
 
 .start-btn {
@@ -403,13 +497,39 @@ Each object must have this exact structure:
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .level-header h3 {
   margin: 0;
   font-size: 1.25rem;
   color: #1e293b;
+}
+
+.level-target-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  background: #f8fafc;
+  padding: 0.75rem;
+  border-radius: 12px;
+}
+
+.level-target-input label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.level-target-input input {
+  width: 80px;
+  padding: 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  text-align: right;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .status-badge {
@@ -423,12 +543,6 @@ Each object must have this exact structure:
 .status-badge.pending { background: #f1f5f9; color: #64748b; }
 .status-badge.generating { background: #dbeafe; color: #3b82f6; animation: pulse 2s infinite; }
 .status-badge.done { background: #dcfce3; color: #10b981; }
-
-.description {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin-bottom: 1.5rem;
-}
 
 .progress-stats {
   display: flex;
@@ -504,7 +618,12 @@ Each object must have this exact structure:
   transition: all 0.2s;
 }
 
-.refresh-btn:hover {
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.refresh-btn:hover:not(:disabled) {
   background: #e2e8f0;
   color: #0f172a;
 }
@@ -523,6 +642,13 @@ Each object must have this exact structure:
   align-items: center;
   gap: 0.5rem;
   font-weight: 700;
+}
+
+.empty-stats {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+  font-weight: 500;
 }
 
 .stat-level {

@@ -97,7 +97,7 @@ export default {
   name: 'AdminSeeder',
   data() {
     return {
-      geminiApiKey: '',
+      geminiApiKey: localStorage.getItem('geminiApiKey') || '',
       subjectId: 'Ingliz tili',
       targetCount: 1000,
       isRunning: false,
@@ -121,6 +121,9 @@ export default {
   watch: {
     subjectId() {
       this.fetchDbStats();
+    },
+    geminiApiKey(newKey) {
+      localStorage.setItem('geminiApiKey', newKey);
     }
   },
   methods: {

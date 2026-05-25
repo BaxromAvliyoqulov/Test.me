@@ -283,6 +283,8 @@ Each object must have this exact structure:
   gap: 0.5rem;
   transition: all 0.2s;
   height: 45px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .start-btn:hover:not(:disabled) {
@@ -307,6 +309,8 @@ Each object must have this exact structure:
   align-items: center;
   gap: 0.5rem;
   height: 45px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .progress-grid {

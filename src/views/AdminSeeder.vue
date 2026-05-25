@@ -49,6 +49,21 @@
       </div>
     </div>
 
+    <!-- Live Activity Console -->
+    <div class="activity-log-card" v-if="isRunning || activityLogs.length > 0">
+      <div class="log-header">
+        <h3><i class="fas fa-terminal"></i> Live Activity Console</h3>
+        <span class="pulse-indicator" :class="{ active: isRunning && !isPaused }"></span>
+      </div>
+      <div class="log-window">
+        <div v-for="log in activityLogs" :key="log.id" :class="['log-item', 'log-' + log.type]">
+          <span class="log-time">[{{ log.time }}]</span>
+          <span class="log-msg">{{ log.msg }}</span>
+        </div>
+        <div v-if="activityLogs.length === 0" class="log-empty">Waiting for tasks to begin...</div>
+      </div>
+    </div>
+
     <div v-if="errorMessage" class="error-banner">
       <i class="fas fa-exclamation-triangle"></i>
       {{ errorMessage }}
@@ -129,7 +144,8 @@ export default {
       isFetchingStats: false,
       errorMessage: '',
       dbStats: [],
-      levels: []
+      levels: [],
+      activityLogs: []
     };
   },
   async mounted() {
@@ -221,14 +237,24 @@ export default {
     },
     pauseSeeding() {
       this.isPaused = true;
+      this.logActivity('Generation Paused by Admin.', 'warn');
     },
     resumeSeeding() {
       this.isPaused = false;
       this.errorMessage = '';
+      this.logActivity('Generation Resumed.', 'success');
     },
     stopSeeding() {
       this.shouldStop = true;
       this.isPaused = false;
+      this.logActivity('Generation manually Stopped.', 'error');
+    },
+    logActivity(msg, type = 'info') {
+      const time = new Date().toLocaleTimeString([], { hour12: false });
+      this.activityLogs.unshift({ id: Date.now() + Math.random(), time, msg, type });
+      if (this.activityLogs.length > 50) {
+        this.activityLogs.pop();
+      }
     },
     async startSeeding() {
       if (!this.geminiApiKey) {
@@ -244,6 +270,9 @@ export default {
       this.isPaused = false;
       this.shouldStop = false;
       this.errorMessage = '';
+      this.activityLogs = [];
+      
+      this.logActivity(`Session started for ${this.subjectId}.`, 'success');
       
       const genAI = new GoogleGenerativeAI(this.geminiApiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -255,16 +284,18 @@ export default {
         level.status = 'generating';
         
         // 1. Fetch all existing questions for deduplication
+        this.logActivity(`Fetching existing tests for ${level.id.toUpperCase()} to prevent duplicates...`, 'info');
         const seenQuestions = new Set();
         try {
           const existingDocs = await getDocs(collection(db, 'subjects', this.subjectId, 'levels', level.id, 'tests'));
           existingDocs.forEach(doc => {
             if (doc.data().question) {
-              // Normalize string to avoid capitalization/spacing false negatives
               seenQuestions.add(doc.data().question.trim().toLowerCase());
             }
           });
+          this.logActivity(`Loaded ${seenQuestions.size} existing questions for deduplication.`, 'success');
         } catch(e) {
+          this.logActivity(`Warning: Could not fetch existing docs.`, 'warn');
           console.warn("Could not fetch existing docs for deduplication:", e);
         }
         
@@ -279,6 +310,8 @@ export default {
           level.status = 'generating';
           
           const batchSize = Math.min(30, level.targetCount - level.current);
+          
+          this.logActivity(`Requesting Gemini for ${batchSize} tests for ${level.id.toUpperCase()}...`, 'info');
           
           const prompt = `You are an expert examiner for the subject: ${this.subjectId}.
 Generate exactly ${batchSize} high-quality, strictly leveled multiple-choice questions for proficiency/academic level ${level.id.toUpperCase()}.
@@ -316,12 +349,13 @@ Each object must have this exact structure:
             const testsRef = collection(db, 'subjects', this.subjectId, 'levels', level.id, 'tests');
             
             let insertedCount = 0;
+            let skippedCount = 0;
             
             questions.forEach(q => {
               const normalizedQ = q.question.trim().toLowerCase();
               if (seenQuestions.has(normalizedQ)) {
                 // Deduplication: skip duplicate question
-                console.log('Skipping duplicate:', q.question);
+                skippedCount++;
                 return;
               }
               
@@ -345,6 +379,8 @@ Each object must have this exact structure:
             level.current += insertedCount;
             this.errorMessage = ''; // clear error on success
             
+            this.logActivity(`Success: +${insertedCount} added. ${skippedCount > 0 ? `(Skipped ${skippedCount} duplicates)` : ''}`, 'success');
+            
             // Update dbStats dynamically
             const statObj = this.dbStats.find(s => s.id === level.id);
             if (statObj) {
@@ -361,6 +397,7 @@ Each object must have this exact structure:
             
             const errMsg = err.message || "";
             if (errMsg.includes('429') || errMsg.includes('quota')) {
+              this.logActivity(`API Quota reached. Halting for 30 seconds...`, 'error');
               // Visible countdown so the user doesn't think it's frozen
               for (let i = 30; i > 0; i--) {
                 if (this.shouldStop) break;
@@ -368,7 +405,9 @@ Each object must have this exact structure:
                 await new Promise(r => setTimeout(r, 1000));
               }
               this.errorMessage = `Retrying ${level.id.toUpperCase()} now...`;
+              this.logActivity(`Resuming generation after wait...`, 'info');
             } else {
+              this.logActivity(`Error: ${errMsg}`, 'error');
               this.errorMessage = `Error in ${level.id.toUpperCase()}: ${errMsg}`;
               await new Promise(r => setTimeout(r, 4000));
             }
@@ -377,10 +416,12 @@ Each object must have this exact structure:
         
         if (level.current >= level.targetCount) {
           level.status = 'done';
+          this.logActivity(`Completed all targets for ${level.id.toUpperCase()}!`, 'success');
         }
       }
       
       this.isRunning = false;
+      this.logActivity('Generation Session Ended.', 'info');
     }
   }
 };
@@ -437,6 +478,100 @@ Each object must have this exact structure:
   align-items: center;
   gap: 0.75rem;
   font-weight: 500;
+}
+
+/* Activity Console */
+.activity-log-card {
+  background: #0f172a;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+  color: #e2e8f0;
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 0.75rem;
+}
+
+.log-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Outfit', sans-serif;
+}
+
+.pulse-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #64748b;
+}
+
+.pulse-indicator.active {
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: logPulse 1.5s infinite;
+}
+
+@keyframes logPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.log-window {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  padding-right: 0.5rem;
+}
+
+.log-window::-webkit-scrollbar {
+  width: 6px;
+}
+.log-window::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 4px;
+}
+.log-window::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+.log-item {
+  display: flex;
+  gap: 0.75rem;
+  line-height: 1.4;
+}
+
+.log-time {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.log-info .log-msg { color: #38bdf8; }
+.log-success .log-msg { color: #34d399; }
+.log-warn .log-msg { color: #fbbf24; }
+.log-error .log-msg { color: #f87171; }
+
+.log-empty {
+  color: #64748b;
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
 }
 
 .form-group {

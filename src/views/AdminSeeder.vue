@@ -41,6 +41,26 @@
       {{ errorMessage }}
     </div>
 
+    <div class="db-status-card">
+      <div class="status-header">
+        <h3><i class="fas fa-database"></i> Database Status ({{ subjectId }})</h3>
+        <button @click="fetchDbStats" class="refresh-btn" title="Refresh DB Stats">
+          <i class="fas fa-sync-alt" :class="{ 'fa-spin': isFetchingStats }"></i> Refresh
+        </button>
+      </div>
+      <div class="stats-grid" v-if="dbStats.length > 0">
+        <div 
+          v-for="stat in dbStats" 
+          :key="stat.id" 
+          class="stat-item" 
+          :class="getStatColor(stat.count)"
+        >
+          <span class="stat-level">{{ stat.id.toUpperCase() }}</span>
+          <span class="stat-count">{{ stat.count }} tests</span>
+        </div>
+      </div>
+    </div>
+
     <div class="progress-grid">
       <div v-for="level in levels" :key="level.id" class="level-card">
         <div class="level-header">
@@ -71,7 +91,7 @@
 <script>
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { db } from '@/config/firebase';
-import { collection, doc, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, doc, writeBatch, getDocs, getCountFromServer } from 'firebase/firestore';
 
 export default {
   name: 'AdminSeeder',
@@ -82,7 +102,9 @@ export default {
       targetCount: 1000,
       isRunning: false,
       shouldStop: false,
+      isFetchingStats: false,
       errorMessage: '',
+      dbStats: [],
       levels: [
         { id: 'a1', status: 'pending', current: 0, desc: 'Basic vocab, to be, simple present.' },
         { id: 'a2', status: 'pending', current: 0, desc: 'Past simple, future, comparatives.' },
@@ -93,7 +115,35 @@ export default {
       ]
     };
   },
+  mounted() {
+    this.fetchDbStats();
+  },
+  watch: {
+    subjectId() {
+      this.fetchDbStats();
+    }
+  },
   methods: {
+    getStatColor(count) {
+      if (count < 100) return 'status-red';
+      if (count < 500) return 'status-yellow';
+      return 'status-green';
+    },
+    async fetchDbStats() {
+      this.isFetchingStats = true;
+      const stats = [];
+      for (let level of this.levels) {
+        try {
+          const coll = collection(db, 'subjects', this.subjectId, 'levels', level.id, 'tests');
+          const snapshot = await getCountFromServer(coll);
+          stats.push({ id: level.id, count: snapshot.data().count });
+        } catch (err) {
+          stats.push({ id: level.id, count: 0 });
+        }
+      }
+      this.dbStats = stats;
+      this.isFetchingStats = false;
+    },
     stopSeeding() {
       this.shouldStop = true;
     },
@@ -171,6 +221,12 @@ Each object must have this exact structure:
             
             level.current += questions.length;
             this.errorMessage = ''; // clear error on success
+            
+            // Update dbStats dynamically
+            const statObj = this.dbStats.find(s => s.id === level.id);
+            if (statObj) {
+              statObj.count += questions.length;
+            }
             
           } catch (err) {
             console.error(`Error generating for ${level.id}:`, err);
@@ -402,5 +458,95 @@ Each object must have this exact structure:
   0% { opacity: 1; }
   50% { opacity: 0.5; }
   100% { opacity: 1; }
+}
+
+.db-status-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.status-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1e293b;
+}
+
+.status-header h3 i {
+  color: #8b5cf6;
+}
+
+.refresh-btn {
+  background: #f1f5f9;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #64748b;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.stat-item {
+  padding: 1rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.stat-level {
+  font-size: 1.25rem;
+}
+
+.stat-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.status-red {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+}
+
+.status-yellow {
+  background: #fefce8;
+  color: #eab308;
+  border: 1px solid #fef08a;
+}
+
+.status-green {
+  background: #f0fdf4;
+  color: #22c55e;
+  border: 1px solid #bbf7d0;
 }
 </style>

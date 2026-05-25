@@ -316,9 +316,15 @@ Each object must have this exact structure:
             
           } catch (err) {
             console.error(`Error generating for ${level.id}:`, err);
-            this.errorMessage = `Error in ${level.id.toUpperCase()}: ${err.message}`;
-            // Wait a bit before retrying on error
-            await new Promise(r => setTimeout(r, 4000));
+            
+            const errMsg = err.message || "";
+            if (errMsg.includes('429') || errMsg.includes('quota')) {
+              this.errorMessage = `API Limit (Free Tier) reached for ${level.id.toUpperCase()}. Automatically waiting 15 seconds before retrying...`;
+              await new Promise(r => setTimeout(r, 15000));
+            } else {
+              this.errorMessage = `Error in ${level.id.toUpperCase()}: ${errMsg}`;
+              await new Promise(r => setTimeout(r, 4000));
+            }
           }
         }
         

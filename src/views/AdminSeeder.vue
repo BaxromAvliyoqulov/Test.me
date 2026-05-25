@@ -77,7 +77,7 @@
         </div>
         
         <div class="level-target-input">
-          <label>Target for {{ level.id.toUpperCase() }}:</label>
+          <label><i class="fas fa-bullseye"></i> Target Tests</label>
           <input v-model.number="level.targetCount" type="number" class="no-spinners" :disabled="isRunning" />
         </div>
 
@@ -511,25 +511,43 @@ Each object must have this exact structure:
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
-  background: #f8fafc;
-  padding: 0.75rem;
-  border-radius: 12px;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
 }
 
 .level-target-input label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.level-target-input label i {
+  color: #8b5cf6;
 }
 
 .level-target-input input {
-  width: 80px;
-  padding: 0.5rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  text-align: right;
-  font-weight: 700;
+  width: 100px;
+  padding: 0.6rem 1rem;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.1rem;
   color: #0f172a;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+
+.level-target-input input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  outline: none;
 }
 
 .status-badge {
@@ -635,47 +653,56 @@ Each object must have this exact structure:
 }
 
 .stat-item {
-  padding: 1rem;
-  border-radius: 12px;
+  padding: 1.25rem 1rem;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
   font-weight: 700;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.empty-stats {
-  text-align: center;
-  color: #94a3b8;
-  padding: 2rem;
-  font-weight: 500;
+.stat-item:hover {
+  transform: translateY(-2px);
 }
 
 .stat-level {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
+  z-index: 1;
 }
 
 .stat-count {
   font-size: 0.85rem;
   font-weight: 600;
   opacity: 0.9;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
 }
 
 .status-red {
-  background: #fef2f2;
-  color: #ef4444;
-  border: 1px solid #fecaca;
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+  box-shadow: 0 4px 15px rgba(225, 29, 72, 0.1);
 }
 
 .status-yellow {
-  background: #fefce8;
-  color: #eab308;
-  border: 1px solid #fef08a;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  color: #d97706;
+  border: 1px solid #fde68a;
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.1);
 }
 
 .status-green {
-  background: #f0fdf4;
-  color: #22c55e;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce3 100%);
+  color: #16a34a;
   border: 1px solid #bbf7d0;
+  box-shadow: 0 4px 15px rgba(22, 163, 74, 0.1);
 }
 </style>

@@ -30,13 +30,23 @@
         @click="startSeeding" 
         class="start-btn" 
         :disabled="isRunning || !subjectId || levels.length === 0"
+        v-if="!isRunning"
       >
-        <i class="fas" :class="isRunning ? 'fa-spinner fa-spin' : 'fa-play'"></i>
-        {{ isRunning ? 'Generation in Progress...' : 'Start Generating Tests' }}
+        <i class="fas fa-play"></i>
+        Start Generating Tests
       </button>
-      <button v-if="isRunning" @click="stopSeeding" class="stop-btn">
-        <i class="fas fa-stop"></i> Stop
-      </button>
+      
+      <div v-if="isRunning" class="action-buttons">
+        <button v-if="!isPaused" @click="pauseSeeding" class="pause-btn">
+          <i class="fas fa-pause"></i> Pause
+        </button>
+        <button v-if="isPaused" @click="resumeSeeding" class="resume-btn">
+          <i class="fas fa-play"></i> Resume
+        </button>
+        <button @click="stopSeeding" class="stop-btn">
+          <i class="fas fa-stop"></i> Stop
+        </button>
+      </div>
     </div>
 
     <div v-if="errorMessage" class="error-banner">
@@ -114,6 +124,7 @@ export default {
       subjects: [],
       globalTargetCount: 1000,
       isRunning: false,
+      isPaused: false,
       shouldStop: false,
       isFetchingStats: false,
       errorMessage: '',
@@ -195,8 +206,16 @@ export default {
       this.dbStats = stats;
       this.isFetchingStats = false;
     },
+    pauseSeeding() {
+      this.isPaused = true;
+    },
+    resumeSeeding() {
+      this.isPaused = false;
+      this.errorMessage = '';
+    },
     stopSeeding() {
       this.shouldStop = true;
+      this.isPaused = false;
     },
     async startSeeding() {
       if (!this.geminiApiKey) {
@@ -209,6 +228,7 @@ export default {
       }
 
       this.isRunning = true;
+      this.isPaused = false;
       this.shouldStop = false;
       this.errorMessage = '';
       
@@ -236,6 +256,15 @@ export default {
         }
         
         while (level.current < level.targetCount && !this.shouldStop) {
+          
+          while (this.isPaused && !this.shouldStop) {
+            level.status = 'paused';
+            await new Promise(r => setTimeout(r, 1000));
+          }
+          if (this.shouldStop) break;
+          
+          level.status = 'generating';
+          
           const batchSize = Math.min(30, level.targetCount - level.current);
           
           const prompt = `You are an expert examiner for the subject: ${this.subjectId}.
@@ -470,6 +499,53 @@ Each object must have this exact structure:
   cursor: not-allowed;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.pause-btn {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 45px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.pause-btn:hover {
+  background: #d97706;
+}
+
+.resume-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 45px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.resume-btn:hover {
+  background: #2563eb;
+}
+
 .stop-btn {
   background: #ef4444;
   color: white;
@@ -484,6 +560,11 @@ Each object must have this exact structure:
   height: 45px;
   white-space: nowrap;
   flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.stop-btn:hover {
+  background: #dc2626;
 }
 
 .progress-grid {
@@ -566,6 +647,7 @@ Each object must have this exact structure:
 
 .status-badge.pending { background: #f1f5f9; color: #64748b; }
 .status-badge.generating { background: #dbeafe; color: #3b82f6; animation: pulse 2s infinite; }
+.status-badge.paused { background: #fefce8; color: #d97706; }
 .status-badge.done { background: #dcfce3; color: #10b981; }
 
 .progress-stats {

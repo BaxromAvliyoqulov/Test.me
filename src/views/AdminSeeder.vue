@@ -11,16 +11,16 @@
     </div>
 
     <div class="controls-card">
-      <div class="form-group">
-        <label>Gemini API Key</label>
+      <div class="form-group api-key-group">
+        <label><i class="fas fa-key"></i> Gemini API Key</label>
         <input v-model="geminiApiKey" type="password" placeholder="Paste your AIza... key here" />
       </div>
       <div class="form-group">
-        <label>Subject ID</label>
+        <label><i class="fas fa-book"></i> Subject ID</label>
         <input v-model="subjectId" type="text" placeholder="e.g. Ingliz tili" />
       </div>
       <div class="form-group">
-        <label>Target Count per Level</label>
+        <label><i class="fas fa-bullseye"></i> Target Count</label>
         <input v-model.number="targetCount" type="number" />
       </div>
       <button 
@@ -228,6 +228,7 @@ Each object must have this exact structure:
   align-items: flex-end;
   gap: 1.5rem;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
 .error-banner {
@@ -248,12 +249,25 @@ Each object must have this exact structure:
   flex-direction: column;
   gap: 0.5rem;
   flex: 1;
+  min-width: 150px;
+}
+
+.api-key-group {
+  flex: 2;
+  min-width: 250px;
 }
 
 .form-group label {
   font-size: 0.85rem;
   color: #64748b;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.form-group label i {
+  color: #3b82f6;
 }
 
 .form-group input {

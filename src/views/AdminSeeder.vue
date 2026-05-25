@@ -12,6 +12,10 @@
 
     <div class="controls-card">
       <div class="form-group">
+        <label>Gemini API Key</label>
+        <input v-model="geminiApiKey" type="password" placeholder="Paste your AIza... key here" />
+      </div>
+      <div class="form-group">
         <label>Subject ID</label>
         <input v-model="subjectId" type="text" placeholder="e.g. Ingliz tili" />
       </div>
@@ -30,6 +34,11 @@
       <button v-if="isRunning" @click="stopSeeding" class="stop-btn">
         <i class="fas fa-stop"></i> Stop
       </button>
+    </div>
+
+    <div v-if="errorMessage" class="error-banner">
+      <i class="fas fa-exclamation-triangle"></i>
+      {{ errorMessage }}
     </div>
 
     <div class="progress-grid">
@@ -68,10 +77,12 @@ export default {
   name: 'AdminSeeder',
   data() {
     return {
+      geminiApiKey: '',
       subjectId: 'Ingliz tili',
       targetCount: 1000,
       isRunning: false,
       shouldStop: false,
+      errorMessage: '',
       levels: [
         { id: 'a1', status: 'pending', current: 0, desc: 'Basic vocab, to be, simple present.' },
         { id: 'a2', status: 'pending', current: 0, desc: 'Past simple, future, comparatives.' },
@@ -87,11 +98,16 @@ export default {
       this.shouldStop = true;
     },
     async startSeeding() {
+      if (!this.geminiApiKey) {
+        this.errorMessage = "Please enter your Gemini API Key first!";
+        return;
+      }
+
       this.isRunning = true;
       this.shouldStop = false;
+      this.errorMessage = '';
       
-      const GEMINI_API_KEY = "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
-      const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+      const genAI = new GoogleGenerativeAI(this.geminiApiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
       for (let level of this.levels) {
@@ -154,11 +170,13 @@ Each object must have this exact structure:
             await batch.commit();
             
             level.current += questions.length;
+            this.errorMessage = ''; // clear error on success
             
           } catch (err) {
             console.error(`Error generating for ${level.id}:`, err);
+            this.errorMessage = `Error in ${level.id.toUpperCase()}: ${err.message}`;
             // Wait a bit before retrying on error
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 4000));
           }
         }
         
@@ -210,6 +228,19 @@ Each object must have this exact structure:
   align-items: flex-end;
   gap: 1.5rem;
   margin-bottom: 2rem;
+}
+
+.error-banner {
+  background: #fef2f2;
+  border: 1px solid #f87171;
+  color: #b91c1c;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
 }
 
 .form-group {

@@ -387,9 +387,11 @@ Each object must have this exact structure:
               statObj.count += insertedCount;
             }
             
-            // If we generated 30 but inserted 0 due to duplicates, we shouldn't infinitely spin instantly
-            if (insertedCount === 0) {
-              await new Promise(r => setTimeout(r, 1000));
+            // Smart Rate Limiting: 60 seconds / 15 requests = 4 seconds per request.
+            // By waiting 4.5 seconds here, we naturally throttle ourselves and NEVER hit the limit!
+            if (level.current < level.targetCount) {
+              this.logActivity(`Applying 4.5s smart delay to avoid API limits...`, 'info');
+              await new Promise(r => setTimeout(r, 4500));
             }
             
           } catch (err) {

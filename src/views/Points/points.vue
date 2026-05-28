@@ -10,239 +10,254 @@
         <p>{{ isRus ? 'Управляйте балансом, приглашайте друзей и обменивайте коины на премиум награды!' : 'Balansingizni boshqaring, do\'stlarni taklif qiling va premium sovg\'alarga almashtiring!' }}</p>
       </div>
 
-      <!-- Premium Cards Grid -->
-      <div class="wallet-cards-grid">
-        <!-- Column 1: Balance Card Container -->
-        <div class="wallet-card-container">
-          <div class="wallet-card balance-card">
-            <div class="card-glass">
-              <div class="card-glare"></div>
-              <div class="card-pattern"></div>
-              
-              <div class="card-top">
-                <span class="card-title">{{ isRus ? 'ТЕКУЩИЙ БАЛАНС' : 'JORIY BALANS' }}</span>
-                <div class="card-chip-container">
-                  <div class="chip-line horizontal"></div>
-                  <div class="chip-line vertical"></div>
-                </div>
-              </div>
-              
-              <div class="balance-display">
-                <img src="../../assets/img/tpCoin.png" alt="TP Coin" class="coin-logo animate-spin-slow" />
-                <div class="balance-val">
-                  <h2>{{ points }}</h2>
-                  <span>TP Coins</span>
-                </div>
-              </div>
+      <div class="points-grid">
+        <!-- Main Content (Left) -->
+        <div class="points-main">
 
-              <!-- Monospace card number mockup -->
-              <div class="card-number">**** **** **** {{ points > 0 ? (points * 7).toString().padStart(4, '0').slice(-4) : '2026' }}</div>
-              
-              <div class="card-holder-row">
-                <div class="card-holder">
-                  <span>{{ isRus ? 'ВЛАДЕЛЕЦ' : 'EGA' }}</span>
-                  <strong>
-                    <i :class="getRankIcon(points)"></i> {{ getRankName(points, locale) }}
-                  </strong>
+          <!-- Premium Cards Grid -->
+          <div class="wallet-cards-grid">
+            <!-- Balance Card -->
+            <div class="wallet-card balance-card">
+              <div class="card-glass">
+                <div class="card-glare"></div>
+                <div class="card-pattern"></div>
+                
+                <div class="card-top">
+                  <span class="card-title">{{ isRus ? 'ТЕКУЩИЙ БАЛАНС' : 'JORIY BALANS' }}</span>
+                  <div class="card-chip-container">
+                    <div class="chip-line horizontal"></div>
+                    <div class="chip-line vertical"></div>
+                  </div>
                 </div>
-                <div class="card-brand">
-                  <div class="brand-circle left"></div>
-                  <div class="brand-circle right"></div>
+                
+                <div class="balance-display">
+                  <img src="../../assets/img/tpCoin.png" alt="TP Coin" class="coin-logo animate-spin-slow" />
+                  <div class="balance-val">
+                    <h2>{{ points }}</h2>
+                    <span>TP Coins</span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Stats Panel below the card -->
-          <div class="card-stats-panel">
-            <div class="stat-item">
-              <span class="stat-label">{{ isRus ? 'Использовано' : 'Sarflangan' }}</span>
-              <strong class="stat-value">{{ totalSpent }} TP</strong>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">{{ isRus ? 'Заработано' : 'Jami ishlangan' }}</span>
-              <strong class="stat-value">{{ totalEarned }} TP</strong>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">{{ isRus ? 'Статус' : 'Holat' }}</span>
-              <strong class="stat-value status-active"><i class="fas fa-check-circle"></i> {{ isRus ? 'Активен' : 'Faol' }}</strong>
-            </div>
-          </div>
-        </div>
 
-        <!-- Column 2: Referral Profits Card Container -->
-        <div class="wallet-card-container">
-          <div class="wallet-card referrals-card">
-            <div class="card-glass">
-              <div class="card-glare"></div>
-              <div class="card-pattern"></div>
-              
-              <div class="card-top">
-                <span class="card-title">{{ isRus ? 'ДОХОД ОТ ПРИГЛАШЕНИЙ' : 'TAKLIFLARDAN DAROMAD' }}</span>
-                <div class="card-hologram"></div>
-              </div>
-              
-              <div class="balance-display">
-                <div class="referral-earnings-logo">
-                  <i class="fas fa-handshake"></i>
-                </div>
-                <div class="balance-val">
-                  <h2>{{ referralCount * 50 }}</h2>
-                  <span>TP Coins</span>
+                <!-- Monospace card number mockup -->
+                <div class="card-number">**** **** **** {{ points > 0 ? (points * 7).toString().padStart(4, '0').slice(-4) : '2026' }}</div>
+                
+                <div class="card-holder-row">
+                  <div class="card-holder">
+                    <span>{{ isRus ? 'ВЛАДЕЛЕЦ' : 'EGA' }}</span>
+                    <strong>
+                      <i :class="getRankIcon(points)"></i> {{ getRankName(points, locale) }}
+                    </strong>
+                  </div>
+                  <div class="card-brand">
+                    <div class="brand-circle left"></div>
+                    <div class="brand-circle right"></div>
+                  </div>
                 </div>
               </div>
+            </div>
+            
+            <!-- Referrals Card -->
+            <div class="wallet-card referrals-card">
+              <div class="card-glass">
+                <div class="card-glare"></div>
+                <div class="card-pattern"></div>
+                
+                <div class="card-top">
+                  <span class="card-title">{{ isRus ? 'ДОХОД ОТ ПРИГЛАШЕНИЙ' : 'TAKLIFLARDAN DAROMAD' }}</span>
+                  <div class="card-hologram"></div>
+                </div>
+                
+                <div class="balance-display">
+                  <div class="referral-earnings-logo">
+                    <i class="fas fa-handshake"></i>
+                  </div>
+                  <div class="balance-val">
+                    <h2>{{ referralCount * 50 }}</h2>
+                    <span>TP Coins</span>
+                  </div>
+                </div>
 
-              <!-- Monospace card code mockup -->
-              <div class="card-number">REF-CODE-{{ referralCount.toString().padStart(4, '0') }}</div>
-              
-              <div class="card-holder-row">
-                <div class="card-holder">
-                  <span>{{ isRus ? 'ПАРТНЕР' : 'HAMKOR' }}</span>
-                  <strong>REFERRAL CARD</strong>
-                </div>
-                <div class="card-brand">
-                  <div class="brand-circle left-green"></div>
-                  <div class="brand-circle right-yellow"></div>
+                <!-- Monospace card code mockup -->
+                <div class="card-number">REF-CODE-{{ referralCount.toString().padStart(4, '0') }}</div>
+                
+                <div class="card-holder-row">
+                  <div class="card-holder">
+                    <span>{{ isRus ? 'ПАРТНЕР' : 'HAMKOR' }}</span>
+                    <strong>REFERRAL CARD</strong>
+                  </div>
+                  <div class="card-brand">
+                    <div class="brand-circle left-green"></div>
+                    <div class="brand-circle right-yellow"></div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Stats Panel below the card -->
-          <div class="card-stats-panel">
-            <div class="stat-item">
-              <span class="stat-label">{{ isRus ? 'Приглашено друзей' : 'Taklif etilgan' }}</span>
-              <strong class="stat-value">{{ referralCount }} {{ isRus ? 'пользователей' : 'ta foydalanuvchi' }}</strong>
+          <!-- Quick Action Cards Grid -->
+          <div class="actions-grid">
+            <div class="action-card" @click="buyPoints">
+              <div class="action-icon icon-blue">
+                <i class="fas fa-shopping-cart"></i>
+              </div>
+              <div class="action-info">
+                <h3>{{ isRus ? 'Покупка коинов' : 'TP Coin sotib olish' }}</h3>
+                <p>{{ isRus ? 'Пополнить баланс кошелька' : 'Hamyon balansini to\'ldirish' }}</p>
+              </div>
+              <div class="action-arrow">
+                <i class="fas fa-chevron-right"></i>
+              </div>
             </div>
-            <div class="stat-item">
-              <span class="stat-label">{{ isRus ? 'Бонус за друга' : 'Bonus stavka' }}</span>
-              <strong class="stat-value">+50 TP</strong>
+
+            <div class="action-card" @click="showReferralModal = true">
+              <div class="action-icon icon-green">
+                <i class="fas fa-share-alt"></i>
+              </div>
+              <div class="action-info">
+                <h3>{{ isRus ? 'Пригласить друга' : 'Do\'stlarni taklif etish' }}</h3>
+                <p>{{ isRus ? 'Получить бонус по ссылке' : 'Havola orqali bonus olish' }}</p>
+              </div>
+              <div class="action-arrow">
+                <i class="fas fa-chevron-right"></i>
+              </div>
             </div>
-            <div class="stat-item">
-              <span class="stat-label">{{ isRus ? 'Акция' : 'Aksiya' }}</span>
-              <strong class="stat-value status-promo"><i class="fas fa-fire"></i> {{ isRus ? 'Активна' : 'Faol' }}</strong>
+
+            <div class="action-card" @click="showReferredUsers = true">
+              <div class="action-icon icon-purple">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="action-info">
+                <h3>{{ isRus ? 'Приглашенные друзья' : 'Taklif etilganlar ro\'yxati' }}</h3>
+                <p>{{ isRus ? 'Список приглашенных учеников' : 'Siz taklif qilgan o\'quvchilar' }}</p>
+              </div>
+              <div class="action-arrow">
+                <i class="fas fa-chevron-right"></i>
+              </div>
+            </div>
+
+            <div class="action-card" @click="showReferralCodeModal = true">
+              <div class="action-icon icon-orange">
+                <i class="fas fa-plus"></i>
+              </div>
+              <div class="action-info">
+                <h3>{{ isRus ? 'Активировать код' : 'Taklif kodini kiritish' }}</h3>
+                <p>{{ isRus ? 'Ввести промокод от друга' : 'Do\'stingizdan kelgan kodni faollash' }}</p>
+              </div>
+              <div class="action-arrow">
+                <i class="fas fa-chevron-right"></i>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Quick Action Cards Grid -->
-      <div class="actions-grid">
-        <div class="action-card" @click="buyPoints">
-          <div class="action-icon icon-blue">
-            <i class="fas fa-shopping-cart"></i>
-          </div>
-          <div class="action-info">
-            <h3>{{ isRus ? 'Покупка коинов' : 'TP Coin sotib olish' }}</h3>
-            <p>{{ isRus ? 'Пополнить баланс кошелька' : 'Hamyon balansini to\'ldirish' }}</p>
-          </div>
-          <div class="action-arrow">
-            <i class="fas fa-chevron-right"></i>
-          </div>
-        </div>
-
-        <div class="action-card" @click="showReferralModal = true">
-          <div class="action-icon icon-green">
-            <i class="fas fa-share-alt"></i>
-          </div>
-          <div class="action-info">
-            <h3>{{ isRus ? 'Пригласить друга' : 'Do\'stlarni taklif etish' }}</h3>
-            <p>{{ isRus ? 'Получить бонус по ссылке' : 'Havola orqali bonus olish' }}</p>
-          </div>
-          <div class="action-arrow">
-            <i class="fas fa-chevron-right"></i>
-          </div>
-        </div>
-
-        <div class="action-card" @click="showReferredUsers = true">
-          <div class="action-icon icon-purple">
-            <i class="fas fa-users"></i>
-          </div>
-          <div class="action-info">
-            <h3>{{ isRus ? 'Приглашенные друзья' : 'Taklif etilganlar ro\'yxati' }}</h3>
-            <p>{{ isRus ? 'Список приглашенных учеников' : 'Siz taklif qilgan o\'quvchilar' }}</p>
-          </div>
-          <div class="action-arrow">
-            <i class="fas fa-chevron-right"></i>
-          </div>
-        </div>
-
-        <div class="action-card" @click="showReferralCodeModal = true">
-          <div class="action-icon icon-orange">
-            <i class="fas fa-plus"></i>
-          </div>
-          <div class="action-info">
-            <h3>{{ isRus ? 'Активировать код' : 'Taklif kodini kiritish' }}</h3>
-            <p>{{ isRus ? 'Ввести промокод от друга' : 'Do\'stingizdan kelgan kodni faollash' }}</p>
-          </div>
-          <div class="action-arrow">
-            <i class="fas fa-chevron-right"></i>
-          </div>
-        </div>
-      </div>
-
-      <!-- Reward Shop Section -->
-      <div class="reward-shop-section">
-        <h2 class="section-title">🎁 {{ isRus ? 'Магазин Наград' : 'Sovg\'alar do\'koni' }}</h2>
-        <p class="section-subtitle">{{ isRus ? 'Обменяйте накопленные TP Coins на ценные привилегии и бонусы!' : 'To\'plangan TP Coinlaringizni ajoyib imtiyoz va sovg\'alarga almashtiring!' }}</p>
-        
-        <div class="rewards-grid">
-          <div 
-            v-for="item in rewardItems" 
-            :key="item.id" 
-            class="reward-card"
-          >
-            <div class="reward-icon-wrapper" :style="{ background: item.color + '15', color: item.color }">
-              <i :class="item.icon"></i>
-            </div>
-            <div class="reward-details">
-              <h3>{{ isRus ? item.nameRu : item.nameUz }}</h3>
-              <p>{{ isRus ? item.descRu : item.descUz }}</p>
-              
-              <div class="reward-footer">
-                <span class="cost-badge">
-                  <img src="../../assets/img/tpCoin.png" alt="TP Coin" />
-                  {{ item.cost }} TP
-                </span>
-                <button 
-                  class="exchange-btn" 
-                  :style="{ background: item.color }"
-                  @click="exchangeItem(item)"
-                >
-                  {{ isRus ? 'Обменять' : 'Almashtirish' }}
-                </button>
+          <!-- Reward Shop Section -->
+          <div class="reward-shop-section">
+            <h2 class="section-title">🎁 {{ isRus ? 'Магазин Наград' : 'Sovg\'alar do\'koni' }}</h2>
+            <p class="section-subtitle">{{ isRus ? 'Обменяйте накопленные TP Coins на ценные привилегии и бонусы!' : 'To\'plangan TP Coinlaringizni ajoyib imtiyoz va sovg\'alarga almashtiring!' }}</p>
+            
+            <div class="rewards-grid">
+              <div 
+                v-for="item in rewardItems" 
+                :key="item.id" 
+                class="reward-card"
+              >
+                <div class="reward-icon-wrapper" :style="{ background: item.color + '15', color: item.color }">
+                  <i :class="item.icon"></i>
+                </div>
+                <div class="reward-details">
+                  <h3>{{ isRus ? item.nameRu : item.nameUz }}</h3>
+                  <p>{{ isRus ? item.descRu : item.descUz }}</p>
+                  
+                  <div class="reward-footer">
+                    <span class="cost-badge">
+                      <img src="../../assets/img/tpCoin.png" alt="TP Coin" />
+                      {{ item.cost }} TP
+                    </span>
+                    <button 
+                      class="exchange-btn" 
+                      :style="{ background: item.color }"
+                      @click="exchangeItem(item)"
+                    >
+                      {{ isRus ? 'Обменять' : 'Almashtirish' }}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Transaction History Section -->
-      <div class="history-section">
-        <h2 class="section-title">🕒 {{ isRus ? 'История транзакций' : 'Tranzaksiyalar tarixi' }}</h2>
-        
-        <div v-if="transactions.length === 0" class="empty-state">
-          <div class="empty-icon"><i class="fas fa-wallet"></i></div>
-          <p>{{ isRus ? 'История транзакций пуста. Начните решать тесты, чтобы заработать TP Coins!' : 'Sizda hozircha tranzaksiyalar mavjud emas. Test yechishni boshlang va TP Coinlar ishlang!' }}</p>
-        </div>
-
-        <div v-else class="transactions-list">
-          <div 
-            v-for="tx in sortedTransactions" 
-            :key="tx.id" 
-            class="tx-item"
-          >
-            <div class="tx-left">
-              <div :class="['tx-badge', tx.points > 0 ? 'tx-plus' : 'tx-minus']">
-                <i :class="tx.points > 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+        <!-- Sidebar Content (Right) -->
+        <div class="points-sidebar">
+          <!-- Stats Summary Card -->
+          <div class="sidebar-card stats-summary-card">
+            <h3 class="sidebar-card-title">📈 {{ isRus ? 'Статистика кошелька' : 'Hamyon statistikasi' }}</h3>
+            
+            <div class="sidebar-stats-list">
+              <div class="sidebar-stat-item">
+                <div class="stat-icon-label">
+                  <span class="stat-icon icon-earned"><i class="fas fa-arrow-alt-circle-up"></i></span>
+                  <span>{{ isRus ? 'Всего заработано' : 'Jami ishlangan' }}</span>
+                </div>
+                <strong class="stat-val earned-color">{{ totalEarned }} TP</strong>
               </div>
-              <div class="tx-info">
-                <h4>{{ tx.action }}</h4>
-                <span>{{ formatDate(tx.timestamp) }}</span>
+
+              <div class="sidebar-stat-item">
+                <div class="stat-icon-label">
+                  <span class="stat-icon icon-spent"><i class="fas fa-arrow-alt-circle-down"></i></span>
+                  <span>{{ isRus ? 'Всего потрачено' : 'Sarflangan' }}</span>
+                </div>
+                <strong class="stat-val spent-color">{{ totalSpent }} TP</strong>
+              </div>
+
+              <div class="sidebar-stat-item">
+                <div class="stat-icon-label">
+                  <span class="stat-icon icon-friends"><i class="fas fa-user-friends"></i></span>
+                  <span>{{ isRus ? 'Приглашено друзей' : 'Taklif etilgan do\'stlar' }}</span>
+                </div>
+                <strong class="stat-val friends-color">{{ referralCount }}</strong>
+              </div>
+
+              <div class="sidebar-stat-item">
+                <div class="stat-icon-label">
+                  <span class="stat-icon icon-status"><i class="fas fa-shield-alt"></i></span>
+                  <span>{{ isRus ? 'Статус аккаунта' : 'Aksiya va Status' }}</span>
+                </div>
+                <div class="stat-status-badges">
+                  <span class="status-badge active-badge"><i class="fas fa-check"></i> {{ isRus ? 'Активен' : 'Faol' }}</span>
+                  <span class="status-badge promo-badge"><i class="fas fa-fire"></i> {{ isRus ? 'Промо' : 'Aksiya' }}</span>
+                </div>
               </div>
             </div>
-            <div :class="['tx-points', tx.points > 0 ? 'points-plus' : 'points-minus']">
-              {{ tx.points > 0 ? '+' : '' }}{{ tx.points }} TP
+          </div>
+
+          <!-- Transaction History Section -->
+          <div class="sidebar-card history-section-card">
+            <h3 class="sidebar-card-title">🕒 {{ isRus ? 'История транзакций' : 'Tranzaksiyalar tarixi' }}</h3>
+            
+            <div v-if="transactions.length === 0" class="empty-state">
+              <div class="empty-icon"><i class="fas fa-wallet"></i></div>
+              <p>{{ isRus ? 'История транзакций пуста.' : 'Sizda hozircha tranzaksiyalar mavjud emas.' }}</p>
+            </div>
+
+            <div v-else class="transactions-list-scroll">
+              <div 
+                v-for="tx in sortedTransactions" 
+                :key="tx.id" 
+                class="tx-item-compact"
+              >
+                <div class="tx-compact-left">
+                  <div :class="['tx-badge-compact', tx.points > 0 ? 'tx-plus' : 'tx-minus']">
+                    <i :class="tx.points > 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                  </div>
+                  <div class="tx-info-compact">
+                    <h4>{{ tx.action }}</h4>
+                    <span>{{ formatDate(tx.timestamp) }}</span>
+                  </div>
+                </div>
+                <div :class="['tx-points-compact', tx.points > 0 ? 'points-plus' : 'points-minus']">
+                  {{ tx.points > 0 ? '+' : '' }}{{ tx.points }} TP
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -479,7 +494,6 @@ export default {
   },
 };
 </script>
-
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
@@ -488,55 +502,78 @@ export default {
   min-height: calc(100vh - 100px);
   font-family: 'Plus Jakarta Sans', sans-serif;
   overflow: hidden;
-  padding: 3rem 1.5rem;
+  padding: 2.5rem 1.5rem;
 }
 
-/* Background glowing elements */
+/* Background glowing elements for futuristic feel */
 .glow-bg {
   position: absolute;
   border-radius: 50%;
-  filter: blur(120px);
+  filter: blur(140px);
   z-index: 0;
-  opacity: 0.08;
+  opacity: 0.05;
+  pointer-events: none;
 }
 .glow-bg-1 {
-  width: 450px;
-  height: 450px;
+  width: 500px;
+  height: 500px;
   background: #3b82f6;
-  top: -10%;
+  top: -5%;
   left: -5%;
 }
 .glow-bg-2 {
-  width: 450px;
-  height: 450px;
+  width: 600px;
+  height: 600px;
   background: #fbbf24;
-  bottom: -10%;
+  bottom: -5%;
   right: -5%;
 }
 
 .points-container {
   position: relative;
   z-index: 10;
-  max-width: 1000px;
+  max-width: 1400px;
+  width: 95%;
   margin: 0 auto;
 }
 
+.points-grid {
+  display: grid;
+  grid-template-columns: 2fr 1.1fr;
+  gap: 2.5rem;
+}
+
+@media (max-width: 1100px) {
+  .points-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.points-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
 .header-section {
-  text-align: center;
-  margin-bottom: 2.5rem;
+  text-align: left;
+  margin-bottom: 2rem;
 }
 
 .header-section h1 {
   font-size: 2.2rem;
   font-weight: 800;
   color: #0f172a;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.5rem 0;
   letter-spacing: -1px;
 }
 
 .header-section p {
   color: #64748b;
   font-size: 1rem;
+  margin: 0;
+  font-weight: 500;
 }
 
 /* Premium Credit Card Styling */
@@ -544,23 +581,20 @@ export default {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
-  max-width: 960px;
-  margin: 0 auto 3rem auto;
 }
 
 @media (max-width: 768px) {
   .wallet-cards-grid {
     grid-template-columns: 1fr;
-    max-width: 520px;
   }
 }
 
 .wallet-card {
   position: relative;
-  border-radius: 24px;
-  padding: 2px;
+  border-radius: 28px;
+  padding: 1px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%);
-  box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.08);
   display: flex;
   flex-direction: column;
   perspective: 1000px;
@@ -572,30 +606,27 @@ export default {
 }
 
 .wallet-card:hover .card-glass {
-  transform: rotateY(8deg) rotateX(6deg) translateY(-5px);
+  transform: rotateY(6deg) rotateX(4deg) translateY(-4px);
 }
 
 .balance-card .card-glass {
-  background: linear-gradient(135deg, #0d1e56 0%, #1e40af 50%, #3b82f6 100%);
-  box-shadow: 0 20px 40px -15px rgba(37, 99, 235, 0.3);
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
+  box-shadow: 0 20px 40px -15px rgba(37, 99, 235, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .balance-card:hover .card-glass {
-  box-shadow: 0 30px 60px -15px rgba(37, 99, 235, 0.45);
+  box-shadow: 0 30px 60px -15px rgba(37, 99, 235, 0.35);
 }
 
 .referrals-card .card-glass {
   background: linear-gradient(135deg, #022c22 0%, #065f46 50%, #10b981 100%);
-  box-shadow: 0 20px 40px -15px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 20px 40px -15px rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .referrals-card:hover .card-glass {
-  box-shadow: 0 30px 60px -15px rgba(16, 185, 129, 0.45);
-}
-
-.card-gift-icon {
-  font-size: 1.5rem;
-  color: #a7f3d0;
+  box-shadow: 0 30px 60px -15px rgba(16, 185, 129, 0.35);
 }
 
 .referral-earnings-logo {
@@ -610,15 +641,8 @@ export default {
   color: #a7f3d0;
 }
 
-.status-promo {
-  color: #ea580c;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
 .card-glass {
-  border-radius: 22px;
+  border-radius: 27px;
   padding: 2.25rem 2rem;
   color: white;
   position: relative;
@@ -649,7 +673,6 @@ export default {
   z-index: 1;
 }
 
-/* Microchip styling */
 .card-chip-container {
   width: 44px;
   height: 32px;
@@ -681,7 +704,6 @@ export default {
   top: 0;
 }
 
-/* Hologram sticker styling for referral card */
 .card-hologram {
   width: 32px;
   height: 32px;
@@ -699,25 +721,22 @@ export default {
   100% { background-position: 0% 50% }
 }
 
-/* Monospace Card Number styling */
 .card-number {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: 3px;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
   opacity: 0.9;
   z-index: 3;
   position: relative;
 }
 
-/* Cardholder and Brand */
 .card-holder-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 1.5rem;
   z-index: 3;
   position: relative;
 }
@@ -736,12 +755,11 @@ export default {
 }
 
 .card-holder strong {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.92rem;
+  font-weight: 700;
   letter-spacing: 0.5px;
 }
 
-/* Brand Circle details */
 .card-brand {
   display: flex;
   align-items: center;
@@ -765,7 +783,7 @@ export default {
 
 .brand-circle.right {
   background: #f79e1b;
-  right: 0;
+  right: 18px;
 }
 
 .brand-circle.left-green {
@@ -775,7 +793,7 @@ export default {
 
 .brand-circle.right-yellow {
   background: #fdcb6e;
-  right: 0;
+  right: 18px;
 }
 
 .card-top {
@@ -792,19 +810,11 @@ export default {
   opacity: 0.8;
 }
 
-.card-chip {
-  width: 44px;
-  height: 32px;
-  background: linear-gradient(135deg, #fef08a 0%, #ca8a04 100%);
-  border-radius: 6px;
-  box-shadow: inset 0 1px 2px rgba(255,255,255,0.4);
-}
-
 .balance-display {
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
 }
 
 .coin-logo {
@@ -837,85 +847,46 @@ export default {
   letter-spacing: 0.5px;
 }
 
-.card-stats-panel {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 18px;
-  padding: 1.25rem 1.5rem;
-  margin-top: 1.25rem;
-  display: flex;
-  justify-content: space-between;
-  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.04);
-  transition: all 0.3s ease;
-}
-
-.card-stats-panel:hover {
-  box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.08);
-  border-color: #cbd5e1;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.stat-label {
-  font-size: 0.68rem;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-}
-
-.stat-value {
-  font-size: 0.95rem;
-  color: #0f172a;
-  font-weight: 700;
-}
-
-.status-active {
-  color: #10b981;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
 /* Actions Grid */
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.25rem;
-  margin-bottom: 3.5rem;
+}
+
+@media (max-width: 600px) {
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .action-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 1.25rem;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 24px;
+  padding: 1.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.02);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.01);
 }
 
 .action-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 12px 28px -5px rgba(15, 23, 42, 0.06);
   border-color: #cbd5e1;
 }
 
 .action-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   flex-shrink: 0;
 }
 
@@ -929,16 +900,18 @@ export default {
 }
 
 .action-info h3 {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 800;
   color: #0f172a;
-  margin: 0 0 2px 0;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.3px;
 }
 
 .action-info p {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: #64748b;
   margin: 0;
+  font-weight: 500;
 }
 
 .action-arrow {
@@ -949,37 +922,37 @@ export default {
 
 .action-card:hover .action-arrow {
   transform: translateX(3px);
-  color: #64748b;
+  color: #0f172a;
 }
 
 /* Sections General */
 .section-title {
-  font-size: 1.4rem;
+  font-size: 1.45rem;
   font-weight: 800;
   color: #0f172a;
-  margin-bottom: 4px;
+  margin: 0 0 6px 0;
   letter-spacing: -0.5px;
 }
 
 .section-subtitle {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   color: #64748b;
-  margin-bottom: 1.5rem;
+  margin: 0 0 1.75rem 0;
+  font-weight: 500;
 }
 
 /* Reward Shop CSS */
 .reward-shop-section {
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 24px;
-  padding: 2rem;
-  margin-bottom: 3.5rem;
-  box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.02);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  border-radius: 28px;
+  padding: 2.25rem;
+  box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.04);
 }
 
 .rewards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
 }
 
@@ -988,21 +961,22 @@ export default {
   gap: 1.25rem;
   padding: 1.25rem;
   background: #f8fafc;
-  border: 1px solid #f1f5f9;
-  border-radius: 20px;
-  transition: all 0.25s;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 22px;
+  transition: all 0.3s ease;
 }
 
 .reward-card:hover {
   background: #ffffff;
   border-color: #cbd5e1;
-  box-shadow: 0 8px 25px -8px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 10px 25px -8px rgba(15, 23, 42, 0.06);
+  transform: translateY(-2px);
 }
 
 .reward-icon-wrapper {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1018,35 +992,38 @@ export default {
 }
 
 .reward-details h3 {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 800;
   color: #0f172a;
   margin: 0 0 4px 0;
+  letter-spacing: -0.3px;
 }
 
 .reward-details p {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: #64748b;
-  line-height: 1.4;
-  margin: 0 0 12px 0;
+  line-height: 1.45;
+  margin: 0 0 14px 0;
+  font-weight: 500;
 }
 
 .reward-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 
 .cost-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: #fef08a;
+  gap: 5px;
+  background: #fef9c3;
   color: #854d0e;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 20px;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .cost-badge img {
@@ -1057,81 +1034,179 @@ export default {
 .exchange-btn {
   border: none;
   color: white;
-  padding: 6px 14px;
-  font-size: 0.72rem;
+  padding: 8px 16px;
+  font-size: 0.78rem;
   font-weight: 700;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 .exchange-btn:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
 }
 
-/* History List Styling */
-.history-section {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 24px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.02);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem 1.5rem;
-}
-
-.empty-icon {
-  font-size: 2.5rem;
-  color: #94a3b8;
-  margin-bottom: 1rem;
-}
-
-.empty-state p {
-  color: #64748b;
-  font-size: 0.9rem;
-  max-width: 400px;
-  margin: 0 auto;
-  line-height: 1.5;
-}
-
-.transactions-list {
+/* Sidebar Layout & Cards */
+.points-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 2rem;
 }
 
-.tx-item {
+.sidebar-card {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  border-radius: 28px;
+  padding: 2rem;
+  box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.04);
+}
+
+.sidebar-card-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 1.5rem 0;
+  letter-spacing: -0.4px;
+}
+
+/* Stats list */
+.sidebar-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sidebar-stat-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sidebar-stat-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.stat-icon-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.icon-earned { background: rgba(34, 197, 94, 0.08); color: #22c55e; }
+.icon-spent { background: rgba(59, 130, 246, 0.08); color: #3b82f6; }
+.icon-friends { background: rgba(168, 85, 247, 0.08); color: #a855f7; }
+.icon-status { background: rgba(249, 115, 22, 0.08); color: #f97316; }
+
+.stat-val {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.earned-color { color: #16a34a; }
+.spent-color { color: #2563eb; }
+.friends-color { color: #a855f7; }
+
+.stat-status-badges {
+  display: flex;
+  gap: 6px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.status-badge.active-badge {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-badge.promo-badge {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+/* Scrollable Transaction List */
+.transactions-list-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-right: 4px;
+}
+
+/* Custom scrollbar */
+.transactions-list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.transactions-list-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+.transactions-list-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.transactions-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.tx-item-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1rem;
   background: #f8fafc;
   border: 1px solid #f1f5f9;
   border-radius: 16px;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
 
-.tx-item:hover {
+.tx-item-compact:hover {
   border-color: #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
 }
 
-.tx-left {
+.tx-compact-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 10px;
+  min-width: 0;
 }
 
-.tx-badge {
-  width: 36px;
-  height: 36px;
+.tx-badge-compact {
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   flex-shrink: 0;
 }
 
@@ -1145,21 +1220,30 @@ export default {
   color: #b91c1c;
 }
 
-.tx-info h4 {
-  font-size: 0.9rem;
+.tx-info-compact {
+  min-width: 0;
+}
+
+.tx-info-compact h4 {
+  font-size: 0.82rem;
   font-weight: 700;
   color: #0f172a;
   margin: 0 0 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.tx-info span {
-  font-size: 0.72rem;
+.tx-info-compact span {
+  font-size: 0.68rem;
   color: #94a3b8;
+  display: block;
 }
 
-.tx-points {
-  font-size: 0.95rem;
+.tx-points-compact {
+  font-size: 0.88rem;
   font-weight: 800;
+  flex-shrink: 0;
 }
 
 .points-plus {
@@ -1170,30 +1254,21 @@ export default {
   color: #dc2626;
 }
 
-@media (max-width: 600px) {
-  .wallet-card {
-    padding: 0;
-  }
-  .card-glass {
-    padding: 1.25rem;
-  }
-  .balance-val h2 {
-    font-size: 2.2rem;
-  }
-  .card-footer {
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-  .actions-grid {
-    grid-template-columns: 1fr;
-  }
-  .tx-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-  .tx-points {
-    align-self: flex-end;
-  }
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.empty-icon {
+  font-size: 2.2rem;
+  color: #94a3b8;
+  margin-bottom: 0.75rem;
+}
+
+.empty-state p {
+  color: #64748b;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  margin: 0;
 }
 </style>

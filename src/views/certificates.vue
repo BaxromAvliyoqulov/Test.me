@@ -47,7 +47,7 @@
             <h3>{{ isRus ? cert.nameRu : cert.nameUz }}</h3>
             <p class="cert-desc">{{ isRus ? cert.descRu : cert.descUz }}</p>
 
-            <div class="progress-bar-container" v-if="cert.progress !== null">
+            <div class="cert-progress-container" v-if="cert.progress !== null">
               <div class="progress-info">
                 <span>{{ isRus ? 'Прогресс' : 'Progress' }}</span>
                 <span>{{ Math.min(cert.currentVal, cert.targetVal) }} / {{ cert.targetVal }}</span>
@@ -150,9 +150,10 @@
 
 <script>
 import { db, auth } from '@/config/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useI18n } from '@/utils/i18n';
+import { getCertificates } from '@/utils/certificates';
 
 export default {
   name: 'CertificatesView',
@@ -183,83 +184,35 @@ export default {
     certId() {
       if (!this.selectedCert) return 'CERT-XXXX-XXXX';
       const issued = this.issuedCertificates.find(c => c.certType === this.selectedCert.id);
-      return issued ? issued.certId : 'CERT-PENDING';
+      if (issued) return issued.certId;
+      
+      // Fallback stable ID generator
+      const uidPart = (auth.currentUser ? auth.currentUser.uid : 'USER').substring(0, 8).toUpperCase();
+      const certPart = this.selectedCert.id.replace(/_/g, '').substring(0, 4).toUpperCase();
+      return `CERT-${uidPart}-${certPart}`;
     },
     formattedDate() {
       if (!this.selectedCert) return '';
       const issued = this.issuedCertificates.find(c => c.certType === this.selectedCert.id);
+      let date = null;
       if (issued && issued.issuedAt) {
-        const date = issued.issuedAt.toDate ? issued.issuedAt.toDate() : new Date(issued.issuedAt);
-        const dd = String(date.getDate()).padStart(2, '0');
-        const mm = String(date.getMonth() + 1).padStart(2, '0');
-        const yyyy = date.getFullYear();
-        return `${dd}.${mm}.${yyyy}`;
+        date = issued.issuedAt.toDate ? issued.issuedAt.toDate() : new Date(issued.issuedAt);
+      } else if (this.results.length > 0) {
+        // Fallback to latest test timestamp
+        const latest = this.results[0];
+        if (latest && latest.timestamp) {
+          date = latest.timestamp.toDate ? latest.timestamp.toDate() : new Date(latest.timestamp);
+        }
       }
-      const now = new Date();
-      const dd = String(now.getDate()).padStart(2, '0');
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const yyyy = now.getFullYear();
+      if (!date) date = new Date();
+
+      const dd = String(date.getDate()).padStart(2, '0');
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const yyyy = date.getFullYear();
       return `${dd}.${mm}.${yyyy}`;
     },
     certificates() {
-      return [
-        {
-          id: 'elementary_graduate',
-          nameUz: 'Boshlang\'ich Savodxon',
-          nameRu: 'Начальный Грамотей',
-          descUz: 'Elementary darajasida kamida 3 ta test yechganda beriladi.',
-          descRu: 'Выдается за решение не менее 3 тестов на уровне Elementary.',
-          icon: 'fas fa-award',
-          color: '#3b82f6',
-          unlockRate: 82,
-          unlocked: this.issuedCertificates.some(ic => ic.certType === 'elementary_graduate'),
-          progress: true,
-          currentVal: this.elementaryCount,
-          targetVal: 3
-        },
-        {
-          id: 'intermediate_expert',
-          nameUz: 'O\'rta darajali Mutaxassis',
-          nameRu: 'Средний Эксперт',
-          descUz: 'Intermediate darajasida kamida 5 ta test yechganda beriladi.',
-          descRu: 'Выдается за решение не менее 5 тестов на уровне Intermediate.',
-          icon: 'fas fa-graduation-cap',
-          color: '#10b981',
-          unlockRate: 34,
-          unlocked: this.issuedCertificates.some(ic => ic.certType === 'intermediate_expert'),
-          progress: true,
-          currentVal: this.intermediateCount,
-          targetVal: 5
-        },
-        {
-          id: 'advanced_professional',
-          nameUz: 'Professional Bilimdon',
-          nameRu: 'Продвинутый Профи',
-          descUz: 'Advanced darajasida kamida 3 ta test yechganda beriladi.',
-          descRu: 'Выдается за решение не менее 3 тестов на уровне Advanced.',
-          icon: 'fas fa-crown',
-          color: '#fbbf24',
-          unlockRate: 12,
-          unlocked: this.issuedCertificates.some(ic => ic.certType === 'advanced_professional'),
-          progress: true,
-          currentVal: this.advancedCount,
-          targetVal: 3
-        },
-        {
-          id: 'ai_enthusiast',
-          nameUz: 'Aktiv Bilim Oluvchi',
-          nameRu: 'Активный Ученик',
-          descUz: 'Platformada jami 5 tadan ortiq test yechganingizda beriladi.',
-          descRu: 'Выдается за прохождение более 5 тестов на платформе.',
-          icon: 'fas fa-magic',
-          color: '#a855f7',
-          unlockRate: 55,
-          unlocked: this.issuedCertificates.some(ic => ic.certType === 'ai_enthusiast'),
-          progress: true,
-          currentVal: this.totalCount,
-          targetVal: 5
-        }
-      ];
+      return getCertificates(this.results);
     }
   },
   methods: {
@@ -274,18 +227,59 @@ export default {
             const querySnapshot = await getDocs(q);
 
             this.results = querySnapshot.docs.map(doc => doc.data());
+            
+            // Sort results by timestamp desc for latest fallback date
+            this.results.sort((a, b) => {
+              const timeA = a.timestamp ? (a.timestamp.toMillis ? a.timestamp.toMillis() : new Date(a.timestamp).getTime()) : 0;
+              const timeB = b.timestamp ? (b.timestamp.toMillis ? b.timestamp.toMillis() : new Date(b.timestamp).getTime()) : 0;
+              return timeB - timeA;
+            });
+
             this.totalCount = this.results.length;
 
             // Calculate level completion metrics
-            this.elementaryCount = this.results.filter(r => r.test_level && r.test_level.toLowerCase().includes('elem')).length;
-            this.intermediateCount = this.results.filter(r => r.test_level && r.test_level.toLowerCase().includes('inter')).length;
-            this.advancedCount = this.results.filter(r => r.test_level && r.test_level.toLowerCase().includes('adv')).length;
+            this.elementaryCount = this.results.filter(r => {
+              const l = (r.test_level || '').toLowerCase();
+              return l.includes('elem') || l.includes('beg') || l.includes('boshlang');
+            }).length;
+            this.intermediateCount = this.results.filter(r => {
+              const l = (r.test_level || '').toLowerCase();
+              return l.includes('inter') || l.includes('o\'rta') || l.includes('orta');
+            }).length;
+            this.advancedCount = this.results.filter(r => {
+              const l = (r.test_level || '').toLowerCase();
+              return l.includes('adv') || l.includes('yuqori') || l.includes('prof');
+            }).length;
 
             // Fetch secure certificates from Firestore
             const certsRef = collection(db, 'certificates');
             const certsQ = query(certsRef, where('userId', '==', user.uid));
             const certsSnapshot = await getDocs(certsQ);
             this.issuedCertificates = certsSnapshot.docs.map(doc => doc.data());
+
+            // Auto-synchronize newly unlocked certificates to Firestore
+            const newlyUnlocked = this.certificates.filter(
+              c => c.unlocked && !this.issuedCertificates.some(ic => ic.certType === c.id)
+            );
+
+            for (const cert of newlyUnlocked) {
+              const uidPart = user.uid.substring(0, 8).toUpperCase();
+              const certCode = `CERT-${uidPart}-${cert.id.substring(0, 4).toUpperCase().replace(/_/g, '')}`;
+              const newCertObj = {
+                certId: certCode,
+                userId: user.uid,
+                userName: user.displayName || user.email || 'Foydalanuvchi',
+                certType: cert.id,
+                nameUz: cert.nameUz,
+                nameRu: cert.nameRu,
+                descUz: cert.descUz,
+                descRu: cert.descRu,
+                issuedAt: new Date()
+              };
+              await addDoc(collection(db, 'certificates'), newCertObj);
+              this.issuedCertificates.push(newCertObj);
+              console.log(`Auto-synchronized certificate: ${cert.id}`);
+            }
           } catch (e) {
             console.error('Error fetching statistics:', e);
           } finally {
@@ -347,7 +341,7 @@ export default {
 .certificates-container {
   position: relative;
   z-index: 10;
-  max-width: 1000px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -492,7 +486,7 @@ export default {
 }
 
 /* Progress bar inside cert */
-.progress-bar-container {
+.cert-progress-container {
   margin-bottom: 12px;
 }
 

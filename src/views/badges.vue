@@ -12,17 +12,32 @@
 
       <!-- Stats overview -->
       <div class="stats-overview">
-        <div class="overview-card">
-          <span class="value">{{ unlockedCount }} / {{ badges.length }}</span>
-          <span class="label">{{ isRus ? 'Открыто наград' : 'Ochilgan yutuqlar' }}</span>
+        <div class="overview-card info-card-1">
+          <div class="overview-card-icon">
+            <i class="fas fa-trophy"></i>
+          </div>
+          <div class="overview-card-info">
+            <span class="value">{{ unlockedCount }} / {{ badges.length }}</span>
+            <span class="label">{{ isRus ? 'Открыто наград' : 'Ochilgan yutuqlar' }}</span>
+          </div>
         </div>
-        <div class="overview-card">
-          <span class="value">{{ totalTestsSolved }}</span>
-          <span class="label">{{ isRus ? 'Всего тестов' : 'Jami testlar' }}</span>
+        <div class="overview-card info-card-2">
+          <div class="overview-card-icon">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <div class="overview-card-info">
+            <span class="value">{{ totalTestsSolved }}</span>
+            <span class="label">{{ isRus ? 'Всего тестов' : 'Jami testlar' }}</span>
+          </div>
         </div>
-        <div class="overview-card">
-          <span class="value">{{ userPoints }}</span>
-          <span class="label">TP Coins</span>
+        <div class="overview-card info-card-3">
+          <div class="overview-card-icon">
+            <i class="fas fa-coins"></i>
+          </div>
+          <div class="overview-card-info">
+            <span class="value">{{ userPoints }}</span>
+            <span class="label">TP Coins</span>
+          </div>
         </div>
       </div>
 
@@ -32,6 +47,7 @@
           v-for="badge in badges"
           :key="badge.id"
           :class="['badge-card', { locked: !badge.unlocked }]"
+          :style="badge.unlocked ? { '--badge-color': badge.color } : { '--badge-color': '#64748b' }"
         >
           <!-- Badge Icon Wrapper with dynamic colors -->
           <div 
@@ -48,7 +64,7 @@
             <h3>{{ isRus ? badge.nameRu : badge.nameUz }}</h3>
             <p class="badge-desc">{{ isRus ? badge.descRu : badge.descUz }}</p>
             
-            <div class="progress-bar-container" v-if="badge.progress !== null">
+            <div class="badge-progress-container" v-if="badge.progress !== null">
               <div class="progress-info">
                 <span>{{ isRus ? 'Прогресс' : 'Progress' }}</span>
                 <span>{{ Math.min(badge.currentVal, badge.targetVal) }} / {{ badge.targetVal }}</span>
@@ -86,6 +102,7 @@ import { db, auth } from '@/config/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useI18n } from '@/utils/i18n';
+import { getBadges } from '@/utils/badges';
 
 export default {
   name: 'BadgesView',
@@ -110,92 +127,7 @@ export default {
       return this.badges.filter(b => b.unlocked).length;
     },
     badges() {
-      return [
-        {
-          id: 'first_step',
-          nameUz: 'Birinchi qadam',
-          nameRu: 'Первый шаг',
-          descUz: 'Kamida 1 ta test topshirganingizda ochiladi.',
-          descRu: 'Открывается при прохождении хотя бы 1 теста.',
-          icon: 'fas fa-walking',
-          color: '#3b82f6',
-          unlockRate: 92,
-          unlocked: this.totalTestsSolved >= 1,
-          progress: true,
-          currentVal: this.totalTestsSolved,
-          targetVal: 1
-        },
-        {
-          id: 'persistent',
-          nameUz: 'Tirishqoq',
-          nameRu: 'Упорный',
-          descUz: 'Kamida 5 ta test topshirganingizda ochiladi.',
-          descRu: 'Открывается при прохождении 5 тестов.',
-          icon: 'fas fa-fire',
-          color: '#f97316',
-          unlockRate: 45,
-          unlocked: this.totalTestsSolved >= 5,
-          progress: true,
-          currentVal: this.totalTestsSolved,
-          targetVal: 5
-        },
-        {
-          id: 'scholar',
-          nameUz: 'Bilimdon',
-          nameRu: 'Эрудит',
-          descUz: 'Kamida 15 ta test topshirganingizda ochiladi.',
-          descRu: 'Открывается при прохождении 15 тестов.',
-          icon: 'fas fa-book-reader',
-          color: '#10b981',
-          unlockRate: 15,
-          unlocked: this.totalTestsSolved >= 15,
-          progress: true,
-          currentVal: this.totalTestsSolved,
-          targetVal: 15
-        },
-        {
-          id: 'perfect_score',
-          nameUz: 'A\'lochi',
-          nameRu: 'Отличник',
-          descUz: 'Birorta testda 100% natija qayd etganingizda ochiladi.',
-          descRu: 'Открывается за 100% результат в любом тесте.',
-          icon: 'fas fa-star',
-          color: '#fbbf24',
-          unlockRate: 24,
-          unlocked: this.perfectScoresCount >= 1,
-          progress: true,
-          currentVal: this.perfectScoresCount,
-          targetVal: 1
-        },
-        {
-          id: 'coin_king',
-          nameUz: 'Koin Qiroli',
-          nameRu: 'Король Коинов',
-          descUz: '500 dan ortiq TP Coin to\'plaganingizda ochiladi.',
-          descRu: 'Открывается за накопление 500+ TP Coins.',
-          icon: 'fas fa-coins',
-          color: '#a855f7',
-          unlockRate: 8,
-          unlocked: this.userPoints >= 500,
-          progress: true,
-          currentVal: this.userPoints,
-          targetVal: 500
-        },
-        {
-          id: 'super_brain',
-          nameUz: 'Super Aql',
-          nameRu: 'Супер Мозг',
-          descUz: '3 ta testda 100% natija qayd etganingizda ochiladi.',
-          descRu: 'Открывается за 100% результат в 3 тестах.',
-          icon: 'fas fa-brain',
-          color: '#ec4899',
-          unlockRate: 4,
-          unlocked: this.perfectScoresCount >= 3,
-          progress: true,
-          currentVal: this.perfectScoresCount,
-          targetVal: 3
-        }
-      ];
+      return getBadges(this.totalTestsSolved, this.perfectScoresCount, this.userPoints, this.results);
     }
   },
   methods: {
@@ -271,7 +203,8 @@ export default {
 .badges-container {
   position: relative;
   z-index: 10;
-  max-width: 1000px;
+  max-width: 1400px;
+  width: 95%;
   margin: 0 auto;
 }
 
@@ -302,26 +235,55 @@ export default {
 }
 
 .overview-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  padding: 1.5rem;
-  border-radius: 20px;
-  text-align: center;
-  box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.02);
+  border: 1.5px solid #f1f5f9;
+  padding: 1.5rem 1.75rem;
+  border-radius: 24px;
+  box-shadow: 0 10px 25px -12px rgba(15, 23, 42, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.overview-card .value {
+.overview-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 30px -10px rgba(15, 23, 42, 0.08);
+  border-color: #cbd5e1;
+}
+
+.overview-card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.info-card-1 .overview-card-icon { background: #fee2e2; color: #ef4444; }
+.info-card-2 .overview-card-icon { background: #e0f2fe; color: #0284c7; }
+.info-card-3 .overview-card-icon { background: #fef9c3; color: #ca8a04; }
+
+.overview-card-info {
+  text-align: left;
+}
+
+.overview-card-info .value {
   display: block;
   font-size: 1.8rem;
   font-weight: 800;
-  color: #2563eb;
-  margin-bottom: 4px;
+  color: #0f172a;
+  margin-bottom: 2px;
+  line-height: 1.2;
 }
 
-.overview-card .label {
-  font-size: 0.85rem;
+.overview-card-info .label {
+  font-size: 0.72rem;
   color: #64748b;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -329,24 +291,48 @@ export default {
 /* Grid of Badges */
 .badges-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.75rem;
 }
 
 .badge-card {
+  position: relative;
   display: flex;
   gap: 1.25rem;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid #f1f5f9;
   border-radius: 24px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.02);
-  transition: all 0.3s ease;
+  padding: 1.75rem 1.5rem;
+  box-shadow: 0 10px 25px -15px rgba(15, 23, 42, 0.04);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.badge-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  border: 1.5px solid transparent;
+  background: linear-gradient(135deg, var(--badge-color) 0%, transparent 60%) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.badge-card:hover::before {
+  opacity: 0.8;
 }
 
 .badge-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px -5px rgba(15, 23, 42, 0.06);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.08);
 }
 
 .badge-card.locked {
@@ -417,8 +403,10 @@ export default {
 }
 
 /* Progress bar inside badge */
-.progress-bar-container {
+.badge-progress-container {
   margin-bottom: 12px;
+  height: auto;
+  overflow: visible;
 }
 
 .progress-info {

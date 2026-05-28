@@ -574,7 +574,14 @@ const finishTest = async () => {
 
     // Reward TP Coins
     const isSpecial = activeSubjectId.value === 'special';
-    const coinsEarned = isSpecial ? 50 : Math.round(score.value);
+    let coinsEarned = isSpecial ? 50 : Math.round(score.value);
+    
+    // V3 Economy: Perfect Score Bonus
+    let perfectScoreBonus = 0;
+    if (!isSpecial && state.questions.length > 20 && score.value === state.questions.length) {
+      perfectScoreBonus = 5;
+      coinsEarned += perfectScoreBonus;
+    }
     
     if (coinsEarned > 0) {
       try {
@@ -585,10 +592,16 @@ const finishTest = async () => {
 
         // Record transaction
         const txRef = collection(userDocRef, 'transactions');
-        await addDoc(txRef, {
-          action: isRus.value
+        let actionMsg = isRus.value
             ? `Награда за тест (${displaySubject.value} - ${displayLevel.value})`
-            : `Test yechish mukofoti (${displaySubject.value} - ${displayLevel.value})`,
+            : `Test yechish mukofoti (${displaySubject.value} - ${displayLevel.value})`;
+            
+        if (perfectScoreBonus > 0) {
+          actionMsg += isRus.value ? " + Бонус за идеальный результат!" : " + Perfect Score Bonus!";
+        }
+
+        await addDoc(txRef, {
+          action: actionMsg,
           points: coinsEarned,
           timestamp: Timestamp.now()
         });

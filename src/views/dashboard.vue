@@ -19,42 +19,93 @@
       <!-- Quick Statistics Summary Cards -->
       <div class="stats-grid">
         <div class="stats-card">
-          <div class="stats-icon-wrapper total-tests-icon">
-            <i class="fas fa-clipboard-list"></i>
-          </div>
+          <div class="stats-icon-wrapper total-tests-icon"><i class="fas fa-clipboard-list"></i></div>
           <div class="stats-info">
             <span class="stats-label">{{ t('totalTests') }}</span>
             <h3 class="stats-value">{{ items.length }}</h3>
           </div>
         </div>
-
         <div class="stats-card">
-          <div class="stats-icon-wrapper avg-score-icon">
-            <i class="fas fa-percentage"></i>
-          </div>
+          <div class="stats-icon-wrapper avg-score-icon"><i class="fas fa-percentage"></i></div>
           <div class="stats-info">
             <span class="stats-label">{{ t('averageScore') }}</span>
             <h3 class="stats-value">{{ averageScorePercent }}%</h3>
           </div>
         </div>
-
         <div class="stats-card">
-          <div class="stats-icon-wrapper max-score-icon">
-            <i class="fas fa-trophy"></i>
-          </div>
+          <div class="stats-icon-wrapper max-score-icon"><i class="fas fa-trophy"></i></div>
           <div class="stats-info">
             <span class="stats-label">{{ t('highestScore') }}</span>
             <h3 class="stats-value">{{ highestScorePercent }}%</h3>
           </div>
         </div>
-
         <div class="stats-card">
-          <div class="stats-icon-wrapper best-subject-icon">
-            <i class="fas fa-graduation-cap"></i>
-          </div>
+          <div class="stats-icon-wrapper best-subject-icon"><i class="fas fa-graduation-cap"></i></div>
           <div class="stats-info">
             <span class="stats-label">{{ t('bestSubject') }}</span>
             <h3 class="stats-value text-truncate" :title="bestSubjectName">{{ bestSubjectName }}</h3>
+          </div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-icon-wrapper perfect-icon"><i class="fas fa-star"></i></div>
+          <div class="stats-info">
+            <span class="stats-label">{{ currentLocale === 'RUS' ? '100% Natijalar' : '100% Natijalar' }}</span>
+            <h3 class="stats-value">{{ perfectScoreCount }}</h3>
+          </div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-icon-wrapper streak-icon"><i class="fas fa-fire"></i></div>
+          <div class="stats-info">
+            <span class="stats-label">{{ currentLocale === 'RUS' ? 'Фанов изучено' : 'Fanlar soni' }}</span>
+            <h3 class="stats-value">{{ uniqueSubjectsStudied }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subject Performance -->
+      <div v-if="subjectStats.length > 0" class="analytics-section">
+        <div class="section-header">
+          <h2 class="section-title"><i class="fas fa-chart-bar"></i> {{ currentLocale === 'RUS' ? 'Результаты по предметам' : 'Fanlar bo\'yicha natijalar' }}</h2>
+        </div>
+        <div class="subject-grid">
+          <div v-for="subj in subjectStats" :key="subj.name" class="subject-card">
+            <div class="subject-card-header">
+              <div class="subj-icon" :style="{ background: subj.color + '20', color: subj.color }"><i :class="subj.icon"></i></div>
+              <div class="subj-meta">
+                <span class="subj-name">{{ subj.name }}</span>
+                <span class="subj-count">{{ subj.count }} {{ currentLocale === 'RUS' ? 'тестов' : 'ta test' }}</span>
+              </div>
+              <div class="subj-avg" :style="{ color: subj.color }">{{ subj.avg }}%</div>
+            </div>
+            <div class="subj-bar-outer">
+              <div class="subj-bar-inner" :style="{ width: subj.avg + '%', background: subj.color }"></div>
+            </div>
+            <div class="subj-footer">
+              <span>{{ currentLocale === 'RUS' ? 'Лучший:' : 'Eng yaxshi:' }} <strong>{{ subj.best }}%</strong></span>
+              <span>⭐ {{ subj.perfectCount }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Level Performance -->
+      <div v-if="levelStats.length > 0" class="analytics-section">
+        <div class="section-header">
+          <h2 class="section-title"><i class="fas fa-layer-group"></i> {{ currentLocale === 'RUS' ? 'Результаты по уровням' : 'Darajalar bo\'yicha natijalar' }}</h2>
+        </div>
+        <div class="level-grid">
+          <div v-for="lvl in levelStats" :key="lvl.name" class="level-card">
+            <div class="level-top">
+              <span :class="['level-badge', lvl.cls]">{{ lvl.name }}</span>
+              <span class="level-avg-val">{{ lvl.avg }}%</span>
+            </div>
+            <div class="subj-bar-outer">
+              <div class="subj-bar-inner" :class="lvl.cls + '-bar'" :style="{ width: lvl.avg + '%' }"></div>
+            </div>
+            <div class="subj-footer">
+              <span>{{ lvl.count }} {{ currentLocale === 'RUS' ? 'тестов' : 'ta test' }}</span>
+              <span>⭐ {{ lvl.perfectCount }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -335,6 +386,53 @@ export default {
     totalPages() {
       return Math.ceil(this.filteredItems.length / this.itemsPerPage) || 1;
     },
+    perfectScoreCount() {
+      return this.items.filter(i => i.total > 0 && i.score === i.total).length;
+    },
+    uniqueSubjectsStudied() {
+      return new Set(this.items.map(i => i.subject)).size;
+    },
+    bestStreak() {
+      let streak = 0, best = 0;
+      [...this.items].sort((a,b) => {
+        const ta = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp).getTime();
+        const tb = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp).getTime();
+        return ta - tb;
+      }).forEach(i => {
+        const pct = i.total > 0 ? Math.round((i.score/i.total)*100) : 0;
+        if (pct >= 60) { streak++; if (streak > best) best = streak; } else streak = 0;
+      });
+      return best;
+    },
+    subjectStats() {
+      const icons = { english: 'fas fa-globe', matematik: 'fas fa-calculator', tarix: 'fas fa-landmark', fizika: 'fas fa-atom', rus: 'fas fa-feather', 'o\'zbek': 'fas fa-book', ozbek: 'fas fa-book', dasturlash: 'fas fa-code', informatika: 'fas fa-desktop', ai: 'fas fa-robot' };
+      const colors = ['#3b82f6','#10b981','#f59e0b','#ec4899','#8b5cf6','#14b8a6','#f97316','#06b6d4','#6366f1','#84cc16'];
+      const map = {};
+      this.items.forEach(i => {
+        const s = i.subject || 'Other';
+        if (!map[s]) map[s] = { name: s, scores: [], color: '', icon: 'fas fa-book' };
+        map[s].scores.push(i.total > 0 ? Math.round((i.score/i.total)*100) : 0);
+      });
+      return Object.values(map).map((s, idx) => {
+        const key = Object.keys(icons).find(k => s.name.toLowerCase().includes(k));
+        return { name: s.name, count: s.scores.length, avg: s.scores.length ? Math.round(s.scores.reduce((a,b)=>a+b,0)/s.scores.length) : 0, best: s.scores.length ? Math.max(...s.scores) : 0, perfectCount: s.scores.filter(p=>p===100).length, color: colors[idx % colors.length], icon: key ? icons[key] : 'fas fa-book' };
+      }).sort((a,b) => b.count - a.count);
+    },
+    levelStats() {
+      const map = {};
+      this.items.forEach(i => {
+        const l = i.test_level || 'Other';
+        if (!map[l]) map[l] = { name: l, scores: [] };
+        map[l].scores.push(i.total > 0 ? Math.round((i.score/i.total)*100) : 0);
+      });
+      return Object.values(map).map(l => {
+        const lc = l.name.toLowerCase();
+        let cls = 'level-hard';
+        if (lc.includes('elem') || lc.includes('beg') || lc.includes('boshlang') || lc.includes('easy')) cls = 'level-easy';
+        else if (lc.includes('inter') || lc.includes('orta') || lc.includes('medium')) cls = 'level-medium';
+        return { name: l.name, count: l.scores.length, avg: l.scores.length ? Math.round(l.scores.reduce((a,b)=>a+b,0)/l.scores.length) : 0, perfectCount: l.scores.filter(p=>p===100).length, cls };
+      });
+    },
   },
   methods: {
     async fetchResults() {
@@ -579,6 +677,174 @@ export default {
   background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
   color: #059669;
 }
+
+.perfect-icon {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef9c3 100%);
+  color: #ca8a04;
+}
+
+.streak-icon {
+  background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+  color: #ea580c;
+}
+
+/* Analytics section */
+.analytics-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.section-title i {
+  color: #3b82f6;
+}
+
+/* Subject grid */
+.subject-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.subject-card {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226,232,240,0.8);
+  border-radius: 18px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px -3px rgba(15,23,42,0.04);
+}
+
+.subject-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -5px rgba(15,23,42,0.08);
+}
+
+.subject-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.subj-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.subj-meta {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.subj-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.subj-count {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.subj-avg {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.subj-bar-outer {
+  height: 7px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.subj-bar-inner {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.level-easy-bar { background: linear-gradient(90deg, #10b981, #34d399); }
+.level-medium-bar { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.level-hard-bar { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+.subj-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #64748b;
+  padding-top: 0.25rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Level grid */
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.level-card {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226,232,240,0.8);
+  border-radius: 18px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px -3px rgba(15,23,42,0.04);
+}
+
+.level-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -5px rgba(15,23,42,0.08);
+}
+
+.level-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.level-avg-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
 
 .stats-info {
   flex-grow: 1;

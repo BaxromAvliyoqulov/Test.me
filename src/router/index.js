@@ -16,6 +16,9 @@ const Badges = () => import('@/views/badges.vue');
 const Certificates = () => import('@/views/certificates.vue');
 const AiTestSetup = () => import('@/views/testPage/aiTestSetup.vue');
 const AdminSeeder = () => import('@/views/AdminSeeder.vue');
+const ShopPage = () => import('@/views/Shop/ShopPage.vue');
+const InventoryPage = () => import('@/views/Shop/InventoryPage.vue');
+const FriendsDashboard = () => import('@/views/Friends/FriendsDashboard.vue');
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -94,6 +97,21 @@ const router = createRouter({
       path: '/certificates',
       name: 'certificates',
       component: Certificates,
+    },
+    {
+      path: '/shop',
+      name: 'shop',
+      component: ShopPage,
+    },
+    {
+      path: '/inventory',
+      name: 'inventory',
+      component: InventoryPage,
+    },
+    {
+      path: '/friends',
+      name: 'friends',
+      component: FriendsDashboard,
     },
   ],
 });

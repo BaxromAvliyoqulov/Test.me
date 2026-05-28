@@ -136,7 +136,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
 
 export default {
@@ -184,6 +184,7 @@ export default {
           photoURL: '',
           points: 0,
           referralCode: user.uid.slice(0, 8).toUpperCase(),
+          shortId: user.uid.slice(0, 8).toUpperCase(),
           preferences: {
             defaultSubject: '',
             defaultLevel: '',
@@ -212,21 +213,27 @@ export default {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
-        await setDoc(doc(db, 'users', user.uid), {
-          username: user.displayName || 'Anonymous',
-          displayName: user.displayName || 'Anonymous',
-          email: user.email,
-          photoURL: user.photoURL || '',
-          points: 0,
-          referralCode: user.uid.slice(0, 8).toUpperCase(),
-          preferences: {
-            defaultSubject: '',
-            defaultLevel: '',
-            dailyGoal: 10,
-            defaultLocale: 'UZB',
-          },
-          createdAt: new Date(),
-        });
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
+            username: user.displayName || 'Anonymous',
+            displayName: user.displayName || 'Anonymous',
+            email: user.email,
+            photoURL: user.photoURL || '',
+            points: 0,
+            referralCode: user.uid.slice(0, 8).toUpperCase(),
+            shortId: user.uid.slice(0, 8).toUpperCase(),
+            preferences: {
+              defaultSubject: '',
+              defaultLevel: '',
+              dailyGoal: 10,
+              defaultLocale: 'UZB',
+            },
+            createdAt: new Date(),
+          });
+        }
 
         successMessage.value = 'Google orqali ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi!';
         toast.success('Google orqali ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi!');

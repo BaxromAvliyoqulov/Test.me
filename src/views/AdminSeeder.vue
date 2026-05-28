@@ -414,6 +414,13 @@ Each object must have this exact structure:
               }
               this.errorMessage = `Retrying ${level.id.toUpperCase()} now...`;
               this.logActivity(`Resuming generation after 60s wait...`, 'info');
+            } else if (errMsg.includes('503') || errMsg.includes('high demand')) {
+              this.logActivity(`Google Server busy (503). Retrying in 10 seconds...`, 'warn');
+              this.errorMessage = `Google API band (503). 10 soniyadan so'ng qayta urinilmoqda...`;
+              for (let i = 10; i > 0; i--) {
+                if (this.shouldStop) break;
+                await new Promise(r => setTimeout(r, 1000));
+              }
             } else {
               this.logActivity(`Error: ${errMsg}`, 'error');
               this.errorMessage = `Error in ${level.id.toUpperCase()}: ${errMsg}`;

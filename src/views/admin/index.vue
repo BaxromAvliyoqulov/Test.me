@@ -50,6 +50,20 @@
           <i class="fas fa-file-excel nav-icon"></i>
           <span>Upload Tests (Excel)</span>
         </button>
+        <button 
+          class="nav-card" 
+          @click="$router.push('/admin-seeder')"
+        >
+          <i class="fas fa-robot nav-icon"></i>
+          <span>AI Test Seeder</span>
+        </button>
+        <button 
+          :class="['nav-card', { active: currentView === 'shopManager' }]" 
+          @click="currentView = 'shopManager'"
+        >
+          <i class="fas fa-store nav-icon"></i>
+          <span>Shop Manager</span>
+        </button>
       </div>
 
       <div class="admin-content-area">
@@ -58,6 +72,7 @@
           <AddAdminComponent v-else-if="currentView === 'addAdmin'" />
           <AddProductComponent v-else-if="currentView === 'addProduct'" />
           <UploadExcelComponent v-else-if="currentView === 'uploadExcel'" />
+          <AdminShopManager v-else-if="currentView === 'shopManager'" />
           
           <div v-else class="welcome-placeholder">
             <i class="fas fa-cogs"></i>
@@ -76,6 +91,7 @@ import AddAdminComponent from "./addAdmin.vue";
 import AddSubjectComponent from "./addSubject.vue";
 import AddProductComponent from "./addProduct.vue";
 import UploadExcelComponent from "./uploadExcel.vue";
+import AdminShopManager from "./AdminShopManager.vue";
 
 export default {
   components: {
@@ -84,6 +100,7 @@ export default {
     AddSubjectComponent,
     AddProductComponent,
     UploadExcelComponent,
+    AdminShopManager,
   },
   data() {
     return {

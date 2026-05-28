@@ -343,23 +343,25 @@ export default {
 
 /* Cosmetics Grid */
 .cosmetics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-.cosmetic-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; gap: 15px; text-align: center; transition: all 0.3s; position: relative; overflow: hidden; }
+.cosmetic-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 20px; padding: 25px 20px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; text-align: center; transition: all 0.3s; position: relative; overflow: hidden; min-height: 280px; justify-content: space-between; }
 .cosmetic-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08); }
-.cosmetic-card.basic { border-bottom: 4px solid #94a3b8; }
-.cosmetic-card.common { border-bottom: 4px solid #10b981; }
-.cosmetic-card.rare { border-bottom: 4px solid #3b82f6; }
-.cosmetic-card.epic { border-bottom: 4px solid #a855f7; }
-.cosmetic-card.legendary { border-bottom: 4px solid #f59e0b; }
-.cosmetic-visual { width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; }
-.cosmetic-info h3 { font-size: 1rem; color: #1e293b; margin: 0 0 5px 0; }
-.cosmetic-rarity { font-size: 0.75rem; font-weight: 800; padding: 3px 8px; border-radius: 4px; background: rgba(0,0,0,0.05); }
-.cosmetic-card.basic .cosmetic-rarity { color: #94a3b8; }
-.cosmetic-card.common .cosmetic-rarity { color: #10b981; }
-.cosmetic-card.rare .cosmetic-rarity { color: #3b82f6; }
-.cosmetic-card.epic .cosmetic-rarity { color: #a855f7; }
-.cosmetic-card.legendary .cosmetic-rarity { color: #f59e0b; }
-.direct-buy-btn { width: 100%; background: #0f172a; color: white; border: none; padding: 10px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s; }
-.direct-buy-btn:hover:not(:disabled) { background: #1e293b; transform: translateY(-2px); }
+.cosmetic-card.basic { border-bottom: 5px solid #94a3b8; }
+.cosmetic-card.common { border-bottom: 5px solid #10b981; }
+.cosmetic-card.rare { border-bottom: 5px solid #3b82f6; }
+.cosmetic-card.epic { border-bottom: 5px solid #a855f7; }
+.cosmetic-card.legendary { border-bottom: 5px solid #f59e0b; }
+.cosmetic-visual { width: 110px; height: 110px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.cosmetic-visual :deep(svg), .cosmetic-visual :deep(div) { width: 100%; height: 100%; }
+.cosmetic-info { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; margin-bottom: 15px; }
+.cosmetic-info h3 { font-size: 1.05rem; color: #1e293b; margin: 0 0 8px 0; font-weight: 800; }
+.cosmetic-rarity { font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; background: rgba(0,0,0,0.05); text-transform: uppercase; letter-spacing: 0.5px; }
+.cosmetic-card.basic .cosmetic-rarity { color: #94a3b8; background: #f8fafc; border: 1px solid #e2e8f0; }
+.cosmetic-card.common .cosmetic-rarity { color: #10b981; background: #ecfdf5; border: 1px solid #d1fae5; }
+.cosmetic-card.rare .cosmetic-rarity { color: #3b82f6; background: #eff6ff; border: 1px solid #dbeafe; }
+.cosmetic-card.epic .cosmetic-rarity { color: #a855f7; background: #faf5ff; border: 1px solid #f3e8ff; }
+.cosmetic-card.legendary .cosmetic-rarity { color: #f59e0b; background: #fffbeb; border: 1px solid #fef3c7; }
+.direct-buy-btn { width: 100%; background: #0f172a; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s; margin-top: auto; }
+.direct-buy-btn:hover:not(:disabled) { background: #1e293b; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(15, 23, 42, 0.2); }
 .direct-buy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Modals */

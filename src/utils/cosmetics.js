@@ -4,7 +4,7 @@ export const cosmetics = [
     "name": "Basic Simple Ring",
     "type": "frame",
     "rarity": "basic",
-    "price": 100,
+    "price": 20,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -12,7 +12,7 @@ export const cosmetics = [
     "name": "Basic Twin Orbit",
     "type": "frame",
     "rarity": "basic",
-    "price": 115,
+    "price": 23,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"3\" /><circle cx=\"50\" cy=\"50\" r=\"35\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"2\" opacity=\"0.5\" /> </svg>"
   },
   {
@@ -20,7 +20,7 @@ export const cosmetics = [
     "name": "Basic Hexa Core",
     "type": "frame",
     "rarity": "basic",
-    "price": 130,
+    "price": 26,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"50,5 89,27 89,72 50,95 11,72 11,27\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -28,7 +28,7 @@ export const cosmetics = [
     "name": "Basic Diamond Edge",
     "type": "frame",
     "rarity": "basic",
-    "price": 145,
+    "price": 29,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"50,5 95,50 50,95 5,50\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -36,7 +36,7 @@ export const cosmetics = [
     "name": "Basic Tech Octo",
     "type": "frame",
     "rarity": "basic",
-    "price": 160,
+    "price": 32,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"30,5 70,5 95,30 95,70 70,95 30,95 5,70 5,30\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -44,7 +44,7 @@ export const cosmetics = [
     "name": "Basic Dashed Line",
     "type": "frame",
     "rarity": "basic",
-    "price": 175,
+    "price": 35,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"4\" stroke-dasharray=\"10 5\" /> </svg>"
   },
   {
@@ -52,7 +52,7 @@ export const cosmetics = [
     "name": "Basic Nova Star",
     "type": "frame",
     "rarity": "basic",
-    "price": 190,
+    "price": 38,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M50,5 L61,35 L95,35 L67,55 L78,85 L50,65 L22,85 L33,55 L5,35 L39,35 Z\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -60,7 +60,7 @@ export const cosmetics = [
     "name": "Basic Smooth Box",
     "type": "frame",
     "rarity": "basic",
-    "price": 205,
+    "price": 41,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <rect x=\"5\" y=\"5\" width=\"90\" height=\"90\" rx=\"20\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -68,7 +68,7 @@ export const cosmetics = [
     "name": "Basic Defender",
     "type": "frame",
     "rarity": "basic",
-    "price": 220,
+    "price": 44,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M10,10 L90,10 L90,40 C90,70 50,95 50,95 C50,95 10,70 10,40 Z\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -76,7 +76,7 @@ export const cosmetics = [
     "name": "Basic Royal Crown",
     "type": "frame",
     "rarity": "basic",
-    "price": 235,
+    "price": 47,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M10,40 L30,10 L50,30 L70,10 L90,40 L80,90 L20,90 Z\" fill=\"none\" stroke=\"#94a3b8\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -84,7 +84,7 @@ export const cosmetics = [
     "name": "Common Simple Ring",
     "type": "frame",
     "rarity": "common",
-    "price": 250,
+    "price": 50,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -92,7 +92,7 @@ export const cosmetics = [
     "name": "Common Twin Orbit",
     "type": "frame",
     "rarity": "common",
-    "price": 265,
+    "price": 53,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"3\" /><circle cx=\"50\" cy=\"50\" r=\"35\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"2\" opacity=\"0.5\" /> </svg>"
   },
   {
@@ -100,7 +100,7 @@ export const cosmetics = [
     "name": "Common Hexa Core",
     "type": "frame",
     "rarity": "common",
-    "price": 280,
+    "price": 56,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"50,5 89,27 89,72 50,95 11,72 11,27\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -108,7 +108,7 @@ export const cosmetics = [
     "name": "Common Diamond Edge",
     "type": "frame",
     "rarity": "common",
-    "price": 295,
+    "price": 59,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"50,5 95,50 50,95 5,50\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -116,7 +116,7 @@ export const cosmetics = [
     "name": "Common Tech Octo",
     "type": "frame",
     "rarity": "common",
-    "price": 310,
+    "price": 62,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"30,5 70,5 95,30 95,70 70,95 30,95 5,70 5,30\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -124,7 +124,7 @@ export const cosmetics = [
     "name": "Common Dashed Line",
     "type": "frame",
     "rarity": "common",
-    "price": 325,
+    "price": 65,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"4\" stroke-dasharray=\"10 5\" /> </svg>"
   },
   {
@@ -132,7 +132,7 @@ export const cosmetics = [
     "name": "Common Nova Star",
     "type": "frame",
     "rarity": "common",
-    "price": 340,
+    "price": 68,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M50,5 L61,35 L95,35 L67,55 L78,85 L50,65 L22,85 L33,55 L5,35 L39,35 Z\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -140,7 +140,7 @@ export const cosmetics = [
     "name": "Common Smooth Box",
     "type": "frame",
     "rarity": "common",
-    "price": 355,
+    "price": 71,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <rect x=\"5\" y=\"5\" width=\"90\" height=\"90\" rx=\"20\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -148,7 +148,7 @@ export const cosmetics = [
     "name": "Common Defender",
     "type": "frame",
     "rarity": "common",
-    "price": 370,
+    "price": 74,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M10,10 L90,10 L90,40 C90,70 50,95 50,95 C50,95 10,70 10,40 Z\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -156,7 +156,7 @@ export const cosmetics = [
     "name": "Common Royal Crown",
     "type": "frame",
     "rarity": "common",
-    "price": 385,
+    "price": 77,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M10,40 L30,10 L50,30 L70,10 L90,40 L80,90 L20,90 Z\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"4\" /> </svg>"
   },
   {
@@ -164,7 +164,7 @@ export const cosmetics = [
     "name": "Rare Simple Ring",
     "type": "frame",
     "rarity": "rare",
-    "price": 500,
+    "price": 120,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"5\" /> </svg>"
   },
   {
@@ -172,7 +172,7 @@ export const cosmetics = [
     "name": "Rare Twin Orbit",
     "type": "frame",
     "rarity": "rare",
-    "price": 515,
+    "price": 123,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"4\" /><circle cx=\"50\" cy=\"50\" r=\"35\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"3\" opacity=\"0.5\" /> </svg>"
   },
   {
@@ -180,7 +180,7 @@ export const cosmetics = [
     "name": "Rare Hexa Core",
     "type": "frame",
     "rarity": "rare",
-    "price": 530,
+    "price": 126,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"50,5 89,27 89,72 50,95 11,72 11,27\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"5\" /> </svg>"
   },
   {
@@ -188,7 +188,7 @@ export const cosmetics = [
     "name": "Rare Diamond Edge",
     "type": "frame",
     "rarity": "rare",
-    "price": 545,
+    "price": 129,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"50,5 95,50 50,95 5,50\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"5\" /> </svg>"
   },
   {
@@ -196,7 +196,7 @@ export const cosmetics = [
     "name": "Rare Tech Octo",
     "type": "frame",
     "rarity": "rare",
-    "price": 560,
+    "price": 132,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"30,5 70,5 95,30 95,70 70,95 30,95 5,70 5,30\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"5\" /> </svg>"
   },
   {
@@ -204,7 +204,7 @@ export const cosmetics = [
     "name": "Rare Dashed Line",
     "type": "frame",
     "rarity": "rare",
-    "price": 575,
+    "price": 135,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"5\" stroke-dasharray=\"10 5\" /> </svg>"
   },
   {
@@ -212,7 +212,7 @@ export const cosmetics = [
     "name": "Rare Nova Star",
     "type": "frame",
     "rarity": "rare",
-    "price": 590,
+    "price": 138,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M50,5 L61,35 L95,35 L67,55 L78,85 L50,65 L22,85 L33,55 L5,35 L39,35 Z\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"5\" /> </svg>"
   },
   {
@@ -220,7 +220,7 @@ export const cosmetics = [
     "name": "Rare Smooth Box",
     "type": "frame",
     "rarity": "rare",
-    "price": 605,
+    "price": 141,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <rect x=\"5\" y=\"5\" width=\"90\" height=\"90\" rx=\"20\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"5\" /> </svg>"
   },
   {
@@ -228,7 +228,7 @@ export const cosmetics = [
     "name": "Rare Defender",
     "type": "frame",
     "rarity": "rare",
-    "price": 620,
+    "price": 144,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M10,10 L90,10 L90,40 C90,70 50,95 50,95 C50,95 10,70 10,40 Z\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"5\" /> </svg>"
   },
   {
@@ -236,7 +236,7 @@ export const cosmetics = [
     "name": "Rare Royal Crown",
     "type": "frame",
     "rarity": "rare",
-    "price": 635,
+    "price": 147,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M10,40 L30,10 L50,30 L70,10 L90,40 L80,90 L20,90 Z\" fill=\"none\" stroke=\"#3b82f6\" stroke-width=\"5\" /> </svg>"
   },
   {
@@ -244,7 +244,7 @@ export const cosmetics = [
     "name": "Epic Simple Ring",
     "type": "frame",
     "rarity": "epic",
-    "price": 1200,
+    "price": 300,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"6\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -252,7 +252,7 @@ export const cosmetics = [
     "name": "Epic Twin Orbit",
     "type": "frame",
     "rarity": "epic",
-    "price": 1215,
+    "price": 303,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"5\" filter=\"url(#glow)\" /><circle cx=\"50\" cy=\"50\" r=\"35\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"4\" opacity=\"0.5\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -260,7 +260,7 @@ export const cosmetics = [
     "name": "Epic Hexa Core",
     "type": "frame",
     "rarity": "epic",
-    "price": 1230,
+    "price": 306,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"50,5 89,27 89,72 50,95 11,72 11,27\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"6\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -268,7 +268,7 @@ export const cosmetics = [
     "name": "Epic Diamond Edge",
     "type": "frame",
     "rarity": "epic",
-    "price": 1245,
+    "price": 309,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"50,5 95,50 50,95 5,50\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"6\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -276,7 +276,7 @@ export const cosmetics = [
     "name": "Epic Tech Octo",
     "type": "frame",
     "rarity": "epic",
-    "price": 1260,
+    "price": 312,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"30,5 70,5 95,30 95,70 70,95 30,95 5,70 5,30\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"6\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -284,7 +284,7 @@ export const cosmetics = [
     "name": "Epic Dashed Line",
     "type": "frame",
     "rarity": "epic",
-    "price": 1275,
+    "price": 315,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"6\" stroke-dasharray=\"10 5\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -292,7 +292,7 @@ export const cosmetics = [
     "name": "Epic Nova Star",
     "type": "frame",
     "rarity": "epic",
-    "price": 1290,
+    "price": 318,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M50,5 L61,35 L95,35 L67,55 L78,85 L50,65 L22,85 L33,55 L5,35 L39,35 Z\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"6\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -300,7 +300,7 @@ export const cosmetics = [
     "name": "Epic Smooth Box",
     "type": "frame",
     "rarity": "epic",
-    "price": 1305,
+    "price": 321,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <rect x=\"5\" y=\"5\" width=\"90\" height=\"90\" rx=\"20\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"6\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -308,7 +308,7 @@ export const cosmetics = [
     "name": "Epic Defender",
     "type": "frame",
     "rarity": "epic",
-    "price": 1320,
+    "price": 324,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M10,10 L90,10 L90,40 C90,70 50,95 50,95 C50,95 10,70 10,40 Z\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"6\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -316,7 +316,7 @@ export const cosmetics = [
     "name": "Epic Royal Crown",
     "type": "frame",
     "rarity": "epic",
-    "price": 1335,
+    "price": 327,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M10,40 L30,10 L50,30 L70,10 L90,40 L80,90 L20,90 Z\" fill=\"none\" stroke=\"#a855f7\" stroke-width=\"6\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -324,7 +324,7 @@ export const cosmetics = [
     "name": "Legendary Simple Ring",
     "type": "frame",
     "rarity": "legendary",
-    "price": 3000,
+    "price": 800,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"8\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -332,7 +332,7 @@ export const cosmetics = [
     "name": "Legendary Twin Orbit",
     "type": "frame",
     "rarity": "legendary",
-    "price": 3015,
+    "price": 803,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"7\" filter=\"url(#glow)\" /><circle cx=\"50\" cy=\"50\" r=\"35\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"6\" opacity=\"0.5\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -340,7 +340,7 @@ export const cosmetics = [
     "name": "Legendary Hexa Core",
     "type": "frame",
     "rarity": "legendary",
-    "price": 3030,
+    "price": 806,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"50,5 89,27 89,72 50,95 11,72 11,27\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"8\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -348,7 +348,7 @@ export const cosmetics = [
     "name": "Legendary Diamond Edge",
     "type": "frame",
     "rarity": "legendary",
-    "price": 3045,
+    "price": 809,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"50,5 95,50 50,95 5,50\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"8\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -356,7 +356,7 @@ export const cosmetics = [
     "name": "Legendary Tech Octo",
     "type": "frame",
     "rarity": "legendary",
-    "price": 3060,
+    "price": 812,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <polygon points=\"30,5 70,5 95,30 95,70 70,95 30,95 5,70 5,30\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"8\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -364,7 +364,7 @@ export const cosmetics = [
     "name": "Legendary Dashed Line",
     "type": "frame",
     "rarity": "legendary",
-    "price": 3075,
+    "price": 815,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <circle cx=\"50\" cy=\"50\" r=\"45\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"8\" stroke-dasharray=\"10 5\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -372,7 +372,7 @@ export const cosmetics = [
     "name": "Legendary Nova Star",
     "type": "frame",
     "rarity": "legendary",
-    "price": 3090,
+    "price": 818,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M50,5 L61,35 L95,35 L67,55 L78,85 L50,65 L22,85 L33,55 L5,35 L39,35 Z\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"8\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -380,7 +380,7 @@ export const cosmetics = [
     "name": "Legendary Smooth Box",
     "type": "frame",
     "rarity": "legendary",
-    "price": 3105,
+    "price": 821,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <rect x=\"5\" y=\"5\" width=\"90\" height=\"90\" rx=\"20\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"8\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -388,7 +388,7 @@ export const cosmetics = [
     "name": "Legendary Defender",
     "type": "frame",
     "rarity": "legendary",
-    "price": 3120,
+    "price": 824,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M10,10 L90,10 L90,40 C90,70 50,95 50,95 C50,95 10,70 10,40 Z\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"8\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -396,7 +396,7 @@ export const cosmetics = [
     "name": "Legendary Royal Crown",
     "type": "frame",
     "rarity": "legendary",
-    "price": 3135,
+    "price": 827,
     "svg": "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"> <defs> <filter id=\"glow\" x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\"> <feGaussianBlur stdDeviation=\"4\" result=\"blur\" /> <feComposite in=\"SourceGraphic\" in2=\"blur\" operator=\"over\" /> </filter> </defs> <path d=\"M10,40 L30,10 L50,30 L70,10 L90,40 L80,90 L20,90 Z\" fill=\"none\" stroke=\"#f59e0b\" stroke-width=\"8\" filter=\"url(#glow)\" /> </svg>"
   },
   {
@@ -404,7 +404,7 @@ export const cosmetics = [
     "name": "Basic Star Badge",
     "type": "badge",
     "rarity": "basic",
-    "price": 100,
+    "price": 20,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #94a3b820, #94a3b860);border-radius:50%;border:3px solid #94a3b8;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-star\"></i> </div>"
   },
   {
@@ -412,7 +412,7 @@ export const cosmetics = [
     "name": "Basic Award Badge",
     "type": "badge",
     "rarity": "basic",
-    "price": 110,
+    "price": 22,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #94a3b820, #94a3b860);border-radius:50%;border:3px solid #94a3b8;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-award\"></i> </div>"
   },
   {
@@ -420,7 +420,7 @@ export const cosmetics = [
     "name": "Basic Shield Badge",
     "type": "badge",
     "rarity": "basic",
-    "price": 120,
+    "price": 24,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #94a3b820, #94a3b860);border-radius:50%;border:3px solid #94a3b8;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-shield-alt\"></i> </div>"
   },
   {
@@ -428,7 +428,7 @@ export const cosmetics = [
     "name": "Basic Crown Badge",
     "type": "badge",
     "rarity": "basic",
-    "price": 130,
+    "price": 26,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #94a3b820, #94a3b860);border-radius:50%;border:3px solid #94a3b8;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-crown\"></i> </div>"
   },
   {
@@ -436,7 +436,7 @@ export const cosmetics = [
     "name": "Basic Gem Badge",
     "type": "badge",
     "rarity": "basic",
-    "price": 140,
+    "price": 28,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #94a3b820, #94a3b860);border-radius:50%;border:3px solid #94a3b8;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-gem\"></i> </div>"
   },
   {
@@ -444,7 +444,7 @@ export const cosmetics = [
     "name": "Basic Fire Badge",
     "type": "badge",
     "rarity": "basic",
-    "price": 150,
+    "price": 30,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #94a3b820, #94a3b860);border-radius:50%;border:3px solid #94a3b8;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-fire\"></i> </div>"
   },
   {
@@ -452,7 +452,7 @@ export const cosmetics = [
     "name": "Basic Lightning Badge",
     "type": "badge",
     "rarity": "basic",
-    "price": 160,
+    "price": 32,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #94a3b820, #94a3b860);border-radius:50%;border:3px solid #94a3b8;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-bolt\"></i> </div>"
   },
   {
@@ -460,7 +460,7 @@ export const cosmetics = [
     "name": "Basic Heart Badge",
     "type": "badge",
     "rarity": "basic",
-    "price": 170,
+    "price": 34,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #94a3b820, #94a3b860);border-radius:50%;border:3px solid #94a3b8;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-heart\"></i> </div>"
   },
   {
@@ -468,7 +468,7 @@ export const cosmetics = [
     "name": "Basic Leaf Badge",
     "type": "badge",
     "rarity": "basic",
-    "price": 180,
+    "price": 36,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #94a3b820, #94a3b860);border-radius:50%;border:3px solid #94a3b8;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-leaf\"></i> </div>"
   },
   {
@@ -476,7 +476,7 @@ export const cosmetics = [
     "name": "Basic Moon Badge",
     "type": "badge",
     "rarity": "basic",
-    "price": 190,
+    "price": 38,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #94a3b820, #94a3b860);border-radius:50%;border:3px solid #94a3b8;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-moon\"></i> </div>"
   },
   {
@@ -484,7 +484,7 @@ export const cosmetics = [
     "name": "Common Star Badge",
     "type": "badge",
     "rarity": "common",
-    "price": 250,
+    "price": 50,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #10b98120, #10b98160);border-radius:50%;border:3px solid #10b981;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-star\"></i> </div>"
   },
   {
@@ -492,7 +492,7 @@ export const cosmetics = [
     "name": "Common Award Badge",
     "type": "badge",
     "rarity": "common",
-    "price": 260,
+    "price": 52,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #10b98120, #10b98160);border-radius:50%;border:3px solid #10b981;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-award\"></i> </div>"
   },
   {
@@ -500,7 +500,7 @@ export const cosmetics = [
     "name": "Common Shield Badge",
     "type": "badge",
     "rarity": "common",
-    "price": 270,
+    "price": 54,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #10b98120, #10b98160);border-radius:50%;border:3px solid #10b981;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-shield-alt\"></i> </div>"
   },
   {
@@ -508,7 +508,7 @@ export const cosmetics = [
     "name": "Common Crown Badge",
     "type": "badge",
     "rarity": "common",
-    "price": 280,
+    "price": 56,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #10b98120, #10b98160);border-radius:50%;border:3px solid #10b981;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-crown\"></i> </div>"
   },
   {
@@ -516,7 +516,7 @@ export const cosmetics = [
     "name": "Common Gem Badge",
     "type": "badge",
     "rarity": "common",
-    "price": 290,
+    "price": 58,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #10b98120, #10b98160);border-radius:50%;border:3px solid #10b981;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-gem\"></i> </div>"
   },
   {
@@ -524,7 +524,7 @@ export const cosmetics = [
     "name": "Common Fire Badge",
     "type": "badge",
     "rarity": "common",
-    "price": 300,
+    "price": 60,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #10b98120, #10b98160);border-radius:50%;border:3px solid #10b981;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-fire\"></i> </div>"
   },
   {
@@ -532,7 +532,7 @@ export const cosmetics = [
     "name": "Common Lightning Badge",
     "type": "badge",
     "rarity": "common",
-    "price": 310,
+    "price": 62,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #10b98120, #10b98160);border-radius:50%;border:3px solid #10b981;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-bolt\"></i> </div>"
   },
   {
@@ -540,7 +540,7 @@ export const cosmetics = [
     "name": "Common Heart Badge",
     "type": "badge",
     "rarity": "common",
-    "price": 320,
+    "price": 64,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #10b98120, #10b98160);border-radius:50%;border:3px solid #10b981;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-heart\"></i> </div>"
   },
   {
@@ -548,7 +548,7 @@ export const cosmetics = [
     "name": "Common Leaf Badge",
     "type": "badge",
     "rarity": "common",
-    "price": 330,
+    "price": 66,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #10b98120, #10b98160);border-radius:50%;border:3px solid #10b981;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-leaf\"></i> </div>"
   },
   {
@@ -556,7 +556,7 @@ export const cosmetics = [
     "name": "Common Moon Badge",
     "type": "badge",
     "rarity": "common",
-    "price": 340,
+    "price": 68,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #10b98120, #10b98160);border-radius:50%;border:3px solid #10b981;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-moon\"></i> </div>"
   },
   {
@@ -564,7 +564,7 @@ export const cosmetics = [
     "name": "Rare Star Badge",
     "type": "badge",
     "rarity": "rare",
-    "price": 500,
+    "price": 120,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #3b82f620, #3b82f660);border-radius:50%;border:3px solid #3b82f6;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-star\"></i> </div>"
   },
   {
@@ -572,7 +572,7 @@ export const cosmetics = [
     "name": "Rare Award Badge",
     "type": "badge",
     "rarity": "rare",
-    "price": 510,
+    "price": 122,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #3b82f620, #3b82f660);border-radius:50%;border:3px solid #3b82f6;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-award\"></i> </div>"
   },
   {
@@ -580,7 +580,7 @@ export const cosmetics = [
     "name": "Rare Shield Badge",
     "type": "badge",
     "rarity": "rare",
-    "price": 520,
+    "price": 124,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #3b82f620, #3b82f660);border-radius:50%;border:3px solid #3b82f6;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-shield-alt\"></i> </div>"
   },
   {
@@ -588,7 +588,7 @@ export const cosmetics = [
     "name": "Rare Crown Badge",
     "type": "badge",
     "rarity": "rare",
-    "price": 530,
+    "price": 126,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #3b82f620, #3b82f660);border-radius:50%;border:3px solid #3b82f6;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-crown\"></i> </div>"
   },
   {
@@ -596,7 +596,7 @@ export const cosmetics = [
     "name": "Rare Gem Badge",
     "type": "badge",
     "rarity": "rare",
-    "price": 540,
+    "price": 128,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #3b82f620, #3b82f660);border-radius:50%;border:3px solid #3b82f6;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-gem\"></i> </div>"
   },
   {
@@ -604,7 +604,7 @@ export const cosmetics = [
     "name": "Rare Fire Badge",
     "type": "badge",
     "rarity": "rare",
-    "price": 550,
+    "price": 130,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #3b82f620, #3b82f660);border-radius:50%;border:3px solid #3b82f6;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-fire\"></i> </div>"
   },
   {
@@ -612,7 +612,7 @@ export const cosmetics = [
     "name": "Rare Lightning Badge",
     "type": "badge",
     "rarity": "rare",
-    "price": 560,
+    "price": 132,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #3b82f620, #3b82f660);border-radius:50%;border:3px solid #3b82f6;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-bolt\"></i> </div>"
   },
   {
@@ -620,7 +620,7 @@ export const cosmetics = [
     "name": "Rare Heart Badge",
     "type": "badge",
     "rarity": "rare",
-    "price": 570,
+    "price": 134,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #3b82f620, #3b82f660);border-radius:50%;border:3px solid #3b82f6;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-heart\"></i> </div>"
   },
   {
@@ -628,7 +628,7 @@ export const cosmetics = [
     "name": "Rare Leaf Badge",
     "type": "badge",
     "rarity": "rare",
-    "price": 580,
+    "price": 136,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #3b82f620, #3b82f660);border-radius:50%;border:3px solid #3b82f6;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-leaf\"></i> </div>"
   },
   {
@@ -636,7 +636,7 @@ export const cosmetics = [
     "name": "Rare Moon Badge",
     "type": "badge",
     "rarity": "rare",
-    "price": 590,
+    "price": 138,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #3b82f620, #3b82f660);border-radius:50%;border:3px solid #3b82f6;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 4px 6px rgba(0,0,0,0.1);\"> <i class=\"fas fa-moon\"></i> </div>"
   },
   {
@@ -644,7 +644,7 @@ export const cosmetics = [
     "name": "Epic Star Badge",
     "type": "badge",
     "rarity": "epic",
-    "price": 1200,
+    "price": 300,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #a855f720, #a855f760);border-radius:50%;border:3px solid #a855f7;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #a855f780, inset 0 0 10px #a855f740;\"> <i class=\"fas fa-star\"></i> </div>"
   },
   {
@@ -652,7 +652,7 @@ export const cosmetics = [
     "name": "Epic Award Badge",
     "type": "badge",
     "rarity": "epic",
-    "price": 1210,
+    "price": 302,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #a855f720, #a855f760);border-radius:50%;border:3px solid #a855f7;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #a855f780, inset 0 0 10px #a855f740;\"> <i class=\"fas fa-award\"></i> </div>"
   },
   {
@@ -660,7 +660,7 @@ export const cosmetics = [
     "name": "Epic Shield Badge",
     "type": "badge",
     "rarity": "epic",
-    "price": 1220,
+    "price": 304,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #a855f720, #a855f760);border-radius:50%;border:3px solid #a855f7;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #a855f780, inset 0 0 10px #a855f740;\"> <i class=\"fas fa-shield-alt\"></i> </div>"
   },
   {
@@ -668,7 +668,7 @@ export const cosmetics = [
     "name": "Epic Crown Badge",
     "type": "badge",
     "rarity": "epic",
-    "price": 1230,
+    "price": 306,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #a855f720, #a855f760);border-radius:50%;border:3px solid #a855f7;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #a855f780, inset 0 0 10px #a855f740;\"> <i class=\"fas fa-crown\"></i> </div>"
   },
   {
@@ -676,7 +676,7 @@ export const cosmetics = [
     "name": "Epic Gem Badge",
     "type": "badge",
     "rarity": "epic",
-    "price": 1240,
+    "price": 308,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #a855f720, #a855f760);border-radius:50%;border:3px solid #a855f7;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #a855f780, inset 0 0 10px #a855f740;\"> <i class=\"fas fa-gem\"></i> </div>"
   },
   {
@@ -684,7 +684,7 @@ export const cosmetics = [
     "name": "Epic Fire Badge",
     "type": "badge",
     "rarity": "epic",
-    "price": 1250,
+    "price": 310,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #a855f720, #a855f760);border-radius:50%;border:3px solid #a855f7;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #a855f780, inset 0 0 10px #a855f740;\"> <i class=\"fas fa-fire\"></i> </div>"
   },
   {
@@ -692,7 +692,7 @@ export const cosmetics = [
     "name": "Epic Lightning Badge",
     "type": "badge",
     "rarity": "epic",
-    "price": 1260,
+    "price": 312,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #a855f720, #a855f760);border-radius:50%;border:3px solid #a855f7;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #a855f780, inset 0 0 10px #a855f740;\"> <i class=\"fas fa-bolt\"></i> </div>"
   },
   {
@@ -700,7 +700,7 @@ export const cosmetics = [
     "name": "Epic Heart Badge",
     "type": "badge",
     "rarity": "epic",
-    "price": 1270,
+    "price": 314,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #a855f720, #a855f760);border-radius:50%;border:3px solid #a855f7;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #a855f780, inset 0 0 10px #a855f740;\"> <i class=\"fas fa-heart\"></i> </div>"
   },
   {
@@ -708,7 +708,7 @@ export const cosmetics = [
     "name": "Epic Leaf Badge",
     "type": "badge",
     "rarity": "epic",
-    "price": 1280,
+    "price": 316,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #a855f720, #a855f760);border-radius:50%;border:3px solid #a855f7;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #a855f780, inset 0 0 10px #a855f740;\"> <i class=\"fas fa-leaf\"></i> </div>"
   },
   {
@@ -716,7 +716,7 @@ export const cosmetics = [
     "name": "Epic Moon Badge",
     "type": "badge",
     "rarity": "epic",
-    "price": 1290,
+    "price": 318,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #a855f720, #a855f760);border-radius:50%;border:3px solid #a855f7;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #a855f780, inset 0 0 10px #a855f740;\"> <i class=\"fas fa-moon\"></i> </div>"
   },
   {
@@ -724,7 +724,7 @@ export const cosmetics = [
     "name": "Legendary Star Badge",
     "type": "badge",
     "rarity": "legendary",
-    "price": 3000,
+    "price": 800,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #f59e0b20, #f59e0b60);border-radius:50%;border:3px solid #f59e0b;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #f59e0b80, inset 0 0 10px #f59e0b40;\"> <i class=\"fas fa-star\"></i> </div>"
   },
   {
@@ -732,7 +732,7 @@ export const cosmetics = [
     "name": "Legendary Award Badge",
     "type": "badge",
     "rarity": "legendary",
-    "price": 3010,
+    "price": 802,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #f59e0b20, #f59e0b60);border-radius:50%;border:3px solid #f59e0b;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #f59e0b80, inset 0 0 10px #f59e0b40;\"> <i class=\"fas fa-award\"></i> </div>"
   },
   {
@@ -740,7 +740,7 @@ export const cosmetics = [
     "name": "Legendary Shield Badge",
     "type": "badge",
     "rarity": "legendary",
-    "price": 3020,
+    "price": 804,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #f59e0b20, #f59e0b60);border-radius:50%;border:3px solid #f59e0b;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #f59e0b80, inset 0 0 10px #f59e0b40;\"> <i class=\"fas fa-shield-alt\"></i> </div>"
   },
   {
@@ -748,7 +748,7 @@ export const cosmetics = [
     "name": "Legendary Crown Badge",
     "type": "badge",
     "rarity": "legendary",
-    "price": 3030,
+    "price": 806,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #f59e0b20, #f59e0b60);border-radius:50%;border:3px solid #f59e0b;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #f59e0b80, inset 0 0 10px #f59e0b40;\"> <i class=\"fas fa-crown\"></i> </div>"
   },
   {
@@ -756,7 +756,7 @@ export const cosmetics = [
     "name": "Legendary Gem Badge",
     "type": "badge",
     "rarity": "legendary",
-    "price": 3040,
+    "price": 808,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #f59e0b20, #f59e0b60);border-radius:50%;border:3px solid #f59e0b;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #f59e0b80, inset 0 0 10px #f59e0b40;\"> <i class=\"fas fa-gem\"></i> </div>"
   },
   {
@@ -764,7 +764,7 @@ export const cosmetics = [
     "name": "Legendary Fire Badge",
     "type": "badge",
     "rarity": "legendary",
-    "price": 3050,
+    "price": 810,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #f59e0b20, #f59e0b60);border-radius:50%;border:3px solid #f59e0b;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #f59e0b80, inset 0 0 10px #f59e0b40;\"> <i class=\"fas fa-fire\"></i> </div>"
   },
   {
@@ -772,7 +772,7 @@ export const cosmetics = [
     "name": "Legendary Lightning Badge",
     "type": "badge",
     "rarity": "legendary",
-    "price": 3060,
+    "price": 812,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #f59e0b20, #f59e0b60);border-radius:50%;border:3px solid #f59e0b;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #f59e0b80, inset 0 0 10px #f59e0b40;\"> <i class=\"fas fa-bolt\"></i> </div>"
   },
   {
@@ -780,7 +780,7 @@ export const cosmetics = [
     "name": "Legendary Heart Badge",
     "type": "badge",
     "rarity": "legendary",
-    "price": 3070,
+    "price": 814,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #f59e0b20, #f59e0b60);border-radius:50%;border:3px solid #f59e0b;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #f59e0b80, inset 0 0 10px #f59e0b40;\"> <i class=\"fas fa-heart\"></i> </div>"
   },
   {
@@ -788,7 +788,7 @@ export const cosmetics = [
     "name": "Legendary Leaf Badge",
     "type": "badge",
     "rarity": "legendary",
-    "price": 3080,
+    "price": 816,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #f59e0b20, #f59e0b60);border-radius:50%;border:3px solid #f59e0b;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #f59e0b80, inset 0 0 10px #f59e0b40;\"> <i class=\"fas fa-leaf\"></i> </div>"
   },
   {
@@ -796,7 +796,7 @@ export const cosmetics = [
     "name": "Legendary Moon Badge",
     "type": "badge",
     "rarity": "legendary",
-    "price": 3090,
+    "price": 818,
     "svg": "<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, #f59e0b20, #f59e0b60);border-radius:50%;border:3px solid #f59e0b;color:#fff;font-size:2.5rem;text-shadow:0 2px 4px rgba(0,0,0,0.5);box-shadow: 0 0 20px #f59e0b80, inset 0 0 10px #f59e0b40;\"> <i class=\"fas fa-moon\"></i> </div>"
   }
 ];

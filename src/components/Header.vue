@@ -199,8 +199,8 @@ export default {
 
 .notification-badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   width: 8px;
   height: 8px;
   background: #ef4444;

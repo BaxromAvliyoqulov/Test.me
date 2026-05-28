@@ -61,7 +61,7 @@ export default {
 <style scoped>
 .main-layout-wrapper {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   background-color: #f8fafc;
   width: 100%;
   max-width: 100%;
@@ -72,7 +72,7 @@ export default {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 100vh;
+  height: 100vh;
   margin-left: 280px;
   transition: margin-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   width: calc(100% - 280px);

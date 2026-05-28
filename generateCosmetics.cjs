@@ -2,11 +2,11 @@ const fs = require('fs');
 const path = require('path');
 
 const rarities = [
-  { name: 'basic', price: 100, color: '#94a3b8' },
-  { name: 'common', price: 250, color: '#10b981' },
-  { name: 'rare', price: 500, color: '#3b82f6' },
-  { name: 'epic', price: 1200, color: '#a855f7' },
-  { name: 'legendary', price: 3000, color: '#f59e0b' }
+  { name: 'basic', price: 20, color: '#94a3b8' },
+  { name: 'common', price: 50, color: '#10b981' },
+  { name: 'rare', price: 120, color: '#3b82f6' },
+  { name: 'epic', price: 300, color: '#a855f7' },
+  { name: 'legendary', price: 800, color: '#f59e0b' }
 ];
 
 // Diverse SVG Frame Shapes
@@ -73,7 +73,7 @@ for (let i = 0; i < 50; i++) {
     name: name,
     type: 'frame',
     rarity: rarity.name,
-    price: rarity.price + (num * 15),
+    price: rarity.price + (num * 3),
     svg: svg.replace(/\n/g, '').replace(/\s+/g, ' ')
   });
 }
@@ -99,7 +99,7 @@ for (let i = 0; i < 50; i++) {
     name: name,
     type: 'badge',
     rarity: rarity.name,
-    price: rarity.price + (num * 10),
+    price: rarity.price + (num * 2),
     svg: svg.replace(/\n/g, '').replace(/\s+/g, ' ')
   });
 }

@@ -158,11 +158,11 @@ export const addToInventory = async (userId, item) => {
 // Get standardized sell price
 export const getSellPrice = (rarity) => {
   const prices = {
-    basic: 20,
-    common: 50,
-    rare: 150,
-    epic: 500,
-    legendary: 1500
+    basic: 10,
+    common: 25,
+    rare: 60,
+    epic: 150,
+    legendary: 400
   };
   return prices[rarity] || 10;
 };

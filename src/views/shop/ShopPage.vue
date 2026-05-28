@@ -6,12 +6,18 @@
     <div class="shop-header">
       <div class="header-content">
         <h2><i class="fas fa-store"></i> TP Coin Shop</h2>
-        <p>Purchase mystery boxes to unlock rare profile cosmetics!</p>
+        <p>Purchase mystery boxes or buy cosmetics directly!</p>
       </div>
       <div class="user-balance">
         <img src="@/assets/img/tpCoin.png" class="coin-icon" alt="TP" />
         <span class="balance-amount">{{ userPoints }}</span>
       </div>
+    </div>
+    
+    <div class="shop-tabs">
+      <button :class="{ active: activeTab === 'boxes' }" @click="activeTab = 'boxes'">Mystery Boxes</button>
+      <button :class="{ active: activeTab === 'frames' }" @click="activeTab = 'frames'">Frames</button>
+      <button :class="{ active: activeTab === 'badges' }" @click="activeTab = 'badges'">Badges</button>
     </div>
 
     <!-- Inspect Modal -->
@@ -64,7 +70,7 @@
       <h3>Qutilar yuklanmoqda...</h3>
     </div>
 
-    <div v-else class="boxes-grid">
+    <div v-else-if="activeTab === 'boxes'" class="boxes-grid">
       <div v-for="box in boxes" :key="box.id" class="box-card" :style="{ '--box-color': box.color }">
         <div class="box-visual" v-html="box.svg || '<i class=\'fas fa-cube\'></i>'"></div>
         <div class="box-info">
@@ -92,6 +98,24 @@
         </div>
       </div>
     </div>
+
+    <!-- Direct Shop Grid (Frames / Badges) -->
+    <div v-else class="cosmetics-grid">
+      <div v-for="item in activeCosmetics" :key="item.id" class="cosmetic-card" :class="item.rarity">
+        <div class="cosmetic-visual" v-html="item.svg"></div>
+        <div class="cosmetic-info">
+          <h3>{{ item.name }}</h3>
+          <span class="cosmetic-rarity">{{ item.rarity.toUpperCase() }}</span>
+        </div>
+        <button 
+          class="direct-buy-btn" 
+          :disabled="userPoints < item.price || loading"
+          @click="buyDirectItem(item)"
+        >
+          <img src="@/assets/img/tpCoin.png" class="btn-coin" /> {{ item.price }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -99,12 +123,13 @@
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
 import { doc, getDoc, collection, onSnapshot, addDoc } from 'firebase/firestore';
-import { purchaseBox, addToInventory, quickSellItem, getSellPrice } from '@/utils/economy';
+import { purchaseBox, purchaseDirectItem, addToInventory, quickSellItem, getSellPrice } from '@/utils/economy';
 import { cosmetics } from '@/utils/cosmetics';
 
 export default {
   data() {
     return {
+      activeTab: 'boxes', // 'boxes', 'frames', 'badges'
       boxes: [],
       userPoints: 0,
       loading: false,
@@ -117,6 +142,11 @@ export default {
     };
   },
   computed: {
+    activeCosmetics() {
+      if (this.activeTab === 'frames') return cosmetics.filter(c => c.type === 'frame');
+      if (this.activeTab === 'badges') return cosmetics.filter(c => c.type === 'badge');
+      return [];
+    },
     getSellPriceValue() {
       if (!this.droppedItem) return 0;
       return getSellPrice(this.droppedItem.rarity);
@@ -224,6 +254,25 @@ export default {
         alert(err.message);
       }
     },
+    async buyDirectItem(item) {
+      if (this.userPoints < item.price) return;
+      if (!confirm(`Siz "${item.name}" ni ${item.price} TP evaziga sotib olmoqchimisiz?`)) return;
+      
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) return alert("Must be logged in!");
+
+      this.loading = true;
+      try {
+        await purchaseDirectItem(user.uid, item);
+        alert(`Muvaffaqiyatli! ${item.name} inventaringizga qo'shildi.`);
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      } finally {
+        this.loading = false;
+      }
+    },
     async keepItem() {
       const auth = getAuth();
       await addToInventory(auth.currentUser.uid, this.droppedItem);
@@ -252,13 +301,18 @@ export default {
 .glow-1 { width: 400px; height: 400px; background: #3b82f6; top: -50px; left: -50px; }
 .glow-2 { width: 300px; height: 300px; background: #a855f7; bottom: 10%; right: 5%; }
 
-.shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; background: rgba(255,255,255,0.7); padding: 20px 30px; border-radius: 20px; backdrop-filter: blur(10px); }
+.shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: rgba(255,255,255,0.7); padding: 20px 30px; border-radius: 20px; backdrop-filter: blur(10px); }
 .header-content h2 { margin: 0; font-size: 2rem; color: #1e293b; }
 .header-content p { margin: 5px 0 0; color: #64748b; }
 
 .user-balance { display: flex; align-items: center; gap: 10px; background: #fef3c7; padding: 10px 20px; border-radius: 15px; border: 2px solid #f59e0b; }
 .coin-icon { width: 30px; height: 30px; }
 .balance-amount { font-size: 1.5rem; font-weight: 800; color: #b45309; }
+
+.shop-tabs { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
+.shop-tabs button { background: rgba(255, 255, 255, 0.8); border: 1px solid #e2e8f0; padding: 10px 25px; border-radius: 99px; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.3s; }
+.shop-tabs button:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.shop-tabs button.active { background: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
 
 .loading-state { text-align: center; padding: 60px 20px; color: #64748b; margin-top: 20px; }
 .loading-state h3 { font-size: 1.8rem; color: #1e293b; margin: 20px 0 10px; }
@@ -286,6 +340,27 @@ export default {
 .buy-btn:hover:not(:disabled) { background: #0f172a; }
 .buy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-coin { width: 24px; height: 24px; }
+
+/* Cosmetics Grid */
+.cosmetics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+.cosmetic-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; gap: 15px; text-align: center; transition: all 0.3s; position: relative; overflow: hidden; }
+.cosmetic-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08); }
+.cosmetic-card.basic { border-bottom: 4px solid #94a3b8; }
+.cosmetic-card.common { border-bottom: 4px solid #10b981; }
+.cosmetic-card.rare { border-bottom: 4px solid #3b82f6; }
+.cosmetic-card.epic { border-bottom: 4px solid #a855f7; }
+.cosmetic-card.legendary { border-bottom: 4px solid #f59e0b; }
+.cosmetic-visual { width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; }
+.cosmetic-info h3 { font-size: 1rem; color: #1e293b; margin: 0 0 5px 0; }
+.cosmetic-rarity { font-size: 0.75rem; font-weight: 800; padding: 3px 8px; border-radius: 4px; background: rgba(0,0,0,0.05); }
+.cosmetic-card.basic .cosmetic-rarity { color: #94a3b8; }
+.cosmetic-card.common .cosmetic-rarity { color: #10b981; }
+.cosmetic-card.rare .cosmetic-rarity { color: #3b82f6; }
+.cosmetic-card.epic .cosmetic-rarity { color: #a855f7; }
+.cosmetic-card.legendary .cosmetic-rarity { color: #f59e0b; }
+.direct-buy-btn { width: 100%; background: #0f172a; color: white; border: none; padding: 10px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s; }
+.direct-buy-btn:hover:not(:disabled) { background: #1e293b; transform: translateY(-2px); }
+.direct-buy-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Modals */
 .inspect-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }

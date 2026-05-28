@@ -105,6 +105,39 @@ export const purchaseBox = async (userId, box) => {
   return droppedItem;
 };
 
+// Direct Purchase
+export const purchaseDirectItem = async (userId, item) => {
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  
+  if (!userSnap.exists()) throw new Error("User not found");
+  
+  const userData = userSnap.data();
+  const currentPoints = userData.points || 0;
+  
+  if (currentPoints < item.price) {
+    throw new Error("Insufficient TP Coins!");
+  }
+  
+  // Deduct points
+  await updateDoc(userRef, {
+    points: increment(-item.price)
+  });
+  
+  // Add to inventory directly
+  await addToInventory(userId, item);
+  
+  // Log purchase
+  await addDoc(collection(userRef, 'transactions'), {
+    amount: -item.price,
+    type: 'direct_purchase',
+    itemId: item.id || 'unknown',
+    timestamp: serverTimestamp()
+  });
+  
+  return item;
+};
+
 // Add to inventory
 export const addToInventory = async (userId, item) => {
   const userRef = doc(db, 'users', userId);

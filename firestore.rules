@@ -33,6 +33,13 @@ service cloud.firestore {
         allow create: if isOwner(userId);
         allow update, delete: if false;
       }
+
+      // User Inventory sub-collection
+      match /inventory/{itemId} {
+        allow read: if isOwner(userId);
+        allow create, delete: if isOwner(userId);
+        allow update: if false;
+      }
     }
 
     // Subjects and nested collections read-only for authenticated users

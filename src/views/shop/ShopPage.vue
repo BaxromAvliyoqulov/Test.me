@@ -125,8 +125,13 @@ import { getAuth } from 'firebase/auth';
 import { doc, getDoc, collection, onSnapshot, addDoc } from 'firebase/firestore';
 import { purchaseBox, purchaseDirectItem, addToInventory, quickSellItem, getSellPrice } from '@/utils/economy';
 import { cosmetics } from '@/utils/cosmetics';
+import { useToast } from 'vue-toastification';
 
 export default {
+  setup() {
+    const toast = useToast();
+    return { toast };
+  },
   data() {
     return {
       activeTab: 'boxes', // 'boxes', 'frames', 'badges'
@@ -240,18 +245,18 @@ export default {
       this.droppedItem = null;
 
       try {
-        const item = await purchaseBox(user.uid, box);
+        const itemObj = await purchaseBox(user.uid, box);
         // Simulate animation delay
         setTimeout(() => {
           this.isShaking = false;
-          this.droppedItem = item;
+          this.droppedItem = itemObj;
           this.loading = false;
         }, 2000);
       } catch (err) {
         console.error(err);
         this.openingBox = false;
         this.loading = false;
-        alert(err.message);
+        this.toast.error("Xatolik: " + err.message);
       }
     },
     async buyDirectItem(item) {
@@ -260,15 +265,15 @@ export default {
       
       const auth = getAuth();
       const user = auth.currentUser;
-      if (!user) return alert("Must be logged in!");
+      if (!user) return this.toast.error("Tizimga kirmagansiz!");
 
       this.loading = true;
       try {
         await purchaseDirectItem(user.uid, item);
-        alert(`Muvaffaqiyatli! ${item.name} inventaringizga qo'shildi.`);
+        this.toast.success(`Muvaffaqiyatli! ${item.name} inventaringizga qo'shildi.`);
       } catch (err) {
         console.error(err);
-        alert(err.message);
+        this.toast.error("Xatolik: " + err.message);
       } finally {
         this.loading = false;
       }

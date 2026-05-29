@@ -77,7 +77,7 @@
               <i class="fas fa-user-minus"></i> {{ currentLocale === 'RUS' ? 'Снять' : 'Yechish' }}
             </button>
             
-            <button class="action-btn sell-btn" @click="sellItem(item)" :title="currentLocale === 'RUS' ? 'Продать системе за 10 TP' : 'Tizimga 10 TP ga sotish'">
+            <button class="action-btn sell-btn" @click="sellItem(item)" :title="currentLocale === 'RUS' ? `Продать системе за ${getItemPrice(item)} TP` : `Tizimga ${getItemPrice(item)} TP ga sotish`">
               <i class="fas fa-coins"></i>
             </button>
           </div>
@@ -93,6 +93,7 @@ import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, increment } from 'firebase/firestore';
 import { useI18n } from '@/utils/i18n';
+import { cosmetics } from '@/utils/cosmetics';
 
 export default {
   name: 'InventoryPage',
@@ -157,6 +158,11 @@ export default {
       return false;
     };
 
+    const getItemPrice = (item) => {
+      const originalItem = cosmetics.find(c => c.id === item.itemId);
+      return originalItem ? originalItem.price : 10;
+    };
+
     const equipItem = async (item) => {
       try {
         const auth = getAuth();
@@ -184,9 +190,10 @@ export default {
     };
 
     const sellItem = async (item) => {
+      const price = getItemPrice(item);
       const confirmMsg = currentLocale.value === 'RUS' 
-        ? `Вы уверены, что хотите продать ${item.name} за 10 TP?` 
-        : `Rostdan ham ${item.name} ni 10 TP ga sotmoqchimisiz?`;
+        ? `Вы уверены, что хотите продать ${item.name} за ${price} TP?` 
+        : `Rostdan ham ${item.name} ni ${price} TP ga sotmoqchimisiz?`;
         
       if (!confirm(confirmMsg)) return;
       
@@ -200,7 +207,7 @@ export default {
         
         await deleteDoc(doc(db, 'users', uid, 'inventory', item.docId));
         await updateDoc(doc(db, 'users', uid), {
-          points: increment(10)
+          points: increment(price)
         });
       } catch (e) {
         console.error("Error selling item:", e);
@@ -215,6 +222,7 @@ export default {
       activeFilter,
       filteredItems,
       isEquipped,
+      getItemPrice,
       equipItem,
       unequipItem,
       sellItem

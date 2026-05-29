@@ -155,7 +155,7 @@ export default {
     },
     getSellPriceValue() {
       if (!this.droppedItem) return 0;
-      return getSellPrice(this.droppedItem.rarity);
+      return this.droppedItem.price || 10;
     }
   },
   mounted() {
@@ -289,7 +289,7 @@ export default {
     },
     async quickSell() {
       const auth = getAuth();
-      const sellPrice = getSellPrice(this.droppedItem.rarity);
+      const sellPrice = this.getSellPriceValue;
       await quickSellItem(auth.currentUser.uid, this.droppedItem.id, sellPrice);
       this.closeModal();
     },

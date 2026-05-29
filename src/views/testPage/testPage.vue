@@ -84,12 +84,19 @@
             {{ currentQuestion?.question }}
           </h3>
 
+          <transition name="fade">
+            <div v-if="state.hintText" class="ai-hint-box">
+              <i class="fas fa-robot"></i> <span>{{ state.hintText }}</span>
+            </div>
+          </transition>
+
           <!-- Premium Custom Answer Options -->
           <div class="options-grid">
             <button
               v-for="(option, index) in currentQuestion?.options"
               :key="index"
               class="option-card"
+              v-show="!state.eliminatedOptions.includes(index)"
               :class="{ selected: state.selectedAnswer === index }"
               @click="selectOption(index)"
             >
@@ -98,6 +105,27 @@
                 <span class="check-marker"><i class="fas fa-check"></i></span>
               </div>
               <span class="option-text">{{ option }}</span>
+            </button>
+          </div>
+          
+          <!-- AI Tools Bar -->
+          <div class="ai-tools-bar" v-if="(state.userTools && state.userTools.tool_5050 > 0) || (state.userTools && state.userTools.tool_ai_hint > 0)">
+            <span class="tools-lbl"><i class="fas fa-magic"></i> {{ isRus ? 'AI Инструменты:' : 'AI Yordamchilari:' }}</span>
+            <button 
+              v-if="state.userTools && state.userTools.tool_5050 > 0" 
+              class="ai-tool-btn" 
+              :disabled="state.using5050 || state.eliminatedOptions.length > 0"
+              @click="use5050"
+            >
+              <span>50/50</span> <span class="tool-count">{{ state.userTools.tool_5050 }}</span>
+            </button>
+            <button 
+              v-if="state.userTools && state.userTools.tool_ai_hint > 0" 
+              class="ai-tool-btn" 
+              :disabled="state.hintText"
+              @click="useAiHint"
+            >
+              <i class="fas fa-lightbulb"></i> <span class="tool-count">{{ state.userTools.tool_ai_hint }}</span>
             </button>
           </div>
         </div>
@@ -270,8 +298,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
 import { db } from '@/config/firebase';
-import { collection, getDocs, addDoc, Timestamp, query, where, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { collection, getDocs, addDoc, Timestamp, query, where, doc, getDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from '@/utils/i18n';
 
@@ -333,6 +361,10 @@ const state = reactive({
   showReviewModal: false,
   timer: 900,
   sessionId: null,
+  userTools: {},
+  eliminatedOptions: [],
+  hintText: null,
+  using5050: false,
 });
 
 let intervalId = null;
@@ -405,6 +437,9 @@ const selectOption = (index) => {
 const goToPage = (index) => {
   state.currentPage = index;
   state.selectedAnswer = state.selectedAnswers[index];
+  state.eliminatedOptions = [];
+  state.hintText = null;
+  state.using5050 = false;
 };
 
 const goToPrev = () => {
@@ -430,6 +465,55 @@ const isCorrectAnswer = (qIndex) => {
   const selected = state.selectedAnswers[qIndex];
   const q = state.questions[qIndex];
   return selected !== null && selected !== undefined && q.options[selected] === q.answer;
+};
+
+// --- AI Tools Logic ---
+const use5050 = async () => {
+  if (!state.userTools || state.userTools.tool_5050 <= 0 || state.eliminatedOptions.length > 0) return;
+  
+  const currentQ = currentQuestion.value;
+  const incorrectIndices = [];
+  currentQ.options.forEach((opt, idx) => {
+    if (opt !== currentQ.answer) incorrectIndices.push(idx);
+  });
+  
+  // Pick 2 random incorrect options
+  incorrectIndices.sort(() => Math.random() - 0.5);
+  state.eliminatedOptions = incorrectIndices.slice(0, 2);
+  state.using5050 = true;
+
+  try {
+    const auth = getAuth();
+    if (auth.currentUser) {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userRef, { 'tools.tool_5050': increment(-1) });
+    }
+  } catch (err) {
+    console.error("Failed to deduct 5050 tool", err);
+  }
+};
+
+const useAiHint = async () => {
+  if (!state.userTools || state.userTools.tool_ai_hint <= 0 || state.hintText) return;
+  
+  const currentQ = currentQuestion.value;
+  // Make a simple AI hint
+  const answerWords = currentQ.answer.split(' ').filter(w => w.length > 3);
+  const hintKeyword = answerWords.length > 0 ? answerWords[0] : currentQ.answer;
+  
+  state.hintText = isRus.value 
+    ? `Подсказка: Правильный ответ может быть связан с "${hintKeyword}"...`
+    : `Yordam: To'g'ri javob "${hintKeyword}" so'zi yoki shunga o'xshash ma'no bilan bog'liq bo'lishi mumkin...`;
+
+  try {
+    const auth = getAuth();
+    if (auth.currentUser) {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userRef, { 'tools.tool_ai_hint': increment(-1) });
+    }
+  } catch (err) {
+    console.error("Failed to deduct ai hint tool", err);
+  }
 };
 
 // Fetch questions safely supporting both individual docs and packaging
@@ -699,6 +783,18 @@ onMounted(() => {
     if (state.timer > 0) state.timer--;
     else finishTest();
   }, 1000);
+
+  const auth = getAuth();
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const userRef = doc(db, 'users', user.uid);
+      onSnapshot(userRef, (snap) => {
+        if (snap.exists()) {
+          state.userTools = snap.data().tools || {};
+        }
+      });
+    }
+  });
 });
 
 onUnmounted(() => clearInterval(intervalId));
@@ -1061,6 +1157,88 @@ defineExpose({ initializeTest: fetchQuestions });
 }
 .option-card.selected .option-text {
   color: #a855f7;
+}
+
+/* AI Tools CSS */
+.ai-tools-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px dashed rgba(168, 85, 247, 0.3);
+  border-radius: 16px;
+  align-items: center;
+}
+
+.tools-lbl {
+  font-weight: 700;
+  color: #7e22ce;
+  font-size: 0.95rem;
+  margin-right: 8px;
+}
+
+.ai-tool-btn {
+  background: white;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  padding: 8px 16px;
+  border-radius: 12px;
+  color: #6b21a8;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.ai-tool-btn:hover:not(:disabled) {
+  background: #f3e8ff;
+  border-color: #a855f7;
+  transform: translateY(-2px);
+}
+
+.ai-tool-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+.tool-count {
+  background: #a855f7;
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 800;
+}
+
+.ai-hint-box {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(4, 120, 87, 0.05));
+  border-left: 4px solid #10b981;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #047857;
+  font-weight: 500;
+  font-size: 0.95rem;
+  animation: slideInDown 0.3s ease-out;
+}
+
+.ai-hint-box i {
+  font-size: 1.5rem;
+  color: #10b981;
+}
+
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Quiz Footer */

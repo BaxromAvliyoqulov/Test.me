@@ -18,6 +18,8 @@
       <button :class="{ active: activeTab === 'boxes' }" @click="activeTab = 'boxes'">Mystery Boxes</button>
       <button :class="{ active: activeTab === 'frames' }" @click="activeTab = 'frames'">Frames</button>
       <button :class="{ active: activeTab === 'badges' }" @click="activeTab = 'badges'">Badges</button>
+      <button :class="{ active: activeTab === 'boosters' }" @click="activeTab = 'boosters'">Boosters</button>
+      <button :class="{ active: activeTab === 'ai_tools' }" @click="activeTab = 'ai_tools'">AI Tools</button>
     </div>
 
     <!-- Inspect Modal -->
@@ -100,7 +102,7 @@
     </div>
 
     <!-- Direct Shop Grid (Frames / Badges) -->
-    <div v-else class="cosmetics-grid">
+    <div v-else-if="activeTab === 'frames' || activeTab === 'badges'" class="cosmetics-grid">
       <div v-for="item in activeCosmetics" :key="item.id" class="cosmetic-card" :class="item.rarity">
         <div class="cosmetic-visual" v-html="item.svg"></div>
         <div class="cosmetic-info">
@@ -117,6 +119,25 @@
         </button>
       </div>
     </div>
+
+    <!-- Functional Items Grid (Boosters / AI Tools) -->
+    <div v-else class="cosmetics-grid">
+      <div v-for="item in activeFunctionalItems" :key="item.id" class="cosmetic-card functional-card" style="--card-color: #3b82f6;">
+        <div class="cosmetic-visual" v-html="item.svg"></div>
+        <div class="cosmetic-info">
+          <h3>{{ item.name }}</h3>
+          <p style="font-size: 0.85rem; color: #64748b; line-height: 1.4; margin-top: 8px;">{{ item.description }}</p>
+        </div>
+        <button 
+          class="direct-buy-btn" 
+          :class="{ 'locked-btn': userPoints < item.price }"
+          :disabled="loading"
+          @click="buyFunctionalItem(item)"
+        >
+          <img src="@/assets/img/tpCoin.png" class="btn-coin" /> {{ item.price }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -124,8 +145,9 @@
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
 import { doc, getDoc, collection, onSnapshot, addDoc } from 'firebase/firestore';
-import { purchaseBox, purchaseDirectItem, addToInventory, quickSellItem, getSellPrice } from '@/utils/economy';
+import { purchaseBox, purchaseDirectItem, purchaseFunctionalItem, addToInventory, quickSellItem, getSellPrice } from '@/utils/economy';
 import { cosmetics } from '@/utils/cosmetics';
+import { shopItems } from '@/utils/boosters';
 import { useToast } from 'vue-toastification';
 
 export default {
@@ -151,6 +173,11 @@ export default {
     activeCosmetics() {
       if (this.activeTab === 'frames') return cosmetics.filter(c => c.type === 'frame');
       if (this.activeTab === 'badges') return cosmetics.filter(c => c.type === 'badge');
+      return [];
+    },
+    activeFunctionalItems() {
+      if (this.activeTab === 'boosters') return shopItems.filter(c => c.category === 'boosters');
+      if (this.activeTab === 'ai_tools') return shopItems.filter(c => c.category === 'ai_tools');
       return [];
     },
     getSellPriceValue() {
@@ -275,6 +302,28 @@ export default {
       try {
         await purchaseDirectItem(user.uid, item);
         this.toast.success(`Muvaffaqiyatli! ${item.name} inventaringizga qo'shildi.`);
+      } catch (err) {
+        console.error(err);
+        this.toast.error("Xatolik: " + err.message);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async buyFunctionalItem(item) {
+      if (this.userPoints < item.price) {
+        this.toast.warning(`Pulingiz yetarli emas! Sizga yana ${item.price - this.userPoints} TP kerak.`);
+        return;
+      }
+      if (!confirm(`Siz "${item.name}" ni ${item.price} TP evaziga sotib olmoqchimisiz?`)) return;
+      
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) return this.toast.error("Tizimga kirmagansiz!");
+
+      this.loading = true;
+      try {
+        await purchaseFunctionalItem(user.uid, item);
+        this.toast.success(`Muvaffaqiyatli! "${item.name}" xarid qilindi va hisobingizga qo'shildi.`);
       } catch (err) {
         console.error(err);
         this.toast.error("Xatolik: " + err.message);

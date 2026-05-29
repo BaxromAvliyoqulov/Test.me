@@ -12,13 +12,27 @@ export const awardTestPoints = async (userId, correctCount, totalQuestions) => {
   let earnedTP = correctCount; // 1 TP per correct answer
   let perfectScoreBonus = 0;
 
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  let multiplier = 1;
+  
+  if (userSnap.exists()) {
+    const data = userSnap.data();
+    // Check for Double TP booster
+    if (data.activeBoosters && data.activeBoosters.double_tp && data.activeBoosters.double_tp.toDate() > new Date()) {
+      multiplier = 2;
+    }
+  }
+
+  earnedTP *= multiplier;
+
   // Perfect score bonus only for tests with more than 20 questions
   if (totalQuestions > 20 && correctCount === totalQuestions) {
     perfectScoreBonus = 5;
     earnedTP += perfectScoreBonus;
   }
 
-  if (earnedTP > 0) {
+  if (earnedTP > 0 || perfectScoreBonus > 0) {
     const userRef = doc(db, 'users', userId);
     await updateDoc(userRef, {
       points: increment(earnedTP) // Assuming 'points' field is used for TP coins based on firestore rules
@@ -126,6 +140,56 @@ export const purchaseDirectItem = async (userId, item) => {
   
   // Add to inventory directly
   await addToInventory(userId, item);
+  
+  // Log purchase
+  await addDoc(collection(userRef, 'transactions'), {
+    amount: -item.price,
+    type: 'direct_purchase',
+    itemId: item.id || 'unknown',
+    timestamp: serverTimestamp()
+  });
+  
+  return item;
+};
+
+// Functional Purchase (Boosters & AI Tools)
+export const purchaseFunctionalItem = async (userId, item) => {
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  
+  if (!userSnap.exists()) throw new Error("User not found");
+  
+  const userData = userSnap.data();
+  const currentPoints = userData.points || 0;
+  
+  if (currentPoints < item.price) {
+    throw new Error("Insufficient TP Coins!");
+  }
+  
+  const updates = {
+    points: increment(-item.price)
+  };
+
+  if (item.category === 'boosters') {
+    // Add time to existing booster or create new
+    const now = new Date();
+    // Normalize booster ID (e.g., double_tp_1h -> double_tp)
+    const boosterKey = item.id.startsWith('double_tp') ? 'double_tp' : item.id;
+    
+    const currentExpiry = (userData.activeBoosters && userData.activeBoosters[boosterKey]) 
+      ? userData.activeBoosters[boosterKey].toDate() 
+      : now;
+    
+    // If expired, start from now. If active, add to it.
+    const newExpiry = new Date(Math.max(currentExpiry.getTime(), now.getTime()) + (item.durationHours * 60 * 60 * 1000));
+    updates[`activeBoosters.${boosterKey}`] = newExpiry;
+  } else if (item.category === 'ai_tools') {
+    // Increment tool quantity
+    updates[`tools.${item.id}`] = increment(item.quantity);
+  }
+  
+  // Update points and items
+  await updateDoc(userRef, updates);
   
   // Log purchase
   await addDoc(collection(userRef, 'transactions'), {

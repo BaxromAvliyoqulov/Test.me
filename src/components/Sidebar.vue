@@ -46,57 +46,57 @@
     <nav class="sidebar-nav">
       
       <!-- ASOSIY SECTION -->
-      <div class="nav-section-title" v-if="!isCollapsed">ASOSIY</div>
+      <div class="nav-section-title" v-if="!isCollapsed">{{ currentLocale === 'RUS' ? 'ГЛАВНАЯ' : 'ASOSIY' }}</div>
       <div class="nav-links-list">
         <router-link to="/" class="sidebar-link home-link" v-tooltip="t('home')">
           <div class="link-icon"><i class="fas fa-home"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Bosh sahifa</span>
+            <span v-if="!isCollapsed" class="link-text">{{ t('home') }}</span>
           </transition>
         </router-link>
 
         <router-link to="/dashboard" class="sidebar-link dash-link" v-tooltip="t('dashboard')">
           <div class="link-icon"><i class="fas fa-chart-simple"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Statistika</span>
+            <span v-if="!isCollapsed" class="link-text">{{ t('dashboard') }}</span>
           </transition>
         </router-link>
       </div>
 
       <!-- YUTUQLAR & PROGRES SECTION -->
-      <div class="nav-section-title mt-sec" v-if="!isCollapsed">YUTUQLAR & PROGRES</div>
+      <div class="nav-section-title mt-sec" v-if="!isCollapsed">{{ currentLocale === 'RUS' ? 'ДОСТИЖЕНИЯ И ПРОГРЕСС' : 'YUTUQLAR & PROGRES' }}</div>
       <div class="nav-links-list">
         <router-link to="/certificates" class="sidebar-link certs-link" v-tooltip="t('certificates')">
           <div class="link-icon"><i class="fas fa-award"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Sertifikatlar</span>
+            <span v-if="!isCollapsed" class="link-text">{{ t('certificates') }}</span>
           </transition>
         </router-link>
 
         <router-link to="/points" class="sidebar-link points-link" v-tooltip="t('points')">
           <div class="link-icon"><i class="fas fa-coins"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Ballar</span>
+            <span v-if="!isCollapsed" class="link-text">{{ t('points') }}</span>
           </transition>
         </router-link>
 
         <router-link to="/badges" class="sidebar-link badges-link" v-tooltip="t('badges')">
           <div class="link-icon"><i class="fas fa-trophy"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Yutuqlar</span>
+            <span v-if="!isCollapsed" class="link-text">{{ t('badges') }}</span>
           </transition>
         </router-link>
 
         <router-link to="/friends" class="sidebar-link friends-link" v-tooltip="'Friends'">
           <div class="link-icon"><i class="fas fa-user-group"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Do'stlar</span>
+            <span v-if="!isCollapsed" class="link-text">{{ currentLocale === 'RUS' ? 'Друзья' : "Do'stlar" }}</span>
           </transition>
         </router-link>
       </div>
 
       <!-- DO'KON SECTION -->
-      <div class="nav-section-title mt-sec" v-if="!isCollapsed">DO'KON</div>
+      <div class="nav-section-title mt-sec" v-if="!isCollapsed">{{ currentLocale === 'RUS' ? 'МАГАЗИН' : "DO'KON" }}</div>
       <div class="nav-links-list">
         <router-link to="/shop" class="sidebar-link shop-link" v-tooltip="'Shop'">
           <div class="link-icon"><i class="fas fa-cart-shopping"></i></div>
@@ -119,14 +119,14 @@
         <router-link to="/about" class="sidebar-link about-link" v-tooltip="t('about')">
           <div class="link-icon"><i class="fas fa-circle-info"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Biz haqimizda</span>
+            <span v-if="!isCollapsed" class="link-text">{{ t('about') }}</span>
           </transition>
         </router-link>
 
         <router-link to="/contactUs" class="sidebar-link contact-link" v-tooltip="t('contact')">
           <div class="link-icon"><i class="fas fa-headset"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Aloqa</span>
+            <span v-if="!isCollapsed" class="link-text">{{ t('contact') }}</span>
           </transition>
         </router-link>
       </div>
@@ -138,7 +138,7 @@
       <div class="logout-container" v-if="!isCollapsed">
         <a href="#" @click.prevent="logout" class="sidebar-link logout-link">
           <div class="link-icon"><i class="fas fa-arrow-right-from-bracket"></i></div>
-          <span class="link-text">Chiqish</span>
+          <span class="link-text">{{ t('logout') }}</span>
         </a>
       </div>
       <div class="logout-container-collapsed" v-else>

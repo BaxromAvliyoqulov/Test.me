@@ -99,7 +99,6 @@
             </div>
           </div>
         </div>
-        </div>
       </div>
       
       <!-- Empty State for Smart Filter -->

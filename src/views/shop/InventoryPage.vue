@@ -61,7 +61,7 @@
           </div>
           
           <div class="item-preview-wrapper" :class="item.rarity + '-bg'">
-            <div class="item-preview" v-html="item.svg"></div>
+            <div class="item-preview" v-html="getItemSvg(item)"></div>
           </div>
           
           <div class="item-info">
@@ -163,6 +163,11 @@ export default {
       return originalItem ? originalItem.price : 10;
     };
 
+    const getItemSvg = (item) => {
+      const originalItem = cosmetics.find(c => c.id === item.itemId);
+      return originalItem ? originalItem.svg : '<i class="fas fa-question-circle"></i>';
+    };
+
     const equipItem = async (item) => {
       try {
         const auth = getAuth();
@@ -223,6 +228,7 @@ export default {
       filteredItems,
       isEquipped,
       getItemPrice,
+      getItemSvg,
       equipItem,
       unequipItem,
       sellItem

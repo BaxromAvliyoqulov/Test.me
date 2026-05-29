@@ -292,7 +292,6 @@ export default {
         this.toast.warning(`Pulingiz yetarli emas! Sizga yana ${item.price - this.userPoints} TP kerak.`);
         return;
       }
-      if (!confirm(`Siz "${item.name}" ni ${item.price} TP evaziga sotib olmoqchimisiz?`)) return;
       
       const auth = getAuth();
       const user = auth.currentUser;
@@ -314,7 +313,6 @@ export default {
         this.toast.warning(`Pulingiz yetarli emas! Sizga yana ${item.price - this.userPoints} TP kerak.`);
         return;
       }
-      if (!confirm(`Siz "${item.name}" ni ${item.price} TP evaziga sotib olmoqchimisiz?`)) return;
       
       const auth = getAuth();
       const user = auth.currentUser;

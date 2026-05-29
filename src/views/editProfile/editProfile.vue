@@ -258,7 +258,7 @@
                     v-model="profile.password"
                     :class="['styled-input', { error: passwordError }]"
                     @input="validatePassword"
-                    placeholder="••••••••"
+                    :placeholder="currentLocale === 'RUS' ? 'Новый пароль (оставьте пустым если не меняете)' : 'Yangi parol (o\'zgartirmasangiz bo\'sh qoldiring)'"
                     autocomplete="new-password"
                   />
                   <i
@@ -1327,11 +1327,13 @@ export default {
 /* Tab Navigation Styling */
 .tabs-nav {
   display: flex;
-  background-color: #f1f5f9;
-  padding: 0.35rem;
-  border-radius: 16px;
-  margin-bottom: 2rem;
-  gap: 0.25rem;
+  background-color: rgba(241, 245, 249, 0.6);
+  padding: 0.5rem;
+  border-radius: 20px;
+  margin-bottom: 2.5rem;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .tab-link {
@@ -1339,27 +1341,29 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 0.7rem;
+  gap: 10px;
+  padding: 0.8rem;
   border: none;
   background: transparent;
-  border-radius: 12px;
+  border-radius: 14px;
   color: #64748b;
   font-family: inherit;
-  font-weight: 700;
-  font-size: 0.88rem;
+  font-weight: 800;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tab-link:hover {
   color: #0f172a;
+  background: rgba(255,255,255,0.4);
 }
 
 .tab-link.active {
   background-color: #ffffff;
-  color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  color: #2563eb;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.1);
+  transform: scale(1.02);
 }
 
 @media (max-width: 480px) {
@@ -1370,26 +1374,26 @@ export default {
 
 /* Form Settings card */
 .form-card {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 24px;
-  padding: 2.25rem;
-  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 28px;
+  padding: 2.5rem;
+  box-shadow: 0 15px 35px -5px rgba(15, 23, 42, 0.05), inset 0 0 0 1px rgba(255,255,255,0.5);
 }
 
 .profile-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
 }
 
 .tab-pane-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  animation: fadeIn 0.3s ease;
+  gap: 1.75rem;
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeIn {
@@ -1524,27 +1528,37 @@ export default {
 
 .input-icon {
   position: absolute;
-  left: 14px;
+  left: 16px;
   color: #94a3b8;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
+  transition: color 0.3s ease;
 }
 
 .styled-input {
   width: 100%;
-  padding: 0.8rem 1rem 0.8rem 2.6rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
+  padding: 1rem 1rem 1rem 2.8rem;
+  border: 2px solid transparent;
+  border-radius: 16px;
   font-size: 0.95rem;
+  font-weight: 500;
   color: #0f172a;
-  background-color: #ffffff;
+  background-color: rgba(241, 245, 249, 0.6);
   outline: none;
   font-family: inherit;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .styled-input:focus {
+  background-color: #ffffff;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+.styled-input:focus + .input-icon,
+.styled-input:focus ~ .input-icon {
+  color: #3b82f6;
 }
 
 .styled-input.error {

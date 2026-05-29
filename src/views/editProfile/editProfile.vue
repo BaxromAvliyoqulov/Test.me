@@ -491,7 +491,7 @@ export default {
       activeTab: 'profile', // active tab: profile, preferences, achievements
       profile: {
         username: '',
-        password: '',
+        password: '••••••••',
       },
       userEmail: '',
       memberSince: null,
@@ -807,6 +807,10 @@ export default {
       this.showPassword = !this.showPassword;
     },
     validatePassword() {
+      if (this.profile.password === '••••••••') {
+        this.passwordError = '';
+        return;
+      }
       if (this.profile.password && this.profile.password.length < 6) {
         this.passwordError = this.t('passwordLengthError');
       } else {
@@ -870,13 +874,13 @@ export default {
           photoURL: authPhotoURL,
         });
 
-        // 3. Update Password if specified
-        if (this.profile.password) {
+        // 3. Update Password if specified and modified
+        if (this.profile.password && this.profile.password !== '••••••••' && this.profile.password.trim() !== '') {
           await updatePassword(user, this.profile.password);
         }
 
         this.showToast(this.t('profileUpdated'), 'success');
-        this.profile.password = '';
+        this.profile.password = '••••••••';
         
         // Triggers UI navbar updates instantly using a global CustomEvent
         // Use the full selectedPhotoURL (even Base64) for the live preview

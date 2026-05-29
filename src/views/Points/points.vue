@@ -246,16 +246,16 @@
                 class="tx-item-compact"
               >
                 <div class="tx-compact-left">
-                  <div :class="['tx-badge-compact', tx.points > 0 ? 'tx-plus' : 'tx-minus']">
-                    <i :class="tx.points > 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                  <div :class="['tx-badge-compact', tx.normalizedPoints > 0 ? 'tx-plus' : 'tx-minus']">
+                    <i :class="tx.normalizedPoints > 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
                   </div>
                   <div class="tx-info-compact">
-                    <h4>{{ tx.action }}</h4>
+                    <h4>{{ tx.normalizedAction }}</h4>
                     <span>{{ formatDate(tx.timestamp) }}</span>
                   </div>
                 </div>
-                <div :class="['tx-points-compact', tx.points > 0 ? 'points-plus' : 'points-minus']">
-                  {{ tx.points > 0 ? '+' : '' }}{{ tx.points }} TP
+                <div :class="['tx-points-compact', tx.normalizedPoints > 0 ? 'points-plus' : 'points-minus']">
+                  {{ tx.normalizedPoints > 0 ? '+' : '' }}{{ tx.normalizedPoints }} TP
                 </div>
               </div>
             </div>
@@ -395,7 +395,26 @@ export default {
     const isRus = computed(() => locale.value === 'RUS');
 
     const sortedTransactions = computed(() => {
-      return [...transactions.value].sort((a, b) => {
+      return [...transactions.value].map(tx => {
+        // Normalize points/amount
+        const val = tx.points !== undefined ? tx.points : (tx.amount || 0);
+        
+        // Normalize action/type
+        let act = tx.action;
+        if (!act) {
+          if (tx.type === 'box_purchase') act = isRus.value ? 'Покупка коробки (Lootbox)' : 'Quti xaridi (Lootbox)';
+          else if (tx.type === 'direct_purchase') act = isRus.value ? 'Покупка в магазине' : 'Do\'kondan xarid';
+          else if (tx.type === 'quick_sell') act = isRus.value ? 'Быстрая продажа' : 'Tezkor sotish';
+          else if (tx.type === 'test_reward') act = isRus.value ? 'Награда за тест' : 'Test yechish mukofoti';
+          else act = isRus.value ? 'Транзакция' : 'Tranzaksiya';
+        }
+
+        return {
+          ...tx,
+          normalizedPoints: val,
+          normalizedAction: act
+        };
+      }).sort((a, b) => {
         const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp).getTime();
         const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp).getTime();
         return timeB - timeA;
@@ -403,15 +422,15 @@ export default {
     });
 
     const totalSpent = computed(() => {
-      return transactions.value
-        .filter(t => t.points < 0)
-        .reduce((sum, t) => sum + Math.abs(t.points), 0);
+      return sortedTransactions.value
+        .filter(t => t.normalizedPoints < 0)
+        .reduce((sum, t) => sum + Math.abs(t.normalizedPoints), 0);
     });
 
     const totalEarned = computed(() => {
-      return transactions.value
-        .filter(t => t.points > 0)
-        .reduce((sum, t) => sum + t.points, 0);
+      return sortedTransactions.value
+        .filter(t => t.normalizedPoints > 0)
+        .reduce((sum, t) => sum + t.normalizedPoints, 0);
     });
 
     const exchangeItem = async (item) => {

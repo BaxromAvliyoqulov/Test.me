@@ -14,6 +14,7 @@
     <div class="sidebar-user" v-if="username" @click="navigateTo('/editProfile')">
       <div class="user-avatar-wrapper">
         <img :src="profileImage" class="user-avatar" alt="Avatar" />
+        <div class="avatar-ring"></div>
       </div>
       <transition name="fade-slide">
         <div class="user-details" v-if="!isCollapsed">
@@ -130,9 +131,10 @@
         </router-link>
       </div>
 
-      <div style="flex-grow: 1"></div>
+    </nav>
 
-      <!-- LOGOUT SECTION -->
+    <!-- LOGOUT SECTION (Fixed at bottom) -->
+    <div class="sidebar-footer">
       <div class="logout-container" v-if="!isCollapsed">
         <a href="#" @click.prevent="logout" class="sidebar-link logout-link">
           <div class="link-icon"><i class="fas fa-arrow-right-from-bracket"></i></div>
@@ -144,7 +146,7 @@
           <div class="link-icon"><i class="fas fa-arrow-right-from-bracket"></i></div>
         </a>
       </div>
-    </nav>
+    </div>
   </aside>
 </template>
 
@@ -361,7 +363,23 @@ export default {
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  z-index: 2;
+  position: relative;
+}
+
+.avatar-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  opacity: 0.7;
+  z-index: 1;
+  animation: rotateRing 6s linear infinite;
+}
+
+@keyframes rotateRing {
+  100% { transform: rotate(360deg); }
 }
 
 .user-details {
@@ -384,18 +402,18 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 800;
   text-transform: uppercase;
-  background: white;
-  color: #1e293b;
-  padding: 2px 8px;
-  border-radius: 99px;
+  background: transparent;
+  color: #64748b;
+  padding: 0;
+  border-radius: 0;
   align-self: flex-start;
   margin-bottom: 6px;
 }
 .user-rank-badge i {
-  color: #64748b;
+  color: #475569;
 }
 
 .user-id-badge {
@@ -537,12 +555,14 @@ export default {
 }
 
 /* Logout */
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+}
 .logout-container {
-  margin-top: 1rem;
   padding: 0;
 }
 .logout-container-collapsed {
-  margin-top: 1rem;
 }
 .logout-link {
   background: rgba(255, 255, 255, 0.03);

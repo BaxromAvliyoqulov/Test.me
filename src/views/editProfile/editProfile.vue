@@ -12,47 +12,7 @@
       </div>
     </Transition>
 
-    <!-- Ranks Modal -->
-    <transition name="modal-fade">
-      <div v-if="showRanksModal" class="modal-overlay" @click.self="showRanksModal = false">
-        <div class="modal-content ranks-modal">
-          <div class="modal-header">
-            <h3><i class="fas fa-trophy"></i> {{ currentLocale === 'RUS' ? 'Система Рангов' : 'Darajalar Tizimi' }}</h3>
-            <button @click="showRanksModal = false" class="close-btn"><i class="fas fa-times"></i></button>
-          </div>
-          <div class="modal-body ranks-path-container">
-            <div class="rank-path-intro">
-              <p>{{ currentLocale === 'RUS' ? 'Зарабатывайте TP, проходя тесты, чтобы повышать свой ранг и открывать новые возможности!' : 'Testlarni ishlash orqali TP yig\'ing va yangi darajalarga ko\'tariling!' }}</p>
-            </div>
-            
-            <div class="ranks-timeline">
-              <div 
-                v-for="(rank, index) in ranksList" 
-                :key="rank.id"
-                class="rank-timeline-item"
-                :class="[rank.class, { 'locked': userPoints < rank.min, 'current': userPoints >= rank.min && (index === ranksList.length - 1 || userPoints < ranksList[index + 1].min) }]"
-              >
-                <div class="timeline-line" v-if="index < ranksList.length - 1"></div>
-                
-                <div class="rank-node">
-                  <div class="rank-icon-bubble">
-                    <i :class="rank.icon"></i>
-                  </div>
-                </div>
-                
-                <div class="rank-details">
-                  <h4>{{ currentLocale === 'RUS' ? rank.nameRu : rank.nameUz }}</h4>
-                  <span class="rank-req"><i class="fas fa-coins"></i> {{ rank.min }} TP {{ currentLocale === 'RUS' ? 'и выше' : 'dan boshlab' }}</span>
-                  <div class="current-indicator" v-if="userPoints >= rank.min && (index === ranksList.length - 1 || userPoints < ranksList[index + 1].min)">
-                    {{ currentLocale === 'RUS' ? 'Текущий ранг' : 'Sizning darajangiz' }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </transition>
+
 
     <div class="edit-profile-container">
       <!-- Left Column: Live ID Card Preview -->
@@ -109,7 +69,7 @@
         </div>
 
         <!-- Rank Progress Card -->
-        <div class="rank-progress-card clickable-rank" @click="showRanksModal = true">
+        <div class="rank-progress-card clickable-rank" @click="goToRanksPage">
           <div class="progress-card-header">
             <span>{{ currentLocale === 'RUS' ? 'Прогресс Ранга' : 'Rang Progressi' }}</span>
             <span class="progress-target-text">
@@ -501,7 +461,6 @@ export default {
       showPassword: false,
       loading: false,
       passwordError: '',
-      showRanksModal: false,
       ranksList: ranksData,
       
       // Toast notification status
@@ -832,6 +791,9 @@ export default {
     },
     goBack() {
       this.$router.back();
+    },
+    goToRanksPage() {
+      this.$router.push('/ranks');
     },
     async saveProfile() {
       if (this.loading) return;
@@ -1923,11 +1885,10 @@ export default {
   gap: 8px;
 }
 
-/* Ranks Modal Styles */
 .clickable-rank {
   cursor: pointer;
-  transition: all 0.2s;
   border: 1px solid transparent;
+  transition: all 0.2s;
 }
 .clickable-rank:hover {
   transform: translateY(-2px);
@@ -1935,152 +1896,6 @@ export default {
   border-color: rgba(59, 130, 246, 0.4);
 }
 
-.ranks-modal {
-  max-width: 600px !important;
-  max-height: 85vh;
-  overflow-y: auto;
-  border-radius: 24px;
-}
-.ranks-path-container {
-  padding: 1.5rem;
-}
-.rank-path-intro {
-  text-align: center;
-  color: #64748b;
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  background: #f8fafc;
-  padding: 1rem;
-  border-radius: 12px;
-}
 
-.ranks-timeline {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  padding-left: 20px;
-}
-
-.rank-timeline-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 1.5rem;
-  position: relative;
-  padding-bottom: 2.5rem;
-}
-
-.rank-timeline-item:last-child {
-  padding-bottom: 0;
-}
-
-.timeline-line {
-  position: absolute;
-  top: 40px;
-  bottom: -10px;
-  left: 20px;
-  width: 2px;
-  background: #e2e8f0;
-  z-index: 1;
-}
-
-.rank-node {
-  position: relative;
-  z-index: 2;
-}
-
-.rank-icon-bubble {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: white;
-  border: 2px solid #cbd5e1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  color: #94a3b8;
-  transition: all 0.3s;
-}
-
-.rank-details {
-  flex-grow: 1;
-  background: #f8fafc;
-  padding: 1rem 1.25rem;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  position: relative;
-  transition: all 0.3s;
-}
-
-.rank-details h4 {
-  margin: 0 0 4px 0;
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #1e293b;
-}
-
-.rank-req {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.rank-req i {
-  color: #f59e0b;
-}
-
-.current-indicator {
-  position: absolute;
-  top: -10px;
-  right: 15px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 800;
-  padding: 4px 10px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
-  animation: pulse-badge 2s infinite;
-}
-
-/* Rank specific colors */
-.rank-newbie .rank-icon-bubble { border-color: #94a3b8; color: #94a3b8; }
-.rank-bronze .rank-icon-bubble { border-color: #b45309; color: #b45309; }
-.rank-silver .rank-icon-bubble { border-color: #94a3b8; color: #94a3b8; }
-.rank-gold .rank-icon-bubble { border-color: #f59e0b; color: #f59e0b; }
-.rank-platinum .rank-icon-bubble { border-color: #14b8a6; color: #14b8a6; }
-.rank-diamond .rank-icon-bubble { border-color: #3b82f6; color: #3b82f6; }
-.rank-master .rank-icon-bubble { border-color: #8b5cf6; color: #8b5cf6; }
-.rank-grandmaster .rank-icon-bubble { border-color: #ec4899; color: #ec4899; }
-.rank-legendary .rank-icon-bubble { border-color: #f43f5e; color: #f43f5e; }
-.rank-mythic .rank-icon-bubble { border-color: #10b981; color: #10b981; }
-
-.rank-timeline-item.locked .rank-icon-bubble {
-  background: #f1f5f9;
-  border-color: #e2e8f0 !important;
-  color: #cbd5e1 !important;
-}
-
-.rank-timeline-item.locked .rank-details {
-  opacity: 0.6;
-}
-
-.rank-timeline-item.current .rank-details {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15);
-}
-.rank-timeline-item.current .timeline-line {
-  background: #3b82f6;
-}
-
-@keyframes pulse-badge {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
 
 </style>

@@ -804,6 +804,10 @@ export default {
       reader.readAsDataURL(file);
     },
     togglePasswordVisibility() {
+      if (this.profile.password === '••••••••') {
+        this.showToast(this.t('passwordHiddenSecurity', 'Xavfsizlik sababli joriy parolingiz yashiringan. Yangisini kiriting.'), 'error');
+        // Still toggle it just so they know the button works, but they just see dots
+      }
       this.showPassword = !this.showPassword;
     },
     validatePassword() {
@@ -1636,9 +1640,10 @@ export default {
   right: 14px;
   color: #94a3b8;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   transition: color 0.2s;
-  padding: 4px;
+  padding: 8px;
+  z-index: 5;
 }
 
 .toggle-eye-icon:hover {

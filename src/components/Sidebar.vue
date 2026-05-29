@@ -11,131 +11,137 @@
     </div>
 
     <!-- User Profile Details -->
-    <div class="sidebar-user" v-if="username">
-      <div class="user-avatar-wrapper" @click="navigateTo('/editProfile')">
+    <div class="sidebar-user" v-if="username" @click="navigateTo('/editProfile')">
+      <div class="user-avatar-wrapper">
         <img :src="profileImage" class="user-avatar" alt="Avatar" />
-        <div class="avatar-ring"></div>
       </div>
       <transition name="fade-slide">
         <div class="user-details" v-if="!isCollapsed">
-          <router-link to="/editProfile" class="user-name">{{ username }}</router-link>
-          <div :class="['user-rank', getRankClass(userPoints)]">
+          <div class="user-name">{{ username }}</div>
+          <div class="user-rank-badge">
             <i :class="getRankIcon(userPoints)"></i>
             <span>{{ getRankName(userPoints, currentLocale) }}</span>
           </div>
-          <div class="user-short-id" v-if="shortId" @click="copyId" title="Nusxalash / Copy">
+          <div class="user-id-badge" v-if="shortId" @click.stop="copyId" title="Nusxalash / Copy">
             ID: {{ shortId }} <i class="fas fa-copy"></i>
           </div>
         </div>
       </transition>
     </div>
 
-    <!-- Language Section (UZB & RUS) -->
+    <!-- Language Section -->
     <div class="sidebar-lang" v-if="!isCollapsed">
-      <div class="lang-toggle-container">
-        <button 
-          @click.prevent="changeLocale('UZB')" 
-          :class="{ active: currentLocale === 'UZB' }"
-          class="lang-btn"
-        >
-          UZ
-        </button>
-        <button 
-          @click.prevent="changeLocale('RUS')" 
-          :class="{ active: currentLocale === 'RUS' }"
-          class="lang-btn"
-        >
-          RU
-        </button>
+      <div class="lang-dropdown" @click="toggleLang">
+        <div class="lang-left">
+          <i class="fas fa-globe"></i>
+          <span class="lang-divider"></span>
+          <span class="lang-text">{{ currentLocale === 'UZB' ? 'UZ' : 'RU' }}</span>
+        </div>
+        <i class="fas fa-chevron-down"></i>
       </div>
     </div>
 
     <!-- Navigation Menu Links -->
     <nav class="sidebar-nav">
-      <div class="nav-section-title" v-if="!isCollapsed">{{ t('menu') || 'Mentyu' }}</div>
       
+      <!-- ASOSIY SECTION -->
+      <div class="nav-section-title" v-if="!isCollapsed">ASOSIY</div>
       <div class="nav-links-list">
         <router-link to="/" class="sidebar-link home-link" v-tooltip="t('home')">
           <div class="link-icon"><i class="fas fa-home"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('home') }}</span>
+            <span v-if="!isCollapsed" class="link-text">Bosh sahifa</span>
+          </transition>
+        </router-link>
+
+        <router-link to="/dashboard" class="sidebar-link dash-link" v-tooltip="t('dashboard')">
+          <div class="link-icon"><i class="fas fa-chart-simple"></i></div>
+          <transition name="fade-slide">
+            <span v-if="!isCollapsed" class="link-text">Statistika</span>
+          </transition>
+        </router-link>
+      </div>
+
+      <!-- YUTUQLAR & PROGRES SECTION -->
+      <div class="nav-section-title mt-sec" v-if="!isCollapsed">YUTUQLAR & PROGRES</div>
+      <div class="nav-links-list">
+        <router-link to="/certificates" class="sidebar-link certs-link" v-tooltip="t('certificates')">
+          <div class="link-icon"><i class="fas fa-award"></i></div>
+          <transition name="fade-slide">
+            <span v-if="!isCollapsed" class="link-text">Sertifikatlar</span>
           </transition>
         </router-link>
 
         <router-link to="/points" class="sidebar-link points-link" v-tooltip="t('points')">
-          <div class="link-icon">
-            <img src="../assets/img/tpCoin.png" alt="TP" class="coin-img" />
-          </div>
+          <div class="link-icon"><i class="fas fa-coins"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('points') }}</span>
+            <span v-if="!isCollapsed" class="link-text">Ballar</span>
           </transition>
         </router-link>
 
+        <router-link to="/badges" class="sidebar-link badges-link" v-tooltip="t('badges')">
+          <div class="link-icon"><i class="fas fa-trophy"></i></div>
+          <transition name="fade-slide">
+            <span v-if="!isCollapsed" class="link-text">Yutuqlar</span>
+          </transition>
+        </router-link>
+
+        <router-link to="/friends" class="sidebar-link friends-link" v-tooltip="'Friends'">
+          <div class="link-icon"><i class="fas fa-user-group"></i></div>
+          <transition name="fade-slide">
+            <span v-if="!isCollapsed" class="link-text">Do'stlar</span>
+          </transition>
+        </router-link>
+      </div>
+
+      <!-- DO'KON SECTION -->
+      <div class="nav-section-title mt-sec" v-if="!isCollapsed">DO'KON</div>
+      <div class="nav-links-list">
         <router-link to="/shop" class="sidebar-link shop-link" v-tooltip="'Shop'">
-          <div class="link-icon"><i class="fas fa-store"></i></div>
+          <div class="link-icon"><i class="fas fa-cart-shopping"></i></div>
           <transition name="fade-slide">
             <span v-if="!isCollapsed" class="link-text">Shop</span>
           </transition>
         </router-link>
 
         <router-link to="/inventory" class="sidebar-link inventory-link" v-tooltip="'Inventory'">
-          <div class="link-icon"><i class="fas fa-box-open"></i></div>
+          <div class="link-icon"><i class="fas fa-backpack"></i></div>
           <transition name="fade-slide">
             <span v-if="!isCollapsed" class="link-text">Inventory</span>
           </transition>
         </router-link>
-
-        <router-link to="/badges" class="sidebar-link badges-link" v-tooltip="t('badges')">
-          <div class="link-icon"><i class="fas fa-award"></i></div>
-          <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('badges') }}</span>
-          </transition>
-        </router-link>
-
-        <router-link to="/certificates" class="sidebar-link certs-link" v-tooltip="t('certificates')">
-          <div class="link-icon"><i class="fas fa-certificate"></i></div>
-          <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('certificates') }}</span>
-          </transition>
-        </router-link>
-
-        <router-link to="/dashboard" class="sidebar-link dash-link" v-tooltip="t('dashboard')">
-          <div class="link-icon"><i class="fas fa-chart-pie"></i></div>
-          <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('dashboard') }}</span>
-          </transition>
-        </router-link>
-
-        <router-link to="/friends" class="sidebar-link friends-link" v-tooltip="'Friends'">
-          <div class="link-icon"><i class="fas fa-users"></i></div>
-          <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Friends</span>
-          </transition>
-        </router-link>
       </div>
 
-      <div class="sidebar-divider"></div>
-
+      <!-- INFO SECTION -->
+      <div class="nav-section-title mt-sec" v-if="!isCollapsed">INFO</div>
       <div class="nav-links-list footer-links">
         <router-link to="/about" class="sidebar-link about-link" v-tooltip="t('about')">
-          <div class="link-icon"><i class="fas fa-info-circle"></i></div>
+          <div class="link-icon"><i class="fas fa-circle-info"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('about') }}</span>
+            <span v-if="!isCollapsed" class="link-text">Biz haqimizda</span>
           </transition>
         </router-link>
 
         <router-link to="/contactUs" class="sidebar-link contact-link" v-tooltip="t('contact')">
           <div class="link-icon"><i class="fas fa-headset"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('contact') }}</span>
+            <span v-if="!isCollapsed" class="link-text">Aloqa</span>
           </transition>
         </router-link>
+      </div>
 
-        <a href="#" @click.prevent="logout" class="sidebar-link logout-link" v-tooltip="t('logout')">
-          <div class="link-icon"><i class="fas fa-sign-out-alt"></i></div>
-          <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('logout') }}</span>
-          </transition>
+      <div style="flex-grow: 1"></div>
+
+      <!-- LOGOUT SECTION -->
+      <div class="logout-container" v-if="!isCollapsed">
+        <a href="#" @click.prevent="logout" class="sidebar-link logout-link">
+          <div class="link-icon"><i class="fas fa-arrow-right-from-bracket"></i></div>
+          <span class="link-text">Chiqish</span>
+        </a>
+      </div>
+      <div class="logout-container-collapsed" v-else>
+        <a href="#" @click.prevent="logout" class="sidebar-link logout-link">
+          <div class="link-icon"><i class="fas fa-arrow-right-from-bracket"></i></div>
         </a>
       </div>
     </nav>
@@ -250,11 +256,16 @@ export default {
     getRankName(pts, loc) { return getRankName(pts, loc); },
     getRankClass(pts) { return getRankClass(pts); },
     getRankIcon(pts) { return getRankIcon(pts); },
+    getRankIcon(pts) { return getRankIcon(pts); },
     copyId() {
       if (this.shortId) {
         navigator.clipboard.writeText(this.shortId);
         this.toast.success(this.currentLocale === 'RUS' ? 'ID скопирован!' : 'ID nusxalandi!');
       }
+    },
+    toggleLang() {
+      const newLang = this.currentLocale === 'UZB' ? 'RUS' : 'UZB';
+      this.changeLocale(newLang);
     }
   },
   directives: {
@@ -340,31 +351,17 @@ export default {
 
 .user-avatar-wrapper {
   position: relative;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-avatar {
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  z-index: 2;
-  position: relative;
-}
-
-.avatar-ring {
-  position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  opacity: 0.7;
-  z-index: 1;
-  animation: rotateRing 6s linear infinite;
-}
-
-@keyframes rotateRing {
-  100% { transform: rotate(360deg); }
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .user-details {
@@ -374,83 +371,85 @@ export default {
 }
 
 .user-name {
-  font-weight: 700;
+  font-weight: 800;
   color: white;
-  font-size: 0.95rem;
+  font-size: 1rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 4px;
 }
 
-.user-name:hover {
-  color: #60a5fa;
-}
-
-.user-rank {
+.user-rank-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 800;
   text-transform: uppercase;
-  margin-top: 4px;
+  background: white;
+  color: #1e293b;
   padding: 2px 8px;
   border-radius: 99px;
   align-self: flex-start;
+  margin-bottom: 6px;
+}
+.user-rank-badge i {
+  color: #64748b;
 }
 
-.user-rank.rank-legend { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
-
-.user-short-id {
-  margin-top: 6px;
-  font-size: 0.75rem;
+.user-id-badge {
+  font-size: 0.7rem;
   font-weight: 700;
   color: #94a3b8;
   background: rgba(255, 255, 255, 0.05);
-  padding: 4px 8px;
-  border-radius: 8px;
-  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  transition: all 0.2s;
   border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.user-short-id:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
+  align-self: flex-start;
 }
 
 /* Language Switcher */
 .sidebar-lang {
-  margin-bottom: 20px;
-  padding: 0 12px;
+  margin-bottom: 10px;
 }
 
-.lang-toggle-container {
+.lang-dropdown {
   display: flex;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 4px;
-}
-
-.lang-btn {
-  flex: 1;
-  border: none;
+  align-items: center;
+  justify-content: space-between;
   background: transparent;
-  color: #94a3b8;
-  font-size: 0.8rem;
-  font-weight: 700;
-  padding: 8px 0;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px 16px;
+  color: white;
   cursor: pointer;
   transition: all 0.3s;
 }
+.lang-dropdown:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
 
-.lang-btn.active {
-  background: #3b82f6;
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+.lang-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lang-left i {
+  color: #60a5fa;
+  font-size: 1.1rem;
+}
+.lang-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.2);
+}
+.lang-text {
+  font-weight: 700;
+  font-size: 0.9rem;
 }
 
 /* Navigation Links */
@@ -471,13 +470,16 @@ export default {
 }
 
 .nav-section-title {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: #64748b;
   font-weight: 800;
   padding-left: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+}
+.mt-sec {
+  margin-top: 16px;
 }
 
 .nav-links-list {
@@ -490,25 +492,23 @@ export default {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px;
+  padding: 10px 12px;
   border-radius: 12px;
-  color: #94a3b8;
+  color: #cbd5e1;
   font-weight: 600;
   font-size: 0.95rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s;
   border: 1px solid transparent;
 }
 
 .link-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  transition: all 0.3s;
+  color: #94a3b8;
 }
 
 .coin-img {
@@ -525,44 +525,40 @@ export default {
 .sidebar-link:hover {
   color: white;
   background: rgba(255, 255, 255, 0.05);
-  transform: translateX(4px);
 }
 
 .router-link-exact-active.sidebar-link {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.05) 100%);
-  color: #3b82f6;
-  border-color: rgba(59, 130, 246, 0.2);
+  background: #1e293b;
+  color: white;
 }
 
 .router-link-exact-active.sidebar-link .link-icon {
-  background: #3b82f6;
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* Individual Link Hover Effects */
-.home-link:hover .link-icon { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
-.points-link:hover .link-icon { background: rgba(234, 179, 8, 0.2); }
-.shop-link:hover .link-icon { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
-.inventory-link:hover .link-icon { background: rgba(217, 70, 239, 0.2); color: #d946ef; }
-.badges-link:hover .link-icon { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
-.certs-link:hover .link-icon { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
-.dash-link:hover .link-icon { background: rgba(244, 63, 94, 0.2); color: #f43f5e; }
-.friends-link:hover .link-icon { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-.about-link:hover .link-icon { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
-.contact-link:hover .link-icon { background: rgba(20, 184, 166, 0.2); color: #14b8a6; }
-
+/* Logout */
+.logout-container {
+  margin-top: 1rem;
+  padding: 0;
+}
+.logout-container-collapsed {
+  margin-top: 1rem;
+}
 .logout-link {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   color: #fca5a5;
+  justify-content: center;
 }
 .logout-link:hover {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
 }
+.logout-link .link-icon {
+  color: #fca5a5;
+}
 .logout-link:hover .link-icon {
-  background: #ef4444;
-  color: white;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  color: #ef4444;
 }
 
 .sidebar-divider {

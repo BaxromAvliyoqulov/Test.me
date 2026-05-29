@@ -258,7 +258,7 @@
                     v-model="profile.password"
                     :class="['styled-input', { error: passwordError }]"
                     @input="validatePassword"
-                    :placeholder="currentLocale === 'RUS' ? 'Новый пароль (оставьте пустым если не меняете)' : 'Yangi parol (o\'zgartirmasangiz bo\'sh qoldiring)'"
+                    :placeholder="currentLocale === 'RUS' ? '••••••••' : '••••••••'"
                     autocomplete="new-password"
                   />
                   <i
@@ -985,11 +985,11 @@ export default {
 .edit-profile-container {
   position: relative;
   z-index: 1;
-  max-width: 980px;
+  max-width: 1150px;
   width: 100%;
   display: grid;
-  grid-template-columns: 1fr 1.3fr;
-  gap: 3rem;
+  grid-template-columns: 380px 1fr;
+  gap: 2.5rem;
   align-items: start;
 }
 
@@ -1074,24 +1074,21 @@ export default {
 
 .id-card {
   width: 100%;
-  max-width: 380px;
-  height: 230px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  height: 240px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   border-radius: 24px;
-  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.12), inset 0 0 0 1px rgba(255,255,255,0.6);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), inset 0 1px 1px rgba(255,255,255,0.1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
   position: relative;
+  color: white;
 }
 
 .id-card-wrapper:hover .id-card {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 30px 60px -20px rgba(37, 99, 235, 0.25);
+  transform: translateY(-8px) scale(1.02) rotateX(2deg);
+  box-shadow: 0 35px 60px -15px rgba(15, 23, 42, 0.4);
 }
 
 .id-card::after {
@@ -1118,25 +1115,30 @@ export default {
 }
 
 .id-card-header {
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .id-card-logo {
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   letter-spacing: -0.5px;
+  background: linear-gradient(to right, #60a5fa, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .id-card-title {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  opacity: 0.85;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #94a3b8;
 }
 
 .chip-icon {
@@ -1270,20 +1272,18 @@ export default {
 
 /* Rank Progress Card */
 .rank-progress-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 1.5rem;
   box-shadow: 0 10px 25px -10px rgba(15, 23, 42, 0.05);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .rank-progress-card:hover {
-  background: rgba(255, 255, 255, 0.9);
   transform: translateY(-4px);
-  box-shadow: 0 15px 35px -10px rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.08);
+  border-color: #cbd5e1;
 }
 
 .progress-card-header {
@@ -1327,13 +1327,12 @@ export default {
 /* Tab Navigation Styling */
 .tabs-nav {
   display: flex;
-  background-color: rgba(241, 245, 249, 0.6);
+  background-color: #f8fafc;
   padding: 0.5rem;
-  border-radius: 20px;
+  border-radius: 18px;
   margin-bottom: 2.5rem;
   gap: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+  border: 1px solid #f1f5f9;
 }
 
 .tab-link {
@@ -1342,27 +1341,27 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 0.8rem;
+  padding: 0.9rem;
   border: none;
   background: transparent;
   border-radius: 14px;
   color: #64748b;
   font-family: inherit;
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tab-link:hover {
   color: #0f172a;
-  background: rgba(255,255,255,0.4);
+  background: #f1f5f9;
 }
 
 .tab-link.active {
   background-color: #ffffff;
-  color: #2563eb;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.1);
+  color: #0f172a;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0,0,0,0.02);
   transform: scale(1.02);
 }
 
@@ -1374,25 +1373,23 @@ export default {
 
 /* Form Settings card */
 .form-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 28px;
-  padding: 2.5rem;
-  box-shadow: 0 15px 35px -5px rgba(15, 23, 42, 0.05), inset 0 0 0 1px rgba(255,255,255,0.5);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 32px;
+  padding: 3rem;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.05);
 }
 
 .profile-form {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 2rem;
 }
 
 .tab-pane-content {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 2rem;
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1536,29 +1533,28 @@ export default {
 
 .styled-input {
   width: 100%;
-  padding: 1rem 1rem 1rem 2.8rem;
-  border: 2px solid transparent;
+  padding: 1.1rem 1rem 1.1rem 3rem;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
   color: #0f172a;
-  background-color: rgba(241, 245, 249, 0.6);
+  background-color: #f8fafc;
   outline: none;
   font-family: inherit;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .styled-input:focus {
   background-color: #ffffff;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  border-color: #0f172a;
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.08);
   transform: translateY(-2px);
 }
 
 .styled-input:focus + .input-icon,
 .styled-input:focus ~ .input-icon {
-  color: #3b82f6;
+  color: #0f172a;
 }
 
 .styled-input.error {

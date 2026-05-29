@@ -117,7 +117,7 @@
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
+import { useI18n } from '@/utils/i18n';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, updateDoc, increment, arrayUnion, onSnapshot } from 'firebase/firestore';
 import { db } from '@/firebase/config';

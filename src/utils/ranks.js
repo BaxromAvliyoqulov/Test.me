@@ -1,33 +1,46 @@
 /**
- * Rank system logic
+ * Comprehensive Rank System Logic
  */
 
+export const ranksData = [
+  { id: 'newbie', min: 0, max: 100, class: 'rank-newbie', icon: 'fas fa-seedling', nameUz: 'Newbie Scholar', nameRu: 'Новичок' },
+  { id: 'bronze', min: 100, max: 300, class: 'rank-bronze', icon: 'fas fa-shield-halved', nameUz: 'Bronze Scholar', nameRu: 'Бронзовый Ученик' },
+  { id: 'silver', min: 300, max: 600, class: 'rank-silver', icon: 'fas fa-medal', nameUz: 'Silver Scholar', nameRu: 'Серебряный Ученик' },
+  { id: 'gold', min: 600, max: 1000, class: 'rank-gold', icon: 'fas fa-award', nameUz: 'Gold Scholar', nameRu: 'Золотой Ученик' },
+  { id: 'platinum', min: 1000, max: 1500, class: 'rank-platinum', icon: 'fas fa-star', nameUz: 'Platinum Scholar', nameRu: 'Платиновый Ученик' },
+  { id: 'diamond', min: 1500, max: 2500, class: 'rank-diamond', icon: 'fas fa-gem', nameUz: 'Diamond Expert', nameRu: 'Алмазный Эксперт' },
+  { id: 'master', min: 2500, max: 4000, class: 'rank-master', icon: 'fas fa-chess-knight', nameUz: 'Master', nameRu: 'Мастер' },
+  { id: 'grandmaster', min: 4000, max: 7000, class: 'rank-grandmaster', icon: 'fas fa-chess-king', nameUz: 'Grandmaster', nameRu: 'Грандмастер' },
+  { id: 'legendary', min: 7000, max: 10000, class: 'rank-legendary', icon: 'fas fa-crown', nameUz: 'Legendary', nameRu: 'Легенда' },
+  { id: 'mythic', min: 10000, max: Infinity, class: 'rank-mythic', icon: 'fas fa-dragon', nameUz: 'Mythic', nameRu: 'Мифический' }
+];
+
+function getCurrentRankObj(points) {
+  for (let i = ranksData.length - 1; i >= 0; i--) {
+    if (points >= ranksData[i].min) {
+      return { rank: ranksData[i], index: i };
+    }
+  }
+  return { rank: ranksData[0], index: 0 };
+}
+
 export function getRankName(points, locale = 'UZB') {
-  if (points >= 1000) return locale === 'RUS' ? 'Грандмастер' : 'Grandmaster Scholar';
-  if (points >= 600) return locale === 'RUS' ? 'Золотой Ученик' : 'Gold Scholar';
-  if (points >= 300) return locale === 'RUS' ? 'Серебряный Ученик' : 'Silver Scholar';
-  if (points >= 100) return locale === 'RUS' ? 'Бронзовый Ученик' : 'Bronze Scholar';
-  return locale === 'RUS' ? 'Новичок' : 'Newbie Scholar';
+  const { rank } = getCurrentRankObj(points);
+  return locale === 'RUS' ? rank.nameRu : rank.nameUz;
 }
 
 export function getRankClass(points) {
-  if (points >= 1000) return 'rank-grandmaster';
-  if (points >= 600) return 'rank-gold';
-  if (points >= 300) return 'rank-silver';
-  if (points >= 100) return 'rank-bronze';
-  return 'rank-newbie';
+  return getCurrentRankObj(points).rank.class;
 }
 
 export function getRankIcon(points) {
-  if (points >= 1000) return 'fas fa-crown';
-  if (points >= 600) return 'fas fa-medal';
-  if (points >= 300) return 'fas fa-award';
-  if (points >= 100) return 'fas fa-shield-halved';
-  return 'fas fa-seedling';
+  return getCurrentRankObj(points).rank.icon;
 }
 
 export function getNextRankInfo(points, locale = 'UZB') {
-  if (points >= 1000) {
+  const { rank, index } = getCurrentRankObj(points);
+  
+  if (index === ranksData.length - 1) {
     return {
       nextRankName: locale === 'RUS' ? 'Макс. Ранг' : 'Max Rank',
       pointsNeeded: 0,
@@ -36,32 +49,15 @@ export function getNextRankInfo(points, locale = 'UZB') {
     };
   }
   
-  let currentRankMin = 0;
-  let nextRankMax = 100;
-  let nextRankName = locale === 'RUS' ? 'Бронзовый Ученик' : 'Bronze Scholar';
-  
-  if (points >= 600) {
-    currentRankMin = 600;
-    nextRankMax = 1000;
-    nextRankName = locale === 'RUS' ? 'Грандмастер' : 'Grandmaster Scholar';
-  } else if (points >= 300) {
-    currentRankMin = 300;
-    nextRankMax = 600;
-    nextRankName = locale === 'RUS' ? 'Золотой Ученик' : 'Gold Scholar';
-  } else if (points >= 100) {
-    currentRankMin = 100;
-    nextRankMax = 300;
-    nextRankName = locale === 'RUS' ? 'Серебряный Ученик' : 'Silver Scholar';
-  }
-  
-  const range = nextRankMax - currentRankMin;
-  const progress = points - currentRankMin;
+  const nextRank = ranksData[index + 1];
+  const range = nextRank.min - rank.min;
+  const progress = points - rank.min;
   const progressPercent = Math.min(Math.round((progress / range) * 100), 100);
   
   return {
-    nextRankName,
-    pointsNeeded: nextRankMax - points,
+    nextRankName: locale === 'RUS' ? nextRank.nameRu : nextRank.nameUz,
+    pointsNeeded: nextRank.min - points,
     progressPercent,
-    label: `${points} / ${nextRankMax} TP`
+    label: `${points} / ${nextRank.min} TP`
   };
 }

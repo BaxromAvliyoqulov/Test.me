@@ -410,11 +410,20 @@ export default {
     },
 
     selectSubjectCard(subject) {
-      if (this.selectedSubject && this.selectedSubject.id === subject.id) return;
       this.selectedSubject = subject;
       this.selectedLevel = '';
       this.selectedQuestionCount = '';
+      this.showTestWizard = true;
       this.fetchLevels();
+    },
+
+    closeWizard() {
+      this.showTestWizard = false;
+      setTimeout(() => {
+        this.selectedSubject = null;
+        this.selectedLevel = '';
+        this.selectedQuestionCount = '';
+      }, 300);
     },
 
     async fetchSubjects() {

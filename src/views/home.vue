@@ -553,6 +553,7 @@ export default {
         }
 
         this.startTest = true;
+        this.showTestWizard = false;
 
         this.$nextTick(() => {
           this.$refs.testPage?.initializeTest({

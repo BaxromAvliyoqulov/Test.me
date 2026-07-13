@@ -45,6 +45,18 @@
               <i class="far fa-copy info-arrow"></i>
             </div>
 
+            <!-- Phone copy card -->
+            <div class="info-item-card" @click="copyPhone">
+              <div class="info-icon" style="background: #e0e7ff; color: #4f46e5;">
+                <i class="fas fa-phone-alt"></i>
+              </div>
+              <div class="info-details">
+                <span>{{ isRus ? 'Номер телефона' : 'Telefon raqam' }}</span>
+                <strong>+998 99 074 62 57</strong>
+              </div>
+              <i class="far fa-copy info-arrow"></i>
+            </div>
+
             <!-- Support Time Card -->
             <div class="info-item-card no-click">
               <div class="info-icon time-icon">
@@ -189,6 +201,15 @@ export default {
       );
     };
 
+    const copyPhone = () => {
+      navigator.clipboard.writeText("+998990746257");
+      toast.success(
+        isRus.value
+          ? "Номер телефона скопирован в буфер обмена!"
+          : "Telefon raqam nusxalandi!"
+      );
+    };
+
     const resetForm = () => {
       formData.value = {
         name: "",
@@ -254,6 +275,7 @@ ${formData.value.subject ? `📚 Fan: ${formData.value.subject}` : ""}
       submitting,
       handleRequestTypeChange,
       copyEmail,
+      copyPhone,
       handleSubmit,
     };
   },

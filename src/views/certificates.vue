@@ -133,17 +133,13 @@
                   <div class="cert-body">
                     <p>
                       {{ isRus 
-                        ? `За успешное прохождение испытаний по программе "${selectedCert.nameRu}" на платформе Test.me с подтвержденными результатами.` 
-                        : `Test.me platformasida "${selectedCert.nameUz}" dasturi bo'yicha belgilangan barcha sinovlardan muvaffaqiyatli o'tganligi uchun.` 
+                        ? `Настоящий сертификат подтверждает, что участник успешно завершил все необходимые испытания по образовательной программе "${selectedCert.nameRu}". Продемонстрированные результаты свидетельствуют о высоком уровне подготовки, целеустремленности и глубоком понимании предмета в рамках стандартов платформы Test.me.` 
+                        : `Ushbu sertifikat foydalanuvchining Test.me platformasida "${selectedCert.nameUz}" dasturi bo'yicha barcha kerakli sinovlardan muvaffaqiyatli o'tganligini tasdiqlaydi. Ko'rsatilgan natijalar ishtirokchining yuqori darajadagi tayyorgarligi, intiluvchanligi va fanni chuqur o'zlashtirganligidan dalolat beradi.` 
                       }}
                     </p>
                   </div>
 
                   <div class="cert-footer">
-                    <div class="footer-sign">
-                      <div class="line"></div>
-                      <span>{{ isRus ? 'Руководитель Test.me' : 'Test.me Rahbariyati' }}</span>
-                    </div>
                     <div class="footer-stamp">
                       <div class="stamp-circle">
                         <span>TEST.ME</span>
@@ -821,11 +817,12 @@ export default {
 }
 
 .cert-body {
-  max-width: 500px;
-  line-height: 1.6;
+  max-width: 600px;
+  line-height: 1.7;
   font-size: 0.95rem;
   color: #334155;
   margin-bottom: 2rem;
+  text-align: justify;
 }
 
 .cert-footer {
@@ -836,21 +833,6 @@ export default {
   margin-top: 1.5rem;
 }
 
-.footer-sign {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.footer-sign .line {
-  width: 140px;
-  height: 1px;
-  background: #94a3b8;
-  margin-bottom: 8px;
-}
-.footer-sign span {
-  font-size: 0.75rem;
-  color: #64748b;
-}
 
 .stamp-circle {
   width: 76px;

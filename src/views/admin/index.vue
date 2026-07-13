@@ -57,13 +57,7 @@
           <i class="fas fa-robot nav-icon"></i>
           <span>AI Test Seeder</span>
         </button>
-        <button 
-          :class="['nav-card', { active: currentView === 'shopManager' }]" 
-          @click="currentView = 'shopManager'"
-        >
-          <i class="fas fa-store nav-icon"></i>
-          <span>Shop Manager</span>
-        </button>
+
       </div>
 
       <div class="admin-content-area">
@@ -72,7 +66,7 @@
           <AddAdminComponent v-else-if="currentView === 'addAdmin'" />
           <AddProductComponent v-else-if="currentView === 'addProduct'" />
           <UploadExcelComponent v-else-if="currentView === 'uploadExcel'" />
-          <AdminShopManager v-else-if="currentView === 'shopManager'" />
+
           
           <div v-else class="welcome-placeholder">
             <i class="fas fa-cogs"></i>
@@ -86,12 +80,13 @@
 </template>
 
 <script>
+import { auth } from "@/config/firebase";
 import LoginModal from "./loginModal.vue";
 import AddAdminComponent from "./addAdmin.vue";
 import AddSubjectComponent from "./addSubject.vue";
 import AddProductComponent from "./addProduct.vue";
 import UploadExcelComponent from "./uploadExcel.vue";
-import AdminShopManager from "./AdminShopManager.vue";
+
 
 export default {
   components: {
@@ -100,12 +95,13 @@ export default {
     AddSubjectComponent,
     AddProductComponent,
     UploadExcelComponent,
-    AdminShopManager,
+
   },
   data() {
     return {
       currentView: null,
       authenticated: false,
+      isBoss: false,
       selectedSubject: "",
       selectedLevel: "",
       tests: [],
@@ -121,6 +117,15 @@ export default {
     if (authToken) {
       this.authenticated = true;
     }
+    
+    // Check if the current user is the super admin
+    auth.onAuthStateChanged((user) => {
+      if (user && user.email === 'avliyoqulovbaxrom99@gmail.com') {
+        this.authenticated = true;
+        this.isBoss = true;
+        localStorage.setItem("adminAuth", "true");
+      }
+    });
   },
   methods: {
     handleAuthentication(status) {
@@ -135,6 +140,7 @@ export default {
     logout() {
       localStorage.removeItem("adminAuth");
       this.authenticated = false;
+      this.isBoss = false;
       this.$router.push("/");
     },
   },

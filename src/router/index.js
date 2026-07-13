@@ -16,8 +16,7 @@ const Badges = () => import('@/views/badges.vue');
 const Certificates = () => import('@/views/certificates.vue');
 const AiTestSetup = () => import('@/views/testPage/aiTestSetup.vue');
 const AdminSeeder = () => import('@/views/AdminSeeder.vue');
-const ShopPage = () => import('@/views/Shop/ShopPage.vue');
-const InventoryPage = () => import('@/views/Shop/InventoryPage.vue');
+const ShopPage = () => import('@/views/shop/ShopPage.vue');
 const FriendsDashboard = () => import('@/views/Friends/FriendsDashboard.vue');
 const RankSystemPage = () => import('@/views/Ranks/RankSystemPage.vue');
 
@@ -103,11 +102,6 @@ const router = createRouter({
       path: '/shop',
       name: 'shop',
       component: ShopPage,
-    },
-    {
-      path: '/inventory',
-      name: 'inventory',
-      component: InventoryPage,
     },
     {
       path: '/friends',

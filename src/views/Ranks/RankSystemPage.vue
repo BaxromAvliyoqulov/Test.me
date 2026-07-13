@@ -120,7 +120,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from '@/utils/i18n';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, updateDoc, increment, arrayUnion, onSnapshot } from 'firebase/firestore';
-import { db } from '@/firebase/config';
+import { db } from '@/config/firebase';
 import { ranksData, getRankName, getNextRankInfo } from '@/utils/ranks';
 import { useToast } from 'vue-toastification';
 

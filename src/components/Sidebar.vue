@@ -104,13 +104,6 @@
             <span v-if="!isCollapsed" class="link-text">Shop</span>
           </transition>
         </router-link>
-
-        <router-link to="/inventory" class="sidebar-link inventory-link" v-tooltip="'Inventory'">
-          <div class="link-icon"><i class="fas fa-backpack"></i></div>
-          <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Inventory</span>
-          </transition>
-        </router-link>
       </div>
 
       <!-- INFO SECTION -->
@@ -186,6 +179,7 @@ export default {
       pointsUnsub: null,
     };
   },
+
   created() {
     this.initializeAuth();
     window.addEventListener('profile-updated', this.handleProfileUpdated);
@@ -376,6 +370,25 @@ export default {
   opacity: 0.7;
   z-index: 1;
   animation: rotateRing 6s linear infinite;
+}
+
+.avatar-frame-svg {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  width: 90px;
+  height: 90px;
+  z-index: 3;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-frame-svg :deep(svg) {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));
 }
 
 @keyframes rotateRing {

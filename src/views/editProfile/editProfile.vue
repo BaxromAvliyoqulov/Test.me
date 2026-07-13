@@ -41,6 +41,7 @@
                   class="id-card-avatar"
                   alt="Student Avatar"
                 />
+
               </div>
               
               <div class="id-card-info">
@@ -434,6 +435,7 @@ import { db } from '../../config/firebase.js';
 import { useI18n } from '@/utils/i18n';
 import { getRankName, getRankClass, getRankIcon, getNextRankInfo, ranksData } from '@/utils/ranks.js';
 import { sortLevels } from '@/utils/sorters';
+
 import defaultUserImage from '../../assets/img/user.png';
 
 export default {
@@ -462,6 +464,7 @@ export default {
       loading: false,
       passwordError: '',
       ranksList: ranksData,
+
       
       // Toast notification status
       toast: {
@@ -591,7 +594,8 @@ export default {
           unlocked: perfect >= 3 
         }
       ];
-    }
+    },
+
   },
   watch: {
     'preferences.defaultSubject'(newSub, oldSub) {
@@ -625,6 +629,7 @@ export default {
               this.profile.username = data.displayName || data.username || user.displayName || '';
               this.selectedPhotoURL = data.photoURL || user.photoURL || '';
               this.userPoints = data.points || 0;
+
 
               // Load preferences
               if (data.preferences) {
@@ -1146,6 +1151,30 @@ export default {
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+}
+.id-card-avatar-wrap {
+  position: relative;
+  width: fit-content;
+  margin: 0;
+}
+
+.avatar-frame-svg {
+  position: absolute;
+  top: -16px;
+  left: -16px;
+  width: 96px;
+  height: 96px;
+  z-index: 3;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-frame-svg :deep(svg) {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));
 }
 
 .id-card-name {

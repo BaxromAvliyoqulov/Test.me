@@ -48,7 +48,6 @@ export default {
         '/': 'Bosh sahifa',
         '/points': 'Ballar & Coinlar',
         '/shop': 'Do\'kon',
-        '/inventory': 'Inventar',
         '/badges': 'Yutuqlar',
         '/certificates': 'Sertifikatlar',
         '/dashboard': 'Statistika',

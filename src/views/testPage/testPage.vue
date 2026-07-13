@@ -1,195 +1,86 @@
 <template>
-  <div class="pro-test-view">
-    <!-- Loading Screen -->
-    <div v-if="state.loading" class="pro-center-screen">
-      <div class="pro-spinner"></div>
-      <h3>{{ isRus ? 'Загрузка теста...' : 'Test yuklanmoqda...' }}</h3>
-    </div>
-
-    <!-- Error / Empty Screen -->
-    <div v-else-if="state.error || state.questions.length === 0" class="pro-center-screen error-state">
-      <i class="fas fa-exclamation-circle error-icon"></i>
-      <h3>{{ state.error ? (isRus ? 'Ошибка загрузки' : 'Yuklashda xatolik') : (isRus ? 'Тесты не найдены' : 'Testlar topilmadi') }}</h3>
-      <p>{{ state.error || (isRus ? 'В этой категории пока нет загруженных тестов.' : 'Ushbu yo\'nalishda hozircha testlar mavjud emas.') }}</p>
-      <div class="pro-actions">
-        <button class="pro-btn primary" @click="fetchQuestions" v-if="state.error">
-          <i class="fas fa-redo"></i> {{ isRus ? 'Попробовать снова' : 'Qaytadan urinish' }}
-        </button>
-        <button class="pro-btn secondary" @click="goHome">
-          <i class="fas fa-arrow-left"></i> {{ isRus ? 'На главную' : 'Orqaga' }}
-        </button>
+  <div class="premium-layout">
+    
+    <!-- Floating Header -->
+    <header class="dynamic-island-header">
+      <div class="header-left">
+        <span class="subject-name">{{ displaySubject }}</span>
+        <span class="level-tag">{{ displayLevel }}</span>
       </div>
-    </div>
-
-    <!-- Active Quiz Interface -->
-    <div v-else-if="!state.testFinished" class="pro-quiz-layout">
-      <!-- Minimalist Header -->
-      <header class="pro-header">
-        <div class="pro-header-left">
-          <h2 class="pro-subject-title">{{ displaySubject }} <span class="pro-level-dot">•</span> <span class="pro-level">{{ displayLevel }}</span></h2>
-        </div>
-        <div class="pro-header-right">
-          <div class="pro-timer" :class="{ 'time-low': state.timer < 60 }">
-            <i class="far fa-clock"></i> {{ formattedTime }}
-          </div>
-        </div>
-      </header>
-
-      <!-- Super Thin Progress Line -->
-      <div class="pro-progress-bar">
-        <div class="pro-progress-fill" :style="{ width: ((state.currentPage + 1) / state.questions.length) * 100 + '%' }"></div>
-      </div>
-
-      <!-- Main Content Area -->
-      <main class="pro-question-area">
-        <div class="pro-q-meta">
-          <span>{{ isRus ? 'Вопрос' : 'Savol' }} {{ state.currentPage + 1 }} / {{ state.questions.length }}</span>
-        </div>
-        
-        <h1 class="pro-question-text">
-          {{ currentQuestion?.question }}
-        </h1>
-
-        <transition name="fade">
-          <div v-if="state.hintText" class="pro-hint-alert">
-            <i class="fas fa-lightbulb"></i> {{ state.hintText }}
-          </div>
-        </transition>
-
-        <!-- Clean Options -->
-        <div class="pro-options-grid">
-          <button
-            v-for="(option, index) in currentQuestion?.options"
-            :key="index"
-            class="pro-option"
-            v-show="!state.eliminatedOptions.includes(index)"
-            :class="{ 'is-selected': state.selectedAnswer === index }"
-            @click="selectOption(index)"
-          >
-            <div class="pro-opt-letter">{{ ['A', 'B', 'C', 'D'][index] }}</div>
-            <div class="pro-opt-text">{{ option }}</div>
-          </button>
-        </div>
-
-        <!-- AI Tools -->
-        <div class="pro-tools-bar" v-if="(state.userTools && state.userTools.tool_5050 > 0) || (state.userTools && state.userTools.tool_ai_hint > 0)">
-          <button 
-            v-if="state.userTools && state.userTools.tool_5050 > 0" 
-            class="pro-tool-btn" 
-            :disabled="state.using5050 || state.eliminatedOptions.length > 0"
-            @click="use5050"
-          >
-            50/50 ({{ state.userTools.tool_5050 }})
-          </button>
-          <button 
-            v-if="state.userTools && state.userTools.tool_ai_hint > 0" 
-            class="pro-tool-btn" 
-            :disabled="state.hintText"
-            @click="useAiHint"
-          >
-            <i class="fas fa-magic"></i> {{ isRus ? 'Подсказка AI' : 'AI Yordam' }} ({{ state.userTools.tool_ai_hint }})
-          </button>
-        </div>
-      </main>
-
-      <!-- Minimalist Footer -->
-      <footer class="pro-footer">
-        <div class="pro-pagination">
-          <button class="pro-nav-btn" @click="goToPrev" :disabled="state.currentPage === 0">
-            <i class="fas fa-arrow-left"></i>
-          </button>
-          <span class="pro-pag-text">{{ state.currentPage + 1 }} / {{ state.questions.length }}</span>
-        </div>
-        
-        <button
-          class="pro-btn-next"
-          :class="{ 'is-finish': state.currentPage === state.questions.length - 1 }"
-          @click="submitAnswer"
-        >
-          {{ state.currentPage < state.questions.length - 1 ? (isRus ? 'Далее' : 'Keyingisi') : (isRus ? 'Завершить' : 'Yakunlash') }}
-          <i class="fas" :class="state.currentPage < state.questions.length - 1 ? 'fa-arrow-right' : 'fa-check'"></i>
-        </button>
-      </footer>
-    </div>
-
-    <!-- Stunning Full-Screen Results View -->
-    <div v-else class="pro-results-view">
-      <div class="pro-results-content">
-        <h1 class="pro-r-title">{{ isRus ? 'Тест Завершен' : 'Test Yakunlandi' }}</h1>
-        <p class="pro-r-subtitle">{{ isRus ? 'Отличная работа! Вот ваши результаты:' : 'Ajoyib natija! Sizning ko\'rsatkichlaringiz:' }}</p>
-
-        <!-- Massive Floating Score Ring -->
-        <div class="pro-score-hero">
-          <svg class="pro-ring-svg" viewBox="0 0 36 36">
-            <path class="pro-ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="pro-ring-fill" :stroke-dasharray="((score / state.questions.length) * 100) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <div class="pro-score-text">
-            <span class="p-score">{{ score }}</span>
-            <span class="p-total">/ {{ state.questions.length }}</span>
-          </div>
-        </div>
-
-        <!-- Clean Stats Row -->
-        <div class="pro-stats-row">
-          <div class="pro-stat-item">
-            <span class="p-stat-val">{{ Math.round((score / state.questions.length) * 100) }}%</span>
-            <span class="p-stat-lbl">{{ isRus ? 'Точность' : 'Aniqlik' }}</span>
-          </div>
-          <div class="pro-stat-divider"></div>
-          <div class="pro-stat-item">
-            <span class="p-stat-val">{{ state.questions.length - score }}</span>
-            <span class="p-stat-lbl">{{ isRus ? 'Ошибки' : 'Xatolar' }}</span>
-          </div>
-          <div class="pro-stat-divider"></div>
-          <div class="pro-stat-item">
-            <span class="p-stat-val">{{ timeSpent }}</span>
-            <span class="p-stat-lbl">{{ isRus ? 'Время' : 'Vaqt' }}</span>
-          </div>
-        </div>
-
-        <!-- Clean Reward Row -->
-        <div class="pro-reward-row" v-if="score > 0">
-          <img src="../../assets/img/tpCoin.png" alt="TP" class="pro-coin" />
-          <div class="pro-reward-info">
-            <span class="r-amt">+{{ score }} TP Coins</span>
-            <span class="r-lbl">{{ isRus ? 'заработано' : 'ishlab topildi' }}</span>
-          </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="pro-results-actions">
-          <button class="pro-btn secondary outline" @click="state.showReviewModal = true">
-            <i class="fas fa-eye"></i> {{ isRus ? 'Анализ' : 'Tahlil' }}
-          </button>
-          <button class="pro-btn primary" @click="goHome">
-            {{ isRus ? 'На главную' : 'Bosh Sahifa' }}
-          </button>
+      <div class="header-right">
+        <div class="timer-pill" :class="{ 'danger': state.timer < 60 }">
+          <i class="far fa-clock"></i> {{ formattedTime }}
         </div>
       </div>
+    </header>
+
+    <div class="content-container">
+      <!-- Loading Screen -->
+      <div v-if="state.loading" class="center-content">
+        <div class="spinner-xl"></div>
+        <h3 class="status-title">{{ isRus ? 'Загрузка...' : 'Yuklanmoqda...' }}</h3>
+      </div>
+
+      <!-- Error / Empty Screen -->
+      <div v-else-if="state.error || state.questions.length === 0" class="center-content error-card">
+        <i class="fas fa-exclamation-triangle error-icon"></i>
+        <h3 class="status-title">{{ state.error ? (isRus ? 'Ошибка' : 'Xatolik') : (isRus ? 'Пусто' : 'Bo\'sh') }}</h3>
+        <p class="status-desc">{{ state.error || (isRus ? 'Тесты не найдены.' : 'Testlar topilmadi.') }}</p>
+        <button class="btn-primary" @click="goHome">{{ isRus ? 'На главную' : 'Bosh Sahifa' }}</button>
+      </div>
+
+      <!-- Active Quiz Interface -->
+      <TestQuestionCard 
+        v-else-if="!state.testFinished"
+        :question="currentQuestion"
+        :questionNumber="state.currentPage + 1"
+        :totalQuestions="state.questions.length"
+        :selectedAnswer="state.selectedAnswer"
+        :eliminatedOptions="state.eliminatedOptions"
+        :hintText="state.hintText"
+        :userTools="state.userTools"
+        :using5050="state.using5050"
+        :isRus="isRus"
+        @selectOption="selectOption"
+        @use5050="use5050"
+        @useAiHint="useAiHint"
+        @goToPrev="goToPrev"
+        @submitAnswer="submitAnswer"
+      />
+
+      <!-- Success / Results Screen -->
+      <TestResults 
+        v-else
+        :score="score"
+        :totalQuestions="state.questions.length"
+        :timeSpent="timeSpent"
+        :isRus="isRus"
+        @goHome="goHome"
+        @showReview="state.showReviewModal = true"
+      />
     </div>
 
-    <!-- Review Modal -->
+    <!-- Review Modal (Kept inline for simplicity since it's just an overlay) -->
     <transition name="fade">
-      <div v-if="state.showReviewModal" class="pro-review-overlay" @click.self="state.showReviewModal = false">
-        <div class="pro-review-modal">
-          <div class="pr-header">
+      <div v-if="state.showReviewModal" class="review-overlay" @click.self="state.showReviewModal = false">
+        <div class="review-modal">
+          <div class="rm-header">
             <h3>{{ isRus ? 'Анализ ответов' : 'Javoblar Tahlili' }}</h3>
-            <button class="pr-close" @click="state.showReviewModal = false"><i class="fas fa-times"></i></button>
+            <button class="rm-close" @click="state.showReviewModal = false"><i class="fas fa-times"></i></button>
           </div>
-          <div class="pr-body">
-            <div v-for="(question, index) in state.questions" :key="index" class="pr-q-card">
+          <div class="rm-body">
+            <div v-for="(question, index) in state.questions" :key="index" class="rm-q-card">
               <h4>{{ index + 1 }}. {{ question.question }}</h4>
-              <div class="pr-opts">
+              <div class="rm-opts">
                 <div v-for="(option, optIndex) in question.options" :key="optIndex" 
-                     class="pr-opt"
+                     class="rm-opt"
                      :class="{
                        'is-correct': question.answer === option,
                        'is-wrong': state.selectedAnswers[index] === optIndex && question.answer !== option
                      }">
                   <i class="fas fa-check" v-if="question.answer === option"></i>
                   <i class="fas fa-times" v-else-if="state.selectedAnswers[index] === optIndex"></i>
-                  <span class="pr-dot" v-else></span>
+                  <span class="rm-dot" v-else></span>
                   <span>{{ option }}</span>
                 </div>
               </div>
@@ -203,6 +94,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
+import TestQuestionCard from './components/TestQuestionCard.vue';
+import TestResults from './components/TestResults.vue';
 import { db } from '@/config/firebase';
 import { collection, getDocs, addDoc, Timestamp, query, where, doc, getDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -709,245 +602,162 @@ defineExpose({ initializeTest: fetchQuestions });
 </script>
 
 
+
 <style scoped>
-/* Ultra-Minimalist Pro UI */
-.pro-test-view {
-  width: 100%;
+.premium-layout {
   min-height: 100vh;
-  background: #fdfdfd; /* Pure clean background, no boxes */
-  color: #0f172a;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   display: flex;
   flex-direction: column;
+  align-items: center;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #0f172a;
+  padding: 24px;
 }
 
-/* Center Screens (Loading/Error) */
-.pro-center-screen {
+/* Dynamic Island Floating Header */
+.dynamic-island-header {
+  background: white;
+  border-radius: 100px;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  margin-bottom: 40px;
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.subject-name {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.level-tag {
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.timer-pill {
+  background: #0f172a;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 10px rgba(15,23,42,0.2);
+}
+
+.timer-pill.danger {
+  background: #ef4444;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+.content-container {
+  width: 100%;
+  max-width: 800px;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 2rem;
 }
-.pro-spinner {
-  width: 40px; height: 40px;
-  border: 3px solid #e2e8f0;
+
+/* Fallback Screens */
+.center-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.error-card {
+  background: white;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.spinner-xl {
+  width: 48px; height: 48px;
+  border: 4px solid #e2e8f0;
   border-top-color: #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 1.5rem;
+  margin-bottom: 16px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Layout */
-.pro-quiz-layout {
-  max-width: 800px;
-  margin: 0 auto;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  padding: 2rem;
-}
+.error-icon { font-size: 3rem; color: #ef4444; margin-bottom: 16px; }
+.status-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; }
+.status-desc { color: #64748b; margin-bottom: 24px; }
 
-/* Header */
-.pro-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-.pro-subject-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  margin: 0;
-  color: #0f172a;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.pro-level-dot { color: #cbd5e1; }
-.pro-level { font-size: 1rem; color: #64748b; font-weight: 600; }
-.pro-timer {
-  background: #f1f5f9;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #334155;
-  display: flex; align-items: center; gap: 6px;
-}
-.pro-timer.time-low { background: #fee2e2; color: #ef4444; }
-
-/* Thin Progress */
-.pro-progress-bar {
-  width: 100%;
-  height: 4px;
-  background: #f1f5f9;
-  border-radius: 2px;
-  margin-bottom: 3rem;
-  overflow: hidden;
-}
-.pro-progress-fill {
-  height: 100%;
-  background: #3b82f6;
-  transition: width 0.4s ease;
-}
-
-/* Main Area */
-.pro-question-area { flex: 1; display: flex; flex-direction: column; }
-.pro-q-meta { font-size: 0.85rem; font-weight: 700; color: #94a3b8; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; }
-.pro-question-text {
-  font-size: 1.8rem;
-  font-weight: 800;
-  line-height: 1.4;
-  color: #0f172a;
-  margin: 0 0 3rem 0;
-}
-
-/* Options */
-.pro-options-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.pro-option {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
-  background: #ffffff;
-  border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.2s;
-}
-.pro-option:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
-}
-.pro-option.is-selected {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
-}
-.pro-opt-letter {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  background: #f1f5f9;
-  color: #64748b;
-  font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.2s;
-}
-.pro-option.is-selected .pro-opt-letter {
-  background: #3b82f6;
-  color: #fff;
-}
-.pro-opt-text {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-/* Tools */
-.pro-tools-bar { display: flex; gap: 10px; margin-top: 2rem; }
-.pro-tool-btn { padding: 8px 16px; border-radius: 12px; background: #f1f5f9; border: none; font-weight: 600; color: #475569; cursor: pointer; }
-.pro-tool-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.pro-hint-alert { background: #fef3c7; color: #d97706; padding: 12px 16px; border-radius: 12px; font-weight: 600; margin-bottom: 2rem; }
-
-/* Footer */
-.pro-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 2rem;
-  margin-top: 2rem;
-}
-.pro-pagination { display: flex; align-items: center; gap: 16px; }
-.pro-nav-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #e2e8f0; background: transparent; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-.pro-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.pro-pag-text { font-weight: 700; color: #64748b; }
-
-.pro-btn-next {
-  padding: 16px 32px;
-  border-radius: 100px;
+.btn-primary {
   background: #0f172a;
   color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
   font-weight: 700;
-  font-size: 1.1rem;
   border: none;
   cursor: pointer;
-  display: flex; align-items: center; gap: 10px;
-  transition: transform 0.2s, box-shadow 0.2s;
 }
-.pro-btn-next:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2); }
-.pro-btn-next.is-finish { background: #3b82f6; }
 
-/* Stunning Full-Screen Results */
-.pro-results-view {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  background: #fdfdfd; padding: 2rem;
+/* Review Modal Overlay */
+.review-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15,23,42,0.6);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  padding: 24px;
 }
-.pro-results-content {
-  max-width: 600px; width: 100%; display: flex; flex-direction: column; align-items: center; text-align: center;
+
+.review-modal {
+  background: white;
+  width: 100%; max-width: 600px;
+  border-radius: 24px;
+  max-height: 85vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
 }
-.pro-r-title { font-size: 2.5rem; font-weight: 900; color: #0f172a; margin: 0 0 8px 0; }
-.pro-r-subtitle { font-size: 1.1rem; color: #64748b; font-weight: 500; margin-bottom: 3rem; }
 
-.pro-score-hero { position: relative; width: 200px; height: 200px; margin-bottom: 3rem; display: flex; align-items: center; justify-content: center; }
-.pro-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.pro-ring-bg { fill: none; stroke: #f1f5f9; stroke-width: 2.5; }
-.pro-ring-fill { fill: none; stroke: #3b82f6; stroke-width: 2.5; stroke-linecap: round; transition: stroke-dasharray 1s ease-out; }
-.pro-score-text { position: absolute; display: flex; flex-direction: column; align-items: center; }
-.p-score { font-size: 4rem; font-weight: 900; color: #0f172a; line-height: 1; }
-.p-total { font-size: 1.2rem; font-weight: 700; color: #94a3b8; }
+.rm-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.rm-header h3 { margin: 0; font-weight: 800; font-size: 1.2rem; }
+.rm-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: #f1f5f9; cursor: pointer; }
 
-.pro-stats-row { display: flex; align-items: center; justify-content: center; gap: 2rem; margin-bottom: 3rem; }
-.pro-stat-item { display: flex; flex-direction: column; align-items: center; }
-.p-stat-val { font-size: 1.5rem; font-weight: 800; color: #0f172a; }
-.p-stat-lbl { font-size: 0.8rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-.pro-stat-divider { width: 2px; height: 30px; background: #e2e8f0; }
-
-.pro-reward-row { display: flex; align-items: center; gap: 12px; background: #fef9c3; padding: 12px 24px; border-radius: 100px; margin-bottom: 3rem; }
-.pro-coin { width: 32px; height: 32px; }
-.pro-reward-info { display: flex; flex-direction: column; align-items: flex-start; }
-.r-amt { font-size: 1rem; font-weight: 800; color: #d97706; }
-.r-lbl { font-size: 0.75rem; font-weight: 600; color: #ca8a04; }
-
-.pro-results-actions { display: flex; gap: 16px; width: 100%; justify-content: center; }
-.pro-btn { padding: 16px 32px; border-radius: 100px; font-weight: 700; font-size: 1.05rem; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
-.pro-btn.primary { background: #0f172a; color: white; }
-.pro-btn.primary:hover { background: #1e293b; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(15,23,42,0.15); }
-.pro-btn.secondary.outline { background: transparent; border: 2px solid #e2e8f0; color: #475569; }
-.pro-btn.secondary.outline:hover { border-color: #cbd5e1; color: #0f172a; background: #f8fafc; }
-
-/* Review Modal */
-.pro-review-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.5); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
-.pro-review-modal { background: white; width: 100%; max-width: 600px; border-radius: 24px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
-.pr-header { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem; border-bottom: 1px solid #e2e8f0; }
-.pr-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; }
-.pr-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: #f1f5f9; color: #64748b; cursor: pointer; }
-.pr-body { padding: 2rem; overflow-y: auto; display: flex; flex-direction: column; gap: 2rem; }
-.pr-q-card h4 { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin: 0 0 1rem 0; line-height: 1.4; }
-.pr-opts { display: flex; flex-direction: column; gap: 8px; }
-.pr-opt { padding: 12px 16px; border-radius: 12px; background: #f8fafc; font-weight: 600; display: flex; align-items: center; gap: 12px; color: #64748b; border: 1px solid transparent; }
-.pr-opt.is-correct { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
-.pr-opt.is-wrong { background: #fef2f2; color: #e11d48; border-color: #fecdd3; }
-.pr-dot { width: 16px; height: 16px; border-radius: 50%; background: #e2e8f0; }
+.rm-body { padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+.rm-q-card h4 { font-size: 1.1rem; font-weight: 700; margin: 0 0 12px 0; }
+.rm-opts { display: flex; flex-direction: column; gap: 8px; }
+.rm-opt { padding: 12px; border-radius: 12px; background: #f8fafc; display: flex; align-items: center; gap: 12px; font-weight: 600; color: #64748b; border: 1px solid transparent; }
+.rm-opt.is-correct { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+.rm-opt.is-wrong { background: #fef2f2; color: #e11d48; border-color: #fecdd3; }
+.rm-dot { width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; }
 
 @media (max-width: 600px) {
-  .pro-quiz-layout { padding: 1.5rem 1rem; }
-  .pro-question-text { font-size: 1.4rem; }
-  .pro-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .pro-results-view { padding: 1rem; }
-  .pro-r-title { font-size: 2rem; }
-  .pro-stats-row { gap: 1rem; }
-  .pro-results-actions { flex-direction: column; }
+  .premium-layout { padding: 16px; }
+  .dynamic-island-header { padding: 12px 16px; }
+  .subject-name { font-size: 1rem; }
 }
 </style>
+
 

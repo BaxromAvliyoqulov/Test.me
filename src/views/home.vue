@@ -6,26 +6,18 @@
 
     <div class="test-container" v-if="!startTest">
       <!-- Welcome Banner -->
-      <div class="welcome-banner">
-        <div class="welcome-text">
-          <h1>{{ t('welcomeTitle', { name: userDisplayName || t('username') }) }}</h1>
-          <p>{{ t('welcomeSubtitle') }}</p>
-        </div>
-        <div class="welcome-stat-chip">
-          <img src="../assets/img/tpCoin.png" alt="TP Coin" class="coin-icon" />
-          <div class="stat-info">
-            <span class="stat-val">{{ userPoints }}</span>
-            <span class="stat-lbl">TP Coins</span>
-          </div>
-        </div>
-      </div>
+      <WelcomeBanner 
+        :welcomeTitle="t('welcomeTitle', { name: userDisplayName || t('username') })"
+        :welcomeSubtitle="t('welcomeSubtitle')"
+        :points="userPoints"
+      />
 
       <div class="dashboard-grid">
         <!-- Left Side: Interactive Selection Panel -->
-        <div class="selection-panel">
+        <div class="selection-panel glass-panel">
           
           <!-- Test Type Tabs -->
-          <div class="test-type-tabs">
+          <div class="test-type-tabs premium-tabs">
             <button 
               :class="['tab-btn', { active: currentTab === 'standard' }]" 
               @click="currentTab = 'standard'"
@@ -36,54 +28,52 @@
               :class="['tab-btn', { active: currentTab === 'special' }]" 
               @click="currentTab = 'special'"
             >
-              <i class="fas fa-star"></i> Maxsus Testlar
+              <i class="fas fa-crown"></i> Maxsus Testlar
             </button>
           </div>
 
           <!-- STANDARD TAB -->
-          <div class="tab-content" v-if="currentTab === 'standard'">
+          <transition name="fade-slide" mode="out-in">
+          <div class="tab-content" v-if="currentTab === 'standard'" key="standard">
             <div class="panel-section">
               <div class="section-header">
                 <span class="step-badge">1</span>
                 <h3>{{ t('chooseSubject') }}</h3>
               </div>
               
-              <div v-if="loadingSubjects" class="loading-container">
-                <span class="mini-loader"></span>
+              <div v-if="loadingSubjects" class="loading-state">
+                <div class="spinner"></div>
                 <p>{{ t('loadingSubjects') }}</p>
               </div>
 
-              <div class="subject-cards-grid premium-cards" v-else>
+              <div class="subject-grid" v-else>
                 <div
                   v-for="subject in subjects"
                   :key="subject.id"
-                  :class="['subject-card premium', { selected: selectedSubject && selectedSubject.id === subject.id }]"
-                  :style="{ '--card-color': getSubjectColor(subject.id) }"
+                  :class="['subject-card', { selected: selectedSubject && selectedSubject.id === subject.id }]"
+                  :style="{ '--subject-color': getSubjectColor(subject.id) }"
                   @click="selectSubjectCard(subject)"
                 >
-                  <div class="subject-card-bg">
-                    <i :class="getSubjectIcon(subject.id)"></i>
-                  </div>
-                  <div class="subject-card-icon">
-                    <i :class="getSubjectIcon(subject.id)"></i>
-                  </div>
-                  <div class="subject-card-details">
+                  <div class="card-bg-icon"><i :class="getSubjectIcon(subject.id)"></i></div>
+                  <div class="card-content">
+                    <div class="icon-wrapper"><i :class="getSubjectIcon(subject.id)"></i></div>
                     <h4>{{ subject.id }}</h4>
-                    <span class="subject-badge">{{ t('testsReady') }}</span>
+                    <span class="status-badge">{{ t('testsReady') }}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Level selection -->
+            <transition name="expand">
             <div class="panel-section" v-if="selectedSubject">
               <div class="section-header">
                 <span class="step-badge">2</span>
                 <h3>{{ t('selectLevel') }}</h3>
               </div>
 
-              <div v-if="loadingLevels" class="loading-container">
-                <span class="mini-loader"></span>
+              <div v-if="loadingLevels" class="loading-state">
+                <div class="spinner"></div>
                 <p>{{ t('loadingLevels') }}</p>
               </div>
 
@@ -99,8 +89,10 @@
                 </button>
               </div>
             </div>
+            </transition>
 
             <!-- Question count selection -->
+            <transition name="expand">
             <div class="panel-section" v-if="selectedLevel">
               <div class="section-header">
                 <span class="step-badge">3</span>
@@ -119,26 +111,29 @@
                 </button>
               </div>
             </div>
+            </transition>
 
             <!-- Start Button -->
+            <transition name="fade">
             <div class="action-section" v-if="selectedQuestionCount">
-              <button @click="startTestWithFilters" class="start-test-btn" :disabled="!canStart">
-                <span v-if="!loading">{{ t('startTest') }}</span>
-                <span v-else class="loader"></span>
+              <button @click="startTestWithFilters" class="btn-start-premium" :disabled="!canStart">
+                <span v-if="!loading">{{ t('startTest') }} <i class="fas fa-arrow-right"></i></span>
+                <div v-else class="spinner-small"></div>
               </button>
             </div>
+            </transition>
           </div>
 
           <!-- SPECIAL TESTS TAB -->
-          <div class="tab-content" v-else-if="currentTab === 'special'">
+          <div class="tab-content" v-else-if="currentTab === 'special'" key="special">
             <div class="panel-section">
               <div class="section-header">
-                <span class="step-badge"><i class="fas fa-crown"></i></span>
+                <span class="step-badge special"><i class="fas fa-star"></i></span>
                 <h3>DTM va Maxsus Imtihonlar</h3>
               </div>
               
-              <div v-if="loadingSpecial" class="loading-container">
-                <span class="mini-loader"></span>
+              <div v-if="loadingSpecial" class="loading-state">
+                <div class="spinner"></div>
                 <p>Maxsus testlar yuklanmoqda...</p>
               </div>
               
@@ -151,144 +146,149 @@
                     <h4>{{ test.title }}</h4>
                     <span class="st-category">{{ test.category }}</span>
                   </div>
-                  <button class="st-start-btn"><i class="fas fa-play"></i> Boshlash</button>
+                  <button class="btn-st-start"><i class="fas fa-play"></i> Boshlash</button>
                 </div>
               </div>
               
-              <div class="no-tests-banner" v-else>
-                <i class="fas fa-folder-open"></i>
+              <div class="empty-state" v-else>
+                <i class="fas fa-box-open"></i>
                 <p>Hozircha maxsus testlar yo'q.</p>
               </div>
             </div>
           </div>
+          </transition>
         </div>
 
         <!-- Right Side: Sidebar Info & AI Coach -->
         <div class="sidebar-panel">
           
           <!-- Rank Progress Card -->
-          <div class="sidebar-card rank-progress-card" style="margin-bottom: 1.5rem;">
-            <div class="progress-card-header">
-              <span class="nav-rank-badge" :class="getRankClass(userPoints)" style="margin:0; padding: 2px 8px; font-size: 0.70rem;">
+          <div class="premium-card rank-card">
+            <div class="rank-header">
+              <div class="rank-badge" :class="getRankClass(userPoints)">
                 <i :class="getRankIcon(userPoints)"></i> {{ getRankName(userPoints, currentLocale) }}
-              </span>
-              <span class="progress-target-text">
+              </div>
+              <span class="next-rank">
                 → {{ getNextRankInfo(userPoints, currentLocale).nextRankName }}
               </span>
             </div>
-            <div class="progress-bar-container">
+            <div class="progress-track">
               <div 
-                class="progress-bar-fill" 
+                class="progress-fill" 
                 :style="{ width: getNextRankInfo(userPoints, currentLocale).progressPercent + '%' }"
-              ></div>
+              >
+                <div class="progress-glow"></div>
+              </div>
             </div>
-            <div class="progress-footer-stats">
+            <div class="rank-footer">
               <span>{{ getNextRankInfo(userPoints, currentLocale).label }}</span>
-              <span v-if="getNextRankInfo(userPoints, currentLocale).pointsNeeded > 0">
+              <span v-if="getNextRankInfo(userPoints, currentLocale).pointsNeeded > 0" class="points-needed">
                 {{ currentLocale === 'RUS' ? `Нужно еще ${getNextRankInfo(userPoints, currentLocale).pointsNeeded} TP` : `Yana ${getNextRankInfo(userPoints, currentLocale).pointsNeeded} TP` }}
               </span>
-              <span v-else>{{ currentLocale === 'RUS' ? 'Максимальный Ранг' : 'Maksimal Rang' }}</span>
+              <span v-else class="points-needed">{{ currentLocale === 'RUS' ? 'Максимальный Ранг' : 'Maksimal Rang' }}</span>
             </div>
           </div>
 
           <!-- AI Coach Card -->
-          <div class="sidebar-card ai-coach-card">
+          <div class="premium-card ai-card">
             <div class="ai-header">
               <div class="ai-avatar">
                 <i class="fas fa-robot"></i>
               </div>
-              <div>
+              <div class="ai-title">
                 <h4>{{ t('aiTutor') }}</h4>
-                <span class="status-online">{{ t('activeInSystem') }}</span>
+                <span class="online-dot">{{ t('activeInSystem') }}</span>
               </div>
             </div>
-            <p class="ai-advice">
-              <span v-if="aiAdviceLoading" class="ai-loading-text">
-                <i class="fas fa-circle-notch fa-spin"></i>
-                {{ currentLocale === 'RUS' ? 'ИИ-Наставник анализирует результаты...' : 'AI Ustozingiz natijalarni tahlil qilmoqda...' }}
-              </span>
-              <span v-else>
+            <div class="ai-body">
+              <div v-if="aiAdviceLoading" class="ai-loading">
+                <div class="spinner-small blue"></div>
+                <span>{{ currentLocale === 'RUS' ? 'Анализ...' : 'Tahlil qilinmoqda...' }}</span>
+              </div>
+              <p v-else class="ai-text">
                 "{{ aiAdvice.text }}"
-              </span>
-            </p>
-            <div class="ai-action-badge" v-if="!aiAdviceLoading && aiAdvice.badge" @click="handleAiBadgeClick">
-              <i class="fas fa-lightbulb"></i> {{ aiAdvice.badge }}
+              </p>
+              <button class="btn-ai-action" v-if="!aiAdviceLoading && aiAdvice.badge" @click="handleAiBadgeClick">
+                <i class="fas fa-magic"></i> {{ aiAdvice.badge }}
+              </button>
             </div>
           </div>
 
           <!-- Daily Streak & Achievements Widget -->
-          <div class="sidebar-card streak-widget-card">
+          <div class="premium-card achievements-card">
             <h4>{{ t('activityAndAwards') }}</h4>
             
             <!-- Streak counter -->
-            <div class="streak-badge-container">
-              <div class="streak-icon-wrap">
+            <div class="streak-box">
+              <div class="fire-icon">
                 <i class="fas fa-fire"></i>
               </div>
-              <div class="streak-details">
-                <span class="streak-num">{{ getStreakText(userStreak) }}</span>
-                <span class="streak-lbl">{{ t('streakStreak') }}</span>
+              <div class="streak-info">
+                <strong>{{ getStreakText(userStreak) }}</strong>
+                <span>{{ t('streakStreak') }}</span>
               </div>
             </div>
 
             <!-- Mini Badges preview -->
-            <div class="badges-preview-sec">
+            <div class="badges-preview">
               <h5>{{ t('latestAwards') }}</h5>
-              <div class="mini-badges-list" v-if="unlockedBadges.length > 0">
+              <div class="mini-badges-row" v-if="unlockedBadges.length > 0">
                 <div 
-                  v-for="badge in unlockedBadges.slice(0, 3)"
+                  v-for="badge in unlockedBadges.slice(0, 4)"
                   :key="badge.id"
-                  class="mini-badge-item"
-                  :style="{ background: badge.color + '15', color: badge.color, borderColor: badge.color + '30' }"
+                  class="badge-item"
+                  :style="{ '--badge-color': badge.color }"
                   :title="currentLocale === 'RUS' ? badge.nameRu : badge.nameUz"
                 >
                   <i :class="badge.icon"></i>
                 </div>
-                <router-link to="/badges" class="all-badges-link" :title="currentLocale === 'RUS' ? 'Все награды' : 'Barcha yutuqlar'">
-                  <i class="fas fa-arrow-right"></i>
+                <router-link to="/badges" class="btn-all-badges" :title="currentLocale === 'RUS' ? 'Все награды' : 'Barcha yutuqlar'">
+                  <i class="fas fa-chevron-right"></i>
                 </router-link>
               </div>
-              <p class="no-badges-text" v-else>
+              <div class="empty-state small" v-else>
                 {{ t('noBadgesYet') }}
-              </p>
+              </div>
             </div>
           </div>
-
-          <!-- Removed AI Widget to focus on Academics -->
         </div>
       </div>
 
-      <div v-if="status" :class="['status', status.type]" @click="clearStatus">
-        {{ status.message }}
-      </div>
+      <transition name="slide-up">
+        <div v-if="status" :class="['toast-alert', status.type]" @click="clearStatus">
+          {{ status.message }}
+        </div>
+      </transition>
     </div>
 
     <!-- Test Component (shown after subject selection) -->
-    <div class="test-view-container" v-else>
-      <div class="test-header">
-        <div class="test-title-info">
-          <h3>
-            {{ selectedSubject.id }} - {{ selectedLevel }} Test
-          </h3>
-          <span class="questions-count-tag">
-            <i class="fas fa-question-circle"></i> {{ selectedQuestionCount }} {{ t('questions') }}
-          </span>
+    <transition name="fade">
+      <div class="test-view-container" v-if="startTest">
+        <div class="test-header glass-panel">
+          <div class="test-meta">
+            <h3>
+              {{ selectedSubject.id }} <span class="dot">•</span> {{ selectedLevel }}
+            </h3>
+            <span class="q-count">
+              <i class="fas fa-question-circle"></i> {{ selectedQuestionCount }} {{ t('questions') }}
+            </span>
+          </div>
+          <button class="btn-close-test" @click="goBackToSelection">
+            <i class="fas fa-times"></i> {{ t('backToSelection') }}
+          </button>
         </div>
-        <button class="back-btn" @click="goBackToSelection">
-          ← {{ t('backToSelection') }}
-        </button>
-      </div>
 
-      <div class="test-body-card">
-        <TestPage
-          ref="testPage"
-          :subjectId="selectedSubject.id"
-          :levelId="selectedLevel"
-          :questionCount="selectedQuestionCount"
-          @test-completed="handleTestCompletion"
-        />
+        <div class="test-body glass-panel">
+          <TestPage
+            ref="testPage"
+            :subjectId="selectedSubject.id"
+            :levelId="selectedLevel"
+            :questionCount="selectedQuestionCount"
+            @test-completed="handleTestCompletion"
+          />
+        </div>
       </div>
-    </div>
+    </transition>
   </div>
 </template>
 
@@ -303,11 +303,13 @@ import { getRankName, getRankClass, getRankIcon, getNextRankInfo } from '@/utils
 import { sortLevels } from '@/utils/sorters';
 import { getBadges } from '@/utils/badges';
 import TestPage from './testPage/testPage.vue';
+import WelcomeBanner from '@/components/home/WelcomeBanner.vue';
 
 export default {
   name: 'SubjectTestSelection',
   components: {
     TestPage,
+    WelcomeBanner
   },
   setup() {
     const { t, locale } = useI18n();
@@ -1013,915 +1015,631 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+}
 
 .dashboard-wrapper {
   position: relative;
-  min-height: calc(100vh - 100px);
+  min-height: 100vh;
   font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: #f8fafc;
   overflow: hidden;
+  padding-bottom: 3rem;
 }
 
-/* Background glowing elements for futuristic feel */
+/* Abstract Glowing Background */
 .glow-bg {
   position: absolute;
   border-radius: 50%;
-  filter: blur(140px);
+  filter: blur(120px);
   z-index: 0;
-  opacity: 0.06;
+  opacity: 0.15;
   pointer-events: none;
 }
 .glow-bg-1 {
-  width: 500px;
-  height: 500px;
-  background: #3b82f6;
-  top: -5%;
-  left: -5%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+  top: -10%; left: -10%;
 }
 .glow-bg-2 {
-  width: 600px;
-  height: 600px;
-  background: #8b5cf6;
-  bottom: -5%;
-  right: -5%;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, #8b5cf6 0%, transparent 70%);
+  bottom: 10%; right: -10%;
 }
 
-.test-container {
+.test-container, .test-view-wrapper {
   position: relative;
   z-index: 10;
-  max-width: 1400px;
-  width: 95%;
+  max-width: 1280px;
+  width: 92%;
   margin: 0 auto;
-  padding: 2.5rem 0;
+  padding-top: 2.5rem;
 }
 
-/* Welcome Banner Redesign */
-.welcome-banner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
-  padding: 2.5rem 2.25rem;
+/* Glass Panel Base */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 28px;
-  color: white;
-  margin-bottom: 2.5rem;
-  position: relative;
+  box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.05);
   overflow: hidden;
-  box-shadow: 0 20px 40px -15px rgba(37, 99, 235, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.welcome-banner::before {
-  content: '';
-  position: absolute;
-  top: -60%;
-  left: -20%;
-  width: 320px;
-  height: 320px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.45) 0%, transparent 70%);
-  filter: blur(50px);
-  pointer-events: none;
-}
-
-.welcome-banner::after {
-  content: '';
-  position: absolute;
-  bottom: -60%;
-  right: -10%;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, transparent 70%);
-  filter: blur(50px);
-  pointer-events: none;
-}
-
-.welcome-text h1 {
-  font-size: 2.1rem;
-  font-weight: 800;
-  margin: 0 0 0.6rem 0;
-  letter-spacing: -0.75px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(to right, #ffffff, #dbeafe);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.welcome-text p {
-  color: #93c5fd;
-  font-size: 1rem;
-  margin: 0;
-  font-weight: 500;
-}
-
-.welcome-stat-chip {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: rgba(255, 255, 255, 0.07);
-  padding: 0.85rem 1.5rem;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s;
-}
-
-.welcome-stat-chip:hover {
-  transform: translateY(-2px);
-}
-
-.coin-icon {
-  width: 36px;
-  height: 36px;
-  filter: drop-shadow(0 4px 8px rgba(245, 158, 11, 0.3));
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-val {
-  font-size: 1.4rem;
-  font-weight: 800;
-  line-height: 1.1;
-  color: #fbbf24;
-}
-
-.stat-lbl {
-  font-size: 0.72rem;
-  color: #bfdbfe;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-/* Dashboard Grid Layout */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2.5rem;
+  grid-template-columns: 1fr 340px;
+  gap: 2rem;
+  align-items: start;
 }
 
 .selection-panel {
+  padding: 2.5rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-.panel-section {
+/* Premium Tabs */
+.premium-tabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 6px;
+  border-radius: 20px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 16px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-btn:hover {
+  color: #334155;
+}
+
+.tab-btn.active {
   background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  padding: 2.25rem;
-  border-radius: 28px;
-  box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.04), 0 5px 15px rgba(15, 23, 42, 0.01);
-  position: relative;
+  color: #2563eb;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Panel Sections */
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .section-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 1.75rem;
 }
 
 .step-badge {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  background-color: rgba(37, 99, 235, 0.08);
+  width: 32px;
+  height: 32px;
+  background: #eff6ff;
   color: #2563eb;
-  font-size: 0.9rem;
   font-weight: 800;
-  border-radius: 50%;
+  border-radius: 10px;
+}
+
+.step-badge.special {
+  background: #fdf4ff;
+  color: #c026d3;
 }
 
 .section-header h3 {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 800;
   color: #0f172a;
   margin: 0;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.5px;
 }
 
-/* Tab buttons in capsule style */
-.test-type-tabs {
-  display: flex;
-  background: #f1f5f9;
-  padding: 6px;
-  border-radius: 18px;
-  margin-bottom: 2rem;
-  border: 1px solid rgba(15, 23, 42, 0.03);
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 14px 22px;
-  border-radius: 14px;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  font-weight: 700;
-  font-size: 0.98rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.tab-btn:hover {
-  color: #0f172a;
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.tab-btn.active {
-  background: #ffffff;
-  color: #2563eb;
-  box-shadow: 0 6px 15px rgba(15, 23, 42, 0.04);
-}
-
-/* Premium Subject Grid Cards */
-.subject-cards-grid {
+/* Subject Grid */
+.subject-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.25rem;
 }
 
-.subject-card.premium {
+.subject-card {
   position: relative;
-  overflow: hidden;
   background: #ffffff;
-  border: 1.5px solid #f1f5f9;
-  border-radius: 22px;
-  padding: 1.6rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 1.5rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: flex-end;
+  height: 140px;
+}
+
+.subject-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--subject-color);
+  box-shadow: 0 12px 25px -10px rgba(0, 0, 0, 0.1);
+}
+
+.subject-card.selected {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-color: var(--subject-color);
+  box-shadow: 0 0 0 1px var(--subject-color), 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+}
+
+.card-bg-icon {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  font-size: 100px;
+  color: var(--subject-color);
+  opacity: 0.05;
+  transition: all 0.4s ease;
+}
+
+.subject-card:hover .card-bg-icon {
+  transform: rotate(-10deg) scale(1.1);
+  opacity: 0.1;
+}
+
+.card-content {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.015);
+  gap: 8px;
 }
 
-.subject-card.premium:hover {
-  transform: translateY(-6px);
-  border-color: var(--card-color);
-  box-shadow: 0 12px 24px -10px rgba(15, 23, 42, 0.08);
-}
-
-.subject-card.premium.selected {
-  background: linear-gradient(145deg, #ffffff 0%, #eff6ff 100%);
-  border-color: var(--card-color) !important;
-  box-shadow: 0 12px 28px -8px rgba(37, 99, 235, 0.15);
-}
-
-.subject-card-bg {
-  position: absolute;
-  right: -10px;
-  bottom: -15px;
-  font-size: 85px;
-  opacity: 0.04;
-  transform: rotate(-15deg);
-  pointer-events: none;
-  transition: all 0.4s ease;
-  color: var(--card-color);
-}
-
-.subject-card.premium:hover .subject-card-bg {
-  transform: rotate(0deg) scale(1.15);
-  opacity: 0.07;
-}
-
-.subject-card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+.icon-wrapper {
+  width: 40px;
+  height: 40px;
+  background: var(--subject-color);
+  color: white;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
-  background-color: var(--card-color);
-  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 16px -4px rgba(15, 23, 42, 0.08);
-  transition: all 0.3s;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 10px -2px var(--subject-color);
+  margin-bottom: 4px;
 }
 
-.subject-card.premium.selected .subject-card-icon {
-  transform: scale(1.05);
-  box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.25);
-}
-
-.subject-card-details h4 {
-  font-size: 1.08rem;
+.card-content h4 {
+  margin: 0;
+  font-size: 1.1rem;
   font-weight: 800;
   color: #0f172a;
-  margin: 0;
-  letter-spacing: -0.3px;
 }
 
-.subject-badge {
-  font-size: 0.76rem;
-  color: #64748b;
+.status-badge {
+  font-size: 0.75rem;
   font-weight: 600;
-  margin-top: 2px;
+  color: #64748b;
 }
 
-/* Pills selection group */
+/* Pills */
 .pills-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
 }
 
 .pill-btn {
-  border: 1.5px solid rgba(15, 23, 42, 0.08);
+  padding: 12px 24px;
   background: #ffffff;
-  color: #475569;
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 10px 20px;
+  border: 1px solid #e2e8f0;
   border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #475569;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s ease;
 }
 
 .pill-btn:hover {
   background: #f8fafc;
-  border-color: #94a3b8;
+  border-color: #cbd5e1;
   color: #0f172a;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .pill-btn.active {
   background: #2563eb;
-  border-color: #2563eb;
   color: #ffffff;
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2);
+  border-color: #2563eb;
+  box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.4);
 }
 
-/* Action button */
-.start-test-btn {
+/* Action Section */
+.action-section {
+  margin-top: 1rem;
+}
+
+.btn-start-premium {
   width: 100%;
-  padding: 16px;
-  font-size: 1.05rem;
-  font-weight: 700;
+  padding: 18px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
   border: none;
-  border-radius: 16px;
+  border-radius: 18px;
+  font-size: 1.1rem;
+  font-weight: 800;
   cursor: pointer;
-  background: linear-gradient(to right, #3b82f6, #2563eb);
-  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.start-test-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.32);
+.btn-start-premium:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px -5px rgba(37, 99, 235, 0.4);
 }
 
-.start-test-btn:disabled {
+.btn-start-premium:disabled {
   background: #cbd5e1;
   box-shadow: none;
   cursor: not-allowed;
+  transform: none;
 }
 
-/* Sidebar panel redesign */
+/* Special Tests */
+.special-tests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.special-test-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.special-test-card:hover {
+  transform: translateX(6px);
+  border-color: #a855f7;
+  box-shadow: 0 8px 25px -5px rgba(168, 85, 247, 0.15);
+}
+
+.st-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.st-icon.dtm { background: #fef9c3; color: #ca8a04; }
+.st-icon.prezident { background: #f3e8ff; color: #9333ea; }
+
+.st-details {
+  flex: 1;
+  margin: 0 1rem;
+}
+
+.st-details h4 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+  color: #0f172a;
+}
+
+.st-category {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6366f1;
+  background: #e0e7ff;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.btn-st-start {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.special-test-card:hover .btn-st-start {
+  background: #059669;
+}
+
+/* Sidebar Components */
 .sidebar-panel {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
-.sidebar-card {
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  border-radius: 28px;
-  padding: 2rem;
-  box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.04), 0 5px 15px rgba(15, 23, 42, 0.01);
+.premium-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 24px;
+  padding: 1.75rem;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
 }
 
-/* Progress bar alignment */
-.rank-progress-card {
-  position: relative;
+/* Rank Card */
+.rank-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.progress-card-header {
+.rank-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
 }
 
-.progress-target-text {
+.rank-badge {
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.next-rank {
   font-size: 0.8rem;
-  color: #64748b;
   font-weight: 700;
+  color: #64748b;
 }
 
-.progress-bar-container {
-  height: 10px;
+.progress-track {
+  height: 12px;
   background: #f1f5f9;
-  border-radius: 5px;
+  border-radius: 6px;
   overflow: hidden;
-  margin-bottom: 0.75rem;
+  position: relative;
 }
 
-.progress-bar-fill {
+.progress-fill {
   height: 100%;
-  background: linear-gradient(to right, #3b82f6, #8b5cf6);
-  border-radius: 5px;
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  border-radius: 6px;
+  position: relative;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.progress-footer-stats {
+.progress-glow {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shine 2s infinite;
+}
+
+.rank-footer {
   display: flex;
   justify-content: space-between;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: #64748b;
+  color: #475569;
 }
 
-/* AI Coach widget with glow */
-.ai-coach-card {
-  background: linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #f5f3ff 100%);
-  border: 1.5px solid #bfdbfe;
-  box-shadow: 0 15px 30px rgba(59, 130, 246, 0.03);
+.points-needed {
+  color: #3b82f6;
+}
+
+/* AI Coach Card */
+.ai-card {
+  background: linear-gradient(145deg, #ffffff 0%, #eff6ff 100%);
+  border-color: #bfdbfe;
 }
 
 .ai-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1rem;
 }
 
 .ai-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 46px;
+  width: 44px; height: 44px;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   color: white;
-  font-size: 1.35rem;
-  border-radius: 50%;
-  box-shadow: 0 6px 15px rgba(59, 130, 246, 0.25);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
-.ai-header h4 {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0;
-}
+.ai-title h4 { margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; }
+.online-dot { font-size: 0.75rem; color: #10b981; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.online-dot::before { content: ''; width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
 
-.status-online {
-  font-size: 0.74rem;
-  color: #10b981;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 2px;
-}
-.status-online::before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  background: #10b981;
-  border-radius: 50%;
-  box-shadow: 0 0 8px #10b981;
-}
-
-.ai-advice {
-  font-size: 0.92rem;
-  color: #475569;
-  line-height: 1.65;
+.ai-text {
+  font-size: 0.95rem;
+  color: #334155;
+  line-height: 1.5;
   font-style: italic;
-  margin: 0 0 1.25rem 0;
+  margin: 0 0 1rem 0;
 }
 
-.ai-loading-text {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #64748b;
-  font-weight: 600;
-  font-style: normal;
-}
-
-.ai-loading-text i {
-  color: #3b82f6;
-}
-
-.ai-action-badge {
+.btn-ai-action {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.08);
-  padding: 8px 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
+  transition: all 0.2s;
 }
+.btn-ai-action:hover { background: rgba(37, 99, 235, 0.15); transform: translateY(-2px); }
 
-.ai-action-badge:hover {
-  background: rgba(37, 99, 235, 0.14);
-  transform: translateY(-1.5px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
-}
-
-/* Streak and Achievements widget */
-.streak-widget-card h4 {
-  font-size: 1.05rem;
+/* Streaks and Badges */
+.achievements-card h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
   font-weight: 800;
   color: #0f172a;
-  margin: 0 0 1.25rem 0;
 }
 
-.streak-badge-container {
+.streak-box {
   display: flex;
   align-items: center;
   gap: 14px;
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  background: #fffbeb;
   border: 1px solid #fde047;
-  padding: 14px;
-  border-radius: 18px;
+  padding: 1rem;
+  border-radius: 16px;
   margin-bottom: 1.5rem;
-  box-shadow: 0 6px 15px rgba(253, 224, 71, 0.1);
 }
 
-.streak-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+.fire-icon {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
   color: white;
   border-radius: 12px;
-  font-size: 1.15rem;
-  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
 }
 
-.streak-details {
+.streak-info strong { font-size: 1.2rem; font-weight: 800; color: #b45309; display: block; }
+.streak-info span { font-size: 0.8rem; font-weight: 700; color: #d97706; }
+
+.badges-preview h5 { margin: 0 0 0.75rem 0; font-size: 0.9rem; font-weight: 700; color: #475569; }
+
+.mini-badges-row {
   display: flex;
-  flex-direction: column;
-}
-
-.streak-num {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #b45309;
-  line-height: 1.1;
-}
-
-.streak-lbl {
-  font-size: 0.74rem;
-  color: #d97706;
-  font-weight: 600;
-  margin-top: 1px;
-}
-
-.badges-preview-sec h5 {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: #475569;
-  margin: 0 0 12px 0;
-}
-
-.mini-badges-list {
-  display: flex;
-  align-items: center;
   gap: 10px;
 }
 
-.mini-badge-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  border: 1.5px solid;
-  font-size: 1rem;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.02);
+.badge-item {
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,0.5);
+  border: 1.5px solid var(--badge-color);
+  color: var(--badge-color);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 10px -2px rgba(0,0,0,0.05);
 }
 
-.all-badges-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+.btn-all-badges {
+  width: 40px; height: 40px;
   background: #f1f5f9;
   color: #64748b;
-  border: 1.5px solid #e2e8f0;
-  font-size: 0.9rem;
-  cursor: pointer;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none;
   transition: all 0.2s;
 }
-.all-badges-link:hover {
-  background: #cbd5e1;
-  color: #0f172a;
-}
+.btn-all-badges:hover { background: #e2e8f0; color: #0f172a; }
 
-.no-badges-text {
-  font-size: 0.8rem;
-  color: #64748b;
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* Test view container */
-.test-view-container {
-  max-width: 950px;
-  margin: 30px auto;
-  padding: 0 16px;
-  position: relative;
-  z-index: 10;
-}
-
+/* Test View Header */
 .test-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 28px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+}
+
+.test-meta h3 { margin: 0 0 6px 0; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
+.test-meta .dot { color: #cbd5e1; margin: 0 8px; }
+.q-count { font-size: 0.85rem; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 4px 12px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; }
+
+.btn-close-test {
   background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  border-radius: 22px;
-  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.03);
-  margin-bottom: 24px;
-}
-
-.test-title-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.test-title-info h3 {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0;
-}
-
-.questions-count-tag {
-  font-size: 0.84rem;
-  font-weight: 700;
-  color: #2563eb;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(37, 99, 235, 0.08);
-  padding: 5px 14px;
-  border-radius: 20px;
-  width: max-content;
-}
-
-.test-body-card {
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  border-radius: 28px;
-  padding: 2.25rem;
-  box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.04);
-}
-
-.back-btn {
-  padding: 10px 20px;
-  background-color: #ffffff;
-  border: 1.5px solid rgba(15, 23, 42, 0.08);
-  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 10px 18px;
+  border-radius: 12px;
   font-weight: 700;
   color: #475569;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.back-btn:hover {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: #ffffff;
-  transform: translateX(-4px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
-}
-
-/* Special tests custom design */
-.special-tests-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-.special-test-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px;
-  background: #ffffff;
-  border-radius: 20px;
-  border: 1.5px solid #f1f5f9;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.special-test-card:hover {
-  border-color: #8b5cf6;
-  box-shadow: 0 12px 28px rgba(139, 92, 246, 0.12);
-  transform: translateY(-2px);
-}
-.st-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-}
-.st-icon.dtm { background: #fef9c3; color: #a16207; }
-.st-icon.prezident { background: #f3e8ff; color: #9333ea; }
-.st-details {
-  flex: 1;
-  margin: 0 20px;
-}
-.st-details h4 {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 5px 0;
-}
-.st-category {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #4f46e5;
-  background: #eeebff;
-  padding: 4px 10px;
-  border-radius: 8px;
-}
-.st-start-btn {
-  background: #10b981;
-  color: white;
-  border: none;
-  padding: 11px 22px;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 8px;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
-.special-test-card:hover .st-start-btn {
-  background: #059669;
-  box-shadow: 0 6px 16px rgba(5, 150, 105, 0.3);
+.btn-close-test:hover { background: #ef4444; color: white; border-color: #ef4444; }
+
+.test-body {
+  padding: 2.5rem;
 }
 
-.no-tests-banner {
-  text-align: center;
-  padding: 40px;
-  color: #94a3b8;
-}
-.no-tests-banner i {
-  font-size: 3rem;
-  margin-bottom: 15px;
-}
+/* Utils & Animations */
+.loading-state { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 2rem; color: #64748b; font-weight: 600; }
+.empty-state { text-align: center; padding: 2rem; color: #94a3b8; font-weight: 600; }
+.empty-state i { font-size: 2.5rem; margin-bottom: 1rem; color: #cbd5e1; }
+.empty-state.small { padding: 1rem; font-size: 0.85rem; }
 
-/* Loading animations */
-.loading-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 1rem;
-}
+.spinner { width: 24px; height: 24px; border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
+.spinner-small { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+.spinner-small.blue { border-color: #bfdbfe; border-top-color: #3b82f6; }
 
-.mini-loader {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid #3b82f6;
-  border-top: 2px solid transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shine { 100% { transform: translateX(100%); } }
+@keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
 
-.loader {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid #fff;
-  border-top: 2px solid transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
+/* Transitions */
+.fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.4s ease; }
+.fade-slide-enter-from { opacity: 0; transform: translateX(20px); }
+.fade-slide-leave-to { opacity: 0; transform: translateX(-20px); }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+.expand-enter-active, .expand-leave-active { transition: all 0.4s ease; max-height: 500px; opacity: 1; overflow: hidden; }
+.expand-enter-from, .expand-leave-to { max-height: 0; opacity: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
 
-.status {
-  margin-top: 20px;
-  padding: 12px 16px;
-  text-align: center;
-  border-radius: 14px;
-  font-weight: 700;
-  font-size: 0.92rem;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-}
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 
-.status.success {
-  background: #ecfdf5;
-  border: 1.5px solid #a7f3d0;
-  color: #065f46;
-}
+.toast-alert { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); padding: 14px 24px; border-radius: 16px; font-weight: 700; font-size: 0.95rem; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.1); cursor: pointer; }
+.toast-alert.success { background: #ecfdf5; color: #065f46; border: 1px solid #34d399; }
+.toast-alert.error { background: #fef2f2; color: #991b1b; border: 1px solid #f87171; }
+.toast-alert.info { background: #eff6ff; color: #1e40af; border: 1px solid #60a5fa; }
 
-.status.error {
-  background: #fef2f2;
-  border: 1.5px solid #fca5a5;
-  color: #991b1b;
-}
+.slide-up-enter-active, .slide-up-leave-active { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.slide-up-enter-from, .slide-up-leave-to { transform: translate(-50%, 100%); opacity: 0; }
 
-.status.info {
-  background: #f0f9ff;
-  border: 1.5px solid #bae6fd;
-  color: #075985;
-}
-
-/* AI Seeder Generator Widget */
-.ai-generator-widget {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(59, 130, 246, 0.05));
-  border: 1.5px solid rgba(168, 85, 247, 0.15) !important;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.ai-gen-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.ai-gen-header h4 {
-  font-size: 1rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0;
-}
-.gen-icon {
-  color: #a855f7;
-  font-size: 1.25rem;
-  animation: pulse-icon 2s infinite ease-in-out;
-}
-.ai-gen-desc {
-  font-size: 0.84rem;
-  color: #64748b;
-  line-height: 1.45;
-  margin: 0;
-}
-.ai-gen-btn {
-  background: linear-gradient(135deg, #a855f7, #3b82f6);
-  color: white !important;
-  text-decoration: none;
-  text-align: center;
-  font-size: 0.85rem;
-  font-weight: 700;
-  padding: 12px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 6px 15px rgba(168, 85, 247, 0.18);
-  transition: all 0.25s ease;
-}
-.ai-gen-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(168, 85, 247, 0.28);
-}
-@keyframes pulse-icon {
-  0% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1); opacity: 0.8; }
-}
-
-@media (max-width: 900px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
+@media (max-width: 1024px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
 }
 </style>

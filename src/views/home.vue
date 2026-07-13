@@ -64,64 +64,7 @@
               </div>
             </div>
 
-            <!-- Level selection -->
-            <transition name="expand">
-            <div class="panel-section" v-if="selectedSubject">
-              <div class="section-header">
-                <span class="step-badge">2</span>
-                <h3>{{ t('selectLevel') }}</h3>
-              </div>
-
-              <div v-if="loadingLevels" class="loading-state">
-                <div class="spinner"></div>
-                <p>{{ t('loadingLevels') }}</p>
-              </div>
-
-              <div class="pills-grid" v-else>
-                <button
-                  type="button"
-                  v-for="level in levels"
-                  :key="level"
-                  :class="['pill-btn', { active: selectedLevel === level }]"
-                  @click="selectedLevel = level"
-                >
-                  {{ level }}
-                </button>
-              </div>
-            </div>
-            </transition>
-
-            <!-- Question count selection -->
-            <transition name="expand">
-            <div class="panel-section" v-if="selectedLevel">
-              <div class="section-header">
-                <span class="step-badge">3</span>
-                <h3>{{ t('questionCount') }}</h3>
-              </div>
-
-              <div class="pills-grid">
-                <button
-                  type="button"
-                  v-for="count in questionCounts"
-                  :key="count"
-                  :class="['pill-btn', { active: selectedQuestionCount === count }]"
-                  @click="selectedQuestionCount = count"
-                >
-                  {{ count }} {{ t('questions') }}
-                </button>
-              </div>
-            </div>
-            </transition>
-
-            <!-- Start Button -->
-            <transition name="fade">
-            <div class="action-section" v-if="selectedQuestionCount">
-              <button @click="startTestWithFilters" class="btn-start-premium" :disabled="!canStart">
-                <span v-if="!loading">{{ t('startTest') }} <i class="fas fa-arrow-right"></i></span>
-                <div v-else class="spinner-small"></div>
-              </button>
-            </div>
-            </transition>
+            
           </div>
 
           <!-- SPECIAL TESTS TAB -->
@@ -289,6 +232,76 @@
         </div>
       </div>
     </transition>
+  
+    <!-- Modal Wizard Overlay -->
+    <transition name="modal-fade">
+      <div class="premium-modal-overlay" v-if="showTestWizard" @click.self="closeWizard">
+        <div class="modal-wizard-card">
+          <div class="modal-header">
+            <div class="modal-title-wrapper">
+              <div class="m-icon-wrapper"><i :class="getSubjectIcon(selectedSubject.id)"></i></div>
+              <div class="m-title-info">
+                <h3>{{ selectedSubject.id }}</h3>
+                <span>{{ currentLocale === 'RUS' ? 'Настройки Теста' : 'Test Sozlamalari' }}</span>
+              </div>
+            </div>
+            <button class="m-close-btn" @click="closeWizard"><i class="fas fa-times"></i></button>
+          </div>
+          
+          <div class="modal-body">
+            <!-- Level Selection -->
+            <div class="m-section">
+              <div class="m-section-title">
+                <span class="m-step">1</span>
+                <h4>{{ t('selectLevel') }}</h4>
+              </div>
+              <div v-if="loadingLevels" class="loading-state small">
+                <div class="spinner"></div>
+              </div>
+              <div class="pills-grid" v-else>
+                <button
+                  type="button"
+                  v-for="level in levels"
+                  :key="level"
+                  :class="['pill-btn', { active: selectedLevel === level }]"
+                  @click="selectedLevel = level"
+                >
+                  {{ level }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Question count selection -->
+            <transition name="expand">
+            <div class="m-section" v-if="selectedLevel">
+              <div class="m-section-title">
+                <span class="m-step">2</span>
+                <h4>{{ t('questionCount') }}</h4>
+              </div>
+              <div class="pills-grid">
+                <button
+                  type="button"
+                  v-for="count in questionCounts"
+                  :key="count"
+                  :class="['pill-btn', { active: selectedQuestionCount === count }]"
+                  @click="selectedQuestionCount = count"
+                >
+                  {{ count }} {{ t('questions') }}
+                </button>
+              </div>
+            </div>
+            </transition>
+          </div>
+
+          <div class="modal-footer">
+             <button @click="startTestWithFilters" class="btn-start-premium" :disabled="!canStart">
+               <span v-if="!loading">{{ t('startTest') }} <i class="fas fa-play"></i></span>
+               <div v-else class="spinner-small"></div>
+             </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -320,6 +333,7 @@ export default {
       selectedSubject: null,
       selectedLevel: '',
       selectedQuestionCount: '',
+      showTestWizard: false,
       questionCounts: [5, 10, 15, 20, 25, 30],
       subjects: [],
       levels: [],
@@ -448,6 +462,7 @@ export default {
     startSpecialTest(test) {
       this.loading = true;
       this.startTest = true;
+        this.showTestWizard = false;
       this.$nextTick(() => {
         this.$refs.testPage?.initializeTest({
           sessionId: 'special_' + Math.random().toString(36).substring(2, 9),
@@ -1665,4 +1680,112 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 @media (max-width: 1024px) {
   .dashboard-grid { grid-template-columns: 1fr; }
 }
+
+/* Modal Wizard Styles */
+.premium-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-wizard-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 520px;
+  border-radius: 28px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.75rem 2rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.m-icon-wrapper {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 6px 15px rgba(59, 130, 246, 0.25);
+}
+
+.m-title-info h3 { margin: 0; font-size: 1.35rem; font-weight: 800; color: #0f172a; }
+.m-title-info span { font-size: 0.85rem; font-weight: 600; color: #64748b; }
+
+.m-close-btn {
+  width: 36px; height: 36px;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 50%;
+  color: #475569;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.m-close-btn:hover { background: #cbd5e1; color: #0f172a; transform: scale(1.05); }
+
+.modal-body {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.m-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.m-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.m-step {
+  width: 26px; height: 26px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+}
+
+.m-section-title h4 { margin: 0; font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+
+.modal-footer {
+  padding: 1.5rem 2rem 2rem 2rem;
+}
+
+.modal-fade-enter-active, .modal-fade-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+.modal-fade-enter-from .modal-wizard-card, .modal-fade-leave-to .modal-wizard-card { transform: scale(0.95) translateY(20px); }
+
+/* Remove old action-section */
+.loading-state.small { padding: 1rem; }
+
 </style>

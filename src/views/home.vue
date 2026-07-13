@@ -1,10 +1,11 @@
 <template>
-  <div class="dashboard-wrapper">
+  <div class="app-root-container">
+    <div class="dashboard-wrapper" v-show="!startTest">
     <!-- Glowing background elements for premium feel -->
     <div class="glow-bg glow-bg-1"></div>
     <div class="glow-bg glow-bg-2"></div>
 
-    <div class="test-container" v-if="!startTest">
+    <div class="test-container">
       <!-- Welcome Banner -->
       <WelcomeBanner 
         :welcomeTitle="t('welcomeTitle', { name: userDisplayName || t('username') })"
@@ -204,33 +205,17 @@
       </transition>
     </div>
 
-    <!-- Test Component (shown after subject selection) -->
+    <!-- Test Component -->
     <transition name="fade">
-      <div class="test-view-container" v-if="startTest">
-        <div class="test-header glass-panel">
-          <div class="test-meta">
-            <h3>
-              {{ selectedSubject.id }} <span class="dot">•</span> {{ selectedLevel }}
-            </h3>
-            <span class="q-count">
-              <i class="fas fa-question-circle"></i> {{ selectedQuestionCount }} {{ t('questions') }}
-            </span>
-          </div>
-          <button class="btn-close-test" @click="goBackToSelection">
-            <i class="fas fa-times"></i> {{ t('backToSelection') }}
-          </button>
-        </div>
-
-        <div class="test-body glass-panel">
-          <TestPage
-            ref="testPage"
-            :subjectId="selectedSubject.id"
-            :levelId="selectedLevel"
-            :questionCount="selectedQuestionCount"
-            @test-completed="handleTestCompletion"
-          />
-        </div>
-      </div>
+      <TestPage
+        v-if="startTest"
+        ref="testPage"
+        :subjectId="selectedSubject.id"
+        :levelId="selectedLevel"
+        :questionCount="selectedQuestionCount"
+        @test-completed="handleTestCompletion"
+        @exit-test="goBackToSelection"
+      />
     </transition>
   
     <!-- Modal Wizard Overlay -->
@@ -302,6 +287,7 @@
         </div>
       </div>
     </transition>
+      </div>
   </div>
 </template>
 

@@ -4,6 +4,7 @@
     <!-- Floating Header -->
     <header class="dynamic-island-header">
       <div class="header-left">
+        <button class="exit-pro-btn" @click="$emit('exit-test')"><i class="fas fa-arrow-left"></i></button>
         <span class="subject-name">{{ displaySubject }}</span>
         <span class="level-tag">{{ displayLevel }}</span>
       </div>
@@ -604,6 +605,21 @@ defineExpose({ initializeTest: fetchQuestions });
 
 
 <style scoped>
+
+.exit-pro-btn {
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: #64748b;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  margin-right: 8px;
+  transition: all 0.2s;
+}
+.exit-pro-btn:hover { background: #e2e8f0; color: #0f172a; }
+
 .premium-layout {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -613,6 +629,10 @@ defineExpose({ initializeTest: fetchQuestions });
   font-family: 'Plus Jakarta Sans', sans-serif;
   color: #0f172a;
   padding: 24px;
+
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* Dynamic Island Floating Header */

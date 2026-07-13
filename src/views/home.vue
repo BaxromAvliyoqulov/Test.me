@@ -14,7 +14,7 @@
 
       <div class="dashboard-grid">
         <!-- Left Side: Interactive Selection Panel -->
-        <div class="selection-panel glass-panel">
+        <div class="selection-panel">
           
           <!-- Test Type Tabs -->
           <div class="test-type-tabs premium-tabs">

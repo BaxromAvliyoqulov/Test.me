@@ -1241,37 +1241,60 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   color: #64748b;
 }
 
-/* Pills */
+/* Premium Pills */
 .pills-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
 }
 
 .pill-btn {
-  padding: 12px 24px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #475569;
+  position: relative;
+  overflow: hidden;
+  padding: 14px 28px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(226, 232, 240, 0.9);
+  border-radius: 16px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #64748b;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px -5px rgba(15, 23, 42, 0.03);
 }
 
 .pill-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: #0f172a;
-  transform: translateY(-2px);
+  background: #ffffff;
+  border-color: #93c5fd;
+  color: #1e3a8a;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 25px -8px rgba(59, 130, 246, 0.25);
 }
 
 .pill-btn.active {
-  background: #2563eb;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: #ffffff;
   border-color: #2563eb;
-  box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 14px 30px -6px rgba(37, 99, 235, 0.4);
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* Inner glow effect for active state */
+.pill-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 60%);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.5s ease;
+  pointer-events: none;
+}
+
+.pill-btn.active::after {
+  opacity: 1;
+  transform: scale(1);
 }
 
 /* Action Section */

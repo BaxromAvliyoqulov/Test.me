@@ -1,15 +1,26 @@
 <template>
-  <mainLayout>
+  <component :is="layout">
     <router-view />
-  </mainLayout>
+  </component>
 </template>
 
 <script>
 import MainLayout from '@/layout/mainLayout.vue';
+
 export default {
   components: {
     MainLayout,
   },
+  computed: {
+    layout() {
+      // If the route starts with /admin, do not use MainLayout.
+      // Just render a plain div (or fragment) to avoid nesting sidebars.
+      if (this.$route.path.startsWith('/admin')) {
+        return 'div';
+      }
+      return 'MainLayout';
+    }
+  }
 };
 </script>
 

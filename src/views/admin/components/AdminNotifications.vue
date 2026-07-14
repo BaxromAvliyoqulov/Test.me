@@ -106,8 +106,12 @@
 
 <script>
 import { db } from '@/config/firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { useToast } from 'vue-toastification';
+import { confirmDelete } from '@/utils/sweetalert';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const toast = useToast();
 
 export default {
   name: 'AdminNotifications',
@@ -239,11 +243,12 @@ Matn: "${this.form.body}"`;
       } finally { this.sending = false; }
     },
     async deleteNotification(notif) {
-      if (!confirm('Bu bildirishnomani o\'chirasizmi?')) return;
+      if (!(await confirmDelete('O\'chirish', 'Bu bildirishnomani o\'chirasizmi?'))) return;
       try {
         await deleteDoc(doc(db, 'notifications', notif.id));
         this.history = this.history.filter(n => n.id !== notif.id);
-      } catch(e) { alert('Xatolik: ' + e.message); }
+        toast.success("Bildirishnoma o'chirildi");
+      } catch(e) { toast.error('Xatolik: ' + e.message); }
     }
   }
 }

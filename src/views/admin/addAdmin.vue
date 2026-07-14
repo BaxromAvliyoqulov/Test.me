@@ -123,6 +123,7 @@
 import { db } from '@/config/firebase';
 import { collection, getDocs, doc, updateDoc, query, where, limit } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
+import { confirmDelete } from '@/utils/sweetalert';
 
 const toast = useToast();
 
@@ -258,7 +259,10 @@ export default {
       } catch(e) { toast.error('Xatolik: ' + e.message); }
     },
     async removeAdmin(admin) {
-      if (!confirm(`${admin.displayName || admin.email} foydalanuvchining admin huquqini olasizmi?`)) return;
+      if (!(await confirmDelete(
+        'Adminni o\'chirish',
+        `${admin.displayName || admin.email} foydalanuvchisidan adminlikni olasizmi?`
+      ))) return;
       try {
         await updateDoc(doc(db, 'users', admin.id), { isAdmin: false, adminRole: null });
         toast.info(`${admin.displayName || admin.email} adminlar ro'yxatidan o'chirildi.`);

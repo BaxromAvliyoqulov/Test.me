@@ -59,6 +59,7 @@ import {
 import { getAuth } from 'firebase/auth';
 import * as XLSX from 'xlsx';
 import { useI18n } from '@/utils/i18n';
+import { confirmDelete } from '@/utils/sweetalert';
 import DashboardHero from '@/components/dashboard/DashboardHero.vue';
 import SubjectAnalytics from '@/components/dashboard/SubjectAnalytics.vue';
 import ResultsTable from '@/components/dashboard/ResultsTable.vue';
@@ -287,7 +288,7 @@ export default {
       }
     },
     async deleteItem(item) {
-      if (!confirm(this.t('deleteConfirm'))) return;
+      if (!(await confirmDelete(this.t('deleteConfirm'), "Bu amalni ortga qaytarib bo'lmaydi!"))) return;
       try {
         await deleteDoc(doc(db, 'results', item.id));
         this.fetchResults();

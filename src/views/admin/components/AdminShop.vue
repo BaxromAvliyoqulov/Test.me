@@ -142,7 +142,11 @@
 
 <script>
 import { db } from '@/config/firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, addDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { useToast } from 'vue-toastification';
+import { confirmDelete } from '@/utils/sweetalert';
+
+const toast = useToast();
 
 export default {
   name: 'AdminShop',
@@ -212,7 +216,10 @@ export default {
       this.form = { id: '', name: '', emoji: '🎁', type: 'cosmetic', rarity: 'Common', minValue: 100, maxValue: 500, description: '' };
     },
     async deleteItem(item) {
-      if (!confirm(`"${item.name || item.id}" ni o'chirasizmi?`)) return;
+      if (!(await confirmDelete(
+        'Mahsulotni o\'chirish',
+        `"${item.name || item.id}" ni o'chirasizmi?`
+      ))) return;
       try {
         await deleteDoc(doc(db, 'shopItems', item.id));
         this.allItems = this.allItems.filter(i => i.id !== item.id);

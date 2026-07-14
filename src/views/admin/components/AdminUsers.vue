@@ -251,6 +251,7 @@ import { collection, getDocs, doc, updateDoc, query, where } from 'firebase/fire
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import { getRankName, getRankClass } from '@/utils/ranks';
 import { useToast } from 'vue-toastification';
+import { confirmDelete } from '@/utils/sweetalert';
 
 const toast = useToast();
 
@@ -459,13 +460,15 @@ export default {
         toast.error('Xatolik yuz berdi: ' + e.message); 
       }
     },
-    confirmBan(user) {
-      if (confirm(`${user.displayName || user.email} ni ban qilasizmi?`)) {
+    async banUser(user) {
+      if (!(await confirmDelete(
+        'Foydalanuvchini bloklash',
+        `${user.displayName || user.email} ni bloklaysizmi?`
+      ))) return;
         updateDoc(doc(db, 'users', user.id), { isAdmin: false }).then(() => {
           toast.info('Foydalanuvchi admin huquqidan mahrum qilindi.');
           this.loadUsers();
         }).catch(e => toast.error('Xatolik yuz berdi: ' + e.message));
-      }
     },
     sendMail(user) {
       toast.info(`Maktub tizimi yozilmoqda... ${user.email} ga tez orada xat yozish imkoni bo'ladi.`);
@@ -495,17 +498,20 @@ export default {
       this.selectedUsers = [];
       toast.success(`${successCount} ta foydalanuvchiga muvaffaqiyatli ${this.bulkPointsToAdd} TP qo'shildi!`);
     },
-    async confirmBulkBan() {
-      if (confirm(`Rostdan ham tanlangan ${this.selectedUsers.length} ta foydalanuvchini bloklamoqchimisiz?`)) {
+    async bulkBan() {
+      if (this.selectedUsers.length === 0) return;
+      if (!(await confirmDelete(
+        'Ommaviy Bloklash',
+        `Rostdan ham tanlangan ${this.selectedUsers.length} ta foydalanuvchini bloklamoqchimisiz?`
+      ))) return;
         toast.warning('Ommaviy Ban qilish boshlandi...');
         for (const uid of this.selectedUsers) {
           try { await updateDoc(doc(db, 'users', uid), { isAdmin: false }); } 
           catch(e) { console.error(e); }
         }
-        toast.success('Foydalanuvchilar muvaffaqiyatli bloklandi.');
+        toast.success("Ommaviy bloklash muvaffaqiyatli yakunlandi!");
         this.selectedUsers = [];
         this.loadUsers();
-      }
     },
     
     exportCSV() {

@@ -184,6 +184,7 @@
 import { db } from '@/config/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
+import { confirmDelete } from '@/utils/sweetalert';
 
 const toast = useToast();
 
@@ -358,7 +359,10 @@ export default {
     },
 
     async deleteSubject(subject) {
-      if (!confirm(`DIQQAT: "${subject.id}" fanini butunlay o'chirasizmi? Barcha testlar yo'qoladi!`)) return;
+      if (!(await confirmDelete(
+        'Fanni o\'chirish', 
+        `DIQQAT: "${subject.id}" fanini butunlay o'chirasizmi? Barcha testlar yo'qoladi!`
+      ))) return;
       try { 
         await deleteDoc(doc(db, 'subjects', subject.id)); 
         this.subjects = this.subjects.filter(s => s.id !== subject.id);
@@ -369,7 +373,10 @@ export default {
     },
     
     async deleteLevel(subjectId, levelId) {
-      if (!confirm(`"${levelId}" darajasini o'chirasizmi?`)) return;
+      if (!(await confirmDelete(
+        'Darajani o\'chirish',
+        `"${levelId}" darajasini o'chirasizmi?`
+      ))) return;
       try { 
         await deleteDoc(doc(db, 'subjects', subjectId, 'levels', levelId)); 
         
@@ -398,7 +405,10 @@ export default {
     },
 
     async deleteTest(test) {
-      if (!confirm(`Ushbu test savolini bazadan butunlay o'chirib yuborasizmi?`)) return;
+      if (!(await confirmDelete(
+        'Testni o\'chirish',
+        `Ushbu test savolini bazadan butunlay o'chirib yuborasizmi?`
+      ))) return;
       const { subjectId, levelId } = this.viewingTests;
       try {
         await deleteDoc(doc(db, 'subjects', subjectId, 'levels', levelId, 'tests', test.id));

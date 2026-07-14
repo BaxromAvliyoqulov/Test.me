@@ -90,7 +90,7 @@
             <span class="setting-label">Barcha natijalarni tozalash</span>
             <span class="setting-desc">Bu amal qaytarilmaydi! Barcha test natijalari o'chadi.</span>
           </div>
-          <button class="danger-btn" @click="confirmClearResults">
+          <button class="danger-btn" @click="resetResults">
             <i class="fas fa-trash"></i> Tozalash
           </button>
         </div>
@@ -110,7 +110,11 @@
 
 <script>
 import { db } from '@/config/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
+import { useToast } from 'vue-toastification';
+import { confirmDelete } from '@/utils/sweetalert';
+
+const toast = useToast();
 
 export default {
   name: 'AdminSettings',
@@ -165,9 +169,17 @@ export default {
         this.saveStatus = { type: 'error', message: 'Saqlashda xatolik: ' + e.message };
       } finally { this.saving = false; }
     },
-    confirmClearResults() {
-      if (confirm('DIQQAT! Barcha test natijalarini o\'chirasizmi? Bu amal qaytarilmaydi!')) {
-        alert('Bu funksiya hali ishga tushirilmagan. Xavfsizlik uchun to\'g\'ridan-to\'g\'ri Firebase konsolidan bajaring.');
+    async resetResults() {
+      if (!(await confirmDelete(
+        'Barcha natijalarni o\'chirish', 
+        'DIQQAT! Barcha test natijalarini o\'chirasizmi? Bu amal qaytarilmaydi!'
+      ))) return;
+      try {
+        const snapshot = await getDocs(collection(db, 'results'));
+        snapshot.forEach(async (d) => await deleteDoc(d.ref));
+        toast.success("Barcha test natijalari o'chirildi.");
+      } catch (e) {
+        toast.error("Xatolik: " + e.message);
       }
     }
   }

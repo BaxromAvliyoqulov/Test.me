@@ -63,9 +63,7 @@ import AdminFinance from './components/AdminFinance.vue';
 import AddAdminComponent from './addAdmin.vue';
 import UploadExcelComponent from './uploadExcel.vue';
 import AddSubjectComponent from './addSubject.vue';
-
-// Lazy-loaded external views
-const AdminSeederView = { template: '<div style="padding:2rem;text-align:center;color:#64748b"><i class="fas fa-robot" style="font-size:3rem;margin-bottom:1rem;display:block;color:#3b82f6"></i><h3>AI Test Seeder sahifasiga o\'tish...</h3></div>', mounted() { window.open("/admin-seeder", "_blank"); } };
+import AdminSeederComponent from '@/views/AdminSeeder.vue';
 
 const VIEW_MAP = {
   overview:      AdminOverview,
@@ -76,7 +74,7 @@ const VIEW_MAP = {
   subjects:      AdminSubjects,
   addSubject:    AddSubjectComponent,
   uploadExcel:   UploadExcelComponent,
-  aiSeeder:      AdminSeederView,
+  aiSeeder:      AdminSeederComponent,
   addAdmin:      AddAdminComponent,
   notifications: AdminNotifications,
   certificates:  { template: '<div style="padding:2rem;text-align:center;color:#64748b"><i class="fas fa-certificate" style="font-size:3rem;color:#f59e0b;display:block;margin-bottom:1rem"></i><h3>Sertifikatlar boshqaruvi</h3><p>Firebase Firestore > "certificates" kolleksiyasini tekshiring.</p></div>' },

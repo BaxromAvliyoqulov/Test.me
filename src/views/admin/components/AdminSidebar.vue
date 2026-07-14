@@ -1,7 +1,7 @@
 <template>
   <aside class="admin-sidebar" :class="{ collapsed: isCollapsed }">
     <div class="sidebar-header">
-      <div class="logo-area">
+      <div class="logo-area" :class="{ 'hidden': isCollapsed }">
         <div class="logo-icon"><i class="fas fa-crown"></i></div>
         <transition name="label-fade">
           <span v-if="!isCollapsed" class="logo-text">Admin<span>Panel</span></span>
@@ -130,11 +130,20 @@ export default {
   min-height: 72px;
 }
 
+.admin-sidebar.collapsed .sidebar-header {
+  justify-content: center;
+  padding: 20px 0;
+}
+
 .logo-area {
   display: flex;
   align-items: center;
   gap: 12px;
   overflow: hidden;
+  transition: opacity 0.2s;
+}
+.logo-area.hidden {
+  display: none;
 }
 
 .logo-icon {
@@ -230,6 +239,11 @@ export default {
   position: relative;
 }
 
+.admin-sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 10px 0;
+}
+
 .nav-item:hover {
   background: rgba(255,255,255,0.07);
   color: white;
@@ -262,6 +276,10 @@ export default {
 .sidebar-footer {
   padding: 10px;
   border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.admin-sidebar.collapsed .sidebar-footer {
+  padding: 10px 0;
 }
 
 .logout-item { color: #f87171; }

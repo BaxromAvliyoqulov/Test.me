@@ -122,7 +122,11 @@ import { useToast } from 'vue-toastification';
 
 const toast = useToast();
 
-const aiPrompt = ref(`Menga O'zbekiston maktab darsliklariga asoslangan 10 ta test savolini faqat quyidagi JSON massiv formatida (boshqa hech qanday izohlarsiz) tuzib ber:
+const aiPrompt = computed(() => {
+  const fan = selectedSubject.value ? selectedSubject.value.id : "[FAN NOMI]";
+  const daraja = selectedLevel.value ? selectedLevel.value : "[SINF/DARAJA]";
+  
+  return `Menga O'zbekiston maktab darsliklariga asoslangan, "${fan}" fani bo'yicha "${daraja}" uchun 10 ta test savolini faqat quyidagi JSON massiv formatida (boshqa hech qanday izohlarsiz) tuzib ber:
 
 [
   {
@@ -130,7 +134,8 @@ const aiPrompt = ref(`Menga O'zbekiston maktab darsliklariga asoslangan 10 ta te
     "options": ["Variant A", "Variant B", "Variant C", "Variant D"],
     "answer": "To'g'ri javob (options ichidagi matn bilan aynan bir xil bo'lishi shart)"
   }
-]`);
+]`;
+});
 
 const copied = ref(false);
 const subjects = ref([]);

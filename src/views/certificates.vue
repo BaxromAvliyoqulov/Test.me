@@ -11,103 +11,30 @@
       </div>
 
       <!-- Stats overview -->
-      <div class="stats-overview">
-        <div class="overview-card">
-          <span class="value">{{ unlockedCount }} / {{ certificates.length }}</span>
-          <span class="label">{{ isRus ? 'Получено сертификатов' : 'Olingan sertifikatlar' }}</span>
-        </div>
-        <div class="overview-card">
-          <span class="value">{{ elementaryCount }}</span>
-          <span class="label">Elementary tests</span>
-        </div>
-        <div class="overview-card">
-          <span class="value">{{ intermediateCount }}</span>
-          <span class="label">Intermediate tests</span>
-        </div>
-      </div>
+      <CertStats 
+        :unlockedCount="unlockedCount"
+        :totalCount="certificates.length"
+        :elementaryCount="elementaryCount"
+        :intermediateCount="intermediateCount"
+        :isRus="isRus"
+      />
 
       <!-- Smart Filter Section -->
-      <div class="smart-filter-container">
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" v-model="searchQuery" :placeholder="isRus ? 'Поиск сертификатов...' : 'Sertifikatlarni qidirish...'" />
-        </div>
-        <div class="filter-tabs">
-          <button :class="{ active: activeFilter === 'all' }" @click="activeFilter = 'all'">
-            <i class="fas fa-border-all"></i> {{ isRus ? 'Все' : 'Barcha' }}
-          </button>
-          <button :class="{ active: activeFilter === 'unlocked' }" @click="activeFilter = 'unlocked'">
-            <i class="fas fa-unlock"></i> {{ isRus ? 'Открыто' : 'Olingan' }}
-          </button>
-          <button :class="{ active: activeFilter === 'locked' }" @click="activeFilter = 'locked'">
-            <i class="fas fa-lock"></i> {{ isRus ? 'Закрыто' : 'Qulflangan' }}
-          </button>
-        </div>
-      </div>
+      <CertFilter 
+        :searchQuery="searchQuery"
+        @update:searchQuery="searchQuery = $event"
+        :activeFilter="activeFilter"
+        @update:activeFilter="activeFilter = $event"
+        :isRus="isRus"
+      />
 
       <!-- Grid of Certificates -->
-      <div class="certs-grid" v-if="filteredCertificates.length > 0">
-        <div
-          v-for="cert in filteredCertificates"
-          :key="cert.id"
-          :class="['cert-card', { locked: !cert.unlocked }]"
-        >
-          <div 
-            class="cert-icon" 
-            :style="cert.unlocked ? { background: cert.color + '15', color: cert.color, borderColor: cert.color + '30' } : {}"
-          >
-            <i :class="cert.icon"></i>
-            <div class="lock-indicator" v-if="!cert.unlocked">
-              <i class="fas fa-lock"></i>
-            </div>
-          </div>
-
-          <div class="cert-details">
-            <h3>{{ isRus ? cert.nameRu : cert.nameUz }}</h3>
-            <p class="cert-desc">{{ isRus ? cert.descRu : cert.descUz }}</p>
-
-            <div class="cert-progress-container" v-if="cert.progress !== null">
-              <div class="progress-info">
-                <span>{{ isRus ? 'Прогресс' : 'Progress' }}</span>
-                <span>{{ Math.min(cert.currentVal, cert.targetVal) }} / {{ cert.targetVal }}</span>
-              </div>
-              <div class="bar-outer">
-                <div 
-                  class="bar-inner" 
-                  :style="{ 
-                    width: Math.min((cert.currentVal / cert.targetVal) * 100, 100) + '%', 
-                    background: cert.unlocked ? cert.color : '#94a3b8' 
-                  }"
-                ></div>
-              </div>
-            </div>
-
-            <div class="cert-actions">
-              <span class="unlock-rate">
-                <i class="fas fa-users"></i> {{ cert.unlockRate }}%
-              </span>
-              <button 
-                class="view-cert-btn" 
-                v-if="cert.unlocked"
-                @click="openCertificateModal(cert)"
-              >
-                <i class="fas fa-eye"></i> {{ isRus ? 'Посмотреть' : 'Ko\'rish' }}
-              </button>
-              <span class="locked-lbl" v-else>
-                <i class="fas fa-lock"></i> {{ isRus ? 'Заблокировано' : 'Qulflangan' }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Empty State for Smart Filter -->
-      <div class="empty-filter-state" v-else>
-        <div class="empty-icon"><i class="fas fa-search"></i></div>
-        <h3>{{ isRus ? 'Ничего не найдено' : 'Hech narsa topilmadi' }}</h3>
-        <p>{{ isRus ? 'Попробуйте изменить параметры фильтрации' : 'Qidiruv parametrlarini o\'zgartirib ko\'ring' }}</p>
-        <button class="reset-btn" @click="resetFilters">{{ isRus ? 'Сбросить фильтры' : 'Filtrlarni tozalash' }}</button>
-      </div>
+      <CertGrid 
+        :certificates="filteredCertificates"
+        :isRus="isRus"
+        @view-cert="openCertificateModal"
+        @reset-filters="resetFilters"
+      />
     </div>
 
     <!-- Certificate Modal Printable -->
@@ -177,9 +104,17 @@ import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useI18n } from '@/utils/i18n';
 import { getCertificates } from '@/utils/certificates';
+import CertStats from '@/components/certificates/CertStats.vue';
+import CertFilter from '@/components/certificates/CertFilter.vue';
+import CertGrid from '@/components/certificates/CertGrid.vue';
 
 export default {
   name: 'CertificatesView',
+  components: {
+    CertStats,
+    CertFilter,
+    CertGrid
+  },
   setup() {
     const { locale } = useI18n();
     return { currentLocale: locale };

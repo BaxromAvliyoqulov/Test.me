@@ -1,4 +1,9 @@
-<template>
+const fs = require('fs');
+const path = require('path');
+
+const shopPath = path.join(__dirname, '..', 'src', 'views', 'shop', 'ShopPage.vue');
+
+const newTemplate = `<template>
   <div class="premium-layout shop-wrapper">
     <!-- Glowing background elements for premium feel -->
     <div class="glow-bg glow-bg-1"></div>
@@ -6,8 +11,8 @@
 
     <div class="shop-container">
       <div class="header-section">
-        <h1>🛍️ {{ isRus ? 'Магазин' : 'Do\'kon' }}</h1>
-        <p>{{ isRus ? 'Обменивайте TP Coins на кейсы и получайте уникальные награды!' : 'TP Coin larni g\'aznalarga almashtiring va noyob yutuqlarni qolga kiriting!' }}</p>
+        <h1>🛍️ {{ isRus ? 'Магазин' : 'Do\\'kon' }}</h1>
+        <p>{{ isRus ? 'Обменивайте TP Coins на кейсы и получайте уникальные награды!' : 'TP Coin larni g\\'aznalarga almashtiring va noyob yutuqlarni qolga kiriting!' }}</p>
       </div>
 
       <div class="shop-content">
@@ -29,8 +34,8 @@
         <!-- Cases Section -->
         <div class="cases-section">
           <div class="section-title-wrap">
-            <h2><i class="fas fa-box-open text-blue"></i> {{ isRus ? 'Секретные Ящики' : 'Sirli G\'aznalar' }}</h2>
-            <p>{{ isRus ? 'Откройте ящик и испытайте удачу' : 'G\'aznani oching va omadingizni sinab koring' }}</p>
+            <h2><i class="fas fa-box-open text-blue"></i> {{ isRus ? 'Секретные Ящики' : 'Sirli G\\'aznalar' }}</h2>
+            <p>{{ isRus ? 'Откройте ящик и испытайте удачу' : 'G\\'aznani oching va omadingizni sinab koring' }}</p>
           </div>
           
           <ShopCases 
@@ -490,3 +495,7 @@ export default {
   transform: translateY(-2px);
 }
 </style>
+`;
+
+fs.writeFileSync(shopPath, newTemplate);
+console.log('Successfully refactored ShopPage.vue');

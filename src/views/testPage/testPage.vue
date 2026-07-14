@@ -76,10 +76,10 @@
                 <div v-for="(option, optIndex) in question.options" :key="optIndex" 
                      class="rm-opt"
                      :class="{
-                       'is-correct': question.answer === option,
-                       'is-wrong': state.selectedAnswers[index] === optIndex && question.answer !== option
+                       'is-correct': (question.answer || question.correctAnswer) === option,
+                       'is-wrong': state.selectedAnswers[index] === optIndex && (question.answer || question.correctAnswer) !== option
                      }">
-                  <i class="fas fa-check" v-if="question.answer === option"></i>
+                  <i class="fas fa-check" v-if="(question.answer || question.correctAnswer) === option"></i>
                   <i class="fas fa-times" v-else-if="state.selectedAnswers[index] === optIndex"></i>
                   <span class="rm-dot" v-else></span>
                   <span>{{ option }}</span>
@@ -197,7 +197,7 @@ const goHome = () => {
 const score = computed(() => {
   const totalRaw = state.questions.reduce((acc, q, i) => {
     const selectedIdx = state.selectedAnswers[i];
-    if (selectedIdx !== null && selectedIdx !== undefined && q.options[selectedIdx] === q.answer) {
+    if (selectedIdx !== null && selectedIdx !== undefined && q.options[selectedIdx] === (q.answer || q.correctAnswer)) {
       return acc + (q.scoreWeight || 1);
     }
     return acc;
@@ -264,7 +264,7 @@ const submitAnswer = () => {
 const isCorrectAnswer = (qIndex) => {
   const selected = state.selectedAnswers[qIndex];
   const q = state.questions[qIndex];
-  return selected !== null && selected !== undefined && q.options[selected] === q.answer;
+  return selected !== null && selected !== undefined && q.options[selected] === (q.answer || q.correctAnswer);
 };
 
 // --- AI Tools Logic ---
@@ -274,7 +274,7 @@ const use5050 = async () => {
   const currentQ = currentQuestion.value;
   const incorrectIndices = [];
   currentQ.options.forEach((opt, idx) => {
-    if (opt !== currentQ.answer) incorrectIndices.push(idx);
+    if (opt !== (currentQ.answer || currentQ.correctAnswer)) incorrectIndices.push(idx);
   });
   
   // Pick 2 random incorrect options
@@ -298,8 +298,9 @@ const useAiHint = async () => {
   
   const currentQ = currentQuestion.value;
   // Make a simple AI hint
-  const answerWords = currentQ.answer.split(' ').filter(w => w.length > 3);
-  const hintKeyword = answerWords.length > 0 ? answerWords[0] : currentQ.answer;
+  const ans = currentQ.answer || currentQ.correctAnswer;
+  const answerWords = ans.split(' ').filter(w => w.length > 3);
+  const hintKeyword = answerWords.length > 0 ? answerWords[0] : ans;
   
   state.hintText = isRus.value 
     ? `Подсказка: Правильный ответ может быть связан с "${hintKeyword}"...`

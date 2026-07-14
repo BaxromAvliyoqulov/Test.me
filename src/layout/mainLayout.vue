@@ -15,7 +15,7 @@
       />
 
       <!-- Content Area -->
-      <main class="page-content">
+      <main :class="['page-content', { 'admin-page-content': isAdmin }]">
         <slot />
       </main>
     </div>
@@ -37,9 +37,12 @@ export default {
     };
   },
   computed: {
+    isAdmin() {
+      return this.$route.path.startsWith('/admin');
+    },
     showNavbar() {
       const hideOnPaths = ['/login', '/signup', '/SignUp'];
-      return !hideOnPaths.includes(this.$route.path);
+      return !hideOnPaths.includes(this.$route.path) && !this.isAdmin;
     }
   },
   created() {
@@ -95,6 +98,16 @@ export default {
   background-image: radial-gradient(rgba(37, 99, 235, 0.02) 1.5px, transparent 1.5px);
   background-size: 24px 24px;
   overflow-y: auto;
+}
+
+.admin-page-content {
+  padding: 0;
+  background-image: none;
+  background-color: #f1f5f9;
+  overflow: hidden;
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Responsive adjustments */

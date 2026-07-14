@@ -14,59 +14,52 @@
 
 
 
-    <div class="edit-profile-container">
-      <!-- Left Column: Live ID Card Preview -->
-      <div class="preview-section">
-        <h2 class="section-title">
-          <i class="fas fa-id-card"></i> {{ t('livePreview') }}
-        </h2>
-        <div 
-          class="id-card-wrapper"
-          @mousemove="handleMouseMove"
-          @mouseleave="handleMouseLeave"
-        >
-          <div class="id-card">
-            <!-- Card Header -->
-            <div class="id-card-header">
-              <div class="id-card-logo">Test.me</div>
-              <div class="id-card-title">{{ t('studentId') }}</div>
-              <i class="fas fa-microchip chip-icon"></i>
-            </div>
-            
-            <!-- Card Body -->
-            <div class="id-card-body">
-              <div class="id-card-avatar-wrap">
-                <img 
-                  :src="selectedPhotoURL || defaultUserImage" 
-                  class="id-card-avatar"
-                  alt="Student Avatar"
-                />
-
-              </div>
-              
-              <div class="id-card-info">
-                <div class="id-card-name">{{ profile.username || 'Your Name' }}</div>
-                <div class="id-card-email">{{ userEmail || 'student@test.me' }}</div>
-                
-                <div :class="['rank-badge', getRankClass(userPoints)]">
-                  <i :class="getRankIcon(userPoints)"></i>
-                  <span>{{ getRankName(userPoints, currentLocale) }}</span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card Footer -->
-            <div class="id-card-footer">
-              <div class="id-card-stat">
-                <span class="stat-lbl">{{ t('points') }}</span>
-                <span class="stat-val">{{ userPoints }} TP</span>
-              </div>
-              <div class="id-card-stat text-right">
-                <span class="stat-lbl">{{ t('memberSince') }}</span>
-                <span class="stat-val">{{ getMemberSince(memberSince) }}</span>
-              </div>
-            </div>
+    <!-- Top Banner Section -->
+    <div class="profile-header-banner">
+      <div class="banner-content">
+        <div class="banner-avatar-wrap">
+          <img :src="selectedPhotoURL || defaultUserImage" class="banner-avatar" alt="Avatar" />
+        </div>
+        <div class="banner-user-info">
+          <h1 class="banner-name">{{ profile.username || 'Your Name' }}</h1>
+          <span class="banner-email">{{ userEmail || 'student@test.me' }}</span>
+          <div :class="['rank-badge', getRankClass(userPoints)]">
+            <i :class="getRankIcon(userPoints)"></i>
+            <span>{{ getRankName(userPoints, currentLocale) }}</span>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="edit-profile-container layout-v2">
+      <!-- Left Sidebar: Tabs & Progress -->
+      <div class="profile-sidebar">
+        <!-- Vertical Tab Navigation -->
+        <div class="tabs-nav-vertical">
+          <button 
+            type="button" 
+            :class="['tab-link', { active: activeTab === 'profile' }]" 
+            @click="activeTab = 'profile'"
+          >
+            <i class="fas fa-user-cog"></i> 
+            <span>{{ currentLocale === 'RUS' ? 'Профиль' : 'Profil' }}</span>
+          </button>
+          <button 
+            type="button" 
+            :class="['tab-link', { active: activeTab === 'preferences' }]" 
+            @click="activeTab = 'preferences'"
+          >
+            <i class="fas fa-sliders-h"></i> 
+            <span>{{ currentLocale === 'RUS' ? 'Цели' : 'Maqsadlar' }}</span>
+          </button>
+          <button 
+            type="button" 
+            :class="['tab-link', { active: activeTab === 'achievements' }]" 
+            @click="activeTab = 'achievements'"
+          >
+            <i class="fas fa-award"></i> 
+            <span>{{ currentLocale === 'RUS' ? 'Достижения' : 'Yutuqlar' }}</span>
+          </button>
         </div>
 
         <!-- Rank Progress Card -->
@@ -93,41 +86,16 @@
         </div>
       </div>
 
-      <!-- Right Column: Settings Form and Tabs Hub -->
+      <!-- Right Column: Form Settings -->
       <div class="form-section">
         <div class="form-card">
-          <!-- Premium Tab Navigation -->
-          <div class="tabs-nav">
-            <button 
-              type="button" 
-              :class="['tab-link', { active: activeTab === 'profile' }]" 
-              @click="activeTab = 'profile'"
-            >
-              <i class="fas fa-user-cog"></i> 
-              <span>{{ currentLocale === 'RUS' ? 'Профиль' : 'Profil' }}</span>
-            </button>
-            <button 
-              type="button" 
-              :class="['tab-link', { active: activeTab === 'preferences' }]" 
-              @click="activeTab = 'preferences'"
-            >
-              <i class="fas fa-sliders-h"></i> 
-              <span>{{ currentLocale === 'RUS' ? 'Цели' : 'Maqsadlar' }}</span>
-            </button>
-            <button 
-              type="button" 
-              :class="['tab-link', { active: activeTab === 'achievements' }]" 
-              @click="activeTab = 'achievements'"
-            >
-              <i class="fas fa-award"></i> 
-              <span>{{ currentLocale === 'RUS' ? 'Достижения' : 'Yutuqlar' }}</span>
-            </button>
-          </div>
 
           <form @submit.prevent="saveProfile" class="profile-form">
-            <!-- TAB 1: Profile Details -->
-            <div v-show="activeTab === 'profile'" class="tab-pane-content">
-              <!-- Avatar Selector -->
+            <!-- TAB 1: Profile Details & Live ID Card -->
+            <div v-show="activeTab === 'profile'" class="tab-pane-content profile-tab-layout">
+              <!-- Left side: Form fields -->
+              <div class="profile-form-col">
+                <!-- Avatar Selector -->
               <div class="form-group">
                 <label class="group-label">
                   <i class="fas fa-user-circle"></i> {{ t('avatarSelect') }}
@@ -249,6 +217,48 @@
                 
                 <p class="hintText">{{ t('passwordHint') }}</p>
               </div>
+            </div>
+
+            <!-- Right side: Live Preview ID Card -->
+            <div class="profile-id-card-col">
+              <h3 class="group-label mb-3"><i class="fas fa-id-card"></i> {{ t('livePreview') }}</h3>
+              <div class="id-card-wrapper" @mousemove="handleMouseMove" @mouseleave="handleMouseLeave">
+                <div class="id-card">
+                  <!-- Card Header -->
+                  <div class="id-card-header">
+                    <div class="id-card-logo">Test.me</div>
+                    <div class="id-card-title">{{ t('studentId') }}</div>
+                    <i class="fas fa-microchip chip-icon"></i>
+                  </div>
+                  <!-- Card Body -->
+                  <div class="id-card-body">
+                    <div class="id-card-avatar-wrap">
+                      <img :src="selectedPhotoURL || defaultUserImage" class="id-card-avatar" alt="Student Avatar" />
+                    </div>
+                    <div class="id-card-info">
+                      <div class="id-card-name">{{ profile.username || 'Your Name' }}</div>
+                      <div class="id-card-email">{{ userEmail || 'student@test.me' }}</div>
+                      <div :class="['rank-badge', getRankClass(userPoints)]">
+                        <i :class="getRankIcon(userPoints)"></i>
+                        <span>{{ getRankName(userPoints, currentLocale) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Card Footer -->
+                  <div class="id-card-footer">
+                    <div class="id-card-stat">
+                      <span class="stat-lbl">{{ t('points') }}</span>
+                      <span class="stat-val">{{ userPoints }} TP</span>
+                    </div>
+                    <div class="id-card-stat text-right">
+                      <span class="stat-lbl">{{ t('memberSince') }}</span>
+                      <span class="stat-val">{{ getMemberSince(memberSince) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- End Tab 1 specific layout -->
             </div>
 
             <!-- TAB 2: Learning Preferences -->
@@ -922,12 +932,12 @@ export default {
 .edit-profile-wrapper {
   position: relative;
   min-height: calc(100vh - 100px);
-  padding: 3rem 1.5rem;
+  padding: 2rem 1.5rem;
   overflow: hidden;
   background-color: #f8fafc;
   font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
 }
 
@@ -957,22 +967,161 @@ export default {
   filter: blur(120px);
 }
 
-.edit-profile-container {
+.edit-profile-container.layout-v2 {
   position: relative;
   z-index: 1;
-  max-width: 1150px;
+  max-width: 1200px;
   width: 100%;
   display: grid;
-  grid-template-columns: 380px 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 2.5rem;
   align-items: start;
 }
 
 @media (max-width: 868px) {
-  .edit-profile-container {
+  .edit-profile-container.layout-v2 {
     grid-template-columns: 1fr;
-    gap: 2.5rem;
+    gap: 2rem;
   }
+}
+
+/* Banner Header */
+.profile-header-banner {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin-bottom: 3rem;
+  border-radius: 32px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  padding: 2.5rem;
+  display: flex;
+  align-items: flex-end;
+  min-height: 200px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  border: 1px solid rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+
+.profile-header-banner::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: url('data:image/svg+xml;utf8,<svg opacity="0.05" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="2" fill="white"/></svg>');
+}
+
+.banner-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.banner-avatar-wrap {
+  width: 110px;
+  height: 110px;
+  border-radius: 30px;
+  background: #ffffff;
+  padding: 4px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  transform: translateY(20px);
+}
+.banner-avatar {
+  width: 100%; height: 100%; object-fit: cover; border-radius: 26px;
+}
+
+.banner-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.banner-name {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.banner-email {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* Sidebar & Vertical Tabs */
+.profile-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.tabs-nav-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  padding: 1rem;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
+}
+
+.tab-link-v2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 1rem 1.25rem;
+  border: none;
+  background: transparent;
+  border-radius: 16px;
+  color: #64748b;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+}
+
+.tab-link-v2 i { font-size: 1.1rem; width: 24px; text-align: center; }
+
+.tab-link-v2:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.tab-link-v2.active {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #ffffff;
+  box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
+}
+.tab-link-v2.active i { color: #ffffff; }
+
+/* Profile Tab Content Grid */
+.profile-tab-layout {
+  display: grid !important; /* overrides flex */
+  grid-template-columns: 1fr 380px;
+  gap: 3rem;
+}
+
+.profile-form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.profile-id-card-col {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 1100px) {
+  .profile-tab-layout { grid-template-columns: 1fr; }
 }
 
 /* Toast Notifications styling */
@@ -1326,54 +1475,7 @@ export default {
   color: #64748b;
 }
 
-/* Tab Navigation Styling */
-.tabs-nav {
-  display: flex;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px);
-  padding: 0.5rem;
-  border-radius: 20px;
-  margin-bottom: 2.5rem;
-  gap: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: inset 0 2px 10px rgba(0,0,0,0.03);
-}
-
-.tab-link {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 0.9rem;
-  border: none;
-  background: transparent;
-  border-radius: 14px;
-  color: #64748b;
-  font-family: inherit;
-  font-weight: 800;
-  font-size: 0.92rem;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.tab-link:hover {
-  color: #0f172a;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.tab-link.active {
-  background-color: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255,255,255,1);
-  transform: scale(1.02);
-}
-
-@media (max-width: 480px) {
-  .tabs-nav {
-    flex-direction: column;
-  }
-}
+/* Removed old horizontal tabs CSS */
 
 /* Form Settings card */
 .form-card {

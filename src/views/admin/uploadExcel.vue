@@ -200,6 +200,7 @@ const aiPrompt = computed(() => {
 QAT'IY TALAB: 
 1. Savollar "${daraja}" qiyinchilik darajasiga HAQIQIY va aniq mos kelishi shart.
 2. Savollar mutlaqo yangi bo'lishi va umuman takrorlanmasligi shart.
+3. Iltimos, natijani nusxalash oson bo'lishi uchun tayyor va yuklab olish (download) mumkin bo'lgan .csv fayli ko'rinishida taqdim et.
 
 QAT'IY USTUNLAR (COLUMNS) KETMA-KETLIGI:
 1. TestCategory (Faqat bittasi: Standard, DTM, Prezident)

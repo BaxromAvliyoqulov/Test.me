@@ -158,7 +158,8 @@ const aiPrompt = computed(() => {
   
   return `Menga O'zbekiston maktab darsliklariga asoslangan, "${fan}" fani bo'yicha "${daraja}" qiyinchilik darajasiga HAQIQIY va QAT'IY mos keladigan ${soni} ta test savolini tuzib ber.
 DIQQAT: Savollar mutlaqo yangi, sifatli bo'lishi va bir-birini umuman takrorlamasligi shart!
-Javobni faqat quyidagi JSON massiv formatida (boshqa hech qanday matn yoki markdown izohlarsiz) qaytar:
+Javobni tayyor va yuklab olish (download) qilish mumkin bo'lgan .json fayli sifatida taqdim et. 
+Faylning ichki formati faqat quyidagi JSON massiv ko'rinishida bo'lishi shart:
 
 [
   {

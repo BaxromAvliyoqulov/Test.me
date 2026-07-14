@@ -88,8 +88,21 @@
     <!-- Preview Section -->
     <div v-if="parsedData.length > 0" class="preview-section">
       <div class="preview-header">
-        <h3><i class="fas fa-eye"></i> Ma'lumotlar tekshiruvi (Preview)</h3>
-        <span class="badge">{{ parsedData.length }} ta savol tayyor</span>
+        <div class="header-left">
+          <h3><i class="fas fa-eye"></i> Ma'lumotlar tekshiruvi (Preview)</h3>
+          <span class="badge">{{ parsedData.length }} ta savol tayyor</span>
+        </div>
+        
+        <!-- Action Buttons Moved to Header -->
+        <div class="action-buttons">
+          <button class="btn secondary btn-sm" @click="clearData" :disabled="loading">
+            <i class="fas fa-times"></i> Bekor qilish
+          </button>
+          <button class="btn primary btn-sm" @click="uploadToDatabase" :disabled="loading">
+            <span v-if="!loading"><i class="fas fa-database"></i> Bazaga Yuklash</span>
+            <i v-else class="fas fa-circle-notch fa-spin"></i>
+          </button>
+        </div>
       </div>
 
       <div class="table-container">
@@ -114,17 +127,6 @@
         <p class="table-footer" v-if="parsedData.length > 5">
           ... va yana {{ parsedData.length - 5 }} ta savol.
         </p>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="action-buttons">
-        <button class="btn secondary" @click="clearData" :disabled="loading">
-          <i class="fas fa-times"></i> Bekor qilish
-        </button>
-        <button class="btn primary" @click="uploadToDatabase" :disabled="loading">
-          <span v-if="!loading"><i class="fas fa-database"></i> Bazaga Yuklash</span>
-          <i v-else class="fas fa-circle-notch fa-spin"></i>
-        </button>
       </div>
     </div>
   </div>
@@ -497,10 +499,18 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 .preview-header h3 {
   font-size: 1.2rem;
   color: #0f172a;
+  margin: 0;
 }
 .badge {
   background: #dbeafe;
@@ -558,20 +568,23 @@ onMounted(() => {
 
 .action-buttons {
   display: flex;
-  justify-content: flex-end;
-  gap: 15px;
+  gap: 10px;
 }
 .btn {
-  padding: 12px 24px;
-  border-radius: 12px;
+  padding: 10px 20px;
+  border-radius: 10px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
   transition: all 0.2s;
   border: none;
+}
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.9rem;
 }
 .btn:disabled {
   opacity: 0.6;

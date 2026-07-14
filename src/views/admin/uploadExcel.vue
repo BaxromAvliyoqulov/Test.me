@@ -63,6 +63,8 @@
             <option value="25">25 ta savol</option>
             <option value="30">30 ta savol</option>
             <option value="50">50 ta savol</option>
+            <option value="75">75 ta savol</option>
+            <option value="100">100 ta savol</option>
           </select>
         </div>
       </div>

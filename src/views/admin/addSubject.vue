@@ -1,382 +1,577 @@
 <template>
-  <div class="subject-container">
-    <h3>Add Subject Tests</h3>
-    <form @submit.prevent="addTests" class="form">
+  <div class="upload-container">
+    <div class="card-header">
+      <h2><i class="fas fa-file-code"></i> JSON Test Yuklash</h2>
+      <p>Muayyan fan va daraja uchun tayyor JSON faylni bazaga yuklang</p>
+    </div>
+
+    <!-- AI Prompt Section -->
+    <div class="prompt-section">
+      <h3><i class="fas fa-robot"></i> AI uchun tayyor Prompt (JSON)</h3>
+      <p>Sun'iy intellektga ushbu matnni berib, to'g'ridan-to'g'ri tizimga mos JSON fayl yarating:</p>
+      
+      <div class="prompt-box">
+        <textarea readonly v-model="aiPrompt"></textarea>
+        <button class="copy-btn" @click="copyPrompt">
+          <i :class="copied ? 'fas fa-check' : 'fas fa-copy'"></i> 
+          {{ copied ? 'Nusxa olindi!' : 'Nusxa Olish' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Selection Section -->
+    <div class="selection-grid">
       <div class="form-group">
-        <label>Select Subject</label>
-        <select 
-          v-model="selectedSubject" 
-          @change="fetchLevels"
-          :disabled="loading || loadingSubjects"
-        >
-          <option disabled value="">Choose a subject</option>
-          <option v-for="subject in subjects" :key="subject.id" :value="subject">
-            {{ subject.id }}
-          </option>
-        </select>
-        <div v-if="loadingSubjects" class="loading-indicator">Loading subjects...</div>
+        <label>1. Fanni tanlang</label>
+        <div class="select-wrapper">
+          <i class="fas fa-book select-icon"></i>
+          <select v-model="selectedSubject" @change="fetchLevels" :disabled="loading || loadingSubjects">
+            <option disabled value="">Fanni tanlang...</option>
+            <option v-for="subject in subjects" :key="subject.id" :value="subject">
+              {{ subject.id }}
+            </option>
+          </select>
+        </div>
       </div>
 
       <div class="form-group">
-        <label>Select Level</label>
-        <select 
-          v-model="selectedLevel"
-          :disabled="loading || !selectedSubject || loadingLevels"
-        >
-          <option disabled value="">Choose a level</option>
-          <option v-for="level in levels" :key="level" :value="level">
-            {{ level }}
-          </option>
-        </select>
-        <div v-if="loadingLevels" class="loading-indicator">Loading levels...</div>
+        <label>2. Darajani tanlang</label>
+        <div class="select-wrapper">
+          <i class="fas fa-layer-group select-icon"></i>
+          <select v-model="selectedLevel" :disabled="loading || !selectedSubject || loadingLevels">
+            <option disabled value="">Darajani tanlang...</option>
+            <option v-for="level in levels" :key="level" :value="level">
+              {{ level }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="upload-box" :class="{ 'disabled': !canUpload }" @dragover.prevent @drop.prevent="handleDrop">
+      <input 
+        type="file" 
+        id="fileInput" 
+        accept="application/json" 
+        @change="handleFileUpload" 
+        class="hidden-input"
+        :disabled="!canUpload"
+      />
+      <label for="fileInput" class="upload-label">
+        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+        <h3 v-if="!canUpload">Avval fan va darajani tanlang</h3>
+        <h3 v-else>JSON faylni shu yerga tashlang yoki bosing</h3>
+        <p v-if="canUpload">Faqat .json formatidagi fayllar qabul qilinadi.</p>
+      </label>
+      <div v-if="selectedFile" class="file-name">
+        <i class="fas fa-file-code text-blue"></i> {{ selectedFile.name }}
+      </div>
+    </div>
+
+    <!-- Preview Section -->
+    <div v-if="parsedData.length > 0" class="preview-section">
+      <div class="preview-header">
+        <h3><i class="fas fa-eye"></i> Ma'lumotlar tekshiruvi (Preview)</h3>
+        <span class="badge">{{ parsedData.length }} ta savol tayyor</span>
       </div>
 
-      <div class="form-group">
-        <label>Upload Test File (JSON)</label>
-        <input
-          type="file"
-          @change="handleFileUpload"
-          accept="application/json"
-          :disabled="loading"
-        />
-        <small class="info-text">
-          JSON formatida: [ { "question": "Savol", "options": ["Variant 1", "Variant 2", "Variant 3", "Variant 4"], "answer": "To'g'ri javob" } ]
-        </small>
+      <div class="table-container">
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Savol</th>
+              <th>To'g'ri Javob</th>
+              <th>Variantlar soni</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, idx) in parsedData.slice(0, 5)" :key="idx">
+              <td>{{ idx + 1 }}</td>
+              <td class="truncate">{{ row.question }}</td>
+              <td class="text-emerald font-bold">{{ row.answer }}</td>
+              <td>{{ row.options?.length || 0 }} ta</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="table-footer" v-if="parsedData.length > 5">
+          ... va yana {{ parsedData.length - 5 }} ta savol.
+        </p>
       </div>
 
-      <button type="submit" class="btn" :disabled="!canSubmit">
-        <span v-if="!loading">Add Tests</span>
-        <span v-else class="loader"></span>
-      </button>
-    </form>
-
-    <div v-if="status" :class="['status', status.type]" @click="clearStatus">
-      {{ status.message }}
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button class="btn secondary" @click="clearData" :disabled="loading">
+          <i class="fas fa-times"></i> Bekor qilish
+        </button>
+        <button class="btn primary" @click="uploadToDatabase" :disabled="loading">
+          <span v-if="!loading"><i class="fas fa-database"></i> Bazaga Yuklash</span>
+          <i v-else class="fas fa-circle-notch fa-spin"></i>
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
-<script>
-import { db } from "../../config/firebase";
-import { collection, doc, setDoc, addDoc, getDocs } from "firebase/firestore";
+<script setup>
+import { ref, computed, onMounted } from 'vue';
+import { db } from '@/config/firebase';
+import { collection, doc, getDocs, setDoc, addDoc, writeBatch } from 'firebase/firestore';
+import { useToast } from 'vue-toastification';
 
-export default {
-  data() {
-    return {
-      selectedSubject: "",
-      selectedLevel: "",
-      subjects: [],
-      levels: [],
-      file: null,
-      loading: false,
-      loadingSubjects: false,
-      loadingLevels: false,
-      status: null,
-    };
-  },
-  computed: {
-    canSubmit() {
-      return this.selectedSubject && 
-             this.selectedLevel && 
-             this.file && 
-             !this.loading && 
-             !this.loadingSubjects && 
-             !this.loadingLevels;
-    }
-  },
-  methods: {
-    async fetchSubjects() {
-      this.loadingSubjects = true;
-      this.status = null;
-      try {
-        const querySnapshot = await getDocs(collection(db, "subjects"));
-        this.subjects = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        
-        if (this.subjects.length === 0) {
-          this.status = {
-            type: "info",
-            message: "⚠️ No subjects found. Please add a subject first."
-          };
-        }
-      } catch (error) {
-        console.error("❌ Error fetching subjects:", error);
-        this.status = { 
-          type: "error", 
-          message: `❌ Error fetching subjects: ${error.message}` 
-        };
-      } finally {
-        this.loadingSubjects = false;
-      }
-    },
-    async fetchLevels() {
-      if (!this.selectedSubject) return;
-      
-      this.loadingLevels = true;
-      this.selectedLevel = "";
-      this.levels = [];
-      this.status = null;
-      
-      try {
-        const subjectRef = doc(db, "subjects", this.selectedSubject.id);
-        const levelsCollection = await getDocs(collection(subjectRef, "levels"));
-        
-        this.levels = levelsCollection.docs.map(doc => doc.id);
-        
-        if (this.levels.length === 0) {
-          this.status = {
-            type: "info",
-            message: "⚠️ No levels found for this subject. Creating a new level will be required."
-          };
-        }
-      } catch (error) {
-        console.error("❌ Error fetching levels:", error);
-        this.status = { 
-          type: "error", 
-          message: `❌ Error fetching levels: ${error.message}` 
-        };
-      } finally {
-        this.loadingLevels = false;
-      }
-    },
-    handleFileUpload(event) {
-      this.file = event.target.files[0];
-      this.status = null;
-    },
-    clearStatus() {
-      this.status = null;
-    },
-    async addTests() {
-      if (!this.canSubmit) return;
-      
-      this.loading = true;
-      this.status = null;
-      
-      try {
-        // Fan referensini olish
-        const subjectRef = doc(db, "subjects", this.selectedSubject.id);
-        
-        // Level referensini olish
-        const levelRef = doc(subjectRef, "levels", this.selectedLevel);
-        
-        // Level dokumentini yaratish yoki yangilash
-        await setDoc(levelRef, { name: this.selectedLevel }, { merge: true });
-        
-        if (this.file) {
-          const reader = new FileReader();
-          
-          reader.onload = async (e) => {
-            try {
-              const parsedData = JSON.parse(e.target.result);
-              
-              // JSON ma'lumotlarini tekshirish
-              if (!Array.isArray(parsedData)) {
-                throw new Error("JSON massiv bo'lishi kerak!");
-              }
-              
-              // Har bir test strukturasini tekshirish
-              if (!parsedData.every(item => 
-                item.question && 
-                Array.isArray(item.options) && 
-                item.options.length === 4 && 
-                item.answer)) {
-                throw new Error(
-                  "Har bir test obyektida 'question', 4 ta element bo'lgan 'options' massivi, va 'answer' bo'lishi kerak!"
-                );
-              }
-              
-              // Testlar kolleksiyasiga referens
-              const testsCollectionRef = collection(levelRef, "tests");
-              
-              // Testlarni yuklash
-              let addedCount = 0;
-              for (const test of parsedData) {
-                await addDoc(testsCollectionRef, {
-                  question: test.question,
-                  options: test.options,
-                  answer: test.answer,
-                });
-                addedCount++;
-              }
-              
-              this.status = {
-                type: "success",
-                message: `✅ ${addedCount} tests added successfully to ${this.selectedSubject.id} - ${this.selectedLevel}!`,
-              };
-              
-              // Formani tozalash
-              this.file = null;
-              document.querySelector('input[type="file"]').value = '';
-              
-            } catch (error) {
-              console.error("❌ JSON faylni o'qishda xatolik:", error);
-              this.status = {
-                type: "error",
-                message: `❌ Xatolik: ${error.message}`,
-              };
-            }
-          };
-          
-          reader.readAsText(this.file);
-        }
-      } catch (error) {
-        console.error("❌ Error adding tests:", error);
-        this.status = { 
-          type: "error", 
-          message: `❌ Error adding tests: ${error.message}` 
-        };
-      } finally {
-        this.loading = false;
-      }
-    },
-  },
-  mounted() {
-    this.fetchSubjects();
+const toast = useToast();
+
+const aiPrompt = ref(`Menga O'zbekiston maktab darsliklariga asoslangan 10 ta test savolini faqat quyidagi JSON massiv formatida (boshqa hech qanday izohlarsiz) tuzib ber:
+
+[
+  {
+    "question": "Savol matni",
+    "options": ["Variant A", "Variant B", "Variant C", "Variant D"],
+    "answer": "To'g'ri javob (options ichidagi matn bilan aynan bir xil bo'lishi shart)"
+  }
+]`);
+
+const copied = ref(false);
+const subjects = ref([]);
+const levels = ref([]);
+const selectedSubject = ref("");
+const selectedLevel = ref("");
+const loadingSubjects = ref(false);
+const loadingLevels = ref(false);
+const loading = ref(false);
+const selectedFile = ref(null);
+const parsedData = ref([]);
+
+const canUpload = computed(() => selectedSubject.value && selectedLevel.value);
+
+const copyPrompt = () => {
+  navigator.clipboard.writeText(aiPrompt.value);
+  copied.value = true;
+  setTimeout(() => copied.value = false, 2000);
+};
+
+const fetchSubjects = async () => {
+  loadingSubjects.value = true;
+  try {
+    const querySnapshot = await getDocs(collection(db, "subjects"));
+    subjects.value = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    toast.error("Fanlarni yuklashda xatolik: " + error.message);
+  } finally {
+    loadingSubjects.value = false;
   }
 };
+
+const fetchLevels = async () => {
+  if (!selectedSubject.value) return;
+  loadingLevels.value = true;
+  selectedLevel.value = "";
+  levels.value = [];
+  try {
+    const levelsCollection = await getDocs(collection(db, "subjects", selectedSubject.value.id, "levels"));
+    levels.value = levelsCollection.docs.map(doc => doc.id);
+  } catch (error) {
+    toast.error("Darajalarni yuklashda xatolik: " + error.message);
+  } finally {
+    loadingLevels.value = false;
+  }
+};
+
+const handleDrop = (e) => {
+  if (!canUpload.value) return;
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+};
+
+const handleFileUpload = (e) => {
+  if (!canUpload.value) return;
+  const file = e.target.files[0];
+  if (file) processFile(file);
+};
+
+const processFile = (file) => {
+  if (file.type !== "application/json" && !file.name.endsWith('.json')) {
+    toast.error("Faqat JSON fayllar qo'llab-quvvatlanadi!");
+    return;
+  }
+
+  selectedFile.value = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error("JSON ma'lumoti massiv (array) bo'lishi kerak!");
+      
+      const isValid = data.every(item => 
+        item.question && 
+        Array.isArray(item.options) && 
+        item.options.length === 4 && 
+        item.answer
+      );
+
+      if (!isValid) throw new Error("Test strukturasida xato! 'question', 4 ta 'options' va 'answer' bo'lishi shart.");
+      
+      parsedData.value = data;
+      toast.success(`${data.length} ta savol tayyorlandi.`);
+    } catch (err) {
+      toast.error(`JSON faylni o'qishda xatolik: ${err.message}`);
+      clearData();
+    }
+  };
+  reader.readAsText(file);
+};
+
+const clearData = () => {
+  parsedData.value = [];
+  selectedFile.value = null;
+  const input = document.getElementById('fileInput');
+  if (input) input.value = '';
+};
+
+const uploadToDatabase = async () => {
+  if (!canUpload.value || parsedData.value.length === 0) return;
+  
+  loading.value = true;
+  try {
+    const subjectRef = doc(db, "subjects", selectedSubject.value.id);
+    const levelRef = doc(subjectRef, "levels", selectedLevel.value);
+    
+    // Make sure level exists
+    await setDoc(levelRef, { name: selectedLevel.value }, { merge: true });
+    
+    // Batch is much faster!
+    const batch = writeBatch(db);
+    
+    parsedData.value.forEach(test => {
+      const newTestRef = doc(collection(levelRef, "tests"));
+      batch.set(newTestRef, {
+        question: test.question,
+        options: test.options,
+        answer: test.answer
+      });
+    });
+    
+    await batch.commit();
+    toast.success(`✅ ${parsedData.value.length} ta test savoli muvaffaqiyatli yuklandi!`);
+    clearData();
+  } catch (error) {
+    toast.error("Bazaga yuklashda xatolik: " + error.message);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchSubjects();
+});
 </script>
 
 <style scoped>
-.subject-container {
-  max-width: 600px;
-  margin: auto;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  background: #fff;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-}
-
-h3 {
-  margin-bottom: 20px;
-  color: #2c3e50;
-}
-
-.form-group {
-  margin-bottom: 20px;
+.upload-container {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  font-family: 'Plus Jakarta Sans', sans-serif;
   text-align: left;
 }
 
-label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #333;
+.card-header {
+  margin-bottom: 2rem;
 }
-
-input,
-select {
-  width: 100%;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  font-size: 14px;
-  transition: border-color 0.3s;
+.card-header h2 {
+  font-size: 1.5rem;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-
-input:focus,
-select:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+.card-header h2 i {
+  color: #3b82f6; /* Blue for JSON */
 }
-
-input:disabled,
-select:disabled {
-  background-color: #f5f5f5;
-  cursor: not-allowed;
-}
-
-.info-text {
-  display: block;
+.card-header p {
+  color: #64748b;
   margin-top: 5px;
-  font-size: 12px;
-  color: #666;
 }
 
-.btn {
-  width: 80%;
-  padding: 12px 20px;
-  font-size: 16px;
-  font-weight: bold;
+.prompt-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+.prompt-section h3 {
+  font-size: 1.1rem;
+  color: #8b5cf6;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prompt-section p {
+  font-size: 0.9rem;
+  color: #475569;
+  margin-bottom: 1rem;
+}
+
+.prompt-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.prompt-box textarea {
+  width: 100%;
+  height: 120px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 1rem;
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #334155;
+  resize: none;
+}
+.copy-btn {
+  align-self: flex-end;
+  background: #8b5cf6;
   color: white;
   border: none;
-  border-radius: 5px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
   cursor: pointer;
-  margin-top: 15px;
-  background-color: #007bff;
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.copy-btn:hover {
+  background: #7c3aed;
 }
 
-.btn:hover:not(:disabled) {
-  background-color: #0056b3;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+/* Selection Grid */
+.selection-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 2rem;
+}
+.form-group label {
+  display: block;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.select-icon {
+  position: absolute;
+  left: 15px;
+  color: #94a3b8;
+}
+.select-wrapper select {
+  width: 100%;
+  padding: 12px 15px 12px 45px;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #1e293b;
+  appearance: none;
+  background: #f8fafc url('data:image/svg+xml;utf8,<svg fill="%2394a3b8" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>') no-repeat right 10px center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.select-wrapper select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.select-wrapper select:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
-.btn:active:not(:disabled) {
-  transform: translateY(1px);
+/* Upload Box */
+.upload-box {
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: #fafafa;
+  transition: all 0.3s;
+  position: relative;
+  margin-bottom: 2rem;
 }
-
-.btn:disabled {
-  background: #ccc;
+.upload-box:not(.disabled):hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.upload-box.disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
-
-.loader {
-  display: inline-block;
-  width: 15px;
-  height: 15px;
-  border: 2px solid #fff;
-  border-top: 2px solid transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.upload-box.disabled .upload-label {
+  cursor: not-allowed;
 }
-
-.loading-indicator {
-  font-size: 12px;
-  color: #666;
-  margin-top: 5px;
-  font-style: italic;
+.hidden-input {
+  display: none;
 }
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.status {
-  margin-top: 20px;
-  padding: 12px;
-  text-align: center;
-  border-radius: 6px;
-  font-weight: 500;
-  transition: opacity 0.3s;
+.upload-label {
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+.upload-icon {
+  font-size: 3rem;
+  color: #94a3b8;
+  transition: color 0.3s;
+}
+.upload-box:not(.disabled):hover .upload-icon {
+  color: #3b82f6;
+}
+.upload-label h3 {
+  color: #0f172a;
+  font-size: 1.2rem;
+}
+.upload-label p {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+.file-name {
+  margin-top: 20px;
+  font-weight: 600;
+  color: #0f172a;
+  background: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: inline-block;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+.text-blue { color: #3b82f6; }
+
+/* Preview Section */
+.preview-section {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.preview-header h3 {
+  font-size: 1.2rem;
+  color: #0f172a;
+}
+.badge {
+  background: #dbeafe;
+  color: #2563eb;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
-.status:hover {
-  opacity: 0.9;
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 2rem;
+}
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.preview-table th {
+  background: #f8fafc;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-bottom: 2px solid #e2e8f0;
+}
+.preview-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  color: #334155;
+}
+.truncate {
+  max-width: 350px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.text-emerald {
+  color: #10b981;
+}
+.font-bold {
+  font-weight: bold;
+}
+.table-footer {
+  text-align: center;
+  padding: 10px;
+  color: #64748b;
+  font-size: 0.9rem;
+  background: #f8fafc;
+  border-radius: 0 0 12px 12px;
 }
 
-.status.success {
-  background: #d4edda;
-  color: #155724;
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+.btn {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  border: none;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn.secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+.btn.secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+.btn.primary {
+  background: #3b82f6;
+  color: white;
+}
+.btn.primary:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
 }
 
-.status.error {
-  background: #f8d7da;
-  color: #721c24;
-}
-
-.status.info {
-  background: #e2f3fd;
-  color: #0c5460;
+@media (max-width: 768px) {
+  .selection-grid { grid-template-columns: 1fr; }
 }
 </style>

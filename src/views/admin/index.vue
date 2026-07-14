@@ -62,6 +62,7 @@ import AdminFinance from './components/AdminFinance.vue';
 // Re-use existing components
 import AddAdminComponent from './addAdmin.vue';
 import UploadExcelComponent from './uploadExcel.vue';
+import AddSubjectComponent from './addSubject.vue';
 
 // Lazy-loaded external views
 const AdminSeederView = { template: '<div style="padding:2rem;text-align:center;color:#64748b"><i class="fas fa-robot" style="font-size:3rem;margin-bottom:1rem;display:block;color:#3b82f6"></i><h3>AI Test Seeder sahifasiga o\'tish...</h3></div>', mounted() { window.open("/admin-seeder", "_blank"); } };
@@ -73,7 +74,7 @@ const VIEW_MAP = {
   addProduct:    AdminShop,
   orders:        AdminShop,
   subjects:      AdminSubjects,
-  addSubject:    AdminSubjects,
+  addSubject:    AddSubjectComponent,
   uploadExcel:   UploadExcelComponent,
   aiSeeder:      AdminSeederView,
   addAdmin:      AddAdminComponent,

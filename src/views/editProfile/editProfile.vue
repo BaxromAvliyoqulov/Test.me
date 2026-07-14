@@ -14,31 +14,16 @@
 
 
 
-    <!-- Top Banner Section -->
-    <div class="profile-header-banner">
-      <div class="banner-content">
-        <div class="banner-avatar-wrap">
-          <img :src="selectedPhotoURL || defaultUserImage" class="banner-avatar" alt="Avatar" />
-        </div>
-        <div class="banner-user-info">
-          <h1 class="banner-name">{{ profile.username || 'Your Name' }}</h1>
-          <span class="banner-email">{{ userEmail || 'student@test.me' }}</span>
-          <div :class="['rank-badge', getRankClass(userPoints)]">
-            <i :class="getRankIcon(userPoints)"></i>
-            <span>{{ getRankName(userPoints, currentLocale) }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="edit-profile-container layout-v2">
-      <!-- Left Sidebar: Tabs & Progress -->
-      <div class="profile-sidebar">
-        <!-- Vertical Tab Navigation -->
-        <div class="tabs-nav-vertical">
+    <!-- Clean SaaS Layout Container -->
+    <div class="edit-profile-container layout-v3">
+      
+      <!-- Left Column: Navigation Sidebar -->
+      <aside class="profile-sidebar-v3">
+        <h2 class="sidebar-title">{{ t('settings') || 'Settings' }}</h2>
+        <nav class="pro-sidebar-nav">
           <button 
             type="button" 
-            :class="['tab-link-v2', { active: activeTab === 'profile' }]" 
+            :class="['pro-nav-link', { active: activeTab === 'profile' }]" 
             @click="activeTab = 'profile'"
           >
             <i class="fas fa-user-cog"></i> 
@@ -46,7 +31,7 @@
           </button>
           <button 
             type="button" 
-            :class="['tab-link-v2', { active: activeTab === 'preferences' }]" 
+            :class="['pro-nav-link', { active: activeTab === 'preferences' }]" 
             @click="activeTab = 'preferences'"
           >
             <i class="fas fa-sliders-h"></i> 
@@ -54,83 +39,65 @@
           </button>
           <button 
             type="button" 
-            :class="['tab-link-v2', { active: activeTab === 'achievements' }]" 
+            :class="['pro-nav-link', { active: activeTab === 'achievements' }]" 
             @click="activeTab = 'achievements'"
           >
             <i class="fas fa-award"></i> 
             <span>{{ currentLocale === 'RUS' ? 'Достижения' : 'Yutuqlar' }}</span>
           </button>
-        </div>
+        </nav>
 
-        <!-- Rank Progress Card -->
-        <div class="rank-progress-card clickable-rank" @click="goToRanksPage">
-          <div class="progress-card-header">
-            <span>{{ currentLocale === 'RUS' ? 'Прогресс Ранга' : 'Rang Progressi' }}</span>
-            <span class="progress-target-text">
-              → {{ getNextRankInfo(userPoints, currentLocale).nextRankName }}
-            </span>
+        <!-- Minimal Rank Progress -->
+        <div class="minimal-rank-progress" @click="goToRanksPage">
+          <div class="minimal-rank-header">
+            <span class="rank-lbl">{{ currentLocale === 'RUS' ? 'Ваш Ранг' : 'Sizning Rangingiz' }}</span>
+            <span class="rank-val">{{ getRankName(userPoints, currentLocale) }}</span>
           </div>
-          <div class="progress-bar-container">
-            <div 
-              class="progress-bar-fill" 
-              :style="{ width: getNextRankInfo(userPoints, currentLocale).progressPercent + '%' }"
-            ></div>
+          <div class="minimal-progress-bar">
+            <div class="minimal-progress-fill" :style="{ width: getNextRankInfo(userPoints, currentLocale).progressPercent + '%' }"></div>
           </div>
-          <div class="progress-footer-stats">
-            <span>{{ getNextRankInfo(userPoints, currentLocale).label }}</span>
-            <span v-if="getNextRankInfo(userPoints, currentLocale).pointsNeeded > 0">
-              {{ currentLocale === 'RUS' ? `Нужно еще ${getNextRankInfo(userPoints, currentLocale).pointsNeeded} TP` : `Yana ${getNextRankInfo(userPoints, currentLocale).pointsNeeded} TP kerak` }}
-            </span>
-            <span v-else>{{ currentLocale === 'RUS' ? 'Максимальный Ранг' : 'Maksimal Rang' }}</span>
+          <div class="minimal-rank-footer">
+            <span>{{ userPoints }} TP</span>
+            <span class="text-blue-500">→ {{ getNextRankInfo(userPoints, currentLocale).nextRankName }}</span>
           </div>
         </div>
-      </div>
+      </aside>
 
-      <!-- Right Column: Form Settings -->
-      <div class="form-section">
-        <div class="form-card">
-
+      <!-- Middle Column: Main Forms -->
+      <main class="profile-main-v3">
+        <div class="pro-form-card">
           <form @submit.prevent="saveProfile" class="profile-form">
-            <!-- TAB 1: Profile Details & Live ID Card -->
-            <div v-show="activeTab === 'profile'" class="tab-pane-content profile-tab-layout">
-              <!-- Left side: Form fields -->
-              <div class="profile-form-col">
-                <!-- Avatar Selector -->
-              <div class="form-group">
-                <label class="group-label">
-                  <i class="fas fa-user-circle"></i> {{ t('avatarSelect') }}
-                </label>
-                
-                <!-- Avatar Preset Grid -->
-                <div class="avatar-presets">
-                  <button
-                    type="button"
-                    v-for="preset in presets"
-                    :key="preset.id"
-                    :class="['preset-btn', { active: selectedPhotoURL === preset.id }]"
-                    @click="selectPreset(preset.id)"
-                    :style="{ borderColor: selectedPhotoURL === preset.id ? preset.color : 'transparent' }"
-                  >
-                    <img :src="preset.id" class="preset-img" alt="Avatar Preset" />
-                  </button>
-                </div>
+            
+            <!-- TAB 1: Profile Details -->
+            <div v-show="activeTab === 'profile'" class="tab-pane-content">
+              <div class="pro-pane-header">
+                <h3>{{ currentLocale === 'RUS' ? 'Личные Данные' : 'Shaxsiy Ma\'lumotlar' }}</h3>
+                <p>{{ currentLocale === 'RUS' ? 'Обновите свое фото и личные данные.' : 'O\'z rasmingiz va ma\'lumotlaringizni yangilang.' }}</p>
+              </div>
 
-                <!-- Custom File Uploader -->
-                <div class="custom-uploader-wrap">
-                  <button
-                    type="button"
-                    class="custom-uploader-btn"
-                    @click="triggerFileInput"
-                  >
-                    <i class="fas fa-cloud-upload-alt"></i> {{ t('customAvatar') }}
-                  </button>
-                  <input
-                    type="file"
-                    ref="fileInput"
-                    @change="onFileChange"
-                    accept="image/*"
-                    class="hidden-file-input"
-                  />
+              <!-- Avatar Settings Row -->
+              <div class="pro-avatar-section">
+                <div class="pro-avatar-preview">
+                  <img :src="selectedPhotoURL || defaultUserImage" alt="Avatar" />
+                </div>
+                <div class="pro-avatar-actions">
+                  <div class="custom-uploader-wrap">
+                    <button type="button" class="pro-btn-outline" @click="triggerFileInput">
+                      <i class="fas fa-cloud-upload-alt"></i> {{ t('customAvatar') }}
+                    </button>
+                    <input type="file" ref="fileInput" @change="onFileChange" accept="image/*" class="hidden-file-input" />
+                  </div>
+                  <div class="avatar-presets-mini">
+                    <button
+                      type="button"
+                      v-for="preset in presets.slice(0, 4)"
+                      :key="preset.id"
+                      :class="['preset-btn-mini', { active: selectedPhotoURL === preset.id }]"
+                      @click="selectPreset(preset.id)"
+                    >
+                      <img :src="preset.id" class="preset-img" alt="Preset" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -217,48 +184,6 @@
                 
                 <p class="hintText">{{ t('passwordHint') }}</p>
               </div>
-            </div>
-
-            <!-- Right side: Live Preview ID Card -->
-            <div class="profile-id-card-col">
-              <h3 class="group-label mb-3"><i class="fas fa-id-card"></i> {{ t('livePreview') }}</h3>
-              <div class="id-card-wrapper" @mousemove="handleMouseMove" @mouseleave="handleMouseLeave">
-                <div class="id-card">
-                  <!-- Card Header -->
-                  <div class="id-card-header">
-                    <div class="id-card-logo">Test.me</div>
-                    <div class="id-card-title">{{ t('studentId') }}</div>
-                    <i class="fas fa-microchip chip-icon"></i>
-                  </div>
-                  <!-- Card Body -->
-                  <div class="id-card-body">
-                    <div class="id-card-avatar-wrap">
-                      <img :src="selectedPhotoURL || defaultUserImage" class="id-card-avatar" alt="Student Avatar" />
-                    </div>
-                    <div class="id-card-info">
-                      <div class="id-card-name">{{ profile.username || 'Your Name' }}</div>
-                      <div class="id-card-email">{{ userEmail || 'student@test.me' }}</div>
-                      <div :class="['rank-badge', getRankClass(userPoints)]">
-                        <i :class="getRankIcon(userPoints)"></i>
-                        <span>{{ getRankName(userPoints, currentLocale) }}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- Card Footer -->
-                  <div class="id-card-footer">
-                    <div class="id-card-stat">
-                      <span class="stat-lbl">{{ t('points') }}</span>
-                      <span class="stat-val">{{ userPoints }} TP</span>
-                    </div>
-                    <div class="id-card-stat text-right">
-                      <span class="stat-lbl">{{ t('memberSince') }}</span>
-                      <span class="stat-val">{{ getMemberSince(memberSince) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- End Tab 1 specific layout -->
             </div>
 
             <!-- TAB 2: Learning Preferences -->
@@ -408,32 +333,67 @@
             </div>
 
             <!-- Actions buttons -->
-            <div class="form-actions">
-              <button
-                type="button"
-                class="cancel-btn"
-                @click="goBack"
-                :disabled="loading"
-              >
-                <i class="fas fa-arrow-left"></i> Cancel
+            <div class="pro-form-actions">
+              <button type="button" class="pro-btn-secondary" @click="goBack" :disabled="loading">
+                Cancel
               </button>
-              <button
-                v-if="activeTab !== 'achievements'"
-                type="submit"
-                class="submit-btn"
-                :disabled="loading || !!passwordError"
-              >
-                <span v-if="loading" class="btn-loading">
-                  <i class="fas fa-circle-notch fa-spin"></i> {{ t('saving') }}
-                </span>
-                <span v-else>
-                  <i class="fas fa-save"></i> {{ t('save') }}
-                </span>
+              <button v-if="activeTab !== 'achievements'" type="submit" class="pro-btn-primary" :disabled="loading || !!passwordError">
+                <span v-if="loading"><i class="fas fa-circle-notch fa-spin"></i> {{ t('saving') }}</span>
+                <span v-else>{{ t('save') }}</span>
               </button>
             </div>
           </form>
         </div>
-      </div>
+      </main>
+
+      <!-- Right Column: Live Preview Sticky Card -->
+      <aside class="profile-preview-v3">
+        <div class="sticky-preview">
+          <h4 class="preview-title">Public Profile</h4>
+          
+          <div class="id-card-wrapper" @mousemove="handleMouseMove" @mouseleave="handleMouseLeave">
+            <div class="id-card">
+              <!-- Card Header -->
+              <div class="id-card-header">
+                <div class="id-card-logo">Test.me</div>
+                <div class="id-card-title">{{ t('studentId') }}</div>
+                <i class="fas fa-microchip chip-icon"></i>
+              </div>
+              <!-- Card Body -->
+              <div class="id-card-body">
+                <div class="id-card-avatar-wrap">
+                  <img :src="selectedPhotoURL || defaultUserImage" class="id-card-avatar" alt="Student Avatar" />
+                </div>
+                <div class="id-card-info">
+                  <div class="id-card-name">{{ profile.username || 'Your Name' }}</div>
+                  <div class="id-card-email">{{ userEmail || 'student@test.me' }}</div>
+                  <div :class="['rank-badge', getRankClass(userPoints)]">
+                    <i :class="getRankIcon(userPoints)"></i>
+                    <span>{{ getRankName(userPoints, currentLocale) }}</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Card Footer -->
+              <div class="id-card-footer">
+                <div class="id-card-stat">
+                  <span class="stat-lbl">{{ t('points') }}</span>
+                  <span class="stat-val">{{ userPoints }} TP</span>
+                </div>
+                <div class="id-card-stat text-right">
+                  <span class="stat-lbl">{{ t('memberSince') }}</span>
+                  <span class="stat-val">{{ getMemberSince(memberSince) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-info-box">
+            <i class="fas fa-info-circle"></i>
+            <p>This ID card represents your public persona on the platform. It updates in real-time as you type.</p>
+          </div>
+        </div>
+      </aside>
+
     </div>
   </div>
 </template>
@@ -967,167 +927,183 @@ export default {
   filter: blur(120px);
 }
 
-.edit-profile-container.layout-v2 {
-  position: relative;
-  z-index: 1;
-  max-width: 1200px;
+.edit-profile-container.layout-v3 {
   width: 100%;
+  max-width: 1400px;
   display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 2.5rem;
+  grid-template-columns: 260px minmax(0, 1fr) 360px;
+  gap: 3rem;
   align-items: start;
 }
 
-@media (max-width: 868px) {
-  .edit-profile-container.layout-v2 {
+@media (max-width: 1150px) {
+  .edit-profile-container.layout-v3 {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+  .profile-preview-v3 { display: none; }
+}
+@media (max-width: 768px) {
+  .edit-profile-container.layout-v3 {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
 }
 
-/* Banner Header */
-.profile-header-banner {
-  position: relative;
-  z-index: 1;
-  max-width: 1200px;
-  width: 100%;
-  margin-bottom: 3rem;
-  border-radius: 32px;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  padding: 2.5rem;
-  display: flex;
-  align-items: flex-end;
-  min-height: 200px;
-  box-shadow: 0 10px 40px -10px rgba(37, 99, 235, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-  border: none;
-  overflow: hidden;
+/* Sidebar V3 */
+.sidebar-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+  padding-left: 0.5rem;
 }
 
-.profile-header-banner::before {
-  content: '';
-  position: absolute;
-  top: -50%; left: -50%; width: 200%; height: 200%;
-  background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.2), transparent 50%),
-              radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.15), transparent 50%);
-  z-index: 0;
-  pointer-events: none;
-}
-
-.banner-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.banner-avatar-wrap {
-  width: 110px;
-  height: 110px;
-  border-radius: 30px;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 4px;
-  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
-  transform: translateY(20px);
-}
-.banner-avatar {
-  width: 100%; height: 100%; object-fit: cover; border-radius: 26px;
-}
-
-.banner-user-info {
+.pro-sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
+  margin-bottom: 2.5rem;
 }
 
-.banner-name {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0;
-  line-height: 1.1;
-}
-
-.banner-email {
-  font-size: 0.95rem;
-  color: #475569;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-/* Sidebar & Vertical Tabs */
-.profile-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.tabs-nav-vertical {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  padding: 1rem;
-  border-radius: 24px;
-  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
-}
-
-.tab-link-v2 {
+.pro-nav-link {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1rem;
   border: none;
   background: transparent;
-  border-radius: 16px;
-  color: #64748b;
-  font-family: inherit;
-  font-weight: 700;
+  color: #475569;
+  font-weight: 600;
   font-size: 0.95rem;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   text-align: left;
 }
-
-.tab-link-v2 i { font-size: 1.1rem; width: 24px; text-align: center; }
-
-.tab-link-v2:hover {
+.pro-nav-link:hover {
+  background: #f1f5f9;
   color: #0f172a;
-  background: rgba(255, 255, 255, 0.8);
+}
+.pro-nav-link.active {
+  background: #eff6ff;
+  color: #2563eb;
+  position: relative;
+}
+.pro-nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 10%; height: 80%; width: 4px;
+  background: #2563eb;
+  border-radius: 0 4px 4px 0;
+}
+.pro-nav-link i { font-size: 1.1rem; width: 24px; text-align: center; }
+
+/* Minimal Rank Progress */
+.minimal-rank-progress {
+  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.minimal-rank-progress:hover { border-color: #cbd5e1; }
+
+.minimal-rank-header {
+  display: flex; justify-content: space-between; margin-bottom: 0.75rem;
+}
+.rank-lbl { font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;}
+.rank-val { font-size: 0.85rem; font-weight: 700; color: #0f172a; }
+
+.minimal-progress-bar {
+  height: 6px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem;
+}
+.minimal-progress-fill {
+  height: 100%; background: #2563eb; border-radius: 4px;
+}
+.minimal-rank-footer {
+  display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600; color: #64748b;
 }
 
-.tab-link-v2.active {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  color: #ffffff;
-  box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
-}
-.tab-link-v2.active i { color: #ffffff; }
-
-/* Profile Tab Content Grid */
-.profile-tab-layout {
-  display: grid !important; /* overrides flex */
-  grid-template-columns: 1fr 380px;
-  gap: 3rem;
+/* Main Form Column */
+.pro-form-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
 }
 
-.profile-form-col {
+.pro-pane-header {
+  padding: 2rem 2.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.pro-pane-header h3 { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem; }
+.pro-pane-header p { font-size: 0.9rem; color: #64748b; }
+
+/* Avatar Section V3 */
+.pro-avatar-section {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 2rem;
+  padding: 1.5rem 2.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 1.5rem;
 }
+.pro-avatar-preview img {
+  width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 1px solid #e2e8f0;
+}
+.pro-avatar-actions {
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+.pro-btn-outline {
+  padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 8px; background: transparent;
+  color: #334155; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.pro-btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
+.avatar-presets-mini { display: flex; gap: 0.5rem; }
+.preset-btn-mini { width: 32px; height: 32px; border-radius: 50%; padding: 0; border: 2px solid transparent; cursor: pointer; }
+.preset-btn-mini img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.preset-btn-mini.active { border-color: #2563eb; }
 
-.profile-id-card-col {
+/* Form Actions V3 */
+.pro-form-actions {
+  padding: 1.5rem 2.5rem;
+  background: #f8fafc;
   display: flex;
-  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1rem;
+  border-top: 1px solid #e2e8f0;
 }
+.pro-btn-secondary {
+  padding: 0.6rem 1.25rem; font-weight: 600; color: #475569; background: #ffffff;
+  border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer;
+}
+.pro-btn-primary {
+  padding: 0.6rem 1.25rem; font-weight: 600; color: #ffffff; background: #2563eb;
+  border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(37,99,235,0.2);
+}
+.pro-btn-primary:hover { background: #1d4ed8; }
 
-@media (max-width: 1100px) {
-  .profile-tab-layout { grid-template-columns: 1fr; }
+/* Preview Column V3 */
+.profile-preview-v3 {
+  position: relative;
 }
+.sticky-preview {
+  position: sticky;
+  top: 2rem;
+}
+.preview-title {
+  font-size: 0.9rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;
+}
+.preview-info-box {
+  margin-top: 1.5rem; padding: 1rem; background: #eff6ff; border-radius: 12px;
+  display: flex; gap: 0.75rem; color: #1e3a8a; font-size: 0.85rem; border: 1px solid #bfdbfe;
+}
+.preview-info-box i { font-size: 1.2rem; color: #3b82f6; }
 
 /* Toast Notifications styling */
 .toast-notification {
@@ -1651,24 +1627,22 @@ export default {
 
 .styled-input {
   width: 100%;
-  padding: 1.1rem 1rem 1.1rem 3.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 16px;
-  font-size: 1rem;
-  font-weight: 600;
+  padding: 0.85rem 1rem 0.85rem 2.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
   color: #0f172a;
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.02);
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   outline: none;
   font-family: inherit;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s;
 }
 
 .styled-input:focus {
-  background-color: #ffffff;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 10px 25px -5px rgba(59, 130, 246, 0.1);
-  transform: translateY(-2px);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .styled-input:focus + .input-icon,

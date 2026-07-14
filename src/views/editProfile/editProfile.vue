@@ -935,26 +935,26 @@ export default {
 .glow-bg {
   position: absolute;
   border-radius: 50%;
-  filter: blur(120px);
-  opacity: 0.22;
-  z-index: 0;
   pointer-events: none;
+  z-index: 0;
 }
 
 .glow-bg-1 {
-  top: 10%;
-  left: 10%;
-  width: 350px;
-  height: 350px;
-  background: radial-gradient(circle, #3b82f6 0%, #60a5fa 100%);
+  top: -10%;
+  left: -5%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.35) 0%, rgba(139, 92, 246, 0.25) 100%);
+  filter: blur(100px);
 }
 
 .glow-bg-2 {
-  bottom: 10%;
-  right: 10%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, #a855f7 0%, #ec4899 100%);
+  bottom: -10%;
+  right: -5%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, rgba(245, 158, 11, 0.25) 100%);
+  filter: blur(120px);
 }
 
 .edit-profile-container {
@@ -1052,7 +1052,8 @@ export default {
   height: 240px;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), inset 0 1px 1px rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.3), inset 0 1px 1px rgba(255,255,255,0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1130,13 +1131,13 @@ export default {
 }
 
 .id-card-avatar-wrap {
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
   overflow: hidden;
   background-color: #f1f5f9;
-  border: 2px solid #ffffff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border: 2px solid rgba(255,255,255,0.9);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
 }
 
@@ -1271,11 +1272,13 @@ export default {
 
 /* Rank Progress Card */
 .rank-progress-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 24px;
   padding: 1.5rem;
-  box-shadow: 0 10px 25px -10px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08), inset 0 0 0 1px rgba(255,255,255,0.5);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1326,12 +1329,14 @@ export default {
 /* Tab Navigation Styling */
 .tabs-nav {
   display: flex;
-  background-color: #f8fafc;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
   padding: 0.5rem;
-  border-radius: 18px;
+  border-radius: 20px;
   margin-bottom: 2.5rem;
   gap: 0.5rem;
-  border: 1px solid #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.03);
 }
 
 .tab-link {
@@ -1354,13 +1359,13 @@ export default {
 
 .tab-link:hover {
   color: #0f172a;
-  background: #f1f5f9;
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .tab-link.active {
   background-color: #ffffff;
   color: #0f172a;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0,0,0,0.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255,255,255,1);
   transform: scale(1.02);
 }
 
@@ -1372,11 +1377,13 @@ export default {
 
 /* Form Settings card */
 .form-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 32px;
   padding: 3rem;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 30px 60px -15px rgba(15, 23, 42, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
 
 .profile-form {
@@ -1425,10 +1432,11 @@ export default {
 }
 
 .preset-btn {
-  background: #f1f5f9;
-  border: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.5);
+  border: 2px solid rgba(255,255,255,0.8);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
   border-radius: 16px;
-  padding: 4px;
+  padding: 6px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -1438,13 +1446,14 @@ export default {
 
 .preset-btn:hover {
   transform: scale(1.08);
-  background: #e2e8f0;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.05);
 }
 
 .preset-btn.active {
   background: #ffffff;
   transform: scale(1.05);
-  box-shadow: 0 4px 15px -3px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 25px -3px rgba(59, 130, 246, 0.35);
 }
 
 .preset-img {
@@ -1459,14 +1468,15 @@ export default {
 }
 
 .custom-uploader-btn {
-  background: #ffffff;
-  border: 1px dashed #cbd5e1;
+  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
+  border: 1px dashed rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
   color: #475569;
   font-family: inherit;
   font-weight: 700;
   font-size: 0.85rem;
-  padding: 0.6rem 1rem;
-  border-radius: 12px;
+  padding: 0.7rem 1.2rem;
+  border-radius: 14px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1532,13 +1542,14 @@ export default {
 
 .styled-input {
   width: 100%;
-  padding: 1.1rem 1rem 1.1rem 3rem;
-  border: 1px solid #e2e8f0;
+  padding: 1.1rem 1rem 1.1rem 3.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 16px;
   font-size: 1rem;
   font-weight: 600;
   color: #0f172a;
-  background-color: #f8fafc;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.02);
   outline: none;
   font-family: inherit;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1546,8 +1557,8 @@ export default {
 
 .styled-input:focus {
   background-color: #ffffff;
-  border-color: #0f172a;
-  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.08);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 10px 25px -5px rgba(59, 130, 246, 0.1);
   transform: translateY(-2px);
 }
 

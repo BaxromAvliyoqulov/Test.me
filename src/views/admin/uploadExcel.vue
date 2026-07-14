@@ -17,6 +17,49 @@
           {{ copied ? 'Nusxa olindi!' : 'Nusxa Olish' }}
         </button>
       </div>
+    <!-- Selection Section for Dynamic Prompt -->
+    <div class="selection-grid">
+      <div class="form-group">
+        <label>1. Fanni tanlang (Prompt uchun)</label>
+        <div class="select-wrapper">
+          <i class="fas fa-book select-icon"></i>
+          <select v-model="selectedSubject" @change="fetchLevels" :disabled="loadingSubjects">
+            <option disabled value="">Fanni tanlang...</option>
+            <option v-for="subject in subjects" :key="subject.id" :value="subject">
+              {{ subject.id }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>2. Darajani tanlang (Prompt uchun)</label>
+        <div class="select-wrapper">
+          <i class="fas fa-layer-group select-icon"></i>
+          <select v-model="selectedLevel" :disabled="!selectedSubject || loadingLevels">
+            <option disabled value="">Darajani tanlang...</option>
+            <option v-for="level in levels" :key="level" :value="level">
+              {{ level }}
+            </option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>3. Test soni (Prompt uchun)</label>
+        <div class="select-wrapper">
+          <i class="fas fa-list-ol select-icon"></i>
+          <select v-model="selectedTestCount">
+            <option value="5">5 ta savol</option>
+            <option value="10">10 ta savol</option>
+            <option value="15">15 ta savol</option>
+            <option value="20">20 ta savol</option>
+            <option value="25">25 ta savol</option>
+            <option value="30">30 ta savol</option>
+            <option value="50">50 ta savol</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <!-- Upload Section -->
@@ -91,22 +134,34 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import * as XLSX from 'xlsx';
 import { db } from '@/config/firebase';
-import { collection, writeBatch, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, writeBatch, doc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
 
 const toast = useToast();
 
-const aiPrompt = ref(`Menga quyidagi qoidalarga qat'iy amal qilgan holda O'zbekiston maktab darsliklariga asoslangan 10 ta test savolini Excel (yoki CSV jadval) formatida tuzib ber. 
+const subjects = ref([]);
+const levels = ref([]);
+const selectedSubject = ref("");
+const selectedLevel = ref("");
+const selectedTestCount = ref("10");
+const loadingSubjects = ref(false);
+const loadingLevels = ref(false);
+
+const aiPrompt = computed(() => {
+  const fan = selectedSubject.value ? selectedSubject.value.id : "[FAN NOMI]";
+  const daraja = selectedLevel.value ? selectedLevel.value : "[SINF/DARAJA]";
+  const soni = selectedTestCount.value;
+
+  return `Menga quyidagi qoidalarga qat'iy amal qilgan holda O'zbekiston maktab darsliklariga asoslangan ${soni} ta test savolini Excel (yoki CSV jadval) formatida tuzib ber. 
 
 QAT'IY USTUNLAR (COLUMNS) KETMA-KETLIGI:
 1. TestCategory (Faqat bittasi: Standard, DTM, Prezident)
 2. TestName (Agar Standard bo'lsa bo'sh qoldir, maxsus bo'lsa nomini yoz. Masalan: DTM 2024 Blok)
-3. Subject (Fan nomi: Matematika, Tarix va hk.)
-4. Level (Sinf: 8-sinf, yoki DTM uchun: Asosiy blok)
+3. Subject (Fan nomi. "${fan}" bo'lishi shart)
+4. Level (Sinf. "${daraja}" bo'lishi shart)
 5. ScoreWeight (Ball: Standard uchun 1, DTM Asosiy uchun 3.1)
 6. Question (Savol matni)
 7. Option A (Variant A)
@@ -115,7 +170,8 @@ QAT'IY USTUNLAR (COLUMNS) KETMA-KETLIGI:
 10. Option D (Variant D)
 11. Answer (To'g'ri javob matni. U albatta variantlardan biri bilan aynan bir xil yozilgan bo'lishi shart)
 
-Qoshimcha talab: Fan "Tarix", Sinf "7-sinf" bo'yicha tuz. Hech qanday ortiqcha matnsiz faqat jadvalni taqdim et!`);
+Qoshimcha talab: Hech qanday ortiqcha matnsiz faqat jadvalni taqdim et!`;
+});
 
 const copied = ref(false);
 const selectedFile = ref(null);
@@ -127,6 +183,37 @@ const copyPrompt = () => {
   copied.value = true;
   setTimeout(() => copied.value = false, 2000);
 };
+
+const fetchSubjects = async () => {
+  loadingSubjects.value = true;
+  try {
+    const querySnapshot = await getDocs(collection(db, "subjects"));
+    subjects.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    toast.error("Fanlarni yuklashda xatolik: " + error.message);
+  } finally {
+    loadingSubjects.value = false;
+  }
+};
+
+const fetchLevels = async () => {
+  if (!selectedSubject.value) return;
+  loadingLevels.value = true;
+  selectedLevel.value = "";
+  levels.value = [];
+  try {
+    const levelsCollection = await getDocs(collection(db, "subjects", selectedSubject.value.id, "levels"));
+    levels.value = levelsCollection.docs.map(doc => doc.id);
+  } catch (error) {
+    toast.error("Darajalarni yuklashda xatolik: " + error.message);
+  } finally {
+    loadingLevels.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchSubjects();
+});
 
 const handleDrop = (e) => {
   const file = e.dataTransfer.files[0];
@@ -378,6 +465,54 @@ const uploadToDatabase = async () => {
   background: #2563eb;
 }
 
+/* Selection Grid */
+.selection-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 2rem;
+}
+.form-group label {
+  display: block;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.select-icon {
+  position: absolute;
+  left: 15px;
+  color: #94a3b8;
+}
+.select-wrapper select {
+  width: 100%;
+  padding: 12px 15px 12px 45px;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #1e293b;
+  appearance: none;
+  background: #f8fafc url('data:image/svg+xml;utf8,<svg fill="%2394a3b8" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>') no-repeat right 10px center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.select-wrapper select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.select-wrapper select:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .upload-box {
   border: 2px dashed #cbd5e1;
   border-radius: 16px;
@@ -545,5 +680,9 @@ const uploadToDatabase = async () => {
   background: #059669;
   transform: translateY(-2px);
   box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+}
+
+@media (max-width: 768px) {
+  .selection-grid { grid-template-columns: 1fr; }
 }
 </style>

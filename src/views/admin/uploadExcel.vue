@@ -310,22 +310,35 @@ const processFile = (file) => {
 
       const newJsonData = [];
       let duplicatesCount = 0;
+      const seenInFile = new Set(); // For internal deduplication
 
       // Strict Validation & Deduplication
       for (let i = 0; i < jsonData.length; i++) {
         const row = jsonData[i];
-        const category = (row.TestCategory || 'Standard').trim().toLowerCase();
+        const categoryRaw = (row.TestCategory || '').trim().toLowerCase();
+        const category = categoryRaw === 'dtm' || categoryRaw === 'prezident' ? categoryRaw : 'standard';
         
         if (category === 'standard') {
           const rowSubject = String(row.Subject).trim();
           const rowLevel = String(row.Level).trim();
           
           if (rowSubject !== selectedSubject.value.id || rowLevel !== selectedLevel.value) {
-            toast.error(`XATOLIK! ${i + 1}-qatordagi fan (${rowSubject}) yoki daraja (${rowLevel}) siz tanlaganiga (${selectedSubject.value.id} - ${selectedLevel.value}) mos kelmaydi! Axlat malumotlar kiritish taqiqlanadi.`);
+            toast.error(`XATOLIK! ${i + 1}-qatordagi fan (${rowSubject}) yoki daraja (${rowLevel}) siz tanlaganiga (${selectedSubject.value.id} - ${selectedLevel.value}) mos kelmaydi!`);
+            loading.value = false;
             return;
           }
 
-          if (existingQuestions.has(String(row.Question).trim().toLowerCase())) {
+          const qText = String(row.Question).trim().toLowerCase();
+          
+          // Internal Deduplication (file has same question multiple times)
+          if (seenInFile.has(qText)) {
+            duplicatesCount++;
+            continue;
+          }
+          seenInFile.add(qText);
+
+          // External Deduplication (DB already has it)
+          if (existingQuestions.has(qText)) {
             duplicatesCount++;
             continue; // Skip duplicate
           }
@@ -342,7 +355,7 @@ const processFile = (file) => {
       parsedData.value = newJsonData;
       
       if (duplicatesCount > 0) {
-        toast.warning(`${duplicatesCount} ta takroriy savol topildi va olib tashlandi. Qolgan ${newJsonData.length} tasi tayyorlandi.`);
+        toast.warning(`${duplicatesCount} ta takroriy savol (fayl ichida yoki bazada) topildi va olib tashlandi. Qolgan ${newJsonData.length} tasi tayyorlandi.`);
       } else {
         toast.success(`${newJsonData.length} ta savol tayyorlandi.`);
       }
@@ -389,7 +402,8 @@ const uploadToDatabase = async () => {
     const specialTestsMap = {}; // Grouped by TestName
 
     for (const row of parsedData.value) {
-      const category = (row.TestCategory || 'Standard').trim().toLowerCase();
+      const categoryRaw = (row.TestCategory || '').trim().toLowerCase();
+      const category = categoryRaw === 'dtm' || categoryRaw === 'prezident' ? categoryRaw : 'standard';
       
       const questionObj = {
         question: String(row.Question),
@@ -480,7 +494,19 @@ const uploadToDatabase = async () => {
 
     // Execute Batch
     await batch.commit();
-    toast.success("Barcha savollar muvaffaqiyatli bazaga saqlandi!");
+    
+    const uploadedCount = standardTests.length;
+    let specialCount = Object.keys(specialTestsMap).length;
+    let msg = `✅ ${uploadedCount} ta standard test savoli yuklandi!`;
+    if (specialCount > 0) {
+      msg += ` ${specialCount} ta maxsus test bloki ham qo'shildi.`;
+    }
+    
+    toast.success(msg);
+    
+    // UI count yangilash (faqat standard testlar uchun)
+    currentTestCount.value += uploadedCount;
+    
     clearData();
 
   } catch (err) {

@@ -279,8 +279,20 @@ const processFile = (file) => {
         }
       });
 
-      const newTests = data.filter(item => !existingQuestions.has(item.question.trim().toLowerCase()));
-      const duplicatesCount = data.length - newTests.length;
+      // 1. Fayl ichidagi takroriy savollarni tozalash (Internal deduplication)
+      const uniqueData = [];
+      const seenInFile = new Set();
+      data.forEach(item => {
+        const qText = item.question.trim().toLowerCase();
+        if (!seenInFile.has(qText)) {
+          seenInFile.add(qText);
+          uniqueData.push(item);
+        }
+      });
+
+      // 2. Bazadagi eski savollar bilan solishtirish (External deduplication)
+      const newTests = uniqueData.filter(item => !existingQuestions.has(item.question.trim().toLowerCase()));
+      const duplicatesCount = data.length - newTests.length; // umumiy olib tashlanganlar
 
       if (newTests.length === 0) {
          toast.error("Barcha savollar bazada allaqachon mavjud! Fayl qabul qilinmadi.");
@@ -291,7 +303,7 @@ const processFile = (file) => {
       parsedData.value = newTests;
       
       if (duplicatesCount > 0) {
-         toast.warning(`${duplicatesCount} ta takroriy savol topildi va olib tashlandi. Qolgan ${newTests.length} tasi tayyorlandi.`);
+         toast.warning(`${duplicatesCount} ta takroriy savol (fayl ichida yoki bazada) topildi va olib tashlandi. Qolgan ${newTests.length} tasi tayyorlandi.`);
       } else {
          toast.success(`${newTests.length} ta savol tayyorlandi.`);
       }
@@ -352,7 +364,12 @@ const uploadToDatabase = async () => {
     });
     
     await batch.commit();
-    toast.success(`✅ ${parsedData.value.length} ta test savoli muvaffaqiyatli yuklandi!`);
+    const uploadedCount = parsedData.value.length;
+    toast.success(`✅ ${uploadedCount} ta test savoli muvaffaqiyatli yuklandi!`);
+    
+    // UI-da raqamni darhol yangilash (tezkor javob uchun)
+    currentTestCount.value += uploadedCount;
+    
     clearData();
   } catch (error) {
     toast.error("Bazaga yuklashda xatolik: " + error.message);

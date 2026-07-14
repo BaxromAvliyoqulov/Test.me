@@ -205,6 +205,8 @@
       </transition>
     </div>
 
+        </div>
+
     <!-- Test Component -->
     <transition name="fade">
       <TestPage
@@ -287,8 +289,7 @@
         </div>
       </div>
     </transition>
-      </div>
-  </div>
+        </div>
 </template>
 
 <script>
@@ -298,6 +299,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import defaultUserImage from '../assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
+import { onErrorCaptured } from 'vue';
 import { getRankName, getRankClass, getRankIcon, getNextRankInfo } from '@/utils/ranks';
 import { sortLevels } from '@/utils/sorters';
 import { getBadges } from '@/utils/badges';
@@ -312,6 +314,15 @@ export default {
   },
   setup() {
     const { t, locale } = useI18n();
+
+    onErrorCaptured((err, instance, info) => {
+      console.error('Captured Vue Error:', err, info);
+      const div = document.createElement('div');
+      div.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;background:rgba(255,0,0,0.9);color:white;padding:40px;overflow:auto;font-size:20px;';
+      div.innerHTML = '<h1>VUE RENDER ERROR</h1><p><strong>Message:</strong> ' + err.message + '</p><pre>' + err.stack + '</pre><p><strong>Info:</strong> ' + info + '</p>';
+      document.body.appendChild(div);
+      return false;
+    });
     return { t, currentLocale: locale };
   },
   data() {
@@ -1179,42 +1190,60 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 .subject-card {
   position: relative;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  border-radius: 24px;
   padding: 1.5rem;
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: flex;
   align-items: flex-end;
-  height: 140px;
+  height: 150px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.subject-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-25deg);
+  transition: all 0.7s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.subject-card:hover::before {
+  left: 200%;
 }
 
 .subject-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--subject-color);
-  box-shadow: 0 12px 25px -10px rgba(0, 0, 0, 0.1);
+  transform: translateY(-8px) scale(1.02);
+  border-color: color-mix(in srgb, var(--subject-color) 40%, transparent);
+  box-shadow: 0 20px 40px -10px color-mix(in srgb, var(--subject-color) 25%, transparent), 0 10px 20px -5px rgba(0, 0, 0, 0.05);
 }
 
 .subject-card.selected {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-color: var(--subject-color);
-  box-shadow: 0 0 0 1px var(--subject-color), 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--subject-color) 50%, transparent), 0 15px 30px -5px color-mix(in srgb, var(--subject-color) 20%, transparent);
+  transform: scale(1.02);
 }
 
 .card-bg-icon {
   position: absolute;
-  top: -15px;
-  right: -15px;
-  font-size: 100px;
+  top: -10px;
+  right: -10px;
+  font-size: 110px;
   color: var(--subject-color);
-  opacity: 0.05;
-  transition: all 0.4s ease;
+  opacity: 0.04;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .subject-card:hover .card-bg-icon {
-  transform: rotate(-10deg) scale(1.1);
-  opacity: 0.1;
+  transform: rotate(-15deg) scale(1.15) translateX(-10px);
+  opacity: 0.08;
 }
 
 .card-content {
@@ -1226,24 +1255,35 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 }
 
 .icon-wrapper {
-  width: 40px;
-  height: 40px;
-  background: var(--subject-color);
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, var(--subject-color), color-mix(in srgb, var(--subject-color) 60%, white));
   color: white;
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 10px -2px var(--subject-color);
-  margin-bottom: 4px;
+  font-size: 1.3rem;
+  box-shadow: 0 8px 16px -4px color-mix(in srgb, var(--subject-color) 50%, transparent), inset 0 2px 4px rgba(255,255,255,0.3);
+  margin-bottom: 6px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.subject-card:hover .icon-wrapper {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 20px -4px color-mix(in srgb, var(--subject-color) 60%, transparent), inset 0 2px 4px rgba(255,255,255,0.5);
 }
 
 .card-content h4 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: #0f172a;
+  transition: color 0.3s ease;
+}
+
+.subject-card:hover .card-content h4 {
+  color: var(--subject-color);
 }
 
 .status-badge {

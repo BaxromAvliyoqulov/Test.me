@@ -17,6 +17,8 @@
           {{ copied ? 'Nusxa olindi!' : 'Nusxa Olish' }}
         </button>
       </div>
+    </div>
+
     <!-- Selection Section for Dynamic Prompt -->
     <div class="selection-grid">
       <div class="form-group">

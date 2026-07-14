@@ -122,6 +122,9 @@
 <script>
 import { db } from '@/config/firebase';
 import { collection, getDocs, doc, updateDoc, query, where, limit } from 'firebase/firestore';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
 
 export default {
   name: 'AdminAddAdmin',
@@ -249,16 +252,18 @@ export default {
     async saveEditRole() {
       try {
         await updateDoc(doc(db, 'users', this.editingAdmin.id), { adminRole: this.editRole });
+        toast.success(`Admin roli muvaffaqiyatli yangilandi!`);
         await this.loadAdmins();
         this.editingAdmin = null;
-      } catch(e) { alert('Xatolik: ' + e.message); }
+      } catch(e) { toast.error('Xatolik: ' + e.message); }
     },
     async removeAdmin(admin) {
       if (!confirm(`${admin.displayName || admin.email} foydalanuvchining admin huquqini olasizmi?`)) return;
       try {
         await updateDoc(doc(db, 'users', admin.id), { isAdmin: false, adminRole: null });
+        toast.info(`${admin.displayName || admin.email} adminlar ro'yxatidan o'chirildi.`);
         await this.loadAdmins();
-      } catch(e) { alert('Xatolik: ' + e.message); }
+      } catch(e) { toast.error('Xatolik: ' + e.message); }
     }
   }
 }

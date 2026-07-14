@@ -11,14 +11,18 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Helper to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
     // Users collection rules
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create, delete: if isOwner(userId);
-      allow update: if isOwner(userId) || 
-        (isAuthenticated() && 
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['points']) && 
-         request.resource.data.points == resource.data.points + 50);
+      allow create, delete: if isOwner(userId) || isAdmin();
+      allow update: if isAdmin() || 
+        (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'adminRole'])) ||
+        (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['points']) && request.resource.data.points == resource.data.points + 50);
 
       // User transactions sub-collection (test rewards & purchases)
       match /transactions/{txId} {

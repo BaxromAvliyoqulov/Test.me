@@ -38,12 +38,16 @@
         <label>2. Darajani tanlang (Prompt uchun)</label>
         <div class="select-wrapper">
           <i class="fas fa-layer-group select-icon"></i>
-          <select v-model="selectedLevel" :disabled="!selectedSubject || loadingLevels">
+          <select v-model="selectedLevel" @change="fetchTestCount" :disabled="!selectedSubject || loadingLevels">
             <option disabled value="">Darajani tanlang...</option>
             <option v-for="level in levels" :key="level" :value="level">
               {{ level }}
             </option>
           </select>
+        </div>
+        <div v-if="selectedLevel" class="live-count-badge" :class="{'loading': loadingCount}">
+          <i class="fas fa-database" :class="{'fa-spin': loadingCount}"></i> 
+          Bazada: <strong>{{ currentTestCount }}</strong> ta savol
         </div>
       </div>
       
@@ -144,7 +148,7 @@
 import { ref, computed, onMounted } from 'vue';
 import * as XLSX from 'xlsx';
 import { db } from '@/config/firebase';
-import { collection, writeBatch, doc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { collection, writeBatch, doc, serverTimestamp, getDocs, getCountFromServer } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
 import Swal from 'sweetalert2';
 
@@ -161,6 +165,27 @@ const loadingLevels = ref(false);
 const canUpload = computed(() => {
   return selectedSubject.value && selectedLevel.value;
 });
+
+const currentTestCount = ref(0);
+const loadingCount = ref(false);
+
+const fetchTestCount = async () => {
+  if (!selectedSubject.value || !selectedLevel.value) {
+    currentTestCount.value = 0;
+    return;
+  }
+  loadingCount.value = true;
+  try {
+    const coll = collection(db, "subjects", selectedSubject.value.id, "levels", selectedLevel.value, "tests");
+    const snapshot = await getCountFromServer(coll);
+    currentTestCount.value = snapshot.data().count;
+  } catch(e) {
+    console.error("Test sonini olishda xatolik:", e);
+    currentTestCount.value = 0;
+  } finally {
+    loadingCount.value = false;
+  }
+};
 
 const aiPrompt = computed(() => {
   const fan = selectedSubject.value ? selectedSubject.value.id : "[FAN NOMI]";
@@ -332,10 +357,11 @@ const processFile = (file) => {
   reader.readAsArrayBuffer(file);
 };
 
-const clearData = () => {
+const clearData = async () => {
   parsedData.value = [];
   selectedFile.value = null;
   document.getElementById('fileInput').value = '';
+  await fetchTestCount();
 };
 
 const uploadToDatabase = async () => {
@@ -568,6 +594,29 @@ const uploadToDatabase = async () => {
   position: relative;
   display: flex;
   align-items: center;
+}
+.live-count-badge {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  border: 1px solid #d1fae5;
+  animation: fadeIn 0.3s ease;
+}
+.live-count-badge strong {
+  font-weight: 800;
+  font-size: 1rem;
+}
+.live-count-badge.loading {
+  color: #64748b;
+  background: #f1f5f9;
+  border-color: #e2e8f0;
 }
 .select-icon {
   position: absolute;

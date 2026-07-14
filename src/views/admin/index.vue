@@ -21,7 +21,7 @@
               <i class="fas fa-bars"></i>
             </button>
             <div class="breadcrumb">
-              <span class="bc-root">Admin</span>
+              <span class="bc-root" @click="navigate('overview')" title="Bosh sahifaga qaytish">Admin</span>
               <i class="fas fa-chevron-right bc-sep"></i>
               <span class="bc-current">{{ currentViewLabel }}</span>
             </div>
@@ -179,7 +179,8 @@ export default {
 .mobile-menu-btn:hover { background: #f1f5f9; }
 
 .breadcrumb { display: flex; align-items: center; gap: 8px; }
-.bc-root { font-weight: 700; color: #94a3b8; font-size: 0.9rem; }
+.bc-root { font-weight: 700; color: #94a3b8; font-size: 0.9rem; cursor: pointer; transition: color 0.2s; }
+.bc-root:hover { color: #3b82f6; }
 .bc-sep { color: #cbd5e1; font-size: 0.7rem; }
 .bc-current { font-weight: 800; color: #0f172a; font-size: 0.95rem; }
 

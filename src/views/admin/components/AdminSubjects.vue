@@ -10,10 +10,17 @@
       </button>
     </div>
 
-    <!-- Loading State for Subjects -->
-    <div v-if="loading" class="loading-state">
-      <i class="fas fa-spinner fa-spin"></i>
-      <p>Fanlar yuklanmoqda...</p>
+    <!-- Loading State for Subjects (Skeleton) -->
+    <div v-if="loading && subjects.length === 0" class="subjects-grid">
+      <div v-for="i in 8" :key="i" class="subject-card">
+        <div class="subject-card-header">
+          <div class="subject-icon-box skeleton-box"></div>
+          <div class="subject-info skeleton-info">
+             <div class="skeleton-line skeleton-w75"></div>
+             <div class="skeleton-line skeleton-w40"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Subjects Grid -->
@@ -21,7 +28,7 @@
       <div v-for="subject in subjects" :key="subject.id" :class="['subject-card', { 'is-open': openSubjects.includes(subject.id) }]">
         
         <!-- Card Header (Always Visible) -->
-        <div class="subject-card-header" @click="toggleSubject(subject)">
+        <div class="subject-card-header" @click="toggleSubject(subject)" @mouseenter="prefetchSubject(subject)">
           <div class="subject-icon-box">
             <i class="fas fa-book"></i>
           </div>
@@ -204,17 +211,33 @@ export default {
     this.loadSubjects(); 
   },
   methods: {
-    // Lazy Load 1: Load ONLY subjects first
+    // Ultimate Speed 1: Load from Cache immediately, then fetch in background
     async loadSubjects() {
-      this.loading = true;
+      // Try cache first
+      const cached = localStorage.getItem('admin_subjects_cache');
+      if (cached) {
+        try {
+          this.subjects = JSON.parse(cached);
+          this.loading = false; // Turn off main loading instantly!
+        } catch(e) { console.error(e); }
+      } else {
+        this.loading = true;
+      }
+      
       try {
         const snap = await getDocs(collection(db, 'subjects'));
-        this.subjects = snap.docs.map(doc => ({
-          id: doc.id,
-          levels: [],
-          levelsLoaded: false,
-          loadingLevels: false
-        }));
+        const freshSubjects = snap.docs.map(doc => {
+          const existing = this.subjects.find(s => s.id === doc.id);
+          return {
+            id: doc.id,
+            levels: existing ? existing.levels : [],
+            levelsLoaded: existing ? existing.levelsLoaded : false,
+            loadingLevels: existing ? existing.loadingLevels : false
+          };
+        });
+        this.subjects = freshSubjects;
+        // Save only basic structure to cache
+        localStorage.setItem('admin_subjects_cache', JSON.stringify(freshSubjects.map(s => ({ id: s.id, levels: [], levelsLoaded: false, loadingLevels: false }))));
       } catch(e) { 
         toast.error('Fanlarni yuklashda xatolik: ' + e.message); 
       } finally { 
@@ -222,7 +245,28 @@ export default {
       }
     },
     
-    // Lazy Load 2: Load levels ONLY when subject is expanded
+    // Ultimate Speed 2: Prefetch levels when mouse hovers over the card
+    prefetchSubject(subject) {
+      if (!subject.levelsLoaded && !subject.loadingLevels) {
+        subject.loadingLevels = true;
+        // Fetch silently in background
+        getDocs(collection(db, 'subjects', subject.id, 'levels')).then(async (levelsSnap) => {
+          const levels = [];
+          for (const lvlDoc of levelsSnap.docs) {
+            const testsSnap = await getDocs(collection(db, 'subjects', subject.id, 'levels', lvlDoc.id, 'tests'));
+            levels.push({ id: lvlDoc.id, testCount: testsSnap.size });
+          }
+          subject.levels = levels;
+          subject.levelsLoaded = true;
+        }).catch(e => {
+          console.warn('Prefetch failed:', e);
+        }).finally(() => {
+          subject.loadingLevels = false;
+        });
+      }
+    },
+    
+    // Lazy Load 3: If click happens before prefetch finishes, it waits. If already fetched, it's instant!
     async toggleSubject(subject) {
       const isOpen = this.openSubjects.includes(subject.id);
       
@@ -398,8 +442,15 @@ export default {
 .empty-state-full h3 { font-size: 1.3rem; color: #0f172a; margin: 0 0 8px; font-weight: 800; }
 .empty-state-full p { color: #64748b; max-width: 400px; margin: 0; }
 
-/* Grid Cards */
+/* Grid Cards & Skeletons */
 .subjects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.25rem; align-items: start; }
+
+.skeleton-box { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+.skeleton-info { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.skeleton-line { height: 12px; border-radius: 6px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+.skeleton-w75 { width: 75%; height: 16px; }
+.skeleton-w40 { width: 40%; }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
 .subject-card { background: white; border-radius: 20px; border: 1px solid #f1f5f9; box-shadow: 0 4px 15px rgba(0,0,0,0.02); overflow: hidden; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .subject-card:hover { border-color: #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.06); transform: translateY(-2px); }

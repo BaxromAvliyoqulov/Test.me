@@ -38,7 +38,7 @@
         <div class="tabs-nav-vertical">
           <button 
             type="button" 
-            :class="['tab-link', { active: activeTab === 'profile' }]" 
+            :class="['tab-link-v2', { active: activeTab === 'profile' }]" 
             @click="activeTab = 'profile'"
           >
             <i class="fas fa-user-cog"></i> 
@@ -46,7 +46,7 @@
           </button>
           <button 
             type="button" 
-            :class="['tab-link', { active: activeTab === 'preferences' }]" 
+            :class="['tab-link-v2', { active: activeTab === 'preferences' }]" 
             @click="activeTab = 'preferences'"
           >
             <i class="fas fa-sliders-h"></i> 
@@ -54,7 +54,7 @@
           </button>
           <button 
             type="button" 
-            :class="['tab-link', { active: activeTab === 'achievements' }]" 
+            :class="['tab-link-v2', { active: activeTab === 'achievements' }]" 
             @click="activeTab = 'achievements'"
           >
             <i class="fas fa-award"></i> 
@@ -993,21 +993,26 @@ export default {
   width: 100%;
   margin-bottom: 3rem;
   border-radius: 32px;
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   padding: 2.5rem;
   display: flex;
   align-items: flex-end;
   min-height: 200px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
-  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 10px 40px -10px rgba(37, 99, 235, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  border: none;
   overflow: hidden;
 }
 
 .profile-header-banner::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: url('data:image/svg+xml;utf8,<svg opacity="0.05" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="2" fill="white"/></svg>');
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.2), transparent 50%),
+              radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.15), transparent 50%);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .banner-content {
@@ -1022,9 +1027,9 @@ export default {
   width: 110px;
   height: 110px;
   border-radius: 30px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.8);
   padding: 4px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
   transform: translateY(20px);
 }
 .banner-avatar {
@@ -1040,15 +1045,15 @@ export default {
 .banner-name {
   font-size: 2rem;
   font-weight: 800;
-  color: #ffffff;
+  color: #0f172a;
   margin: 0;
   line-height: 1.1;
 }
 
 .banner-email {
   font-size: 0.95rem;
-  color: #94a3b8;
-  font-weight: 500;
+  color: #475569;
+  font-weight: 600;
   margin-bottom: 8px;
 }
 
@@ -1199,16 +1204,18 @@ export default {
 .id-card {
   width: 100%;
   height: 240px;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: 24px;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.3), inset 0 1px 1px rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.2), inset 0 1px 1px rgba(255,255,255,0.8);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
   position: relative;
-  color: white;
+  color: #0f172a;
 }
 
 .id-card-wrapper:hover .id-card {
@@ -1240,13 +1247,13 @@ export default {
 }
 
 .id-card-header {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(10px);
   padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 .id-card-logo {
@@ -1263,7 +1270,7 @@ export default {
   font-weight: 800;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .chip-icon {

@@ -76,7 +76,7 @@
       />
       <label for="fileInput" class="upload-label">
         <i class="fas fa-cloud-upload-alt upload-icon"></i>
-        <h3 v-if="!canUpload">Avval fan va darajani tanlang</h3>
+        <h3 v-if="!canUpload" class="text-danger">Iltimos, avval Fan va Darajani tanlang!</h3>
         <h3 v-else>JSON faylni shu yerga tashlang yoki bosing</h3>
         <p v-if="canUpload">Faqat .json formatidagi fayllar qabul qilinadi.</p>
       </label>
@@ -91,6 +91,9 @@
         <div class="header-left">
           <h3><i class="fas fa-eye"></i> Ma'lumotlar tekshiruvi (Preview)</h3>
           <span class="badge">{{ parsedData.length }} ta savol tayyor</span>
+          <span class="badge destination-badge" v-if="canUpload">
+            <i class="fas fa-bullseye"></i> Qabul qilinuvchi manzil: {{ selectedSubject.id }} &rarr; {{ selectedLevel }}
+          </span>
         </div>
         
         <!-- Action Buttons Moved to Header -->
@@ -135,8 +138,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { db } from '@/config/firebase';
-import { collection, doc, getDocs, setDoc, addDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDocs, collection, writeBatch, setDoc } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
+import Swal from 'sweetalert2';
 
 const toast = useToast();
 
@@ -260,6 +264,19 @@ const clearData = () => {
 const uploadToDatabase = async () => {
   if (!canUpload.value || parsedData.value.length === 0) return;
   
+  const result = await Swal.fire({
+    title: 'Ishonchingiz komilmi?',
+    text: `Ushbu ${parsedData.value.length} ta test savolini ${selectedSubject.value.id} -> ${selectedLevel.value} bazasiga aniq qo'shmoqchimisiz?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3b82f6',
+    cancelButtonColor: '#ef4444',
+    confirmButtonText: 'Ha, tasdiqlayman!',
+    cancelButtonText: 'Bekor qilish'
+  });
+
+  if (!result.isConfirmed) return;
+
   loading.value = true;
   try {
     const subjectRef = doc(db, "subjects", selectedSubject.value.id);
@@ -433,21 +450,26 @@ onMounted(() => {
   border-radius: 16px;
   padding: 3rem 2rem;
   text-align: center;
-  background: #fafafa;
+  background: #f8fafc;
   transition: all 0.3s;
   position: relative;
   margin-bottom: 2rem;
 }
-.upload-box:not(.disabled):hover {
+.upload-box:hover:not(.disabled) {
   border-color: #3b82f6;
   background: #eff6ff;
 }
 .upload-box.disabled {
-  opacity: 0.6;
+  border-color: #f1f5f9;
+  background: #f8fafc;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 .upload-box.disabled .upload-label {
   cursor: not-allowed;
+}
+.text-danger {
+  color: #ef4444 !important;
 }
 .hidden-input {
   display: none;
@@ -520,6 +542,16 @@ onMounted(() => {
   font-size: 0.85rem;
   font-weight: 600;
 }
+.destination-badge {
+  background: #fefce8;
+  color: #ca8a04;
+  font-weight: 700;
+  border: 1px solid #fef08a;
+}
+.destination-badge i {
+  color: #eab308;
+  margin-right: 4px;
+}
 
 .table-container {
   overflow-x: auto;
@@ -534,7 +566,7 @@ onMounted(() => {
   padding: 12px 16px;
   text-align: left;
   font-size: 0.85rem;
-  color: #64748b;
+  color: #1d4ed8;
   font-weight: 600;
   text-transform: uppercase;
   border-bottom: 2px solid #e2e8f0;

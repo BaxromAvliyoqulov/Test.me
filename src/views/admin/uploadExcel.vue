@@ -65,17 +65,19 @@
     </div>
 
     <!-- Upload Section -->
-    <div class="upload-box" @dragover.prevent @drop.prevent="handleDrop">
+    <div class="upload-box" :class="{ 'disabled': !canUpload }" @dragover.prevent @drop.prevent="handleDrop">
       <input 
         type="file" 
         id="fileInput" 
         accept=".xlsx, .xls" 
         @change="handleFileUpload" 
         class="hidden-input"
+        :disabled="!canUpload"
       />
       <label for="fileInput" class="upload-label">
         <i class="fas fa-cloud-upload-alt upload-icon"></i>
-        <h3>Excel faylni shu yerga tashlang yoki ustiga bosing</h3>
+        <h3 v-if="canUpload">Excel faylni shu yerga tashlang yoki ustiga bosing</h3>
+        <h3 v-else class="text-danger">Iltimos, avval Fan va Darajani tanlang!</h3>
         <p>Faqat .xlsx yoki .xls formatidagi fayllar qabul qilinadi.</p>
       </label>
       <div v-if="selectedFile" class="file-name">
@@ -144,6 +146,7 @@ import * as XLSX from 'xlsx';
 import { db } from '@/config/firebase';
 import { collection, writeBatch, doc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
+import Swal from 'sweetalert2';
 
 const toast = useToast();
 
@@ -154,6 +157,10 @@ const selectedLevel = ref("");
 const selectedTestCount = ref("10");
 const loadingSubjects = ref(false);
 const loadingLevels = ref(false);
+
+const canUpload = computed(() => {
+  return selectedSubject.value && selectedLevel.value;
+});
 
 const aiPrompt = computed(() => {
   const fan = selectedSubject.value ? selectedSubject.value.id : "[FAN NOMI]";
@@ -221,11 +228,13 @@ onMounted(() => {
 });
 
 const handleDrop = (e) => {
+  if (!canUpload.value) return;
   const file = e.dataTransfer.files[0];
   if (file) processFile(file);
 };
 
 const handleFileUpload = (e) => {
+  if (!canUpload.value) return;
   const file = e.target.files[0];
   if (file) processFile(file);
 };
@@ -262,6 +271,22 @@ const processFile = (file) => {
       return;
     }
 
+    // Strict Validation: For Standard tests, Excel columns must match Dropdown selections
+    for (let i = 0; i < jsonData.length; i++) {
+      const row = jsonData[i];
+      const category = (row.TestCategory || 'Standard').trim().toLowerCase();
+      
+      if (category === 'standard') {
+        const rowSubject = String(row.Subject).trim();
+        const rowLevel = String(row.Level).trim();
+        
+        if (rowSubject !== selectedSubject.value.id || rowLevel !== selectedLevel.value) {
+          toast.error(`XATOLIK! ${i + 1}-qatordagi fan (${rowSubject}) yoki daraja (${rowLevel}) siz tanlaganiga (${selectedSubject.value.id} - ${selectedLevel.value}) mos kelmaydi! Axlat malumotlar kiritish taqiqlanadi.`);
+          return;
+        }
+      }
+    }
+
     parsedData.value = jsonData;
     toast.success(`${jsonData.length} ta savol o'qildi.`);
   };
@@ -276,6 +301,21 @@ const clearData = () => {
 };
 
 const uploadToDatabase = async () => {
+  if (parsedData.value.length === 0) return;
+
+  const result = await Swal.fire({
+    title: 'Ishonchingiz komilmi?',
+    text: `Ushbu ${parsedData.value.length} ta test savolini haqiqatdan ham bazaga qo'shmoqchimisiz?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3b82f6',
+    cancelButtonColor: '#ef4444',
+    confirmButtonText: 'Ha, tasdiqlayman!',
+    cancelButtonText: 'Bekor qilish'
+  });
+
+  if (!result.isConfirmed) return;
+
   loading.value = true;
   try {
     const batch = writeBatch(db);
@@ -526,14 +566,26 @@ const uploadToDatabase = async () => {
   border-radius: 16px;
   padding: 3rem 2rem;
   text-align: center;
-  background: #fafafa;
+  background: #f8fafc;
   transition: all 0.3s;
   position: relative;
   margin-bottom: 2rem;
 }
-.upload-box:hover {
-  border-color: #10b981;
-  background: #f0fdf4;
+.upload-box:hover:not(.disabled) {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.upload-box.disabled {
+  border-color: #f1f5f9;
+  background: #f8fafc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.upload-box.disabled .upload-label {
+  cursor: not-allowed;
+}
+.text-danger {
+  color: #ef4444 !important;
 }
 .hidden-input {
   display: none;

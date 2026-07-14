@@ -46,6 +46,22 @@
           </select>
         </div>
       </div>
+
+      <div class="form-group">
+        <label>3. Test sonini tanlang</label>
+        <div class="select-wrapper">
+          <i class="fas fa-list-ol select-icon"></i>
+          <select v-model="selectedTestCount">
+            <option value="5">5 ta savol</option>
+            <option value="10">10 ta savol</option>
+            <option value="15">15 ta savol</option>
+            <option value="20">20 ta savol</option>
+            <option value="25">25 ta savol</option>
+            <option value="30">30 ta savol</option>
+            <option value="50">50 ta savol</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <!-- Upload Section -->
@@ -125,8 +141,9 @@ const toast = useToast();
 const aiPrompt = computed(() => {
   const fan = selectedSubject.value ? selectedSubject.value.id : "[FAN NOMI]";
   const daraja = selectedLevel.value ? selectedLevel.value : "[SINF/DARAJA]";
+  const soni = selectedTestCount.value;
   
-  return `Menga O'zbekiston maktab darsliklariga asoslangan, "${fan}" fani bo'yicha "${daraja}" uchun 10 ta test savolini faqat quyidagi JSON massiv formatida (boshqa hech qanday izohlarsiz) tuzib ber:
+  return `Menga O'zbekiston maktab darsliklariga asoslangan, "${fan}" fani bo'yicha "${daraja}" uchun ${soni} ta test savolini faqat quyidagi JSON massiv formatida (boshqa hech qanday izohlarsiz) tuzib ber:
 
 [
   {
@@ -142,6 +159,7 @@ const subjects = ref([]);
 const levels = ref([]);
 const selectedSubject = ref("");
 const selectedLevel = ref("");
+const selectedTestCount = ref("10");
 const loadingSubjects = ref(false);
 const loadingLevels = ref(false);
 const loading = ref(false);
@@ -362,7 +380,7 @@ onMounted(() => {
 /* Selection Grid */
 .selection-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 20px;
   margin-bottom: 2rem;
 }

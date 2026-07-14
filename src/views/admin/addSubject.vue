@@ -145,6 +145,7 @@ import { db } from '@/config/firebase';
 import { doc, getDocs, collection, writeBatch, setDoc, getCountFromServer } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
 import Swal from 'sweetalert2';
+import { sortLevels } from '@/utils/sorters';
 
 const toast = useToast();
 
@@ -228,7 +229,8 @@ const fetchLevels = async () => {
   levels.value = [];
   try {
     const levelsCollection = await getDocs(collection(db, "subjects", selectedSubject.value.id, "levels"));
-    levels.value = levelsCollection.docs.map(doc => doc.id);
+    const fetchedLevels = levelsCollection.docs.map(doc => doc.id);
+    levels.value = sortLevels(fetchedLevels);
   } catch (error) {
     toast.error("Darajalarni yuklashda xatolik: " + error.message);
   } finally {

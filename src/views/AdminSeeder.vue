@@ -444,10 +444,16 @@ Each object must have this exact structure:
 
 <style scoped>
 .seeder-container {
-  max-width: 900px;
+  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding: 2rem;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .seeder-header {
@@ -471,15 +477,22 @@ Each object must have this exact structure:
 }
 
 .controls-card {
-  background: white;
-  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  padding: 1.5rem 2rem;
   border-radius: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  display: flex;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr auto;
   align-items: flex-end;
   gap: 1.5rem;
   margin-bottom: 2rem;
-  flex-wrap: wrap;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+@media (max-width: 900px) {
+  .controls-card {
+    grid-template-columns: 1fr;
+  }
 }
 
 .error-banner {
@@ -592,14 +605,12 @@ Each object must have this exact structure:
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  flex: 1;
-  min-width: 150px;
+  gap: 0.6rem;
+  width: 100%;
 }
 
 .api-key-group {
-  flex: 2;
-  min-width: 250px;
+  width: 100%;
 }
 
 .form-group label {
@@ -616,13 +627,15 @@ Each object must have this exact structure:
 }
 
 .form-group input, .subject-select {
-  padding: 0.75rem 1rem;
-  border: 1px solid #e2e8f0;
+  padding: 0.85rem 1.2rem;
+  border: 1.5px solid #e2e8f0;
   border-radius: 12px;
   font-size: 1rem;
   outline: none;
-  transition: all 0.2s;
-  background: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 500;
 }
 
 .form-group input:focus, .subject-select:focus {
@@ -641,25 +654,28 @@ Each object must have this exact structure:
 }
 
 .start-btn {
-  background: #10b981;
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
+  padding: 0 2rem;
   border-radius: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1.05rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-  height: 45px;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 52px;
   white-space: nowrap;
   flex-shrink: 0;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
 }
 
 .start-btn:hover:not(:disabled) {
-  background: #059669;
   transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(16, 185, 129, 0.35);
 }
 
 .start-btn:disabled {
@@ -742,10 +758,17 @@ Each object must have this exact structure:
 }
 
 .level-card {
-  background: white;
-  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 1.75rem;
   border-radius: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: transform 0.3s ease;
+}
+.level-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08);
 }
 
 .level-header {
@@ -828,17 +851,24 @@ Each object must have this exact structure:
 }
 
 .progress-bar-bg {
-  height: 8px;
-  background: #f1f5f9;
-  border-radius: 4px;
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 6px;
   overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: gradientMove 3s infinite linear;
+}
+@keyframes gradientMove {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 .progress-bar-fill.finished {
@@ -852,11 +882,13 @@ Each object must have this exact structure:
 }
 
 .db-status-card {
-  background: white;
-  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  padding: 1.75rem;
   border-radius: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
   margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .status-header {
@@ -960,5 +992,14 @@ Each object must have this exact structure:
   color: #16a34a;
   border: 1px solid #bbf7d0;
   box-shadow: 0 4px 15px rgba(22, 163, 74, 0.1);
+}
+.empty-stats {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+  font-weight: 500;
+  background: rgba(241, 245, 249, 0.5);
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
 }
 </style>

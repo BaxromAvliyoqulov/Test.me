@@ -297,7 +297,7 @@ const uploadToDatabase = async () => {
         ],
         answer: String(row.Answer),
         scoreWeight: Number(row.ScoreWeight) || 1,
-        createdAt: serverTimestamp()
+        createdAt: new Date().toISOString()
       };
 
       if (category === 'standard') {
@@ -324,7 +324,10 @@ const uploadToDatabase = async () => {
 
         // Add question to subcollection
         const testRef = doc(collection(db, `subjects/${subjectId}/levels/${levelId}/tests`));
-        batch.set(testRef, questionObj);
+        batch.set(testRef, {
+          ...questionObj,
+          createdAt: serverTimestamp() // Override with serverTimestamp for single doc
+        });
 
       } else {
         // Special Tests (DTM, Prezident)

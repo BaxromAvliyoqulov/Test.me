@@ -148,7 +148,7 @@ export default {
 .admin-root {
   display: flex;
   width: 100%;
-  height: 100%;          /* fill the .admin-page-content flex container */
+  height: 100vh;
   background: #f1f5f9;
   font-family: 'Plus Jakarta Sans', sans-serif;
   overflow: hidden;

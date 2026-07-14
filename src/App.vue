@@ -1,7 +1,10 @@
 <template>
-  <component :is="layout">
+  <div v-if="isAdmin" class="admin-wrapper">
     <router-view />
-  </component>
+  </div>
+  <MainLayout v-else>
+    <router-view />
+  </MainLayout>
 </template>
 
 <script>
@@ -12,13 +15,8 @@ export default {
     MainLayout,
   },
   computed: {
-    layout() {
-      // If the route starts with /admin, do not use MainLayout.
-      // Just render a plain div (or fragment) to avoid nesting sidebars.
-      if (this.$route.path.startsWith('/admin')) {
-        return 'div';
-      }
-      return 'MainLayout';
+    isAdmin() {
+      return this.$route.path.startsWith('/admin');
     }
   }
 };

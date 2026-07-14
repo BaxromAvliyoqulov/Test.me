@@ -230,7 +230,8 @@ const processFile = (file) => {
 
   selectedFile.value = file;
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
+    loading.value = true;
     try {
       const data = JSON.parse(e.target.result);
       if (!Array.isArray(data)) throw new Error("JSON ma'lumoti massiv (array) bo'lishi kerak!");
@@ -244,11 +245,39 @@ const processFile = (file) => {
 
       if (!isValid) throw new Error("Test strukturasida xato! 'question', 4 ta 'options' va 'answer' bo'lishi shart.");
       
-      parsedData.value = data;
-      toast.success(`${data.length} ta savol tayyorlandi.`);
+      // --- Deduplication Logic ---
+      const testsRef = collection(db, "subjects", selectedSubject.value.id, "levels", selectedLevel.value, "tests");
+      const existingDocs = await getDocs(testsRef);
+      const existingQuestions = new Set();
+      existingDocs.forEach(doc => {
+        if (doc.data().question) {
+          existingQuestions.add(doc.data().question.trim().toLowerCase());
+        }
+      });
+
+      const newTests = data.filter(item => !existingQuestions.has(item.question.trim().toLowerCase()));
+      const duplicatesCount = data.length - newTests.length;
+
+      if (newTests.length === 0) {
+         toast.error("Barcha savollar bazada allaqachon mavjud! Fayl qabul qilinmadi.");
+         clearData();
+         return;
+      }
+
+      parsedData.value = newTests;
+      
+      if (duplicatesCount > 0) {
+         toast.warning(`${duplicatesCount} ta takroriy savol topildi va olib tashlandi. Qolgan ${newTests.length} tasi tayyorlandi.`);
+      } else {
+         toast.success(`${newTests.length} ta savol tayyorlandi.`);
+      }
+      // ----------------------------
+
     } catch (err) {
       toast.error(`JSON faylni o'qishda xatolik: ${err.message}`);
       clearData();
+    } finally {
+      loading.value = false;
     }
   };
   reader.readAsText(file);

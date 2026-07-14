@@ -251,44 +251,82 @@ const processFile = (file) => {
   selectedFile.value = file;
   
   const reader = new FileReader();
-  reader.onload = (e) => {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, { type: 'array' });
-    const firstSheet = workbook.SheetNames[0];
-    
-    // Convert to JSON
-    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
-    
-    // Basic validation
-    if (jsonData.length === 0) {
-      toast.error("Fayl bo'sh!");
-      return;
-    }
-    
-    const firstRow = jsonData[0];
-    if (!firstRow.Subject || !firstRow.Question || !firstRow.Answer) {
-      toast.error("Ustunlar xato! Fayl strukturasi to'g'riligiga ishonch hosil qiling.");
-      return;
-    }
-
-    // Strict Validation: For Standard tests, Excel columns must match Dropdown selections
-    for (let i = 0; i < jsonData.length; i++) {
-      const row = jsonData[i];
-      const category = (row.TestCategory || 'Standard').trim().toLowerCase();
+  reader.onload = async (e) => {
+    loading.value = true;
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.SheetNames[0];
       
-      if (category === 'standard') {
-        const rowSubject = String(row.Subject).trim();
-        const rowLevel = String(row.Level).trim();
-        
-        if (rowSubject !== selectedSubject.value.id || rowLevel !== selectedLevel.value) {
-          toast.error(`XATOLIK! ${i + 1}-qatordagi fan (${rowSubject}) yoki daraja (${rowLevel}) siz tanlaganiga (${selectedSubject.value.id} - ${selectedLevel.value}) mos kelmaydi! Axlat malumotlar kiritish taqiqlanadi.`);
-          return;
-        }
+      // Convert to JSON
+      const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+      
+      // Basic validation
+      if (jsonData.length === 0) {
+        toast.error("Fayl bo'sh!");
+        return;
       }
-    }
+      
+      const firstRow = jsonData[0];
+      if (!firstRow.Subject || !firstRow.Question || !firstRow.Answer) {
+        toast.error("Ustunlar xato! Fayl strukturasi to'g'riligiga ishonch hosil qiling.");
+        return;
+      }
 
-    parsedData.value = jsonData;
-    toast.success(`${jsonData.length} ta savol o'qildi.`);
+      // Fetch existing questions for Deduplication
+      const testsRef = collection(db, "subjects", selectedSubject.value.id, "levels", selectedLevel.value, "tests");
+      const existingDocs = await getDocs(testsRef);
+      const existingQuestions = new Set();
+      existingDocs.forEach(doc => {
+        if (doc.data().question) {
+          existingQuestions.add(String(doc.data().question).trim().toLowerCase());
+        }
+      });
+
+      const newJsonData = [];
+      let duplicatesCount = 0;
+
+      // Strict Validation & Deduplication
+      for (let i = 0; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        const category = (row.TestCategory || 'Standard').trim().toLowerCase();
+        
+        if (category === 'standard') {
+          const rowSubject = String(row.Subject).trim();
+          const rowLevel = String(row.Level).trim();
+          
+          if (rowSubject !== selectedSubject.value.id || rowLevel !== selectedLevel.value) {
+            toast.error(`XATOLIK! ${i + 1}-qatordagi fan (${rowSubject}) yoki daraja (${rowLevel}) siz tanlaganiga (${selectedSubject.value.id} - ${selectedLevel.value}) mos kelmaydi! Axlat malumotlar kiritish taqiqlanadi.`);
+            return;
+          }
+
+          if (existingQuestions.has(String(row.Question).trim().toLowerCase())) {
+            duplicatesCount++;
+            continue; // Skip duplicate
+          }
+        }
+        newJsonData.push(row);
+      }
+
+      if (newJsonData.length === 0) {
+        toast.error("Barcha savollar bazada allaqachon mavjud! Fayl qabul qilinmadi.");
+        clearData();
+        return;
+      }
+
+      parsedData.value = newJsonData;
+      
+      if (duplicatesCount > 0) {
+        toast.warning(`${duplicatesCount} ta takroriy savol topildi va olib tashlandi. Qolgan ${newJsonData.length} tasi tayyorlandi.`);
+      } else {
+        toast.success(`${newJsonData.length} ta savol tayyorlandi.`);
+      }
+    } catch(err) {
+      toast.error(`Faylni o'qishda xatolik: ${err.message}`);
+      clearData();
+    } finally {
+      loading.value = false;
+    }
   };
   
   reader.readAsArrayBuffer(file);

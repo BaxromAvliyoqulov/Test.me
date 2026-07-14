@@ -313,18 +313,22 @@ export default {
           
           this.logActivity(`Requesting Gemini for ${batchSize} tests for ${level.id.toUpperCase()}...`, 'info');
           
-          const prompt = `You are an expert examiner for the subject: ${this.subjectId}.
-Generate exactly ${batchSize} high-quality, strictly leveled multiple-choice questions for proficiency/academic level ${level.id.toUpperCase()}.
-Make sure the difficulty is EXACTLY tailored for ${level.id.toUpperCase()}.
+          const prompt = `Siz professional test tuzuvchisiz. "${this.subjectId}" fani bo'yicha "${level.id.toUpperCase()}" qiyinchilik darajasiga HAQIQIY va QAT'IY mos keladigan ${batchSize} ta test savolini O'zbek tilida tuzing.
 
-Return ONLY a valid JSON array of objects. Do not include markdown \`\`\`json wrappers.
-Each object must have this exact structure:
-{
-  "question": "The question text",
-  "options": ["A", "B", "C", "D"],
-  "correctAnswer": "The exact string of the correct option",
-  "explanation": "Short explanation in Uzbek of why it's correct"
-}`;
+QAT'IY TALABLAR:
+1. Savollar butunlay yangi bo'lishi va bir-birini umuman takrorlamasligi shart.
+2. Qiyinchilik darajasi aynan ${level.id.toUpperCase()} uchun mos bo'lishi shart.
+3. Javob qaytarish formati FAQAT JSON massiv bo'lishi shart. Boshqa hech qanday izoh qo'shmang.
+
+Format:
+[
+  {
+    "question": "Savol matni?",
+    "options": ["A javob", "B javob", "C javob", "D javob"],
+    "correctAnswer": "To'g'ri javob matni (options ichidagi bilan aynan bir xil bo'lishi shart)",
+    "explanation": "Qisqacha o'zbek tilida tushuntirish"
+  }
+]`;
 
           try {
             const result = await model.generateContent(prompt);

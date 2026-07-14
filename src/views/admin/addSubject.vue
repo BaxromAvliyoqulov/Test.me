@@ -153,7 +153,9 @@ const aiPrompt = computed(() => {
   const daraja = selectedLevel.value ? selectedLevel.value : "[SINF/DARAJA]";
   const soni = selectedTestCount.value;
   
-  return `Menga O'zbekiston maktab darsliklariga asoslangan, "${fan}" fani bo'yicha "${daraja}" uchun ${soni} ta test savolini faqat quyidagi JSON massiv formatida (boshqa hech qanday izohlarsiz) tuzib ber:
+  return `Menga O'zbekiston maktab darsliklariga asoslangan, "${fan}" fani bo'yicha "${daraja}" qiyinchilik darajasiga HAQIQIY va QAT'IY mos keladigan ${soni} ta test savolini tuzib ber.
+DIQQAT: Savollar mutlaqo yangi, sifatli bo'lishi va bir-birini umuman takrorlamasligi shart!
+Javobni faqat quyidagi JSON massiv formatida (boshqa hech qanday matn yoki markdown izohlarsiz) qaytar:
 
 [
   {

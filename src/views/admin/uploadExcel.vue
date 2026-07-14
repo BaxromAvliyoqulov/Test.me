@@ -194,6 +194,10 @@ const aiPrompt = computed(() => {
 
   return `Menga quyidagi qoidalarga qat'iy amal qilgan holda O'zbekiston maktab darsliklariga asoslangan ${soni} ta test savolini Excel (yoki CSV jadval) formatida tuzib ber. 
 
+QAT'IY TALAB: 
+1. Savollar "${daraja}" qiyinchilik darajasiga HAQIQIY va aniq mos kelishi shart.
+2. Savollar mutlaqo yangi bo'lishi va umuman takrorlanmasligi shart.
+
 QAT'IY USTUNLAR (COLUMNS) KETMA-KETLIGI:
 1. TestCategory (Faqat bittasi: Standard, DTM, Prezident)
 2. TestName (Agar Standard bo'lsa bo'sh qoldir, maxsus bo'lsa nomini yoz. Masalan: DTM 2024 Blok)

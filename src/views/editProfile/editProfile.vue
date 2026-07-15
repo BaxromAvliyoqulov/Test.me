@@ -332,15 +332,16 @@
 
             <!-- TAB 3: Academic Achievements & Milestones -->
             <div v-show="activeTab === 'achievements'" class="tab-pane-content">
-              <!-- Grid Statistics Cards -->
-              <div class="stats-mini-grid">
-                <div class="stat-mini-card">
-                  <i class="fas fa-clipboard-list stat-mini-icon text-blue"></i>
-                  <div class="stat-mini-info">
-                    <span class="stat-mini-lbl">{{ currentLocale === 'RUS' ? 'Всего тестов' : 'Jami testlar' }}</span>
-                    <span class="stat-mini-val">{{ stats.totalTests }}</span>
+              <div class="pro-form-body">
+                <!-- Grid Statistics Cards -->
+                <div class="stats-mini-grid">
+                  <div class="stat-mini-card">
+                    <i class="fas fa-clipboard-list stat-mini-icon text-blue"></i>
+                    <div class="stat-mini-info">
+                      <span class="stat-mini-lbl">{{ currentLocale === 'RUS' ? 'Всего тестов' : 'Jami testlar' }}</span>
+                      <span class="stat-mini-val">{{ stats.totalTests }}</span>
+                    </div>
                   </div>
-                </div>
                 
                 <div class="stat-mini-card">
                   <i class="fas fa-percentage stat-mini-icon text-orange"></i>
@@ -403,6 +404,7 @@
                 :is-premium="profile.isPremium" 
                 :t="t"
               />
+              </div>
             </div>
 
             <!-- Actions buttons -->
@@ -510,7 +512,7 @@ export default {
       profile: {
         username: '',
         password: '••••••••',
-        isPremium: false,
+        isPremium: true, // TEMPORARY UNLOCK
       },
       userEmail: '',
       memberSince: null,
@@ -699,7 +701,7 @@ export default {
               this.profile.username = data.displayName || data.username || user.displayName || '';
               this.selectedPhotoURL = data.photoURL || user.photoURL || '';
               this.userPoints = data.points || 0;
-              this.profile.isPremium = data.isPremium || false;
+              this.profile.isPremium = true; // data.isPremium || false; TEMPORARY UNLOCK
 
 
               // Load preferences

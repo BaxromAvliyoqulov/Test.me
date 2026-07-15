@@ -122,46 +122,47 @@ export default {
 }
 
 .mentor-card {
-  background: rgba(30, 41, 59, 0.4);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 1.25rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .mentor-card:hover:not(.locked) {
-  background: rgba(30, 41, 59, 0.7);
-  border-color: rgba(96, 165, 250, 0.3);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
 }
 
 .mentor-card.active {
   border-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+  background: #eff6ff;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
 }
 
 .mentor-card.locked {
-  opacity: 0.6;
+  opacity: 0.75;
   cursor: not-allowed;
-  filter: grayscale(0.8);
+  filter: grayscale(1);
+  background: #f8fafc;
 }
 
 .mentor-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   flex-shrink: 0;
   position: relative;
 }
@@ -182,15 +183,16 @@ export default {
 }
 
 .mentor-info h4 {
-  color: #f8fafc;
-  font-size: 1.1rem;
-  margin-bottom: 0.25rem;
+  color: #1e293b;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
 }
 
 .mentor-info p {
-  color: #94a3b8;
-  font-size: 0.85rem;
-  line-height: 1.4;
+  color: #64748b;
+  font-size: 0.88rem;
+  line-height: 1.5;
 }
 
 .premium-label {
@@ -207,30 +209,35 @@ export default {
 }
 
 .mentor-preview {
-  margin-top: 1rem;
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .chat-bubble {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 12px 12px 12px 0;
-  padding: 1.25rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0 24px 24px 24px;
+  padding: 1.5rem 2rem;
   position: relative;
-  max-width: 80%;
+  max-width: 85%;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .bubble-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: bold;
-  color: #e2e8f0;
-  margin-bottom: 0.5rem;
+  gap: 0.75rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+  font-size: 1.05rem;
 }
 
 .bubble-text {
-  color: #cbd5e1;
+  color: #334155;
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 1rem;
 }
 </style>

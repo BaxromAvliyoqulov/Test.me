@@ -5,24 +5,36 @@
         v-for="mentor in mentors" 
         :key="mentor.id"
         :class="['mentor-card', { active: localMentorType === mentor.id, locked: mentor.premium && !isPremium }]"
+        :style="{ '--mentor-color': mentor.color }"
         @click="selectMentor(mentor)"
       >
-        <div class="mentor-icon" :style="{ color: mentor.color, backgroundColor: mentor.color + '15' }">
-          <i :class="mentor.icon"></i>
-          <i v-if="mentor.premium && !isPremium" class="fas fa-lock lock-badge"></i>
+        <div class="card-header-area">
+          <div class="mentor-icon">
+            <i :class="mentor.icon"></i>
+          </div>
+          <div v-if="mentor.premium && !isPremium" class="pro-badge">
+            <i class="fas fa-lock"></i> PRO
+          </div>
+          <div v-else-if="mentor.premium" class="pro-badge unlocked">
+            <i class="fas fa-unlock"></i> PRO
+          </div>
         </div>
         <div class="mentor-info">
           <h4>{{ mentor.name[currentLocale] }}</h4>
           <p>{{ mentor.desc[currentLocale] }}</p>
         </div>
-        <div v-if="mentor.premium && !isPremium" class="premium-label">Premium</div>
+        <div class="active-indicator">
+          <i class="fas fa-check-circle"></i>
+        </div>
       </div>
     </div>
 
     <div class="mentor-preview" v-if="selectedMentorData">
-      <div class="chat-bubble">
+      <div class="chat-bubble" :style="{ '--mentor-color': selectedMentorData.color }">
         <div class="bubble-header">
-          <i :class="selectedMentorData.icon" :style="{ color: selectedMentorData.color }"></i>
+          <div class="bubble-avatar">
+            <i :class="selectedMentorData.icon"></i>
+          </div>
           <span>{{ selectedMentorData.name[currentLocale] }}</span>
         </div>
         <p class="bubble-text">"{{ selectedMentorData.greeting[currentLocale] }}"</p>
@@ -144,127 +156,200 @@ export default {
 
 .mentor-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.25rem;
 }
 
 .mentor-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 1.5rem;
+  border-radius: 24px;
+  padding: 1.75rem;
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   gap: 1.25rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+  z-index: 1;
+}
+
+.mentor-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at top right, color-mix(in srgb, var(--mentor-color) 10%, transparent), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
 }
 
 .mentor-card:hover:not(.locked) {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08);
-  border-color: #cbd5e1;
+  transform: translateY(-6px);
+  box-shadow: 0 20px 25px -5px color-mix(in srgb, var(--mentor-color) 15%, transparent), 0 8px 10px -6px color-mix(in srgb, var(--mentor-color) 10%, transparent);
+  border-color: color-mix(in srgb, var(--mentor-color) 30%, transparent);
+}
+.mentor-card:hover:not(.locked)::before {
+  opacity: 1;
 }
 
 .mentor-card.active {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+  border-color: var(--mentor-color);
+  background: #ffffff;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mentor-color) 30%, transparent), 0 15px 35px -5px color-mix(in srgb, var(--mentor-color) 20%, transparent);
+}
+.mentor-card.active::before {
+  opacity: 1;
+  background: radial-gradient(circle at top right, color-mix(in srgb, var(--mentor-color) 15%, transparent), transparent 80%);
 }
 
-.mentor-card.locked {
-  opacity: 0.75;
-  cursor: not-allowed;
-  filter: grayscale(1);
-  background: #f8fafc;
+.card-header-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .mentor-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--mentor-color) 12%, transparent);
+  color: var(--mentor-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.75rem;
-  flex-shrink: 0;
-  position: relative;
+  font-size: 1.6rem;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.lock-badge {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  background: #ef4444;
+.mentor-card:hover:not(.locked) .mentor-icon,
+.mentor-card.active .mentor-icon {
+  transform: scale(1.1) rotate(-5deg);
+  background: linear-gradient(135deg, var(--mentor-color), color-mix(in srgb, var(--mentor-color) 60%, white));
   color: white;
-  font-size: 0.7rem;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  box-shadow: 0 10px 20px -5px color-mix(in srgb, var(--mentor-color) 40%, transparent);
 }
 
 .mentor-info h4 {
-  color: #1e293b;
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin-bottom: 0.35rem;
+  color: #0f172a;
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.3px;
 }
 
 .mentor-info p {
   color: #64748b;
-  font-size: 0.88rem;
-  line-height: 1.5;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.premium-label {
-  position: absolute;
-  top: 0.5rem;
-  right: -1.5rem;
+.pro-badge {
   background: linear-gradient(135deg, #f59e0b, #ea580c);
   color: white;
-  font-size: 0.65rem;
-  font-weight: bold;
-  padding: 0.2rem 1.5rem;
-  transform: rotate(45deg);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 10px -2px rgba(234, 88, 12, 0.4);
+}
+
+.pro-badge.unlocked {
+  background: #f1f5f9;
+  color: #64748b;
+  box-shadow: none;
+}
+
+.active-indicator {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  color: var(--mentor-color);
+  font-size: 1.4rem;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.mentor-card.active .active-indicator {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.mentor-card.locked {
+  opacity: 0.65;
+  filter: grayscale(0.8);
+}
+.mentor-card.locked:hover {
+  filter: grayscale(0.6);
+  opacity: 0.8;
 }
 
 .mentor-preview {
-  margin-top: 2rem;
+  margin-top: 1rem;
   display: flex;
   justify-content: flex-start;
 }
 
 .chat-bubble {
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 0 24px 24px 24px;
-  padding: 1.5rem 2rem;
+  border-radius: 20px 20px 20px 0;
+  padding: 1.75rem 2rem;
   position: relative;
-  max-width: 85%;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  max-width: 90%;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+}
+
+.chat-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -10px;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  border-bottom-left-radius: 15px;
+  clip-path: polygon(100% 0, 0% 100%, 100% 100%);
 }
 
 .bubble-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 12px;
   font-weight: 800;
-  color: #1e293b;
-  margin-bottom: 0.75rem;
-  font-size: 1.05rem;
+  color: #0f172a;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.bubble-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  background: linear-gradient(135deg, var(--mentor-color), color-mix(in srgb, var(--mentor-color) 60%, white));
+  color: white;
+  box-shadow: 0 4px 10px -2px color-mix(in srgb, var(--mentor-color) 40%, transparent);
 }
 
 .bubble-text {
   color: #334155;
-  font-style: italic;
+  font-size: 1.05rem;
   line-height: 1.6;
-  font-size: 1rem;
+  font-weight: 500;
 }
 </style>

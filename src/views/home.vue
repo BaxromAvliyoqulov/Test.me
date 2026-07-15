@@ -1241,10 +1241,24 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 }
 
 .subject-card.selected {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: var(--subject-color);
   border-color: var(--subject-color);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--subject-color) 50%, transparent), 0 15px 30px -5px color-mix(in srgb, var(--subject-color) 20%, transparent);
-  transform: scale(1.02);
+  box-shadow: 0 15px 30px -5px color-mix(in srgb, var(--subject-color) 40%, transparent);
+  transform: scale(1.05);
+}
+
+.subject-card.selected .card-content h4 {
+  color: #ffffff !important;
+}
+
+.subject-card.selected .status-badge {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.subject-card.selected .icon-wrapper {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.3);
 }
 
 .card-bg-icon {
@@ -1255,6 +1269,11 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   color: var(--subject-color);
   opacity: 0.04;
   transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.subject-card.selected .card-bg-icon {
+  color: #ffffff;
+  opacity: 0.2;
 }
 
 .subject-card:hover .card-bg-icon {

@@ -596,6 +596,9 @@ export default {
               self.userPoints = userData.points || 0;
               if (userData.preferences) {
                 self.applyUserPreferences(userData.preferences);
+                self.mentorType = userData.preferences.mentorType || 'standard';
+              } else {
+                self.mentorType = 'standard';
               }
             }
 
@@ -894,7 +897,18 @@ export default {
         
         const subjectsList = this.subjects.map(s => s.id).join(', ');
         
-        const prompt = `You are the expert personalized AI Advisor for the Test.me platform.
+        const personas = {
+          standard: "You are a Standard AI Assistant. You give objective, clear, and straightforward advice.",
+          friendly: "You are a Friendly Mentor. You explain things softly, kindly, and with a lot of encouragement. Use emojis.",
+          strict: "You are a Strict Professor. You speak formally, concisely, and strictly. You focus on discipline and facts. Never use emojis.",
+          socratic: "You are a Socratic Philosopher. You don't just give the answer; you ask thought-provoking questions to make the student think. Use a wise tone.",
+          motivator: "You are a Motivator Coach. You use high-energy language, exclamation marks, and hype! Motivate the student heavily. 🚀",
+          innovator: "You are a Creative Genius. You suggest out-of-the-box, fun, and unconventional ways to study or view the problem. 💡"
+        };
+        const systemPersona = personas[this.mentorType] || personas.standard;
+
+        const prompt = `${systemPersona}
+You are acting as this persona for the Test.me platform.
 Analyze the student's history stats and generate a tailored recommendation.
 
 Student Profile:
@@ -913,7 +927,7 @@ Otherwise, recommend standard practice.
 
 Return a valid JSON object matching this schema exactly (no markdown formatting, no code block backticks):
 {
-  "text": "Your highly personalized advice here in ${locale}. Max 2-3 sentences. Reference their stats (e.g. 'average of ${overallAvg}%') and latest test to be authentic. Avoid generic statements.",
+  "text": "Your highly personalized advice here in ${locale}. YOU MUST ADAPT YOUR TONE TO MATCH YOUR PERSONA! Max 2-3 sentences. Reference their stats (e.g. 'average of ${overallAvg}%') and latest test to be authentic.",
   "badge": "Action label for button in ${locale} (max 3 words, e.g. 'Mathni boshlash' or 'Начать тест')",
   "recommendedSubject": "Exact subject ID from available subjects list (must match one of [${subjectsList}])",
   "recommendedLevel": "Exact recommended level (e.g. 'Beginner', 'Elementary', 'Intermediate', 'Advanced', 'Easy', 'Medium', 'Hard')"

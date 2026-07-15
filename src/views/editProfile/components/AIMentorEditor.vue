@@ -54,6 +54,15 @@ export default {
       localMentorType: this.modelValue || 'friendly',
       mentors: [
         {
+          id: 'standard',
+          icon: 'fas fa-robot',
+          color: '#64748b',
+          premium: false,
+          name: { UZB: 'Standart AI', RUS: 'Стандартный ИИ' },
+          desc: { UZB: 'Oddiy, xolis va aniq maslahatlar beruvchi standart klassik yordamchi.', RUS: 'Обычный классический помощник, дающий объективные и четкие советы.' },
+          greeting: { UZB: 'Assalomu alaykum! Men standart yordamchiman, sizga qanday yordam bera olaman?', RUS: 'Здравствуйте! Я стандартный помощник, чем могу вам помочь?' }
+        },
+        {
           id: 'friendly',
           icon: 'fas fa-smile-beam',
           color: '#3b82f6',

@@ -42,6 +42,7 @@
         :userTools="state.userTools"
         :using5050="state.using5050"
         :isRus="isRus"
+        :isAiLoading="state.isAiLoading"
         @selectOption="selectOption"
         @use5050="use5050"
         @useAiHint="useAiHint"
@@ -102,11 +103,13 @@ import { collection, getDocs, addDoc, Timestamp, query, where, doc, getDoc, upda
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from '@/utils/i18n';
+import { useToast } from 'vue-toastification';
 
-// Router and Locale
+// Router, Locale, Toast
 const router = useRouter();
 const route = useRoute();
 const { locale } = useI18n();
+const toast = useToast();
 
 const emit = defineEmits(['test-completed']);
 
@@ -165,6 +168,10 @@ const state = reactive({
   eliminatedOptions: [],
   hintText: null,
   using5050: false,
+  userPoints: 0,
+  mentorType: 'standard',
+  activeGoal: null,
+  isAiLoading: false
 });
 
 let intervalId = null;
@@ -268,8 +275,15 @@ const isCorrectAnswer = (qIndex) => {
 };
 
 // --- AI Tools Logic ---
+// --- AI Tools Logic ---
 const use5050 = async () => {
-  if (!state.userTools || state.userTools.tool_5050 <= 0 || state.eliminatedOptions.length > 0) return;
+  if (state.eliminatedOptions.length > 0 || state.using5050) return;
+  
+  const hasInventory = state.userTools?.tool_5050 > 0;
+  if (!hasInventory && state.userPoints < 20) {
+    toast.error(isRus.value ? 'Недостаточно TP (нужно 20 TP)' : 'TP yetarli emas (20 TP kerak)');
+    return;
+  }
   
   const currentQ = currentQuestion.value;
   const incorrectIndices = [];
@@ -286,34 +300,100 @@ const use5050 = async () => {
     const auth = getAuth();
     if (auth.currentUser) {
       const userRef = doc(db, 'users', auth.currentUser.uid);
-      await updateDoc(userRef, { 'tools.tool_5050': increment(-1) });
+      if (hasInventory) {
+        await updateDoc(userRef, { 'tools.tool_5050': increment(-1) });
+      } else {
+        await updateDoc(userRef, { points: increment(-20) });
+        await addDoc(collection(userRef, 'transactions'), {
+          action: isRus.value ? 'Покупка подсказки 50/50' : '50/50 yordamini sotib olish',
+          points: -20,
+          timestamp: Timestamp.now()
+        });
+      }
     }
   } catch (err) {
-    console.error("Failed to deduct 5050 tool", err);
+    console.error("Failed to process 5050 tool", err);
   }
 };
 
 const useAiHint = async () => {
-  if (!state.userTools || state.userTools.tool_ai_hint <= 0 || state.hintText) return;
+  if (state.hintText || state.isAiLoading) return;
   
-  const currentQ = currentQuestion.value;
-  // Make a simple AI hint
-  const ans = currentQ.answer || currentQ.correctAnswer;
-  const answerWords = ans.split(' ').filter(w => w.length > 3);
-  const hintKeyword = answerWords.length > 0 ? answerWords[0] : ans;
-  
-  state.hintText = isRus.value 
-    ? `Подсказка: Правильный ответ может быть связан с "${hintKeyword}"...`
-    : `Yordam: To'g'ri javob "${hintKeyword}" so'zi yoki shunga o'xshash ma'no bilan bog'liq bo'lishi mumkin...`;
+  const hasInventory = state.userTools?.tool_ai_hint > 0;
+  if (!hasInventory && state.userPoints < 50) {
+    toast.error(isRus.value ? 'Недостаточно TP (нужно 50 TP)' : 'TP yetarli emas (50 TP kerak)');
+    return;
+  }
 
+  state.isAiLoading = true;
+  
   try {
-    const auth = getAuth();
-    if (auth.currentUser) {
-      const userRef = doc(db, 'users', auth.currentUser.uid);
-      await updateDoc(userRef, { 'tools.tool_ai_hint': increment(-1) });
+    const GEMINI_API_KEY = "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
+    const currentQ = currentQuestion.value;
+    const ans = currentQ.answer || currentQ.correctAnswer;
+    
+    const personas = {
+      standard: "You are a Standard AI Assistant.",
+      friendly: "You are a Friendly Mentor. Add small encouragements or emojis 😊.",
+      strict: "You are a Strict Professor. Speak formally and rigorously.",
+      socratic: "You are a Socratic Philosopher. Ask questions to make them think.",
+      motivator: "You are a Motivator Coach. Use high energy, hype, and emojis! 🚀",
+      innovator: "You are a Creative Genius. Think outside the box. 💡",
+      analyst: "You are a Cyber Analyst. Speak like a tech system. 💻",
+      sage: "You are an Ancient Sage. Use metaphors. 📜"
+    };
+    const persona = personas[state.mentorType] || personas.standard;
+    const goalText = state.activeGoal ? `The user's active goal is: "${state.activeGoal}". Remind them of their goal to motivate them!` : '';
+    
+    const prompt = `You are a helpful AI tutor acting as this persona: ${persona}
+${goalText}
+
+The student is currently taking a test. They are stuck on this question:
+"${currentQ.question}"
+Options: ${JSON.stringify(currentQ.options)}
+
+The correct answer is: "${ans}".
+
+Your task: Provide a clever, very short hint to guide the student toward the correct answer WITHOUT explicitly stating what the correct answer is. 
+Write the hint entirely in the language of the prompt (mostly Uzbek or Russian depending on the question), but keep it under 3 sentences. Be completely in character.`;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
+    );
+
+    if (response.ok) {
+      const resData = await response.json();
+      state.hintText = resData.candidates[0].content.parts[0].text;
+      
+      const auth = getAuth();
+      if (auth.currentUser) {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        if (hasInventory) {
+          await updateDoc(userRef, { 'tools.tool_ai_hint': increment(-1) });
+        } else {
+          await updateDoc(userRef, { points: increment(-50) });
+          await addDoc(collection(userRef, 'transactions'), {
+            action: isRus.value ? 'Покупка AI подсказки' : 'AI Yordamini sotib olish',
+            points: -50,
+            timestamp: Timestamp.now()
+          });
+        }
+      }
+    } else {
+      throw new Error('Gemini API Error');
     }
   } catch (err) {
-    console.error("Failed to deduct ai hint tool", err);
+    console.error("Failed to generate ai hint", err);
+    toast.error(isRus.value ? 'Ошибка при получении подсказки' : 'Yordam olishda xatolik yuz berdi');
+  } finally {
+    state.isAiLoading = false;
   }
 };
 
@@ -591,7 +671,17 @@ onMounted(() => {
       const userRef = doc(db, 'users', user.uid);
       onSnapshot(userRef, (snap) => {
         if (snap.exists()) {
-          state.userTools = snap.data().tools || {};
+          const data = snap.data();
+          state.userTools = data.tools || {};
+          state.userPoints = data.points || 0;
+          state.mentorType = data.preferences?.mentorType || 'standard';
+          
+          if (data.goals && Array.isArray(data.goals)) {
+            const activeGoals = data.goals.filter(g => g.status === 'active');
+            if (activeGoals.length > 0) {
+              state.activeGoal = activeGoals[0].title;
+            }
+          }
         }
       });
     }

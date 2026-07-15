@@ -28,22 +28,26 @@
       </button>
     </div>
 
-    <div class="tools-container" v-if="(userTools?.tool_5050 > 0) || (userTools?.tool_ai_hint > 0)">
+    <div class="tools-container">
       <button 
-        v-if="userTools?.tool_5050 > 0" 
         class="tool-btn" 
         :disabled="using5050 || eliminatedOptions.length > 0"
         @click="$emit('use5050')"
       >
-        <i class="fas fa-balance-scale"></i> 50/50 <span class="badge">{{ userTools.tool_5050 }}</span>
+        <i class="fas fa-balance-scale"></i> 50/50 
+        <span class="badge" v-if="userTools?.tool_5050 > 0">{{ userTools.tool_5050 }}</span>
+        <span class="badge price-badge" v-else><i class="fas fa-coins text-yellow-500"></i> 20 TP</span>
       </button>
       <button 
-        v-if="userTools?.tool_ai_hint > 0" 
         class="tool-btn" 
-        :disabled="hintText !== null"
+        :disabled="hintText !== null || isAiLoading"
         @click="$emit('useAiHint')"
       >
-        <i class="fas fa-robot"></i> {{ isRus ? 'Подсказка' : 'Yordam' }} <span class="badge">{{ userTools.tool_ai_hint }}</span>
+        <i class="fas fa-robot" v-if="!isAiLoading"></i> 
+        <i class="fas fa-spinner fa-spin" v-else></i>
+        {{ isRus ? 'Подсказка' : 'Yordam' }} 
+        <span class="badge" v-if="userTools?.tool_ai_hint > 0">{{ userTools.tool_ai_hint }}</span>
+        <span class="badge price-badge" v-else><i class="fas fa-coins text-yellow-500"></i> 50 TP</span>
       </button>
     </div>
 
@@ -70,7 +74,8 @@ defineProps({
   hintText: String,
   userTools: Object,
   using5050: Boolean,
-  isRus: Boolean
+  isRus: Boolean,
+  isAiLoading: Boolean
 });
 
 defineEmits(['selectOption', 'use5050', 'useAiHint', 'goToPrev', 'submitAnswer']);
@@ -220,6 +225,15 @@ defineEmits(['selectOption', 'use5050', 'useAiHint', 'goToPrev', 'submitAnswer']
   padding: 2px 8px;
   border-radius: 8px;
   font-size: 0.8rem;
+}
+
+.price-badge {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+.text-yellow-500 {
+  color: #eab308;
 }
 
 .card-footer {

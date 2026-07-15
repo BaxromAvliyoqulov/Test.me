@@ -984,7 +984,6 @@ export default {
   position: relative;
   min-height: calc(100vh - 80px);
   padding: 2rem 1.5rem;
-  overflow: hidden;
   background-color: transparent;
   font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
   display: flex;

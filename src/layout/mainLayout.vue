@@ -98,6 +98,7 @@ export default {
   background-image: radial-gradient(rgba(37, 99, 235, 0.02) 1.5px, transparent 1.5px);
   background-size: 24px 24px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .admin-page-content {

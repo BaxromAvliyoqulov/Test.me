@@ -35,7 +35,23 @@
             @click="activeTab = 'preferences'"
           >
             <i class="fas fa-sliders-h"></i> 
+            <span>{{ currentLocale === 'RUS' ? 'Настройки' : 'Sozlamalar' }}</span>
+          </button>
+          <button 
+            type="button" 
+            :class="['pro-nav-link', { active: activeTab === 'goals' }]" 
+            @click="activeTab = 'goals'"
+          >
+            <i class="fas fa-bullseye"></i> 
             <span>{{ currentLocale === 'RUS' ? 'Цели' : 'Maqsadlar' }}</span>
+          </button>
+          <button 
+            type="button" 
+            :class="['pro-nav-link', { active: activeTab === 'mentor' }]" 
+            @click="activeTab = 'mentor'"
+          >
+            <i class="fas fa-robot"></i> 
+            <span>{{ currentLocale === 'RUS' ? 'AI Ментор' : 'AI Ustoz' }}</span>
           </button>
           <button 
             type="button" 
@@ -262,6 +278,40 @@
                   </select>
                 </div>
               </div>
+
+              <!-- Offline Mode Toggle (Premium) -->
+              <div class="form-group">
+                <label class="group-label">
+                  <i class="fas fa-wifi"></i> {{ currentLocale === 'RUS' ? 'Офлайн режим (Premium)' : 'Oflayn rejim (Premium)' }}
+                </label>
+                <div class="offline-toggle-box" :class="{ 'locked': !profile.isPremium }">
+                  <label class="switch">
+                    <input type="checkbox" v-model="preferences.offlineMode" :disabled="!profile.isPremium">
+                    <span class="slider round"></span>
+                  </label>
+                  <span>{{ currentLocale === 'RUS' ? 'Кэшировать тесты для работы без интернета' : 'Internetsiz ishlash uchun testlarni keshga saqlash' }}</span>
+                  <i v-if="!profile.isPremium" class="fas fa-lock text-red-500 ml-2"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: Goals -->
+            <div v-show="activeTab === 'goals'" class="tab-pane-content">
+              <GoalsEditor v-model="goalsList" :t="t" />
+            </div>
+
+            <!-- TAB: AI Mentor -->
+            <div v-show="activeTab === 'mentor'" class="tab-pane-content">
+              <div class="pro-pane-header">
+                <h3><i class="fas fa-robot text-purple"></i> {{ currentLocale === 'RUS' ? 'AI Ментор' : 'AI Ustoz' }}</h3>
+                <p>{{ currentLocale === 'RUS' ? 'Выберите характер вашего ИИ-наставника.' : 'O\'zingiz uchun AI ustoz xarakterini tanlang.' }}</p>
+              </div>
+              
+              <AIMentorEditor 
+                v-model="preferences.mentorType" 
+                :is-premium="profile.isPremium" 
+                :current-locale="currentLocale" 
+              />
             </div>
 
             <!-- TAB 3: Academic Achievements & Milestones -->
@@ -330,6 +380,13 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Advanced Analytics Charts -->
+              <AnalyticsCharts 
+                :results-data="rawResults" 
+                :is-premium="profile.isPremium" 
+                :t="t"
+              />
             </div>
 
             <!-- Actions buttons -->
@@ -371,6 +428,10 @@
                     <i :class="getRankIcon(userPoints)"></i>
                     <span>{{ getRankName(userPoints, currentLocale) }}</span>
                   </div>
+                  <div class="streak-badge" title="Kunlik seriya">
+                    <i class="fas fa-fire flame-icon"></i>
+                    <span>{{ stats.streak || 0 }} {{ currentLocale === 'RUS' ? 'дней' : 'kun' }}</span>
+                  </div>
                 </div>
               </div>
               <!-- Card Footer -->
@@ -407,9 +468,18 @@ import { getRankName, getRankClass, getRankIcon, getNextRankInfo, ranksData } fr
 import { sortLevels } from '@/utils/sorters';
 
 import defaultUserImage from '../../assets/img/user.png';
+import GoalsEditor from './components/GoalsEditor.vue';
+import AIMentorEditor from './components/AIMentorEditor.vue';
+import AnalyticsCharts from './components/AnalyticsCharts.vue';
+import { mapState, mapActions } from 'vuex';
 
 export default {
   name: 'EditProfile',
+  components: {
+    GoalsEditor,
+    AIMentorEditor,
+    AnalyticsCharts
+  },
   setup() {
     const { t, locale, setLocale } = useI18n();
     return {
@@ -424,6 +494,7 @@ export default {
       profile: {
         username: '',
         password: '••••••••',
+        isPremium: false,
       },
       userEmail: '',
       memberSince: null,
@@ -434,7 +505,7 @@ export default {
       loading: false,
       passwordError: '',
       ranksList: ranksData,
-
+      goalsList: [],
       
       // Toast notification status
       toast: {
@@ -449,6 +520,8 @@ export default {
         defaultLevel: '',
         dailyGoal: 10,
         defaultLocale: '',
+        mentorType: 'friendly',
+        offlineMode: false,
       },
       subjectsList: [], // List of subjects fetched from db
       levelsList: [], // List of levels for the selected subject
@@ -460,8 +533,11 @@ export default {
         averageAccuracy: 0,
         highestAccuracy: 0,
         perfectCount: 0,
-        bestSubject: '—'
+        bestSubject: '—',
+        streak: 0,
+        streakFreezes: 0,
       },
+      rawResults: [],
 
       // Predefined avatar selections
       presets: [
@@ -477,6 +553,7 @@ export default {
     };
   },
   computed: {
+    ...mapState('user', ['goals']),
     passwordStrength() {
       const pwd = this.profile.password;
       if (!pwd) return { score: 0, text: '', color: '#cbd5e1' };
@@ -582,6 +659,7 @@ export default {
     this.fetchSubjects();
   },
   methods: {
+    ...mapActions('user', ['fetchUserData', 'saveGoals']),
     initializeProfileData() {
       const auth = getAuth();
       onAuthStateChanged(auth, async (user) => {
@@ -593,12 +671,19 @@ export default {
             // Load stats from results collection
             this.fetchUserResults(user.uid);
 
+            // Fetch Vuex User Data (Profile + Goals)
+            await this.fetchUserData();
+            if (this.goals) {
+              this.goalsList = JSON.parse(JSON.stringify(this.goals));
+            }
+
             const docSnap = await getDoc(doc(db, 'users', user.uid));
             if (docSnap.exists()) {
               const data = docSnap.data();
               this.profile.username = data.displayName || data.username || user.displayName || '';
               this.selectedPhotoURL = data.photoURL || user.photoURL || '';
               this.userPoints = data.points || 0;
+              this.profile.isPremium = data.isPremium || false;
 
 
               // Load preferences
@@ -607,6 +692,8 @@ export default {
                 this.preferences.defaultLevel = data.preferences.defaultLevel || '';
                 this.preferences.dailyGoal = data.preferences.dailyGoal || 10;
                 this.preferences.defaultLocale = data.preferences.defaultLocale || this.currentLocale;
+                this.preferences.mentorType = data.preferences.mentorType || 'friendly';
+                this.preferences.offlineMode = data.preferences.offlineMode || false;
                 
                 if (this.preferences.defaultSubject) {
                   this.fetchLevelsForSubject(this.preferences.defaultSubject, this.preferences.defaultLevel);
@@ -672,6 +759,7 @@ export default {
         const querySnapshot = await getDocs(q);
         const results = querySnapshot.docs.map(doc => doc.data());
         
+        this.rawResults = results;
         this.stats.totalTests = results.length;
         if (results.length > 0) {
           // Average accuracy
@@ -704,6 +792,38 @@ export default {
             }
           }
           this.stats.bestSubject = bestSub;
+          
+          // Streak Calculation
+          if (results.length > 0) {
+            // Sort by date descending (assuming timestamp is stored)
+            const sorted = results
+              .map(r => r.timestamp?.toDate ? r.timestamp.toDate() : new Date(r.timestamp || Date.now()))
+              .sort((a, b) => b - a);
+            
+            let currentStreak = 0;
+            let checkDate = new Date();
+            checkDate.setHours(0,0,0,0);
+            
+            // simple continuous day check
+            let dateSet = new Set(sorted.map(d => {
+              const dt = new Date(d);
+              dt.setHours(0,0,0,0);
+              return dt.getTime();
+            }));
+
+            let hasTodayOrYesterday = dateSet.has(checkDate.getTime()) || dateSet.has(checkDate.getTime() - 86400000);
+            if (hasTodayOrYesterday) {
+              let testDate = checkDate.getTime();
+              if (!dateSet.has(testDate)) {
+                testDate -= 86400000; // start from yesterday if not played today
+              }
+              while (dateSet.has(testDate)) {
+                currentStreak++;
+                testDate -= 86400000;
+              }
+            }
+            this.stats.streak = currentStreak;
+          }
         }
       } catch (err) {
         console.error('Error loading academic statistics:', err);
@@ -803,6 +923,8 @@ export default {
               defaultLevel: this.preferences.defaultLevel,
               dailyGoal: Number(this.preferences.dailyGoal),
               defaultLocale: this.preferences.defaultLocale,
+              mentorType: this.preferences.mentorType,
+              offlineMode: this.preferences.offlineMode,
             },
             updatedAt: new Date(),
           },
@@ -819,6 +941,9 @@ export default {
         if (this.profile.password && this.profile.password !== '••••••••' && this.profile.password.trim() !== '') {
           await updatePassword(user, this.profile.password);
         }
+
+        // 4. Save Goals via Vuex Action
+        await this.saveGoals(this.goalsList);
 
         this.showToast(this.t('profileUpdated'), 'success');
         this.profile.password = '••••••••';
@@ -2019,6 +2144,83 @@ export default {
   border-color: rgba(59, 130, 246, 0.4);
 }
 
+.streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(249, 115, 22, 0.1);
+  color: #f97316;
+  padding: 0.3rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  margin-top: 0.5rem;
+}
 
+.flame-icon {
+  font-size: 1rem;
+  animation: flicker 2s infinite alternate;
+}
+@keyframes flicker {
+  0% { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.1); color: #ea580c; }
+}
+
+.offline-toggle-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  color: #94a3b8;
+}
+.offline-toggle-box.locked {
+  opacity: 0.6;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255,255,255,0.1);
+  transition: .4s;
+  border-radius: 24px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: #3b82f6;
+}
+input:disabled + .slider {
+  cursor: not-allowed;
+}
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
 
 </style>

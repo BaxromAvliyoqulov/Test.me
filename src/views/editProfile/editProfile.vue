@@ -1020,7 +1020,8 @@ export default {
 
 
 .layout-v4 {
-  max-width: 1000px;
+  max-width: 1400px;
+  width: 95%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -1199,6 +1200,7 @@ export default {
   box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
   border: 1px solid #e2e8f0;
   overflow: hidden;
+  min-height: calc(100vh - 120px);
 }
 
 .pro-pane-header {

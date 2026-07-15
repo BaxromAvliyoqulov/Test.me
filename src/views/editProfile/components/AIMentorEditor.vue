@@ -150,206 +150,279 @@ export default {
 .ai-mentor-wrap {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
   margin-top: 1rem;
 }
 
 .mentor-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
 }
 
 .mentor-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 24px;
-  padding: 1.75rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 28px;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.04), inset 0 0 0 1px rgba(255,255,255,0.5);
   z-index: 1;
 }
 
-.mentor-card::before {
+/* Inner glow aura */
+.mentor-card::after {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(circle at top right, color-mix(in srgb, var(--mentor-color) 10%, transparent), transparent 70%);
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--mentor-color) 35%, transparent), transparent 50%);
   opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: -1;
+  z-index: -2;
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(-20px);
 }
 
 .mentor-card:hover:not(.locked) {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 25px -5px color-mix(in srgb, var(--mentor-color) 15%, transparent), 0 8px 10px -6px color-mix(in srgb, var(--mentor-color) 10%, transparent);
-  border-color: color-mix(in srgb, var(--mentor-color) 30%, transparent);
-}
-.mentor-card:hover:not(.locked)::before {
-  opacity: 1;
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 
+    0 30px 60px -15px color-mix(in srgb, var(--mentor-color) 25%, transparent),
+    0 15px 25px -10px color-mix(in srgb, var(--mentor-color) 15%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.9);
 }
 
-.mentor-card.active {
-  border-color: var(--mentor-color);
-  background: #ffffff;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mentor-color) 30%, transparent), 0 15px 35px -5px color-mix(in srgb, var(--mentor-color) 20%, transparent);
-}
-.mentor-card.active::before {
+.mentor-card:hover:not(.locked)::after {
   opacity: 1;
-  background: radial-gradient(circle at top right, color-mix(in srgb, var(--mentor-color) 15%, transparent), transparent 80%);
+  transform: translateY(0);
+}
+
+/* Active State with Animated Glowing Border Effect */
+.mentor-card.active {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: transparent;
+  box-shadow: 
+    0 20px 50px -10px color-mix(in srgb, var(--mentor-color) 35%, transparent),
+    inset 0 0 0 2px var(--mentor-color);
+  transform: scale(1.02);
+}
+.mentor-card.active::after {
+  opacity: 1;
+  background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--mentor-color) 25%, transparent), transparent 60%);
 }
 
 .card-header-area {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
 }
 
+/* Big, bold icons */
 .mentor-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--mentor-color) 12%, transparent);
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  background: #ffffff;
   color: var(--mentor-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6rem;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-size: 2.2rem;
+  box-shadow: 
+    0 10px 25px -5px color-mix(in srgb, var(--mentor-color) 30%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--mentor-color) 15%, transparent);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.mentor-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--mentor-color), color-mix(in srgb, var(--mentor-color) 50%, white));
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
 }
 
 .mentor-card:hover:not(.locked) .mentor-icon,
 .mentor-card.active .mentor-icon {
-  transform: scale(1.1) rotate(-5deg);
-  background: linear-gradient(135deg, var(--mentor-color), color-mix(in srgb, var(--mentor-color) 60%, white));
-  color: white;
-  box-shadow: 0 10px 20px -5px color-mix(in srgb, var(--mentor-color) 40%, transparent);
+  color: #ffffff;
+  transform: scale(1.1) translateY(-4px) rotate(-5deg);
+  box-shadow: 0 15px 35px -5px color-mix(in srgb, var(--mentor-color) 50%, transparent);
 }
 
-.mentor-info h4 {
-  color: #0f172a;
-  font-size: 1.2rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.3px;
+.mentor-card:hover:not(.locked) .mentor-icon::before,
+.mentor-card.active .mentor-icon::before {
+  opacity: 1;
 }
 
-.mentor-info p {
-  color: #64748b;
-  font-size: 0.9rem;
-  line-height: 1.55;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
+/* Premium Badges with shine effect */
 .pro-badge {
-  background: linear-gradient(135deg, #f59e0b, #ea580c);
-  color: white;
-  padding: 4px 10px;
-  border-radius: 10px;
-  font-size: 0.7rem;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 14px;
+  font-size: 0.75rem;
   font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 4px;
-  box-shadow: 0 4px 10px -2px rgba(234, 88, 12, 0.4);
+  gap: 6px;
+  box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.4);
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+.pro-badge::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+  transform: skewX(-20deg);
+  animation: shine 4s infinite cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes shine {
+  0% { left: -100%; }
+  20% { left: 200%; }
+  100% { left: 200%; }
 }
 
 .pro-badge.unlocked {
   background: #f1f5f9;
   color: #64748b;
   box-shadow: none;
+  border: 1px solid #e2e8f0;
+}
+.pro-badge.unlocked::after {
+  display: none;
+}
+
+.mentor-info h4 {
+  color: #0f172a;
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.5px;
+}
+
+.mentor-info p {
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .active-indicator {
   position: absolute;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: 2rem;
+  right: 2rem;
   color: var(--mentor-color);
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   opacity: 0;
-  transform: scale(0.5);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform: scale(0.5) rotate(-45deg);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .mentor-card.active .active-indicator {
   opacity: 1;
-  transform: scale(1);
+  transform: scale(1) rotate(0deg);
 }
 
 .mentor-card.locked {
-  opacity: 0.65;
-  filter: grayscale(0.8);
+  opacity: 0.6;
+  filter: grayscale(0.9);
 }
 .mentor-card.locked:hover {
-  filter: grayscale(0.6);
+  filter: grayscale(0.7);
   opacity: 0.8;
 }
 
+/* Epic Chat Bubble Redesign */
 .mentor-preview {
-  margin-top: 1rem;
+  margin-top: 2rem;
   display: flex;
   justify-content: flex-start;
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .chat-bubble {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 20px 20px 20px 0;
-  padding: 1.75rem 2rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 28px 28px 28px 4px;
+  padding: 2rem 2.5rem;
   position: relative;
   max-width: 90%;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
-}
-
-.chat-bubble::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: -10px;
-  width: 20px;
-  height: 20px;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  border-left: 1px solid #e2e8f0;
-  border-bottom-left-radius: 15px;
-  clip-path: polygon(100% 0, 0% 100%, 100% 100%);
+  box-shadow: 
+    0 20px 40px -10px rgba(15, 23, 42, 0.05),
+    0 10px 15px -5px color-mix(in srgb, var(--mentor-color) 10%, transparent);
 }
 
 .bubble-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   font-weight: 800;
   color: #0f172a;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
+  margin-bottom: 1.25rem;
+  font-size: 1.2rem;
+  letter-spacing: -0.3px;
 }
 
 .bubble-avatar {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   background: linear-gradient(135deg, var(--mentor-color), color-mix(in srgb, var(--mentor-color) 60%, white));
   color: white;
-  box-shadow: 0 4px 10px -2px color-mix(in srgb, var(--mentor-color) 40%, transparent);
+  box-shadow: 0 8px 16px -4px color-mix(in srgb, var(--mentor-color) 50%, transparent);
+  position: relative;
+}
+
+/* Pulsing online indicator */
+.bubble-avatar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #10b981;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 .bubble-text {
   color: #334155;
-  font-size: 1.05rem;
-  line-height: 1.6;
+  font-size: 1.15rem;
+  line-height: 1.7;
   font-weight: 500;
+  font-style: italic;
+  position: relative;
 }
 </style>

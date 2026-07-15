@@ -646,6 +646,7 @@ export default {
     },
 
     applyUserPreferences(prefs) {
+      if (prefs.defaultSubject) { this.defaultSubjectId = prefs.defaultSubject; }
       if (prefs.defaultSubject && !this.selectedSubject) {
         const trySelect = () => {
           const sub = this.subjects.find(s => s.id === prefs.defaultSubject);

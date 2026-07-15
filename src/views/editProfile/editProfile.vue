@@ -932,7 +932,7 @@ export default {
   max-width: 1400px;
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr) 360px;
-  gap: 3rem;
+  gap: 2rem;
   align-items: start;
 }
 
@@ -1038,7 +1038,7 @@ export default {
 }
 
 .pro-pane-header {
-  padding: 2rem 2.5rem;
+  padding: 1.5rem 2rem;
   border-bottom: 1px solid #f1f5f9;
 }
 .pro-pane-header h3 { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem; }
@@ -1049,7 +1049,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 2rem;
-  padding: 1.5rem 2.5rem;
+  padding: 1.25rem 2rem;
   border-bottom: 1px solid #f1f5f9;
   margin-bottom: 1.5rem;
 }
@@ -1071,7 +1071,7 @@ export default {
 
 /* Form Actions V3 */
 .pro-form-actions {
-  padding: 1.5rem 2.5rem;
+  padding: 1.25rem 2rem;
   background: #f8fafc;
   display: flex;
   justify-content: flex-end;

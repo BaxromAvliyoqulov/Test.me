@@ -1,6 +1,8 @@
 <template>
-  <div class="goals-editor-wrap">
-    <!-- Header -->
+  <div class="goals-editor-wrap split-layout">
+    <!-- Left Column: Goals List -->
+    <div class="goals-list-section">
+      <!-- Header -->
     <div class="goals-header">
       <div class="header-icon-wrap">
         <i class="fas fa-bullseye"></i>
@@ -63,8 +65,12 @@
       </div>
     </div>
 
-    <!-- Add / Edit Form -->
-    <div class="goal-form-panel">
+    </div> <!-- End Left Column -->
+
+    <!-- Right Column: Sticky Form -->
+    <div class="goal-form-section">
+      <!-- Add / Edit Form -->
+    <div class="goal-form-panel sticky-panel">
       <div class="panel-header">
         <h4>
           <i :class="editingIndex === -1 ? 'fas fa-plus-circle text-blue' : 'fas fa-edit text-orange'"></i> 
@@ -106,6 +112,7 @@
         </button>
       </div>
     </div>
+    </div> <!-- End Right Column -->
   </div>
 </template>
 
@@ -203,6 +210,36 @@ export default {
 
 <style scoped>
 
+
+/* Split Layout */
+.goals-editor-wrap.split-layout {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 2rem;
+  align-items: start;
+}
+.goals-list-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Prevents flex items from blowing out the grid */
+}
+.goal-form-section {
+  position: sticky;
+  top: 2rem;
+}
+.sticky-panel {
+  margin-top: 0 !important;
+}
+
+@media (max-width: 1024px) {
+  .goals-editor-wrap.split-layout {
+    grid-template-columns: 1fr;
+  }
+  .goal-form-section {
+    position: static;
+  }
+}
+
 .goals-editor-wrap {
   display: flex;
   flex-direction: column;
@@ -269,9 +306,9 @@ export default {
 
 /* Grid & Cards */
 .goals-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
 }
 .goal-pro-card {
   background: #ffffff;

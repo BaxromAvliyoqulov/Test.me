@@ -118,6 +118,24 @@ export default {
           name: { UZB: 'Kreativ Daho', RUS: 'Креативный Гений' },
           desc: { UZB: 'Muammolarga noan\'anaviy va qiziqarli yechimlar topishni o\'rgatadi.', RUS: 'Учит находить нестандартные и интересные решения проблем.' },
           greeting: { UZB: 'Ajoyib urinish! Ammo bu muammoni butunlay boshqacha usulda yechish haqida o\'ylab ko\'rganmisiz? 💡', RUS: 'Отличная попытка! Но думал ли ты о совершенно другом подходе к этой задаче? 💡' }
+        },
+        {
+          id: 'analyst',
+          icon: 'fas fa-terminal',
+          color: '#8b5cf6',
+          premium: true,
+          name: { UZB: 'Kiber-Analitik', RUS: 'Кибер-Аналитик' },
+          desc: { UZB: 'Faktlar, logikalar va algoritmlarga tayangan holda maslahat beradi.', RUS: 'Опирается на факты, логику и алгоритмы при даче советов.' },
+          greeting: { UZB: 'Tizim tahlil qilindi. Sizning logikangizda qandaydir xatolik mavjud. Qayta tekshiramizmi? 💻', RUS: 'Система проанализирована. В вашей логике есть ошибка. Проверим заново? 💻' }
+        },
+        {
+          id: 'sage',
+          icon: 'fas fa-scroll',
+          color: '#d97706',
+          premium: true,
+          name: { UZB: 'Qadimiy Donishmand', RUS: 'Древний Мудрец' },
+          desc: { UZB: 'Maqollar va hayotiy o\'xshatishlar orqali dono maslahatlar beradi.', RUS: 'Дает мудрые советы через пословицы и жизненные аналогии.' },
+          greeting: { UZB: 'Shoshma bolam. Tomchi suv toshni teshar. Sabr bilan xatolar ustida ishlaymiz. 📜', RUS: 'Не спеши, дитя. Капля камень точит. Поработаем над ошибками с терпением. 📜' }
         }
       ]
     }

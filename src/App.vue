@@ -38,6 +38,10 @@ export default {
   --dropdown-border: rgba(15, 23, 42, 0.08);
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 html, body {
   margin: 0;
   padding: 0;

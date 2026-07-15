@@ -62,12 +62,7 @@
           </transition>
         </router-link>
 
-        <router-link to="/stats" class="sidebar-link stats-link" v-tooltip="'Statistika'">
-          <div class="link-icon"><i class="fas fa-chart-pie"></i></div>
-          <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Statistika</span>
-          </transition>
-        </router-link>
+        
       </div>
 
       <!-- YUTUQLAR & PROGRES SECTION -->
@@ -116,6 +111,14 @@
       <!-- INFO SECTION -->
       <div class="nav-section-title mt-sec" v-if="!isCollapsed">INFO</div>
       <div class="nav-links-list footer-links">
+        <router-link to="/stats" class="sidebar-link stats-link" v-tooltip="'Umumiy Statistika'">
+          <div class="link-icon"><i class="fas fa-chart-pie"></i></div>
+          <transition name="fade-slide">
+            <span v-if="!isCollapsed" class="link-text">Umumiy Statistika</span>
+          </transition>
+        </router-link>
+
+        
         <router-link to="/about" class="sidebar-link about-link" v-tooltip="t('about')">
           <div class="link-icon"><i class="fas fa-circle-info"></i></div>
           <transition name="fade-slide">
@@ -216,6 +219,15 @@ export default {
       });
     },
     async handleUserAuthenticated(user) {
+
+      const userAgent = navigator.userAgent || '';
+      let os = 'Unknown';
+      if (/Windows/i.test(userAgent)) os = 'Windows';
+      else if (/Mac/i.test(userAgent)) os = 'macOS';
+      else if (/Android/i.test(userAgent)) os = 'Android';
+      else if (/iPhone|iPad|iPod/i.test(userAgent)) os = 'iOS';
+      else if (/Linux/i.test(userAgent)) os = 'Linux';
+
       this.username = user.displayName || user.email || 'User';
       this.profileImage = user.photoURL || defaultUserImage;
 
@@ -230,10 +242,13 @@ export default {
           
           if (!data.shortId) {
             const newShortId = user.uid.slice(0, 8).toUpperCase();
-            await updateDoc(doc(db, 'users', user.uid), { shortId: newShortId });
+            await updateDoc(doc(db, 'users', user.uid), { shortId: newShortId, deviceOS: os });
             this.shortId = newShortId;
           } else {
             this.shortId = data.shortId;
+          }
+          if (data.deviceOS !== os) {
+            await updateDoc(doc(db, 'users', user.uid), { deviceOS: os });
           }
         }
       });

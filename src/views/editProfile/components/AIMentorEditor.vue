@@ -79,6 +79,24 @@ export default {
           name: { UZB: 'Sokratik Faylasuf', RUS: 'Сократический Философ' },
           desc: { UZB: 'To\'g\'ri javobni aytmaydi, o\'zingiz topishingiz uchun savollar beradi.', RUS: 'Не дает готовых ответов, а задает наводящие вопросы.' },
           greeting: { UZB: 'Sizningcha, nima uchun bu javob xato bo\'lishi mumkin? Keling, o\'ylab ko\'ramiz.', RUS: 'Как ты думаешь, почему этот ответ неверный? Давай поразмыслим.' }
+        },
+        {
+          id: 'motivator',
+          icon: 'fas fa-rocket',
+          color: '#f59e0b',
+          premium: true,
+          name: { UZB: 'Motivator Kouch', RUS: 'Мотиватор Коуч' },
+          desc: { UZB: 'Tinimsiz harakatga undaydi. Qisqa, aniq va energiya beruvchi maslahatlar.', RUS: 'Побуждает к действию. Краткие, четкие и заряжающие энергией советы.' },
+          greeting: { UZB: 'Vaqt ketdi! Xatolar - bu shunchaki navbatdagi pog\'ona. Qani, yana bir bor olg\'a! 🚀', RUS: 'Время пошло! Ошибки - это просто ступень к успеху. Давай еще раз, вперед! 🚀' }
+        },
+        {
+          id: 'innovator',
+          icon: 'fas fa-lightbulb',
+          color: '#10b981',
+          premium: true,
+          name: { UZB: 'Kreativ Daho', RUS: 'Креативный Гений' },
+          desc: { UZB: 'Muammolarga noan\'anaviy va qiziqarli yechimlar topishni o\'rgatadi.', RUS: 'Учит находить нестандартные и интересные решения проблем.' },
+          greeting: { UZB: 'Ajoyib urinish! Ammo bu muammoni butunlay boshqacha usulda yechish haqida o\'ylab ko\'rganmisiz? 💡', RUS: 'Отличная попытка! Но думал ли ты о совершенно другом подходе к этой задаче? 💡' }
         }
       ]
     }

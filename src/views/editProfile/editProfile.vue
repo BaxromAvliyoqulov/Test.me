@@ -2197,10 +2197,11 @@ export default {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(30, 41, 59, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
-  color: #94a3b8;
+  color: #475569;
+  font-weight: 500;
 }
 .offline-toggle-box.locked {
   opacity: 0.6;
@@ -2223,7 +2224,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255,255,255,0.1);
+  background-color: #cbd5e1;
   transition: .4s;
   border-radius: 24px;
 }

@@ -982,10 +982,10 @@ export default {
 
 .edit-profile-wrapper {
   position: relative;
-  min-height: calc(100vh - 100px);
+  min-height: calc(100vh - 80px);
   padding: 2rem 1.5rem;
   overflow: hidden;
-  background-color: #f8fafc;
+  background-color: transparent;
   font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif;
   display: flex;
   flex-direction: column;
@@ -1005,7 +1005,7 @@ export default {
   left: -5%;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.35) 0%, rgba(139, 92, 246, 0.25) 100%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.35) 0%, rgba(139, 92, 246, 0) 70%);
   filter: blur(100px);
 }
 
@@ -1014,7 +1014,7 @@ export default {
   right: -5%;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, rgba(245, 158, 11, 0.25) 100%);
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, rgba(245, 158, 11, 0) 70%);
   filter: blur(120px);
 }
 

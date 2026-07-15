@@ -11,12 +11,20 @@
       </div>
     </div>
 
+    <!-- Goals Tabs -->
+    <div class="goals-tabs">
+      <button :class="['goal-tab', { active: filterTab === 'all' }]" @click="filterTab = 'all'">Barchasi</button>
+      <button :class="['goal-tab', { active: filterTab === 'active' }]" @click="filterTab = 'active'">Jarayonda</button>
+      <button :class="['goal-tab', { active: filterTab === 'completed' }]" @click="filterTab = 'completed'">Bajarildi</button>
+      <button :class="['goal-tab', { active: filterTab === 'failed' }]" @click="filterTab = 'failed'">Bajarilmadi</button>
+    </div>
+
     <!-- Active Goals Grid -->
     <div class="goals-grid">
       <TransitionGroup name="goal-list">
         <div 
-          v-for="(goal, index) in localGoals" 
-          :key="goal.id || index" 
+          v-for="goal in filteredGoals" 
+          :key="goal.id" 
           :class="['goal-pro-card', goal.status]"
         >
           <div class="goal-pro-header">
@@ -24,10 +32,10 @@
               <i :class="statusIcon(goal.status)"></i> {{ t(`status_${goal.status}`) }}
             </span>
             <div class="goal-pro-actions">
-              <button class="action-btn edit" @click="editGoal(index)" :title="t('editGoal')">
+              <button class="action-btn edit" @click="editGoal(goal.id)" :title="t('editGoal')">
                 <i class="fas fa-edit"></i>
               </button>
-              <button class="action-btn delete" @click="removeGoal(index)" :title="t('cancelBtn')">
+              <button class="action-btn delete" @click="removeGoal(goal.id)" :title="t('cancelBtn')">
                 <i class="fas fa-trash-alt"></i>
               </button>
             </div>
@@ -48,7 +56,7 @@
       </TransitionGroup>
 
       <!-- Empty State -->
-      <div v-if="localGoals.length === 0" class="empty-state-card">
+      <div v-if="filteredGoals.length === 0" class="empty-state-card">
         <div class="empty-icon-wrap"><i class="fas fa-flag-checkered"></i></div>
         <h4>{{ t('noGoals') }}</h4>
         <p>{{ t('goalsDesc') }}</p>
@@ -119,7 +127,14 @@ export default {
     return {
       localGoals: [],
       editingIndex: -1,
-      currentGoal: this.getEmptyGoal()
+      currentGoal: this.getEmptyGoal(),
+      filterTab: 'all'
+    }
+  },
+  computed: {
+    filteredGoals() {
+      if (this.filterTab === 'all') return this.localGoals;
+      return this.localGoals.filter(g => g.status === this.filterTab);
     }
   },
   watch: {
@@ -161,13 +176,19 @@ export default {
       this.emitUpdate();
       this.cancelEdit();
     },
-    editGoal(index) {
-      this.editingIndex = index;
-      this.currentGoal = { ...this.localGoals[index] };
+    editGoal(id) {
+      const index = this.localGoals.findIndex(g => g.id === id);
+      if (index !== -1) {
+        this.editingIndex = index;
+        this.currentGoal = { ...this.localGoals[index] };
+      }
     },
-    removeGoal(index) {
-      this.localGoals.splice(index, 1);
-      this.emitUpdate();
+    removeGoal(id) {
+      const index = this.localGoals.findIndex(g => g.id === id);
+      if (index !== -1) {
+        this.localGoals.splice(index, 1);
+        this.emitUpdate();
+      }
     },
     cancelEdit() {
       this.editingIndex = -1;
@@ -216,6 +237,34 @@ export default {
 .header-text-wrap p {
   color: #64748b;
   font-size: 0.9rem;
+}
+
+/* Tabs */
+.goals-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+.goal-tab {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+.goal-tab:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+.goal-tab.active {
+  background: #eff6ff;
+  color: #3b82f6;
 }
 
 /* Grid & Cards */

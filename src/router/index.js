@@ -19,6 +19,7 @@ const AdminSeeder = () => import('@/views/AdminSeeder.vue');
 const ShopPage = () => import('@/views/shop/ShopPage.vue');
 const FriendsDashboard = () => import('@/views/Friends/FriendsDashboard.vue');
 const RankSystemPage = () => import('@/views/Ranks/RankSystemPage.vue');
+const PlatformStats = () => import('@/views/PlatformStats.vue');
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -112,6 +113,11 @@ const router = createRouter({
       path: '/ranks',
       name: 'ranks',
       component: RankSystemPage,
+    },
+    {
+      path: '/stats',
+      name: 'platformStats',
+      component: PlatformStats,
     },
   ],
 });

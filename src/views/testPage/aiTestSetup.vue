@@ -110,7 +110,8 @@ import { reactive, ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { db, auth, functions } from '@/config/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDoc, doc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import { useI18n } from '@/utils/i18n';
 import { useToast } from 'vue-toastification';
 
@@ -167,6 +168,19 @@ export default {
     let progressInterval = null;
     let statusInterval = null;
 
+    const mentorType = ref('standard');
+
+    onMounted(() => {
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists() && userDoc.data().preferences) {
+            mentorType.value = userDoc.data().preferences.mentorType || 'standard';
+          }
+        }
+      });
+    });
+
     const startLoadingAnimations = () => {
       loading.value = true;
       progressPercentage.value = 0;
@@ -196,6 +210,30 @@ export default {
     const generateQuestionsClientSide = async (subject, level, topic) => {
       const GEMINI_API_KEY = "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
       try {
+          const personas = {
+            standard: "You are a Standard AI Assistant. Write clear, academic, and straightforward questions.",
+            friendly: "You are a Friendly Mentor. Add small encouragements or emojis to the question text (e.g., 'Don't worry, you got this! What is...? 😊').",
+            strict: "You are a Strict Professor. Write the questions in a very formal, demanding, and rigorous tone. No emojis.",
+            socratic: "You are a Socratic Philosopher. Frame the questions as deep, thought-provoking inquiries.",
+            motivator: "You are a Motivator Coach. Use high energy, hype, and emojis in the question text! (e.g., 'Let's crush this! What is...? 🚀').",
+            innovator: "You are a Creative Genius. Frame the questions using unusual, creative, or fun scenarios. 💡",
+            analyst: "You are a Cyber Analyst. Frame the questions like a system diagnostic or data query. Use tech jargon. 💻",
+            sage: "You are an Ancient Sage. Frame the questions as ancient riddles or wise inquiries. 📜"
+          };
+          const systemPersona = personas[mentorType.value] || personas.standard;
+
+          const promptText = `You are acting as the following persona: ${systemPersona}
+
+Generate a multiple-choice quiz about the topic "${topic}" for subject "${subject}" at "${level}" difficulty level.
+Write the "question" text entirely in the tone of your persona! Make it obvious that YOU (the persona) are asking the question.
+The response must be exactly a JSON array of 10 objects.
+Each question object MUST contain:
+- "question": string (the exact text of the question, IN THE TONE OF YOUR PERSONA)
+- "options": array of 4 strings (possible options, one must be correct)
+- "answer": string (the exact correct option string)
+
+Ensure all questions are grammatically correct and return ONLY raw JSON matching the schema. No markdown formatting.`;
+
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
           {
@@ -208,14 +246,7 @@ export default {
                 {
                   parts: [
                     {
-                      text: `Generate a multiple-choice quiz about the topic "${topic}" for subject "${subject}" at "${level}" difficulty level.
-The response must be exactly a JSON array of 10 objects.
-Each question object MUST contain:
-- "question": string (the exact text of the question)
-- "options": array of 4 strings (possible options, one must be correct)
-- "answer": string (the exact correct option string)
-
-Ensure all questions are grammatically correct and return ONLY raw JSON matching the schema. No markdown formatting.`
+                      text: promptText
                     }
                   ]
                 }

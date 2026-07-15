@@ -51,7 +51,7 @@
                 <div
                   v-for="subject in subjects"
                   :key="subject.id"
-                  :class="['subject-card', { selected: selectedSubject && selectedSubject.id === subject.id }]"
+                  :class="['subject-card', { selected: selectedSubject && selectedSubject.id === subject.id, 'goal-active': subject.id === defaultSubjectId }]"
                   :style="{ '--subject-color': getSubjectColor(subject.id) }"
                   @click="selectSubjectCard(subject)"
                 >
@@ -352,7 +352,8 @@ export default {
       unlockedBadges: [],
       weakestSubject: '',
       strongestSubject: '',
-      aiAdviceType: ''
+      aiAdviceType: '',
+      defaultSubjectId: null
     };
   },
   computed: {
@@ -1240,22 +1241,22 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   box-shadow: 0 20px 40px -10px color-mix(in srgb, var(--subject-color) 25%, transparent), 0 10px 20px -5px rgba(0, 0, 0, 0.05);
 }
 
-.subject-card.selected {
+.subject-card.selected, .subject-card.goal-active {
   background: var(--subject-color);
   border-color: var(--subject-color);
   box-shadow: 0 15px 30px -5px color-mix(in srgb, var(--subject-color) 40%, transparent);
   transform: scale(1.05);
 }
 
-.subject-card.selected .card-content h4 {
+.subject-card.selected .card-content h4, .subject-card.goal-active .card-content h4 {
   color: #ffffff !important;
 }
 
-.subject-card.selected .status-badge {
+.subject-card.selected .status-badge, .subject-card.goal-active .status-badge {
   color: rgba(255, 255, 255, 0.8) !important;
 }
 
-.subject-card.selected .icon-wrapper {
+.subject-card.selected .icon-wrapper, .subject-card.goal-active .icon-wrapper {
   background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
   box-shadow: inset 0 2px 4px rgba(255,255,255,0.3);
@@ -1271,7 +1272,7 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.subject-card.selected .card-bg-icon {
+.subject-card.selected .card-bg-icon, .subject-card.goal-active .card-bg-icon {
   color: #ffffff;
   opacity: 0.2;
 }

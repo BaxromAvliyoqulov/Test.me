@@ -120,15 +120,16 @@
               <!-- Username Field -->
               <div class="form-group">
                 <label for="username" class="group-label">
-                  <i class="fas fa-signature"></i> {{ t('usernameLabel') }}
+                  <i class="fas fa-user"></i> {{ t('usernameLabel') }}
                 </label>
                 <div class="input-wrapper">
-                  <i class="fas fa-user input-icon"></i>
+                  <i class="fas fa-user-edit input-icon"></i>
                   <input
                     type="text"
                     id="username"
                     v-model="profile.username"
                     class="styled-input"
+                    style="padding-right: 3.5rem;"
                     required
                     placeholder="Enter username"
                     maxlength="16"
@@ -141,15 +142,16 @@
               <!-- Email Field (Read-only) -->
               <div class="form-group">
                 <label class="group-label">
-                  <i class="fas fa-envelope-open-text"></i> {{ t('emailLabel') }}
+                  <i class="fas fa-envelope"></i> {{ t('emailLabel') }}
                 </label>
                 <div class="input-wrapper disabled-wrapper">
-                  <i class="fas fa-lock input-icon"></i>
+                  <i class="fas fa-at input-icon"></i>
                   <input
                     type="text"
                     :value="userEmail"
                     disabled
                     class="styled-input disabled-input"
+                    style="padding-right: 6rem;"
                   />
                   <span class="secure-badge">
                     <i class="fas fa-shield-alt"></i> Secure
@@ -169,6 +171,7 @@
                     id="password"
                     v-model="profile.password"
                     :class="['styled-input', { error: passwordError }]"
+                    style="padding-right: 3rem;"
                     @input="validatePassword"
                     :placeholder="currentLocale === 'RUS' ? '••••••••' : '••••••••'"
                     autocomplete="new-password"

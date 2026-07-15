@@ -61,6 +61,13 @@
             <span v-if="!isCollapsed" class="link-text">{{ t('dashboard') }}</span>
           </transition>
         </router-link>
+
+        <router-link to="/stats" class="sidebar-link stats-link" v-tooltip="'Statistika'">
+          <div class="link-icon"><i class="fas fa-chart-pie"></i></div>
+          <transition name="fade-slide">
+            <span v-if="!isCollapsed" class="link-text">Statistika</span>
+          </transition>
+        </router-link>
       </div>
 
       <!-- YUTUQLAR & PROGRES SECTION -->

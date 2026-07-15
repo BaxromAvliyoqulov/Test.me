@@ -181,6 +181,10 @@ export default {
 </script>
 
 <style scoped>
+.goals-editor-wrap, .goals-editor-wrap * {
+  box-sizing: border-box;
+}
+
 .goals-editor-wrap {
   display: flex;
   flex-direction: column;
@@ -413,6 +417,7 @@ export default {
 .group-label i { color: #94a3b8; }
 
 .goal-input {
+  box-sizing: border-box;
   width: 100%;
   padding: 0.85rem 1rem;
   font-size: 0.95rem;

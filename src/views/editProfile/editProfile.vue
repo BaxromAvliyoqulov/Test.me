@@ -117,7 +117,8 @@
                 </div>
               </div>
 
-              <!-- Username Field -->
+              <div class="pro-form-body">
+                <!-- Username Field -->
               <div class="form-group">
                 <label for="username" class="group-label">
                   <i class="fas fa-user"></i> {{ t('usernameLabel') }}
@@ -204,9 +205,16 @@
                 <p class="hintText">{{ t('passwordHint') }}</p>
               </div>
             </div>
+            </div>
 
             <!-- TAB 2: Learning Preferences -->
             <div v-show="activeTab === 'preferences'" class="tab-pane-content">
+              <div class="pro-pane-header">
+                <h3><i class="fas fa-sliders-h text-blue"></i> {{ t('preferences') }}</h3>
+                <p>{{ currentLocale === 'RUS' ? 'Настройте платформу под себя.' : 'Platformani o\'zingizga moslashtiring.' }}</p>
+              </div>
+
+              <div class="pro-form-body">
               <!-- System Language Toggle -->
               <div class="form-group">
                 <label class="group-label">
@@ -297,10 +305,13 @@
                 </div>
               </div>
             </div>
+            </div>
 
             <!-- TAB: Goals -->
             <div v-show="activeTab === 'goals'" class="tab-pane-content">
-              <GoalsEditor v-model="goalsList" :t="t" />
+              <div class="pro-form-body">
+                <GoalsEditor v-model="goalsList" :t="t" />
+              </div>
             </div>
 
             <!-- TAB: AI Mentor -->
@@ -310,11 +321,13 @@
                 <p>{{ currentLocale === 'RUS' ? 'Выберите характер вашего ИИ-наставника.' : 'O\'zingiz uchun AI ustoz xarakterini tanlang.' }}</p>
               </div>
               
-              <AIMentorEditor 
-                v-model="preferences.mentorType" 
-                :is-premium="profile.isPremium" 
-                :current-locale="currentLocale" 
-              />
+              <div class="pro-form-body">
+                <AIMentorEditor 
+                  v-model="preferences.mentorType" 
+                  :is-premium="profile.isPremium" 
+                  :current-locale="currentLocale" 
+                />
+              </div>
             </div>
 
             <!-- TAB 3: Academic Achievements & Milestones -->
@@ -1171,6 +1184,13 @@ export default {
 }
 .pro-pane-header h3 { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem; }
 .pro-pane-header p { font-size: 0.9rem; color: #64748b; }
+
+.pro-form-body {
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
 
 /* Avatar Section V3 */
 .pro-avatar-section {

@@ -569,17 +569,6 @@ select.custom-select {
   padding-right: 44px;
   cursor: pointer;
 }
-select.custom-select:invalid {
-  color: #94a3b8;
-}
-
-select.custom-select option {
-  color: #0f172a;
-}
-
-select.custom-select option:disabled {
-  color: #94a3b8;
-}
 
 textarea {
   padding-top: 14px;

@@ -332,18 +332,23 @@ export default {
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
+  flex-shrink: 0;
 }
 
 .subj-info-wrap {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0; /* Prevents flex children from overflowing */
 }
 
 .s-name {
   font-weight: 800;
   font-size: 0.95rem;
   color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .s-count {
@@ -357,6 +362,7 @@ export default {
   width: 45px;
   height: 45px;
   position: relative;
+  flex-shrink: 0;
 }
 
 .circular-chart {

@@ -40,6 +40,25 @@
             @open-case="handleOpenCase"
           />
         </div>
+
+        <!-- Exclusive Items (Empty State for now) -->
+        <div class="items-section">
+          <div class="section-title-wrap">
+            <h2><i class="fas fa-store text-purple"></i> {{ isRus ? 'Эксклюзивные Товары' : 'Eksklyuziv Buyumlar' }}</h2>
+            <p>{{ isRus ? 'Рамки, аватары и фоны для вашего профиля' : 'Profilingiz uchun ramkalar, avatarlar va fonlar' }}</p>
+          </div>
+
+          <div class="empty-state-card">
+            <div class="empty-icon-wrapper">
+              <i class="fas fa-ghost floating-ghost"></i>
+            </div>
+            <h3>{{ isRus ? 'Пока что здесь пусто...' : 'Hozircha bu yer bo\'sh...' }}</h3>
+            <p>{{ isRus ? 'Мы усердно работаем над созданием уникальных предметов. Скоро здесь появятся новые товары, следите за обновлениями!' : 'Biz noyob buyumlar yaratish ustida qizg\'in ishlayapmiz. Tez orada bu yerda ajoyib tovarlar paydo bo\'ladi, bizni kuzatib boring!' }}</p>
+            <button class="notify-btn" @click="$router.push('/dashboard')">
+              <i class="fas fa-arrow-left"></i> {{ isRus ? 'Вернуться в панель' : 'Panelga qaytish' }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -356,10 +375,99 @@ export default {
   color: #3b82f6;
 }
 
+.text-purple {
+  color: #8b5cf6;
+}
+
 .section-title-wrap p {
   color: #64748b;
   margin: 0;
   font-weight: 500;
+}
+
+/* EMPTY STATE FOR ITEMS */
+.items-section {
+  margin-top: 2rem;
+}
+
+.empty-state-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px dashed rgba(148, 163, 184, 0.5);
+  border-radius: 32px;
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.02);
+  transition: all 0.3s ease;
+}
+
+.empty-state-card:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.empty-icon-wrapper {
+  width: 90px;
+  height: 90px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.floating-ghost {
+  font-size: 3rem;
+  color: #94a3b8;
+  animation: float-ghost 3s ease-in-out infinite;
+}
+
+@keyframes float-ghost {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.empty-state-card h3 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #334155;
+  margin: 0 0 10px 0;
+}
+
+.empty-state-card p {
+  color: #64748b;
+  max-width: 500px;
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
+}
+
+.notify-btn {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 12px 28px;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.notify-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+  transform: translateY(-2px);
 }
 
 /* OVERLAY ANIMATIONS */

@@ -40,15 +40,18 @@
             v-for="(rank) in (rowIndex % 2 === 0 ? [...ranksList].slice((rowIndex - 1) * 3, rowIndex * 3).reverse() : ranksList.slice((rowIndex - 1) * 3, rowIndex * 3))" 
             :key="rank.id"
             class="rank-snake-item"
-            :class="{ 
-              'current': isCurrentRank(ranksList.indexOf(rank)), 
-              'locked': !hasReachedRank(rank),
-              'completed': hasReachedRank(rank) && !isCurrentRank(ranksList.indexOf(rank))
-            }"
+            :class="[
+              rank.class,
+              { 
+                'current': isCurrentRank(ranksList.indexOf(rank)), 
+                'locked': !hasReachedRank(rank),
+                'completed': hasReachedRank(rank) && !isCurrentRank(ranksList.indexOf(rank))
+              }
+            ]"
           >
             <!-- Marker Dot -->
             <div class="rank-snake-dot-wrap">
-              <div class="rank-icon-bubble" :class="rank.class">
+              <div class="rank-icon-bubble">
                 <i :class="rank.icon"></i>
               </div>
             </div>
@@ -392,7 +395,7 @@ export default {
   display: flex;
   width: 100%;
   position: relative;
-  height: 290px;
+  height: 310px;
 }
 
 .rank-snake-row.row-even {
@@ -418,7 +421,7 @@ export default {
   top: 32px;
   right: 16.66%;
   width: 80px;
-  height: 290px;
+  height: 310px;
   border-top: 6px solid transparent;
   border-right: 6px solid #cbd5e1;
   border-bottom: 6px solid #cbd5e1;
@@ -435,7 +438,7 @@ export default {
   top: 32px;
   left: 16.66%;
   width: 80px;
-  height: 290px;
+  height: 310px;
   border-top: 6px solid transparent;
   border-left: 6px solid #cbd5e1;
   border-bottom: 6px solid #cbd5e1;
@@ -464,18 +467,40 @@ export default {
   margin-bottom: 16px;
 }
 
+.rank-icon-bubble {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #94a3b8;
+  transition: all 0.3s;
+  box-shadow: 0 0 0 8px white;
+  position: relative;
+  z-index: 3;
+}
+
 .rank-details {
   flex-grow: 1;
-  background: #f8fafc;
+  background: white;
   padding: 1.5rem 1rem;
-  border-radius: 24px;
+  border-radius: 20px;
   border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
   position: relative;
   transition: all 0.3s;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+.rank-details:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.08);
 }
 
 .details-header {
@@ -503,24 +528,28 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 100px;
 }
 .rank-req i { color: #f59e0b; }
 
 .current-indicator {
   position: absolute;
-  top: -12px;
+  top: -14px;
   left: 50%;
   transform: translateX(-50%);
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   font-size: 0.7rem;
   font-weight: 800;
-  padding: 4px 12px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+  padding: 6px 14px;
+  border-radius: 100px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
   text-transform: uppercase;
   letter-spacing: 1px;
   white-space: nowrap;
+  z-index: 2;
 }
 
 /* Reward UI */
@@ -530,27 +559,27 @@ export default {
   justify-content: space-between;
   width: 100%;
   gap: 8px;
-  background: white;
-  padding: 6px;
-  border-radius: 100px;
-  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
 }
 .reward-badge {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-weight: 800;
   color: #3b82f6;
-  font-size: 0.9rem;
-  padding-left: 8px;
+  font-size: 0.95rem;
 }
 .reward-badge.claimed {
   color: #94a3b8;
   opacity: 0.7;
 }
 .reward-coin-icon {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 
 .claim-btn {
@@ -623,37 +652,51 @@ export default {
 }
 
 /* Rank specific colors */
-.rank-newbie .rank-icon-bubble { border-color: #94a3b8; color: #94a3b8; }
-.rank-bronze .rank-icon-bubble { border-color: #b45309; color: #b45309; }
-.rank-silver .rank-icon-bubble { border-color: #94a3b8; color: #94a3b8; }
-.rank-gold .rank-icon-bubble { border-color: #f59e0b; color: #f59e0b; }
-.rank-platinum .rank-icon-bubble { border-color: #14b8a6; color: #14b8a6; }
-.rank-diamond .rank-icon-bubble { border-color: #3b82f6; color: #3b82f6; }
-.rank-master .rank-icon-bubble { border-color: #8b5cf6; color: #8b5cf6; }
-.rank-grandmaster .rank-icon-bubble { border-color: #ec4899; color: #ec4899; }
-.rank-legendary .rank-icon-bubble { border-color: #f43f5e; color: #f43f5e; }
-.rank-mythic .rank-icon-bubble { border-color: #10b981; color: #10b981; }
+.rank-snake-item.rank-newbie .rank-icon-bubble { border-color: #94a3b8; color: #94a3b8; }
+.rank-snake-item.rank-bronze .rank-icon-bubble { border-color: #b45309; color: #b45309; }
+.rank-snake-item.rank-silver .rank-icon-bubble { border-color: #94a3b8; color: #94a3b8; }
+.rank-snake-item.rank-gold .rank-icon-bubble { border-color: #f59e0b; color: #f59e0b; }
+.rank-snake-item.rank-platinum .rank-icon-bubble { border-color: #14b8a6; color: #14b8a6; }
+.rank-snake-item.rank-diamond .rank-icon-bubble { border-color: #3b82f6; color: #3b82f6; }
+.rank-snake-item.rank-master .rank-icon-bubble { border-color: #8b5cf6; color: #8b5cf6; }
+.rank-snake-item.rank-grandmaster .rank-icon-bubble { border-color: #ec4899; color: #ec4899; }
+.rank-snake-item.rank-legendary .rank-icon-bubble { border-color: #f43f5e; color: #f43f5e; }
+.rank-snake-item.rank-mythic .rank-icon-bubble { border-color: #10b981; color: #10b981; }
 
-.rank-timeline-item.locked .rank-icon-bubble {
+.rank-snake-item.rank-newbie .rank-details { border-top: 4px solid #94a3b8; }
+.rank-snake-item.rank-bronze .rank-details { border-top: 4px solid #b45309; }
+.rank-snake-item.rank-silver .rank-details { border-top: 4px solid #94a3b8; }
+.rank-snake-item.rank-gold .rank-details { border-top: 4px solid #f59e0b; }
+.rank-snake-item.rank-platinum .rank-details { border-top: 4px solid #14b8a6; }
+.rank-snake-item.rank-diamond .rank-details { border-top: 4px solid #3b82f6; }
+.rank-snake-item.rank-master .rank-details { border-top: 4px solid #8b5cf6; }
+.rank-snake-item.rank-grandmaster .rank-details { border-top: 4px solid #ec4899; }
+.rank-snake-item.rank-legendary .rank-details { border-top: 4px solid #f43f5e; }
+.rank-snake-item.rank-mythic .rank-details { border-top: 4px solid #10b981; }
+
+.rank-snake-item.locked .rank-icon-bubble {
   background: #f1f5f9;
   border-color: #e2e8f0 !important;
   color: #cbd5e1 !important;
 }
 
-.rank-timeline-item.locked .rank-details {
+.rank-snake-item.locked .rank-details {
   opacity: 0.6;
   filter: grayscale(100%);
+  border-top-color: transparent !important;
 }
 
-.rank-timeline-item.current .rank-details {
-  border-color: #3b82f6;
+.rank-snake-item.current .rank-details {
   background: #eff6ff;
   box-shadow: 0 15px 35px -5px rgba(59, 130, 246, 0.15);
   transform: scale(1.02);
   z-index: 5;
 }
-.rank-timeline-item.current .rank-icon-bubble {
-  box-shadow: 0 0 0 6px white, 0 0 0 10px rgba(59, 130, 246, 0.2);
+.rank-snake-item.current .rank-details:hover {
+  transform: scale(1.02) translateY(-4px);
+}
+.rank-snake-item.current .rank-icon-bubble {
+  box-shadow: 0 0 0 8px white, 0 0 0 14px rgba(59, 130, 246, 0.2);
 }
 
 @media (max-width: 768px) {

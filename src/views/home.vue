@@ -119,6 +119,7 @@
             <div class="progress-track">
               <div 
                 class="progress-fill" 
+                :class="getRankClass(userPoints)"
                 :style="{ width: getNextRankInfo(userPoints, currentLocale).progressPercent + '%' }"
               >
                 <div class="progress-glow"></div>
@@ -1555,6 +1556,18 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   gap: 6px;
 }
 
+/* Dynamic Rank Text Colors for Badge */
+.rank-badge.rank-newbie { color: #94a3b8; background: rgba(148, 163, 184, 0.1); }
+.rank-badge.rank-bronze { color: #d97706; background: rgba(217, 119, 6, 0.1); }
+.rank-badge.rank-silver { color: #94a3b8; background: rgba(148, 163, 184, 0.1); }
+.rank-badge.rank-gold { color: #facc15; background: rgba(250, 204, 21, 0.1); }
+.rank-badge.rank-platinum { color: #2dd4bf; background: rgba(45, 212, 191, 0.1); }
+.rank-badge.rank-diamond { color: #60a5fa; background: rgba(96, 165, 250, 0.1); }
+.rank-badge.rank-master { color: #a78bfa; background: rgba(167, 139, 250, 0.1); }
+.rank-badge.rank-grandmaster { color: #f472b6; background: rgba(244, 114, 182, 0.1); }
+.rank-badge.rank-legendary { color: #fb7185; background: rgba(251, 113, 133, 0.1); }
+.rank-badge.rank-mythic { color: #34d399; background: rgba(52, 211, 153, 0.1); }
+
 .next-rank {
   font-size: 0.8rem;
   font-weight: 700;
@@ -1576,6 +1589,18 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   position: relative;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Dynamic Rank Progress Bar Gradients */
+.progress-fill.rank-newbie { background: linear-gradient(90deg, #64748b, #94a3b8); }
+.progress-fill.rank-bronze { background: linear-gradient(90deg, #b45309, #d97706); }
+.progress-fill.rank-silver { background: linear-gradient(90deg, #94a3b8, #cbd5e1); }
+.progress-fill.rank-gold { background: linear-gradient(90deg, #ca8a04, #facc15); }
+.progress-fill.rank-platinum { background: linear-gradient(90deg, #0d9488, #2dd4bf); }
+.progress-fill.rank-diamond { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+.progress-fill.rank-master { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+.progress-fill.rank-grandmaster { background: linear-gradient(90deg, #db2777, #f472b6); }
+.progress-fill.rank-legendary { background: linear-gradient(90deg, #e11d48, #fb7185); }
+.progress-fill.rank-mythic { background: linear-gradient(90deg, #059669, #34d399); }
 
 .progress-glow {
   position: absolute;

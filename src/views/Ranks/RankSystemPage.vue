@@ -37,7 +37,7 @@
           :class="rowIndex % 2 === 0 ? 'row-even' : 'row-odd'"
         >
           <div 
-            v-for="(rank) in (rowIndex % 2 === 0 ? [...ranksList].slice((rowIndex - 1) * 3, rowIndex * 3).reverse() : ranksList.slice((rowIndex - 1) * 3, rowIndex * 3))" 
+            v-for="(rank) in ranksList.slice((rowIndex - 1) * 3, rowIndex * 3)" 
             :key="rank.id"
             class="rank-snake-item"
             :class="[
@@ -400,6 +400,7 @@ export default {
 
 .rank-snake-row.row-even {
   flex-direction: row-reverse;
+  justify-content: flex-end; /* Pushes partial rows (like Mythic) to the left side */
 }
 
 /* Horizontal Line */

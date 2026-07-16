@@ -136,7 +136,7 @@
           <!-- AI Coach Card -->
           <div class="premium-card ai-card">
             <div class="ai-header">
-              <div class="ai-avatar">
+              <div class="ai-avatar" :class="aiMentorInfo.colorClass">
                 <i :class="aiMentorInfo.icon"></i>
               </div>
               <div class="ai-title">
@@ -373,20 +373,21 @@ export default {
     },
     aiMentorInfo() {
       const personas = {
-          standard: { nameUz: 'Standart AI', nameRu: 'Стандартный ИИ', icon: 'fas fa-robot' },
-          friendly: { nameUz: 'Do\'stona Mentor', nameRu: 'Дружелюбный Ментор', icon: 'fas fa-smile-beam' },
-          strict: { nameUz: 'Qattiqqo\'l Professor', nameRu: 'Строгий Профессор', icon: 'fas fa-user-tie' },
-          socratic: { nameUz: 'Faylasuf Sokrat', nameRu: 'Философ Сократ', icon: 'fas fa-scroll' },
-          motivator: { nameUz: 'Motivator', nameRu: 'Мотиватор', icon: 'fas fa-fire' },
-          innovator: { nameUz: 'Kreativ Daho', nameRu: 'Креативный Гений', icon: 'fas fa-lightbulb' },
-          analyst: { nameUz: 'Kiber Analitik', nameRu: 'Кибер Аналитик', icon: 'fas fa-laptop-code' },
-          sage: { nameUz: 'Dono Chol', nameRu: 'Мудрый Старец', icon: 'fas fa-yin-yang' }
+          standard: { nameUz: 'Standart AI', nameRu: 'Стандартный ИИ', icon: 'fas fa-robot', colorClass: 'theme-standard' },
+          friendly: { nameUz: 'Do\'stona Mentor', nameRu: 'Дружелюбный Ментор', icon: 'fas fa-smile-beam', colorClass: 'theme-friendly' },
+          strict: { nameUz: 'Qattiqqo\'l Professor', nameRu: 'Строгий Профессор', icon: 'fas fa-user-tie', colorClass: 'theme-strict' },
+          socratic: { nameUz: 'Faylasuf Sokrat', nameRu: 'Философ Сократ', icon: 'fas fa-scroll', colorClass: 'theme-socratic' },
+          motivator: { nameUz: 'Motivator', nameRu: 'Мотиватор', icon: 'fas fa-fire', colorClass: 'theme-motivator' },
+          innovator: { nameUz: 'Kreativ Daho', nameRu: 'Креативный Гений', icon: 'fas fa-lightbulb', colorClass: 'theme-innovator' },
+          analyst: { nameUz: 'Kiber Analitik', nameRu: 'Кибер Аналитик', icon: 'fas fa-laptop-code', colorClass: 'theme-analyst' },
+          sage: { nameUz: 'Dono Chol', nameRu: 'Мудрый Старец', icon: 'fas fa-yin-yang', colorClass: 'theme-sage' }
       };
       const type = this.mentorType || 'standard';
       const persona = personas[type] || personas.standard;
       return {
         name: this.isRus ? persona.nameRu : persona.nameUz,
-        icon: persona.icon
+        icon: persona.icon,
+        colorClass: persona.colorClass
       };
     }
   },
@@ -1616,7 +1617,18 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   display: flex; align-items: center; justify-content: center;
   font-size: 1.2rem;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  transition: all 0.3s ease;
 }
+
+/* AI Themes */
+.ai-avatar.theme-standard { background: linear-gradient(135deg, #94a3b8, #64748b); box-shadow: 0 4px 12px rgba(100, 116, 139, 0.25); }
+.ai-avatar.theme-friendly { background: linear-gradient(135deg, #34d399, #10b981); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); }
+.ai-avatar.theme-strict { background: linear-gradient(135deg, #475569, #1e293b); box-shadow: 0 4px 12px rgba(30, 41, 59, 0.25); }
+.ai-avatar.theme-socratic { background: linear-gradient(135deg, #fbbf24, #d97706); box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25); }
+.ai-avatar.theme-motivator { background: linear-gradient(135deg, #fb7185, #e11d48); box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25); }
+.ai-avatar.theme-innovator { background: linear-gradient(135deg, #a78bfa, #7c3aed); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25); }
+.ai-avatar.theme-analyst { background: linear-gradient(135deg, #38bdf8, #0284c7); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25); }
+.ai-avatar.theme-sage { background: linear-gradient(135deg, #2dd4bf, #0f766e); box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25); }
 
 .ai-title h4 { margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; }
 .online-dot { font-size: 0.75rem; color: #10b981; font-weight: 700; display: flex; align-items: center; gap: 4px; }

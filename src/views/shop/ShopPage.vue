@@ -26,35 +26,31 @@
           </button>
         </div>
 
-        <!-- Cases Section -->
-        <div class="cases-section">
-          <div class="section-title-wrap">
-            <h2><i class="fas fa-box-open text-blue"></i> {{ isRus ? 'Секретные Ящики' : 'Sirli G\'aznalar' }}</h2>
-            <p>{{ isRus ? 'Откройте ящик и испытайте удачу' : 'G\'aznani oching va omadingizni sinab koring' }}</p>
-          </div>
-          
-          <ShopCases 
-            :userPoints="points" 
-            :isRus="isRus" 
-            :isOpening="isOpening"
-            @open-case="handleOpenCase"
-          />
-        </div>
-
-        <!-- Exclusive Items (Empty State for now) -->
-        <div class="items-section">
-          <div class="section-title-wrap">
-            <h2><i class="fas fa-store text-purple"></i> {{ isRus ? 'Эксклюзивные Товары' : 'Eksklyuziv Buyumlar' }}</h2>
-            <p>{{ isRus ? 'Рамки, аватары и фоны для вашего профиля' : 'Profilingiz uchun ramkalar, avatarlar va fonlar' }}</p>
-          </div>
-
-          <div class="empty-state-card">
-            <div class="empty-icon-wrapper">
-              <i class="fas fa-ghost floating-ghost"></i>
+        <!-- Coming Soon State -->
+        <div class="coming-soon-wrapper">
+          <div class="coming-soon-card">
+            <div class="icon-glow-ring">
+              <i class="fas fa-rocket text-blue floating-icon"></i>
             </div>
-            <h3>{{ isRus ? 'Пока что здесь пусто...' : 'Hozircha bu yer bo\'sh...' }}</h3>
-            <p>{{ isRus ? 'Мы усердно работаем над созданием уникальных предметов. Скоро здесь появятся новые товары, следите за обновлениями!' : 'Biz noyob buyumlar yaratish ustida qizg\'in ishlayapmiz. Tez orada bu yerda ajoyib tovarlar paydo bo\'ladi, bizni kuzatib boring!' }}</p>
-            <button class="notify-btn" @click="$router.push('/dashboard')">
+            <h2>{{ isRus ? 'Магазин скоро откроется!' : 'Do\'kon tez kunda ishga tushadi!' }}</h2>
+            <p>{{ isRus ? 'Мы готовим для вас невероятные награды, уникальные аватары и секретные ящики. Копите TP Coins — скоро они вам понадобятся!' : 'Biz siz uchun ajoyib yutuqlar, noyob avatarlar va sirli g\'aznalar tayyorlayapmiz. TP Coinlarni yig\'ishda davom eting — tez orada ular sizga asqotadi!' }}</p>
+            
+            <div class="features-preview">
+              <div class="feature-item">
+                <i class="fas fa-box-open text-blue"></i>
+                <span>{{ isRus ? 'Секретные Ящики' : 'Sirli G\'aznalar' }}</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-gem text-purple"></i>
+                <span>{{ isRus ? 'Редкие Аватары' : 'Nodir Avatarlar' }}</span>
+              </div>
+              <div class="feature-item">
+                <i class="fas fa-certificate text-orange"></i>
+                <span>{{ isRus ? 'VIP Статусы' : 'VIP Maqomlar' }}</span>
+              </div>
+            </div>
+
+            <button class="back-btn" @click="$router.push('/dashboard')">
               <i class="fas fa-arrow-left"></i> {{ isRus ? 'Вернуться в панель' : 'Panelga qaytish' }}
             </button>
           </div>
@@ -379,95 +375,145 @@ export default {
   color: #8b5cf6;
 }
 
-.section-title-wrap p {
-  color: #64748b;
-  margin: 0;
-  font-weight: 500;
+.text-orange {
+  color: #f59e0b;
 }
 
-/* EMPTY STATE FOR ITEMS */
-.items-section {
+/* COMING SOON UI */
+.coming-soon-wrapper {
   margin-top: 2rem;
+  animation: fadeIn 0.5s ease-out forwards;
 }
 
-.empty-state-card {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px dashed rgba(148, 163, 184, 0.5);
-  border-radius: 32px;
-  padding: 4rem 2rem;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.coming-soon-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 36px;
+  padding: 5rem 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.02);
-  transition: all 0.3s ease;
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.05);
 }
 
-.empty-state-card:hover {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: #cbd5e1;
-  transform: translateY(-2px);
-}
-
-.empty-icon-wrapper {
-  width: 90px;
-  height: 90px;
-  background: #f1f5f9;
+.icon-glow-ring {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1.5rem;
-  box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+  position: relative;
 }
 
-.floating-ghost {
-  font-size: 3rem;
-  color: #94a3b8;
-  animation: float-ghost 3s ease-in-out infinite;
+.icon-glow-ring::after {
+  content: '';
+  position: absolute;
+  top: -10px; left: -10px; right: -10px; bottom: -10px;
+  border-radius: 50%;
+  border: 2px dashed rgba(59, 130, 246, 0.3);
+  animation: spin 15s linear infinite;
 }
 
-@keyframes float-ghost {
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+.floating-icon {
+  font-size: 3.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: float-icon 3s ease-in-out infinite;
+}
+
+@keyframes float-icon {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
 }
 
-.empty-state-card h3 {
-  font-size: 1.6rem;
+.coming-soon-card h2 {
+  font-size: 2.2rem;
   font-weight: 800;
-  color: #334155;
-  margin: 0 0 10px 0;
+  color: #0f172a;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.5px;
 }
 
-.empty-state-card p {
+.coming-soon-card p {
   color: #64748b;
-  max-width: 500px;
-  margin: 0 0 2rem 0;
+  max-width: 600px;
+  font-size: 1.1rem;
   line-height: 1.6;
+  margin: 0 0 3rem 0;
 }
 
-.notify-btn {
+.features-preview {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 600px) {
+  .features-preview {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+.feature-item {
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 20px -5px rgba(0,0,0,0.03);
+  font-weight: 700;
+  color: #334155;
+  transition: transform 0.2s;
+}
+
+.feature-item:hover {
+  transform: translateY(-3px);
+}
+
+.feature-item i {
+  font-size: 1.2rem;
+}
+
+.back-btn {
   background: #f8fafc;
   color: #475569;
-  border: 1px solid #cbd5e1;
-  padding: 12px 28px;
+  border: 2px solid transparent;
+  padding: 14px 32px;
   border-radius: 99px;
-  font-weight: 700;
-  font-size: 1rem;
+  font-weight: 800;
+  font-size: 1.05rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
 }
 
-.notify-btn:hover {
-  background: #f1f5f9;
+.back-btn:hover {
+  background: white;
   color: #0f172a;
-  border-color: #94a3b8;
+  border-color: #cbd5e1;
   transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05);
 }
 
 /* OVERLAY ANIMATIONS */

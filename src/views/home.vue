@@ -137,10 +137,10 @@
           <div class="premium-card ai-card">
             <div class="ai-header">
               <div class="ai-avatar">
-                <i class="fas fa-robot"></i>
+                <i :class="aiMentorInfo.icon"></i>
               </div>
               <div class="ai-title">
-                <h4>{{ t('aiTutor') }}</h4>
+                <h4>{{ aiMentorInfo.name }}</h4>
                 <span class="online-dot">{{ t('activeInSystem') }}</span>
               </div>
             </div>
@@ -353,7 +353,8 @@ export default {
       weakestSubject: '',
       strongestSubject: '',
       aiAdviceType: '',
-      defaultSubjectId: null
+      defaultSubjectId: null,
+      mentorType: 'standard'
     };
   },
   computed: {
@@ -370,6 +371,24 @@ export default {
         !this.loadingLevels
       );
     },
+    aiMentorInfo() {
+      const personas = {
+          standard: { nameUz: 'Standart AI', nameRu: 'Стандартный ИИ', icon: 'fas fa-robot' },
+          friendly: { nameUz: 'Do\'stona Mentor', nameRu: 'Дружелюбный Ментор', icon: 'fas fa-smile-beam' },
+          strict: { nameUz: 'Qattiqqo\'l Professor', nameRu: 'Строгий Профессор', icon: 'fas fa-user-tie' },
+          socratic: { nameUz: 'Faylasuf Sokrat', nameRu: 'Философ Сократ', icon: 'fas fa-scroll' },
+          motivator: { nameUz: 'Motivator', nameRu: 'Мотиватор', icon: 'fas fa-fire' },
+          innovator: { nameUz: 'Kreativ Daho', nameRu: 'Креативный Гений', icon: 'fas fa-lightbulb' },
+          analyst: { nameUz: 'Kiber Analitik', nameRu: 'Кибер Аналитик', icon: 'fas fa-laptop-code' },
+          sage: { nameUz: 'Dono Chol', nameRu: 'Мудрый Старец', icon: 'fas fa-yin-yang' }
+      };
+      const type = this.mentorType || 'standard';
+      const persona = personas[type] || personas.standard;
+      return {
+        name: this.isRus ? persona.nameRu : persona.nameUz,
+        icon: persona.icon
+      };
+    }
   },
   watch: {
     currentLocale() {

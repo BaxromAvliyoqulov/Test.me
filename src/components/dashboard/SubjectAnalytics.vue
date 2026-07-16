@@ -93,13 +93,17 @@ export default {
         datasets: [{
           label: locale.value === 'RUS' ? 'Средний балл' : 'O\'rtacha ball',
           data: topSubj.map(s => s.avg),
-          backgroundColor: 'rgba(59, 130, 246, 0.2)',
-          borderColor: 'rgba(59, 130, 246, 1)',
-          pointBackgroundColor: 'rgba(59, 130, 246, 1)',
-          pointBorderColor: '#fff',
-          pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: 'rgba(59, 130, 246, 1)',
-          borderWidth: 2,
+          backgroundColor: 'rgba(99, 102, 241, 0.25)',
+          borderColor: '#6366f1',
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#6366f1',
+          pointHoverBackgroundColor: '#6366f1',
+          pointHoverBorderColor: '#ffffff',
+          pointBorderWidth: 3,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 3,
+          tension: 0.3
         }]
       };
     });
@@ -109,24 +113,46 @@ export default {
       maintainAspectRatio: false,
       scales: {
         r: {
-          angleLines: { color: 'rgba(0,0,0,0.1)' },
-          grid: { color: 'rgba(0,0,0,0.05)' },
-          pointLabels: {
-            font: { family: 'Outfit', size: 12, weight: 'bold' },
-            color: '#475569'
+          angleLines: { 
+            color: 'rgba(148, 163, 184, 0.3)',
+            lineWidth: 1
           },
-          ticks: { display: false, min: 0, max: 100 }
+          grid: { 
+            color: 'rgba(148, 163, 184, 0.2)',
+            lineWidth: 1,
+            circular: true
+          },
+          pointLabels: {
+            font: { 
+              family: "'Outfit', 'Inter', sans-serif", 
+              size: 13, 
+              weight: '700' 
+            },
+            color: '#1e293b',
+            padding: 15
+          },
+          ticks: { 
+            display: false, 
+            min: 0, 
+            max: 100,
+            stepSize: 20
+          }
         }
       },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: 'rgba(15, 23, 42, 0.9)',
-          titleFont: { family: 'Outfit', size: 13 },
-          bodyFont: { family: 'Outfit', size: 13 },
-          padding: 10,
-          cornerRadius: 8,
-          displayColors: false
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          titleFont: { family: "'Outfit', sans-serif", size: 14, weight: 'bold' },
+          bodyFont: { family: "'Outfit', sans-serif", size: 14 },
+          padding: 12,
+          cornerRadius: 12,
+          displayColors: false,
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${context.raw}%`;
+            }
+          }
         }
       }
     };
@@ -200,8 +226,9 @@ export default {
 }
 
 .radar-container {
-  height: 250px;
+  height: 300px;
   width: 100%;
+  padding: 10px;
 }
 
 .level-bars {

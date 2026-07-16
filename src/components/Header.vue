@@ -104,16 +104,29 @@ export default {
 <style scoped>
 .app-header {
   height: 70px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 30px;
-  position: sticky;
-  top: 0;
+  padding: 0 24px;
+  margin: 16px 30px;
+  border-radius: 20px;
+  position: relative;
   z-index: 99;
+  box-shadow: 0 10px 40px -10px rgba(37, 99, 235, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    margin: 12px 16px;
+    padding: 0 16px;
+    height: 64px;
+    border-radius: 16px;
+  }
 }
 
 .header-left {

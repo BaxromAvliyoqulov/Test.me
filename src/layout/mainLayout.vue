@@ -93,7 +93,7 @@ export default {
 
 .page-content {
   flex: 1;
-  padding: 30px;
+  padding: 10px 30px 30px 30px;
   background-color: #f8fafc;
   background-image: radial-gradient(rgba(37, 99, 235, 0.02) 1.5px, transparent 1.5px);
   background-size: 24px 24px;
@@ -133,6 +133,9 @@ export default {
   .sidebar-collapsed .app-sidebar {
     transform: translateX(0);
     width: 280px; /* Expands fully on mobile when toggled */
+  }
+  .page-content {
+    padding: 10px 16px 20px 16px;
   }
 }
 </style>

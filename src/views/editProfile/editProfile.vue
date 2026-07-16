@@ -69,46 +69,18 @@
             
             <!-- TAB 1: Profile Details -->
             <div v-show="activeTab === 'profile'" class="tab-pane-content">
-              <!-- Ranks Horizontal Snake Timeline -->
-              <div class="ranks-snake-timeline-wrapper">
-                <div class="pro-pane-header text-center mb-8">
-                  <h3>{{ currentLocale === 'RUS' ? 'Карта Рангов' : 'Darajalar Xaritasi' }}</h3>
-                  <p>{{ currentLocale === 'RUS' ? 'Ваш путь к вершине!' : 'Cho\'qqiga tomon yo\'lingiz!' }}</p>
+              <!-- Minimal Rank Progress Banner -->
+              <div class="minimal-rank-progress-banner" @click="goToRanksPage">
+                <div class="minimal-rank-header">
+                  <span class="rank-lbl">{{ currentLocale === 'RUS' ? 'Ваш Ранг' : 'Sizning Rangingiz' }}</span>
+                  <span class="rank-val">{{ getRankName(userPoints, currentLocale) }}</span>
                 </div>
-                
-                <div 
-                  v-for="rowIndex in Math.ceil(ranksList.length / 4)" 
-                  :key="rowIndex"
-                  class="rank-snake-row"
-                  :class="rowIndex % 2 === 0 ? 'row-even' : 'row-odd'"
-                >
-                  <div 
-                    v-for="(rank) in (rowIndex % 2 === 0 ? [...ranksList].slice((rowIndex - 1) * 4, rowIndex * 4).reverse() : ranksList.slice((rowIndex - 1) * 4, rowIndex * 4))" 
-                    :key="rank.id" 
-                    class="rank-snake-item"
-                    :class="[rank.class, { 'attained': userPoints >= rank.min, 'current': getNextRankInfo(userPoints, currentLocale).nextRankName !== (currentLocale === 'RUS' ? rank.nameRu : rank.nameUz) && userPoints >= rank.min && userPoints < rank.max }]"
-                  >
-                    <!-- Marker Dot -->
-                    <div class="rank-snake-dot-wrap">
-                      <div class="rank-snake-dot">
-                        <i :class="rank.icon"></i>
-                      </div>
-                    </div>
-                    
-                    <!-- Content Card -->
-                    <div class="rank-snake-card">
-                      <h4 class="rs-title">{{ currentLocale === 'RUS' ? rank.nameRu : rank.nameUz }}</h4>
-                      <p class="rs-req"><i class="fas fa-bolt text-yellow-500"></i> {{ rank.min }} TP</p>
-                      
-                      <div class="rs-reward" v-if="rank.reward > 0">
-                         <span class="rs-coin"><i class="fas fa-coins text-yellow-500"></i> +{{ rank.reward }}</span>
-                      </div>
-                      
-                      <div class="rs-status" v-if="userPoints >= rank.min">
-                        <i class="fas fa-check-circle text-green-500"></i> {{ currentLocale === 'RUS' ? 'Получено' : 'Olingan' }}
-                      </div>
-                    </div>
-                  </div>
+                <div class="minimal-progress-bar">
+                  <div class="minimal-progress-fill" :style="{ width: getNextRankInfo(userPoints, currentLocale).progressPercent + '%' }"></div>
+                </div>
+                <div class="minimal-rank-footer">
+                  <span>{{ userPoints }} TP</span>
+                  <span class="text-blue-500">→ {{ getNextRankInfo(userPoints, currentLocale).nextRankName }}</span>
                 </div>
               </div>
 
@@ -2353,200 +2325,6 @@ input:disabled + .slider {
 }
 input:checked + .slider:before {
   transform: translateX(20px);
-}
-
-/* Ranks Horizontal Snake Timeline */
-.ranks-snake-timeline-wrapper {
-  display: flex;
-  flex-direction: column;
-  padding: 1rem 0 2rem 0;
-  overflow: hidden;
-  position: relative;
-}
-
-.pro-pane-header {
-  margin-bottom: 2rem;
-}
-
-.rank-snake-row {
-  display: flex;
-  width: 100%;
-  position: relative;
-  height: 200px; /* enough space for icon + text + card */
-}
-
-.rank-snake-row.row-even {
-  flex-direction: row-reverse;
-}
-
-/* Horizontal line */
-.rank-snake-row::before {
-  content: '';
-  position: absolute;
-  top: 25px; /* center of 50px dot */
-  left: 12.5%; /* center of first 25% column */
-  right: 12.5%;
-  height: 6px;
-  background: #cbd5e1; /* default grey */
-  z-index: 1;
-}
-
-/* Curve Right */
-.rank-snake-row.row-odd:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  top: 25px;
-  right: 12.5%;
-  width: 60px;
-  height: 200px;
-  border-top: 6px solid transparent;
-  border-right: 6px solid #cbd5e1;
-  border-bottom: 6px solid #cbd5e1;
-  border-top-right-radius: 60px;
-  border-bottom-right-radius: 60px;
-  z-index: 1;
-  transform: translateX(100%);
-}
-
-/* Curve Left */
-.rank-snake-row.row-even:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  top: 25px;
-  left: 12.5%;
-  width: 60px;
-  height: 200px;
-  border-top: 6px solid transparent;
-  border-left: 6px solid #cbd5e1;
-  border-bottom: 6px solid #cbd5e1;
-  border-top-left-radius: 60px;
-  border-bottom-left-radius: 60px;
-  z-index: 1;
-  transform: translateX(-100%);
-}
-
-.rank-snake-item {
-  width: 25%;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  z-index: 2;
-  padding: 0 10px;
-}
-
-.rank-snake-dot-wrap {
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 15px;
-}
-
-.rank-snake-dot {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: white;
-  border: 4px solid #cbd5e1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  color: #94a3b8;
-  box-shadow: 0 0 0 6px #ffffff; /* hide track behind it */
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 3;
-}
-
-.rank-snake-item:hover .rank-snake-dot {
-  transform: scale(1.1);
-}
-
-.rank-snake-item.attained .rank-snake-dot {
-  background: #3b82f6;
-  border-color: #2563eb;
-  color: white;
-}
-
-.rank-snake-item.current .rank-snake-dot {
-  background: #f59e0b;
-  border-color: #d97706;
-  color: white;
-  transform: scale(1.15);
-  box-shadow: 0 0 0 6px #ffffff, 0 0 15px rgba(245, 158, 11, 0.4);
-}
-
-/* Specific Colors from Ranks */
-.rank-newbie.attained .rank-snake-dot { background: #94a3b8; border-color: #64748b; }
-.rank-bronze.attained .rank-snake-dot { background: #b45309; border-color: #92400e; }
-.rank-silver.attained .rank-snake-dot { background: #cbd5e1; border-color: #94a3b8; color: #475569; }
-.rank-gold.attained .rank-snake-dot { background: #eab308; border-color: #ca8a04; }
-.rank-platinum.attained .rank-snake-dot { background: #14b8a6; border-color: #0d9488; }
-.rank-diamond.attained .rank-snake-dot { background: #06b6d4; border-color: #0891b2; }
-.rank-master.attained .rank-snake-dot { background: #8b5cf6; border-color: #7c3aed; }
-.rank-grandmaster.attained .rank-snake-dot { background: #ec4899; border-color: #db2777; }
-.rank-legendary.attained .rank-snake-dot { background: #f43f5e; border-color: #e11d48; }
-.rank-mythic.attained .rank-snake-dot { background: #6366f1; border-color: #4f46e5; }
-
-.rank-snake-card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px 6px;
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-  transition: all 0.3s ease;
-}
-
-.rank-snake-item:hover .rank-snake-card {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 15px rgba(0,0,0,0.08);
-  border-color: #cbd5e1;
-}
-
-.rank-snake-item.attained .rank-snake-card {
-  border-color: #94a3b8;
-}
-
-.rank-snake-item.current .rank-snake-card {
-  border-color: #f59e0b;
-  background: #fffbeb;
-}
-
-.rs-title {
-  margin: 0 0 4px 0;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #1e293b;
-  line-height: 1.2;
-}
-
-.rs-req {
-  font-size: 0.8rem;
-  color: #64748b;
-  margin: 0 0 8px 0;
-  font-weight: 600;
-}
-
-.rs-reward {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #475569;
-  margin-bottom: 6px;
-  background: #f1f5f9;
-  padding: 4px;
-  border-radius: 6px;
-  display: inline-block;
-}
-
-.rs-status {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #10b981;
 }
 
 </style>

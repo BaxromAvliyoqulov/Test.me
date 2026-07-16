@@ -19,7 +19,7 @@
       <transition name="fade-slide">
         <div class="user-details" v-if="!isCollapsed">
           <div class="user-name">{{ username }}</div>
-          <div class="user-rank-badge">
+          <div class="user-rank-badge" :class="getRankClass(userPoints)">
             <i :class="getRankIcon(userPoints)"></i>
             <span>{{ getRankName(userPoints, currentLocale) }}</span>
           </div>
@@ -361,10 +361,20 @@ export default {
   align-items: center;
   gap: 16px;
   padding: 16px 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
   margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.sidebar-user:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
 }
 
 .user-avatar-wrapper {
@@ -446,10 +456,24 @@ export default {
   border-radius: 0;
   align-self: flex-start;
   margin-bottom: 6px;
+  transition: all 0.3s ease;
 }
 .user-rank-badge i {
-  color: #475569;
+  color: inherit;
+  font-size: 0.8rem;
 }
+
+/* Rank specific colors (optimized for dark sidebar) */
+.user-rank-badge.rank-newbie { color: #94a3b8; text-shadow: 0 0 10px rgba(148, 163, 184, 0.4); }
+.user-rank-badge.rank-bronze { color: #d97706; text-shadow: 0 0 10px rgba(217, 119, 6, 0.4); }
+.user-rank-badge.rank-silver { color: #cbd5e1; text-shadow: 0 0 10px rgba(203, 213, 225, 0.4); }
+.user-rank-badge.rank-gold { color: #facc15; text-shadow: 0 0 10px rgba(250, 204, 21, 0.4); }
+.user-rank-badge.rank-platinum { color: #2dd4bf; text-shadow: 0 0 10px rgba(45, 212, 191, 0.4); }
+.user-rank-badge.rank-diamond { color: #60a5fa; text-shadow: 0 0 10px rgba(96, 165, 250, 0.4); }
+.user-rank-badge.rank-master { color: #a78bfa; text-shadow: 0 0 10px rgba(167, 139, 250, 0.4); }
+.user-rank-badge.rank-grandmaster { color: #f472b6; text-shadow: 0 0 10px rgba(244, 114, 182, 0.4); }
+.user-rank-badge.rank-legendary { color: #fb7185; text-shadow: 0 0 10px rgba(251, 113, 133, 0.4); }
+.user-rank-badge.rank-mythic { color: #34d399; text-shadow: 0 0 10px rgba(52, 211, 153, 0.4); }
 
 .user-id-badge {
   font-size: 0.7rem;

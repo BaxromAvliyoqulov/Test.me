@@ -89,7 +89,7 @@
                 <div class="avatar-sm">{{ user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U' }}</div>
                 <div>
                   <span class="uname">{{ user.displayName || 'Noma\'lum' }}</span>
-                  <span v-if="user.isAdmin" class="admin-badge">Admin</span>
+                  <span v-if="user.isAdmin" :class="['admin-badge', getRoleClass(user.adminRole)]">{{ getRoleName(user.adminRole) }}</span>
                 </div>
               </div>
             </td>
@@ -331,6 +331,23 @@ export default {
       if(!ms) return 'Noma\'lum';
       const d = ms.toMillis ? new Date(ms.toMillis()) : new Date(ms);
       return d.toLocaleDateString('uz-UZ');
+    },
+    getRoleName(role) {
+      if (!role) return 'Admin';
+      const map = {
+        'boss': 'B O S S',
+        'super_admin': 'Super Admin',
+        'content_admin': 'Content Admin',
+        'teacher_admin': 'Teacher Admin',
+        'moderator': 'Moderator',
+        'shop_admin': 'Shop Admin',
+        'viewer': 'Viewer'
+      };
+      return map[role] || 'Admin';
+    },
+    getRoleClass(role) {
+      if (!role) return 'role-default';
+      return 'role-' + role;
     },
     async loadUsers() {
       this.loading = true;
@@ -587,7 +604,15 @@ input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-colo
 .user-cell { display: flex; align-items: center; gap: 12px; }
 .avatar-sm { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0; }
 .uname { font-weight: 700; color: #0f172a; display: block; }
-.admin-badge { background: #fee2e2; color: #dc2626; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; margin-top: 2px; display: inline-block; }
+.admin-badge { font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; margin-top: 2px; display: inline-block; white-space: nowrap; }
+.role-boss { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.role-super_admin { background: #fef3c7; color: #d97706; }
+.role-content_admin { background: #eff6ff; color: #2563eb; }
+.role-teacher_admin { background: #f0f9ff; color: #0ea5e9; }
+.role-moderator { background: #f0fdf4; color: #16a34a; }
+.role-shop_admin { background: #f5f3ff; color: #7c3aed; }
+.role-viewer { background: #f1f5f9; color: #475569; }
+.role-default { background: #fee2e2; color: #dc2626; }
 
 .tp-badge { background: #eff6ff; color: #2563eb; font-size: 0.85rem; font-weight: 800; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
 .rank-badge { font-size: 0.78rem; font-weight: 800; padding: 4px 12px; border-radius: 99px; display: inline-block; white-space: nowrap; text-align: center; }

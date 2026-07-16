@@ -34,7 +34,10 @@
           </div>
           <div class="subject-info">
             <h4>{{ subject.id }}</h4>
-            <span v-if="subject.levelsLoaded" class="badge-blue">{{ subject.levels.length }} ta daraja</span>
+            <div class="subject-badges" v-if="subject.levelsLoaded">
+              <span class="badge-blue">{{ subject.levels.length }} ta daraja</span>
+              <span class="badge-purple">{{ getTotalTests(subject) }} ta test</span>
+            </div>
           </div>
           
           <div class="subject-actions">
@@ -214,6 +217,10 @@ export default {
     this.loadSubjects(); 
   },
   methods: {
+    getTotalTests(subject) {
+      if (!subject.levels) return 0;
+      return subject.levels.reduce((sum, lvl) => sum + (lvl.testCount || 0), 0);
+    },
     // Ultimate Speed 1: Load from Cache immediately, then fetch in background
     async loadSubjects() {
       // Try cache first
@@ -511,6 +518,7 @@ export default {
 .subject-icon-box { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; margin-right: 1rem; }
 .subject-info { flex: 1; min-width: 0; }
 .subject-info h4 { margin: 0 0 4px; font-size: 1.1rem; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.subject-badges { display: flex; gap: 6px; flex-wrap: wrap; }
 .badge-blue { background: #eff6ff; color: #2563eb; font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; display: inline-block; }
 .badge-purple { background: #f5f3ff; color: #7c3aed; font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; display: inline-block; }
 

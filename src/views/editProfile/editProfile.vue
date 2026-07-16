@@ -252,21 +252,54 @@
                 </div>
               </div>
 
-              <!-- Default Target Level Selection -->
-              <div class="form-group">
-                <label for="pref-level" class="group-label">
+              <!-- Default Target Level Selection (Vertical Timeline) -->
+              <div class="form-group mt-6">
+                <label class="group-label">
                   <i class="fas fa-layer-group"></i> {{ currentLocale === 'RUS' ? 'Уровень сложности' : 'Qiyinchilik darajasi' }}
                 </label>
-                <div class="input-wrapper select-wrapper snake-select-wrapper">
-                  <i class="fas fa-signal select-icon"></i>
-                  <select id="pref-level" v-model="preferences.defaultLevel" class="styled-input select-input" :disabled="!preferences.defaultSubject || loadingLevels">
-                    <option value="">
-                      {{ loadingLevels ? (currentLocale === 'RUS' ? 'Загрузка...' : 'Yuklanmoqda...') : (currentLocale === 'RUS' ? '-- Выберите сложность --' : '-- Qiyinchilikni tanlang --') }}
-                    </option>
-                    <option v-for="level in levelsList" :key="level.id" :value="level.id">
-                      {{ level.id }}
-                    </option>
-                  </select>
+                
+                <div class="vertical-timeline-levels" v-if="preferences.defaultSubject && !loadingLevels && levelsList.length">
+                  <div 
+                    v-for="(level, index) in levelsList" 
+                    :key="level.id" 
+                    class="timeline-item"
+                    :class="{ 'active': preferences.defaultLevel === level.id }"
+                    @click="preferences.defaultLevel = level.id"
+                  >
+                    <!-- Timeline Marker -->
+                    <div class="timeline-marker">
+                      <div class="marker-circle">
+                        <i v-if="preferences.defaultLevel === level.id" class="fas fa-check"></i>
+                        <span v-else>{{ index + 1 }}</span>
+                      </div>
+                      <div class="marker-line" v-if="index !== levelsList.length - 1"></div>
+                    </div>
+                    
+                    <!-- Timeline Content Card -->
+                    <div class="timeline-content">
+                      <div class="level-card">
+                        <div class="level-info">
+                          <h4>{{ level.id }}</h4>
+                          <span class="level-desc">{{ currentLocale === 'RUS' ? 'Выберите этот уровень для генерации тестов' : 'Testlar generatsiyasi uchun shu darajani tanlash' }}</span>
+                        </div>
+                        <div class="active-check">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Loading State -->
+                <div v-else-if="loadingLevels" class="timeline-placeholder">
+                  <i class="fas fa-spinner fa-spin text-blue-500 text-xl mb-2 block"></i>
+                  <span>{{ currentLocale === 'RUS' ? 'Загрузка уровней...' : 'Darajalar yuklanmoqda...' }}</span>
+                </div>
+                
+                <!-- Empty State (No Subject Selected) -->
+                <div v-else class="timeline-placeholder empty">
+                  <i class="fas fa-book-open text-gray-400 text-2xl mb-2 block"></i>
+                  <span>{{ currentLocale === 'RUS' ? 'Сначала выберите предмет, чтобы увидеть уровни' : 'Darajalarni ko\'rish uchun dastlab fanni tanlang' }}</span>
                 </div>
               </div>
 
@@ -2327,49 +2360,149 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 
-/* Animated Snake Select Border */
-.snake-select-wrapper {
+/* Vertical Timeline Levels */
+.vertical-timeline-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 1rem;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 16px;
+  cursor: pointer;
   position: relative;
-  border-radius: 14px;
-  overflow: hidden;
-  z-index: 1;
-  padding: 2px;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
 }
 
-.snake-select-wrapper::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: conic-gradient(from 0deg, transparent 0%, transparent 60%, #3b82f6 80%, #ec4899 100%);
-  animation: snake-spin 2.5s linear infinite;
-  z-index: -2;
+.timeline-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 44px;
 }
 
-.snake-select-wrapper::after {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  background: #ffffff;
-  border-radius: 12px;
-  z-index: -1;
-}
-
-.snake-select-wrapper .styled-input {
-  border: none;
-  background: transparent;
-}
-.snake-select-wrapper .select-icon {
+.marker-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #94a3b8;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   z-index: 2;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-@keyframes snake-spin {
-  100% {
-    transform: rotate(360deg);
-  }
+.timeline-item:hover .marker-circle {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: scale(1.05);
+}
+
+.timeline-item.active .marker-circle {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.15);
+}
+
+.marker-line {
+  flex-grow: 1;
+  width: 2px;
+  background: #e2e8f0;
+  margin: 6px 0;
+  min-height: 24px;
+  transition: all 0.3s ease;
+}
+
+.timeline-item.active .marker-line {
+  background: linear-gradient(to bottom, #3b82f6, #e2e8f0);
+}
+
+.timeline-content {
+  flex-grow: 1;
+  padding-bottom: 24px;
+}
+
+.timeline-item:last-child .timeline-content {
+  padding-bottom: 0;
+}
+
+.level-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.timeline-item:hover .level-card {
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.08);
+}
+
+.timeline-item.active .level-card {
+  border-color: #3b82f6;
+  background: rgba(240, 249, 255, 0.5);
+  transform: translateX(4px);
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15);
+}
+
+.level-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 1.15rem;
+  color: #0f172a;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.level-desc {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.active-check {
+  color: #3b82f6;
+  font-size: 1.4rem;
+  opacity: 0;
+  transform: scale(0.5) rotate(-45deg);
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.timeline-item.active .active-check {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.timeline-placeholder {
+  text-align: center;
+  padding: 24px 20px;
+  background: #f8fafc;
+  border-radius: 16px;
+  border: 2px dashed #e2e8f0;
+  color: #64748b;
+  margin-top: 10px;
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-placeholder.empty {
+  background: #fafafa;
 }
 
 </style>

@@ -633,7 +633,7 @@ export default {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
   color: #fca5a5;
-  justify-content: center;
+  justify-content: flex-start;
 }
 .logout-link:hover {
   background: rgba(239, 68, 68, 0.1);

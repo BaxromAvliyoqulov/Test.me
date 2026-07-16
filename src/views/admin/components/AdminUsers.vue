@@ -33,22 +33,25 @@
       
       <select v-model="filters.rank" @change="applyFilters" class="select-pill">
         <option value="all">Barcha Darajalar</option>
-        <option value="Mythic Scholar">Mythic Scholar</option>
-        <option value="Legendary Scholar">Legendary Scholar</option>
+        <option value="Mythic">Mythic</option>
+        <option value="Legendary">Legendary</option>
         <option value="Grandmaster">Grandmaster</option>
-        <option value="Master Scholar">Master</option>
-        <option value="Diamond Scholar">Diamond</option>
-        <option value="Gold Scholar">Gold</option>
-        <option value="Silver Scholar">Silver</option>
-        <option value="Bronze Scholar">Bronze</option>
-        <option value="Newbie Scholar">Newbie</option>
+        <option value="Master">Master</option>
+        <option value="Diamond Expert">Diamond Expert</option>
+        <option value="Platinum Scholar">Platinum Scholar</option>
+        <option value="Gold Scholar">Gold Scholar</option>
+        <option value="Silver Scholar">Silver Scholar</option>
+        <option value="Bronze Scholar">Bronze Scholar</option>
+        <option value="Newbie Scholar">Newbie Scholar</option>
       </select>
 
       <select v-model="filters.sortBy" @change="applyFilters" class="select-pill">
         <option value="createdAt_desc">Eng Yangi Oldin</option>
+        <option value="createdAt_asc">Eng Eski Oldin</option>
         <option value="points_desc">Eng Ko'p TP Oldin</option>
         <option value="points_asc">Eng Kam TP Oldin</option>
         <option value="name_asc">Ism (A-Z)</option>
+        <option value="name_desc">Ism (Z-A)</option>
       </select>
     </div>
 

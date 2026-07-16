@@ -657,27 +657,27 @@ export default {
 }
 
 /* Rank specific colors */
-.rank-snake-item.rank-newbie .rank-icon-bubble { border-color: #94a3b8; color: #94a3b8; }
-.rank-snake-item.rank-bronze .rank-icon-bubble { border-color: #b45309; color: #b45309; }
+.rank-snake-item.rank-newbie .rank-icon-bubble { border-color: #475569; color: #475569; }
+.rank-snake-item.rank-bronze .rank-icon-bubble { border-color: #c2410c; color: #c2410c; }
 .rank-snake-item.rank-silver .rank-icon-bubble { border-color: #94a3b8; color: #94a3b8; }
-.rank-snake-item.rank-gold .rank-icon-bubble { border-color: #f59e0b; color: #f59e0b; }
-.rank-snake-item.rank-platinum .rank-icon-bubble { border-color: #14b8a6; color: #14b8a6; }
-.rank-snake-item.rank-diamond .rank-icon-bubble { border-color: #3b82f6; color: #3b82f6; }
-.rank-snake-item.rank-master .rank-icon-bubble { border-color: #8b5cf6; color: #8b5cf6; }
-.rank-snake-item.rank-grandmaster .rank-icon-bubble { border-color: #ec4899; color: #ec4899; }
-.rank-snake-item.rank-legendary .rank-icon-bubble { border-color: #f43f5e; color: #f43f5e; }
-.rank-snake-item.rank-mythic .rank-icon-bubble { border-color: #10b981; color: #10b981; }
+.rank-snake-item.rank-gold .rank-icon-bubble { border-color: #b45309; color: #b45309; }
+.rank-snake-item.rank-platinum .rank-icon-bubble { border-color: #0f766e; color: #0f766e; }
+.rank-snake-item.rank-diamond .rank-icon-bubble { border-color: #0369a1; color: #0369a1; }
+.rank-snake-item.rank-master .rank-icon-bubble { border-color: #be123c; color: #be123c; }
+.rank-snake-item.rank-grandmaster .rank-icon-bubble { border-color: #7e22ce; color: #7e22ce; }
+.rank-snake-item.rank-legendary .rank-icon-bubble { border-color: #ea580c; color: #ea580c; }
+.rank-snake-item.rank-mythic .rank-icon-bubble { border-color: #a21caf; color: #a21caf; }
 
-.rank-snake-item.rank-newbie .rank-details { border-top: 4px solid #94a3b8; }
-.rank-snake-item.rank-bronze .rank-details { border-top: 4px solid #b45309; }
+.rank-snake-item.rank-newbie .rank-details { border-top: 4px solid #475569; }
+.rank-snake-item.rank-bronze .rank-details { border-top: 4px solid #c2410c; }
 .rank-snake-item.rank-silver .rank-details { border-top: 4px solid #94a3b8; }
-.rank-snake-item.rank-gold .rank-details { border-top: 4px solid #f59e0b; }
-.rank-snake-item.rank-platinum .rank-details { border-top: 4px solid #14b8a6; }
-.rank-snake-item.rank-diamond .rank-details { border-top: 4px solid #3b82f6; }
-.rank-snake-item.rank-master .rank-details { border-top: 4px solid #8b5cf6; }
-.rank-snake-item.rank-grandmaster .rank-details { border-top: 4px solid #ec4899; }
-.rank-snake-item.rank-legendary .rank-details { border-top: 4px solid #f43f5e; }
-.rank-snake-item.rank-mythic .rank-details { border-top: 4px solid #10b981; }
+.rank-snake-item.rank-gold .rank-details { border-top: 4px solid #b45309; }
+.rank-snake-item.rank-platinum .rank-details { border-top: 4px solid #0f766e; }
+.rank-snake-item.rank-diamond .rank-details { border-top: 4px solid #0369a1; }
+.rank-snake-item.rank-master .rank-details { border-top: 4px solid #be123c; }
+.rank-snake-item.rank-grandmaster .rank-details { border-top: 4px solid #7e22ce; }
+.rank-snake-item.rank-legendary .rank-details { border-top: 4px solid #ea580c; }
+.rank-snake-item.rank-mythic .rank-details { border-top: 4px solid #a21caf; }
 
 .rank-snake-item.locked .rank-icon-bubble {
   background: #f1f5f9;

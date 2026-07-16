@@ -213,7 +213,7 @@
       <TestPage
         v-if="startTest"
         ref="testPage"
-        :subjectId="selectedSubject.id"
+        :subjectId="selectedSubject?.id || 'special'"
         :levelId="selectedLevel"
         :questionCount="selectedQuestionCount"
         @test-completed="handleTestCompletion"
@@ -227,9 +227,9 @@
         <div class="modal-wizard-card">
           <div class="modal-header">
             <div class="modal-title-wrapper">
-              <div class="m-icon-wrapper"><i :class="getSubjectIcon(selectedSubject.id)"></i></div>
+              <div class="m-icon-wrapper"><i :class="getSubjectIcon(selectedSubject?.id)"></i></div>
               <div class="m-title-info">
-                <h3>{{ selectedSubject.id }}</h3>
+                <h3>{{ selectedSubject?.id }}</h3>
                 <span>{{ currentLocale === 'RUS' ? 'Настройки Теста' : 'Test Sozlamalari' }}</span>
               </div>
             </div>
@@ -399,6 +399,7 @@ export default {
   },
   methods: {
     getSubjectIcon(name) {
+      if (!name) return 'fas fa-graduation-cap';
       const lower = name.toLowerCase();
       if (lower.includes('matem') || lower.includes('math')) return 'fas fa-calculator';
       if (lower.includes('fizik') || lower.includes('physics')) return 'fas fa-atom';
@@ -414,6 +415,7 @@ export default {
     },
 
     getSubjectColor(name) {
+      if (!name) return '#3b82f6';
       const lower = name.toLowerCase();
       if (lower.includes('matem') || lower.includes('math')) return '#8b5cf6'; // Purple
       if (lower.includes('fizik') || lower.includes('physics')) return '#f59e0b'; // Amber

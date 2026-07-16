@@ -21,7 +21,6 @@
           </div>
 
           <div class="info-cards">
-            <!-- Telegram link card -->
             <a href="https://t.me/Testme_Support_bot" target="_blank" class="info-item-card">
               <div class="info-icon tg-icon">
                 <i class="fab fa-telegram-plane"></i>
@@ -29,6 +28,18 @@
               <div class="info-details">
                 <span>Telegram Support</span>
                 <strong>@Testme_Support_bot</strong>
+              </div>
+              <i class="fas fa-external-link-alt info-arrow"></i>
+            </a>
+
+            <!-- Developer Telegram card -->
+            <a href="https://t.me/Baxrom_Dev" target="_blank" class="info-item-card">
+              <div class="info-icon" style="background: #eef2ff; color: #6366f1;">
+                <i class="fas fa-code"></i>
+              </div>
+              <div class="info-details">
+                <span>{{ isRus ? 'Разработчик' : 'Dasturchi' }}</span>
+                <strong>@Baxrom_Dev</strong>
               </div>
               <i class="fas fa-external-link-alt info-arrow"></i>
             </a>

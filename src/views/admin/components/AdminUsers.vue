@@ -587,17 +587,17 @@ input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-colo
 .admin-badge { background: #fee2e2; color: #dc2626; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; margin-top: 2px; display: inline-block; }
 
 .tp-badge { background: #eff6ff; color: #2563eb; font-size: 0.85rem; font-weight: 800; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
-.rank-badge { font-size: 0.78rem; font-weight: 800; padding: 4px 12px; border-radius: 99px; background: #f1f5f9; color: #475569; display: inline-block; white-space: nowrap; text-align: center; }
-.rank-badge.rank-newbie { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); color: #475569; border: 1px solid #cbd5e1; }
-.rank-badge.rank-bronze { background: linear-gradient(135deg, #78350f, #b45309); color: white; }
-.rank-badge.rank-silver { background: linear-gradient(135deg, #94a3b8, #cbd5e1); color: #0f172a; border: 1px solid #94a3b8; }
-.rank-badge.rank-gold { background: linear-gradient(135deg, #b45309, #f59e0b); color: white; }
-.rank-badge.rank-platinum { background: linear-gradient(135deg, #0f766e, #14b8a6); color: white; }
-.rank-badge.rank-diamond { background: linear-gradient(135deg, #0369a1, #38bdf8); color: white; }
-.rank-badge.rank-master { background: linear-gradient(135deg, #be123c, #f43f5e); color: white; }
-.rank-badge.rank-grandmaster { background: linear-gradient(135deg, #1d4ed8, #60a5fa); color: white; }
-.rank-badge.rank-legendary { background: linear-gradient(135deg, #ea580c, #fb923c); color: white; }
-.rank-badge.rank-mythic { background: linear-gradient(135deg, #6d28d9, #a855f7); color: white; box-shadow: 0 4px 10px rgba(168, 85, 247, 0.4); }
+.rank-badge { font-size: 0.78rem; font-weight: 800; padding: 4px 12px; border-radius: 99px; display: inline-block; white-space: nowrap; text-align: center; }
+.rank-badge.rank-newbie { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
+.rank-badge.rank-bronze { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+.rank-badge.rank-silver { background: #f1f5f9; color: #334155; border: 1px solid #94a3b8; }
+.rank-badge.rank-gold { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.rank-badge.rank-platinum { background: #f0fdfa; color: #0f766e; border: 1px solid #99f6e4; }
+.rank-badge.rank-diamond { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+.rank-badge.rank-master { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+.rank-badge.rank-grandmaster { background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; box-shadow: 0 0 10px rgba(168, 85, 247, 0.12); }
+.rank-badge.rank-legendary { background: #fff7ed; color: #ea580c; border: 1px solid #fdba74; box-shadow: 0 0 10px rgba(234, 88, 12, 0.12); }
+.rank-badge.rank-mythic { background: #fdf4ff; color: #a21caf; border: 1px solid #f5d0fe; box-shadow: 0 0 10px rgba(192, 38, 211, 0.12); }
 
 .actions-cell { display: flex; gap: 6px; }
 .action-btn { width: 34px; height: 34px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; transition: 0.2s; }

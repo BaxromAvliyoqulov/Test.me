@@ -69,18 +69,43 @@
             
             <!-- TAB 1: Profile Details -->
             <div v-show="activeTab === 'profile'" class="tab-pane-content">
-              <!-- Minimal Rank Progress Banner -->
-              <div class="minimal-rank-progress-banner" @click="goToRanksPage">
-                <div class="minimal-rank-header">
-                  <span class="rank-lbl">{{ currentLocale === 'RUS' ? 'Ваш Ранг' : 'Sizning Rangingiz' }}</span>
-                  <span class="rank-val">{{ getRankName(userPoints, currentLocale) }}</span>
-                </div>
-                <div class="minimal-progress-bar">
-                  <div class="minimal-progress-fill" :style="{ width: getNextRankInfo(userPoints, currentLocale).progressPercent + '%' }"></div>
-                </div>
-                <div class="minimal-rank-footer">
-                  <span>{{ userPoints }} TP</span>
-                  <span class="text-blue-500">→ {{ getNextRankInfo(userPoints, currentLocale).nextRankName }}</span>
+              <!-- Ranks Vertical Timeline -->
+              <div class="ranks-vertical-timeline">
+                <div 
+                  v-for="(rank, index) in ranksList" 
+                  :key="rank.id" 
+                  class="rank-timeline-item"
+                  :class="[rank.class, { 'attained': userPoints >= rank.min }]"
+                >
+                  <!-- Timeline Marker -->
+                  <div class="rank-marker-wrap">
+                    <div class="rank-marker-circle">
+                      <i :class="rank.icon"></i>
+                    </div>
+                    <div class="rank-marker-line" v-if="index !== ranksList.length - 1" :class="{ 'line-attained': userPoints >= ranksList[index+1].min }"></div>
+                  </div>
+                  
+                  <!-- Rank Card Content -->
+                  <div class="rank-timeline-card">
+                    <div class="rank-card-left">
+                      <h4 class="rank-card-title">{{ currentLocale === 'RUS' ? rank.nameRu : rank.nameUz }}</h4>
+                      <div class="rank-card-req">
+                        <i class="fas fa-bolt text-yellow-500"></i> {{ rank.min }} TP {{ currentLocale === 'RUS' ? 'и выше' : 'dan boshlab' }}
+                      </div>
+                    </div>
+                    
+                    <div class="rank-card-right" v-if="rank.reward > 0">
+                      <div class="rank-reward-badge" :class="{ 'status-attained': userPoints >= rank.min }">
+                        <div class="reward-coin" :class="{ 'text-yellow-600': userPoints < rank.min, 'text-gray-400': userPoints >= rank.min }">
+                          <i class="fas fa-coins"></i> +{{ rank.reward }}
+                        </div>
+                        <div class="reward-status">
+                          <i v-if="userPoints >= rank.min" class="fas fa-check"></i>
+                          {{ userPoints >= rank.min ? (currentLocale === 'RUS' ? 'Получено' : 'Olingan') : (currentLocale === 'RUS' ? 'Заблокировано' : 'Qulflangan') }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -252,44 +277,39 @@
                 </div>
               </div>
 
-              <!-- Default Target Level Selection (Vertical Timeline) -->
+              <!-- Default Target Level Selection (Snake Timeline) -->
               <div class="form-group mt-6">
-                <label class="group-label">
+                <label class="group-label mb-6 block">
                   <i class="fas fa-layer-group"></i> {{ currentLocale === 'RUS' ? 'Уровень сложности' : 'Qiyinchilik darajasi' }}
                 </label>
-                
-                <div class="vertical-timeline-levels" v-if="preferences.defaultSubject && !loadingLevels && levelsList.length">
+
+                <div class="level-snake-timeline-wrapper" v-if="preferences.defaultSubject && !loadingLevels && levelsList.length">
+                  <!-- Dynamically chunk the levelsList into rows of 4 -->
                   <div 
-                    v-for="(level, index) in levelsList" 
-                    :key="level.id" 
-                    class="timeline-item"
-                    :class="{ 'active': preferences.defaultLevel === level.id }"
-                    @click="preferences.defaultLevel = level.id"
+                    v-for="rowIndex in Math.ceil(levelsList.length / 4)" 
+                    :key="rowIndex"
+                    class="level-snake-row"
+                    :class="rowIndex % 2 === 0 ? 'row-even' : 'row-odd'"
                   >
-                    <!-- Timeline Marker -->
-                    <div class="timeline-marker">
-                      <div class="marker-circle">
-                        <i v-if="preferences.defaultLevel === level.id" class="fas fa-check"></i>
-                        <span v-else>{{ index + 1 }}</span>
+                    <!-- For even rows, we need to reverse the slice to get right-to-left visual flow -->
+                    <div 
+                      v-for="(level) in (rowIndex % 2 === 0 ? [...levelsList].slice((rowIndex - 1) * 4, rowIndex * 4).reverse() : levelsList.slice((rowIndex - 1) * 4, rowIndex * 4))" 
+                      :key="level.id" 
+                      class="level-snake-item"
+                      :class="{ 'active': preferences.defaultLevel === level.id }"
+                      @click="preferences.defaultLevel = level.id"
+                    >
+                      <div class="snake-node-dot">
+                         {{ levelsList.indexOf(level) + 1 }}
                       </div>
-                      <div class="marker-line" v-if="index !== levelsList.length - 1"></div>
-                    </div>
-                    
-                    <!-- Timeline Content Card -->
-                    <div class="timeline-content">
-                      <div class="level-card">
-                        <div class="level-info">
-                          <h4>{{ level.id }}</h4>
-                          <span class="level-desc">{{ currentLocale === 'RUS' ? 'Выберите этот уровень для генерации тестов' : 'Testlar generatsiyasi uchun shu darajani tanlash' }}</span>
-                        </div>
-                        <div class="active-check">
-                          <i class="fas fa-check-circle"></i>
-                        </div>
+
+                      <div class="snake-item-content">
+                        <div class="snake-node-title">{{ level.id }}</div>
                       </div>
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- Loading State -->
                 <div v-else-if="loadingLevels" class="timeline-placeholder">
                   <i class="fas fa-spinner fa-spin text-blue-500 text-xl mb-2 block"></i>
@@ -2360,149 +2380,278 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 
-/* Vertical Timeline Levels */
-.vertical-timeline-levels {
+/* Ranks Vertical Timeline */
+.ranks-vertical-timeline {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  margin-top: 1rem;
+  padding: 1rem 0 2rem 0;
 }
 
-.timeline-item {
+.rank-timeline-item {
   display: flex;
-  gap: 16px;
-  cursor: pointer;
+  gap: 1.5rem;
   position: relative;
 }
 
-.timeline-marker {
+.rank-marker-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 44px;
+  width: 56px;
 }
 
-.marker-circle {
-  width: 44px;
-  height: 44px;
+.rank-marker-circle {
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
+  border: 3px solid #cbd5e1;
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  color: #94a3b8;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-size: 1.5rem;
   z-index: 2;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 0 4px white;
+  transition: transform 0.3s ease;
 }
 
-.timeline-item:hover .marker-circle {
-  border-color: #3b82f6;
-  color: #3b82f6;
+.rank-timeline-item:hover .rank-marker-circle {
   transform: scale(1.05);
 }
 
-.timeline-item.active .marker-circle {
-  background: #3b82f6;
-  border-color: #3b82f6;
-  color: white;
-  transform: scale(1.1);
-  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.15);
-}
-
-.marker-line {
+.rank-marker-line {
+  width: 3px;
   flex-grow: 1;
-  width: 2px;
-  background: #e2e8f0;
-  margin: 6px 0;
-  min-height: 24px;
-  transition: all 0.3s ease;
+  background: #cbd5e1;
+  min-height: 40px;
+  margin: -4px 0;
+  z-index: 1;
 }
 
-.timeline-item.active .marker-line {
-  background: linear-gradient(to bottom, #3b82f6, #e2e8f0);
+.rank-marker-line.line-attained {
+  background: #4f46e5; /* Indigo/Blue for attained */
 }
 
-.timeline-content {
+/* Specific Rank Colors */
+.rank-newbie .rank-marker-circle { border-color: #94a3b8; color: #94a3b8; }
+.rank-bronze .rank-marker-circle { border-color: #b45309; color: #b45309; }
+.rank-silver .rank-marker-circle { border-color: #94a3b8; color: #94a3b8; }
+.rank-gold .rank-marker-circle { border-color: #eab308; color: #eab308; }
+.rank-platinum .rank-marker-circle { border-color: #14b8a6; color: #14b8a6; } /* Teal */
+.rank-diamond .rank-marker-circle { border-color: #06b6d4; color: #06b6d4; }
+.rank-master .rank-marker-circle { border-color: #8b5cf6; color: #8b5cf6; }
+.rank-grandmaster .rank-marker-circle { border-color: #ec4899; color: #ec4899; }
+.rank-legendary .rank-marker-circle { border-color: #f43f5e; color: #f43f5e; }
+.rank-mythic .rank-marker-circle { border-color: #6366f1; color: #6366f1; }
+
+.rank-timeline-card {
   flex-grow: 1;
-  padding-bottom: 24px;
-}
-
-.timeline-item:last-child .timeline-content {
-  padding-bottom: 0;
-}
-
-.level-card {
-  background: #ffffff;
+  background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  padding: 16px 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 1.25rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  transition: all 0.3s ease;
 }
 
-.timeline-item:hover .level-card {
-  border-color: #cbd5e1;
+.rank-timeline-item.attained .rank-timeline-card {
+  background: white;
+}
+
+.rank-timeline-item:hover .rank-timeline-card {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.08);
 }
 
-.timeline-item.active .level-card {
-  border-color: #3b82f6;
-  background: rgba(240, 249, 255, 0.5);
-  transform: translateX(4px);
-  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15);
+.rank-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.level-info h4 {
-  margin: 0 0 4px 0;
-  font-size: 1.15rem;
-  color: #0f172a;
+.rank-card-title {
+  margin: 0;
+  font-size: 1.25rem;
   font-weight: 800;
-  letter-spacing: -0.3px;
+  color: #0f172a;
 }
 
-.level-desc {
-  font-size: 0.85rem;
+.rank-card-req {
+  font-size: 0.95rem;
   color: #64748b;
-  font-weight: 500;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.active-check {
-  color: #3b82f6;
-  font-size: 1.4rem;
-  opacity: 0;
-  transform: scale(0.5) rotate(-45deg);
-  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+.rank-reward-badge {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 30px;
+  padding: 4px;
+  padding-left: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
-.timeline-item.active .active-check {
-  opacity: 1;
-  transform: scale(1) rotate(0deg);
-}
-
-.timeline-placeholder {
-  text-align: center;
-  padding: 24px 20px;
+.rank-reward-badge.status-attained {
   background: #f8fafc;
-  border-radius: 16px;
-  border: 2px dashed #e2e8f0;
+}
+
+.reward-coin {
+  font-weight: 700;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+.reward-status {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+}
+.rank-reward-badge.status-attained .reward-status {
+  background: white;
   color: #64748b;
-  margin-top: 10px;
-  font-weight: 500;
+}
+
+/* Level Snake Timeline */
+.level-snake-timeline-wrapper {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0;
+  overflow: hidden;
+}
+
+.level-snake-row {
+  display: flex;
+  width: 100%;
+  position: relative;
+  height: 120px;
+}
+
+.level-snake-row.row-even {
+  flex-direction: row-reverse;
+}
+
+/* Horizontal Line */
+.level-snake-row::before {
+  content: '';
+  position: absolute;
+  top: 15px; /* Center of 34px dot */
+  left: 12.5%;
+  right: 12.5%;
+  height: 4px;
+  background: #06b6d4; /* Teal / Cyan */
+  z-index: 1;
+}
+
+/* Curve Right (for Odd rows going down) */
+.level-snake-row.row-odd:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  right: 12.5%;
+  width: 60px;
+  height: 120px; /* Equals row height */
+  border-top: 4px solid transparent;
+  border-right: 4px solid #06b6d4;
+  border-bottom: 4px solid #06b6d4;
+  border-top-right-radius: 60px;
+  border-bottom-right-radius: 60px;
+  z-index: 1;
+  transform: translateX(100%);
+}
+
+/* Curve Left (for Even rows going down) */
+.level-snake-row.row-even:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 12.5%;
+  width: 60px;
+  height: 120px;
+  border-top: 4px solid transparent;
+  border-left: 4px solid #06b6d4;
+  border-bottom: 4px solid #06b6d4;
+  border-top-left-radius: 60px;
+  border-bottom-left-radius: 60px;
+  z-index: 1;
+  transform: translateX(-100%);
+}
+
+.level-snake-item {
+  width: 25%;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+  padding-top: 0;
 }
 
-.timeline-placeholder.empty {
-  background: #fafafa;
+.snake-node-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #0891b2; /* Darker cyan */
+  border: 4px solid #cffafe; /* Light cyan border */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+}
+
+.level-snake-item:hover .snake-node-dot {
+  transform: scale(1.15);
+  background: #06b6d4;
+}
+
+.level-snake-item.active .snake-node-dot {
+  background: #f59e0b; /* Amber for active */
+  border-color: #fef3c7;
+  transform: scale(1.25);
+  box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.15);
+}
+
+.snake-item-content {
+  text-align: center;
+  padding: 0 8px;
+}
+
+.snake-node-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #334155;
+  transition: color 0.3s ease;
+}
+
+.level-snake-item:hover .snake-node-title {
+  color: #06b6d4;
+}
+
+.level-snake-item.active .snake-node-title {
+  color: #f59e0b;
 }
 
 </style>

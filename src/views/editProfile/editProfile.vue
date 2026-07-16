@@ -257,7 +257,7 @@
                 <label for="pref-level" class="group-label">
                   <i class="fas fa-layer-group"></i> {{ currentLocale === 'RUS' ? 'Уровень сложности' : 'Qiyinchilik darajasi' }}
                 </label>
-                <div class="input-wrapper select-wrapper">
+                <div class="input-wrapper select-wrapper snake-select-wrapper">
                   <i class="fas fa-signal select-icon"></i>
                   <select id="pref-level" v-model="preferences.defaultLevel" class="styled-input select-input" :disabled="!preferences.defaultSubject || loadingLevels">
                     <option value="">
@@ -2325,6 +2325,51 @@ input:disabled + .slider {
 }
 input:checked + .slider:before {
   transform: translateX(20px);
+}
+
+/* Animated Snake Select Border */
+.snake-select-wrapper {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  z-index: 1;
+  padding: 2px;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+}
+
+.snake-select-wrapper::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent 0%, transparent 60%, #3b82f6 80%, #ec4899 100%);
+  animation: snake-spin 2.5s linear infinite;
+  z-index: -2;
+}
+
+.snake-select-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: #ffffff;
+  border-radius: 12px;
+  z-index: -1;
+}
+
+.snake-select-wrapper .styled-input {
+  border: none;
+  background: transparent;
+}
+.snake-select-wrapper .select-icon {
+  z-index: 2;
+}
+
+@keyframes snake-spin {
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 </style>

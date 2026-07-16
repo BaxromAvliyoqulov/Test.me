@@ -174,10 +174,22 @@ export default {
         'Barcha natijalarni o\'chirish', 
         'DIQQAT! Barcha test natijalarini o\'chirasizmi? Bu amal qaytarilmaydi!'
       ))) return;
+
+      const code = window.prompt("Tasdiqlash uchun xavfsizlik kodini kiriting:");
+      if (code !== "123") {
+        toast.error("Xavfsizlik kodi noto'g'ri! O'chirish bekor qilindi.");
+        return;
+      }
+
+      toast.info("Natijalar o'chirilmoqda, kuting...");
       try {
         const snapshot = await getDocs(collection(db, 'results'));
-        snapshot.forEach(async (d) => await deleteDoc(d.ref));
-        toast.success("Barcha test natijalari o'chirildi.");
+        
+        // Ommaviy o'chirish uchun Promise.all ishlatamiz
+        const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
+        await Promise.all(deletePromises);
+        
+        toast.success("Barcha test natijalari muvaffaqiyatli o'chirildi.");
       } catch (e) {
         toast.error("Xatolik: " + e.message);
       }

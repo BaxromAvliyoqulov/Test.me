@@ -83,6 +83,9 @@
                   v-model="formData.name"
                   required
                   :placeholder="isRus ? 'Введите ваше имя' : 'Ismingizni kiriting'"
+                  maxlength="40"
+                  pattern="^[A-Za-zА-Яа-яЁёOʻoʻGʻgʻ\' \-]+$"
+                  title="Ismda faqat harflar bo'lishi kerak"
                 />
               </div>
             </div>
@@ -142,6 +145,7 @@
                   required
                   :placeholder="isRus ? 'Напишите ваше сообщение...' : 'Xabaringizni yozing...'"
                   rows="4"
+                  maxlength="1000"
                 ></textarea>
               </div>
             </div>
@@ -542,26 +546,28 @@ input,
 select,
 textarea {
   width: 100%;
-  padding: 12px 14px 12px 42px;
-  border: 2px solid #e2e8f0;
-  border-radius: 14px;
+  padding: 14px 16px 14px 44px;
+  border: 2px solid transparent;
+  border-radius: 16px;
   font-size: 0.95rem;
-  background: #ffffff;
+  background: #f8fafc;
   color: #0f172a;
   outline: none;
   box-sizing: border-box;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 select.custom-select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 14px center;
-  background-size: 16px;
-  padding-right: 40px;
+  background-position: right 16px center;
+  background-size: 18px;
+  padding-right: 44px;
+  cursor: pointer;
 }
 select.custom-select:invalid {
   color: #94a3b8;
@@ -586,20 +592,31 @@ textarea {
 }
 
 .textarea-wrapper .input-icon {
-  top: 16px;
+  top: 18px;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
+  background: #ffffff;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
 }
 
 input:focus + .input-icon,
 select:focus + .input-icon,
 textarea:focus + .input-icon {
   color: #3b82f6;
+  transform: scale(1.1);
 }
 
 .submit-button {

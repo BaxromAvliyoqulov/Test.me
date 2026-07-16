@@ -145,6 +145,14 @@ export default {
       editRole: '',
       roles: [
         {
+          key: 'boss',
+          label: 'B O S S',
+          icon: 'fas fa-chess-king',
+          color: '#dc2626',
+          desc: 'Platforma Asoschisi (Mutlaq Nazorat)',
+          permissions: ['God Mode', 'Barchasi']
+        },
+        {
           key: 'super_admin',
           label: 'Super Admin',
           icon: 'fas fa-crown',
@@ -163,7 +171,7 @@ export default {
         {
           key: 'moderator',
           label: 'Moderator',
-          icon: 'fas fa-shield-halved',
+          icon: 'fas fa-user-shield',
           color: '#10b981',
           desc: 'Foydalanuvchilar va shikoyatlar',
           permissions: ['Users', 'Ban', 'Xabarlar']
@@ -347,6 +355,7 @@ h4 i { color: #3b82f6; }
 
 .admin-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .role-badge { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 800; }
+.role-boss { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 .role-super_admin { background: #fef3c7; color: #d97706; }
 .role-content_admin { background: #eff6ff; color: #2563eb; }
 .role-moderator { background: #f0fdf4; color: #16a34a; }

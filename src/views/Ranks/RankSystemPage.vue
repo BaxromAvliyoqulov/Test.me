@@ -422,8 +422,8 @@ export default {
   top: 32px;
   right: 16.66%;
   width: 80px;
-  height: 310px;
-  border-top: 6px solid transparent;
+  height: 316px;
+  border-top: 6px solid #cbd5e1;
   border-right: 6px solid #cbd5e1;
   border-bottom: 6px solid #cbd5e1;
   border-top-right-radius: 80px;
@@ -439,8 +439,8 @@ export default {
   top: 32px;
   left: 16.66%;
   width: 80px;
-  height: 310px;
-  border-top: 6px solid transparent;
+  height: 316px;
+  border-top: 6px solid #cbd5e1;
   border-left: 6px solid #cbd5e1;
   border-bottom: 6px solid #cbd5e1;
   border-top-left-radius: 80px;

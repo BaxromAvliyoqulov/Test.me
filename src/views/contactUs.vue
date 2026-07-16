@@ -393,7 +393,7 @@ ${formData.value.subject ? `📚 Fan: ${formData.value.subject}` : ""}
   display: grid;
   grid-template-columns: 1fr 1.25fr;
   gap: 2.5rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* Left Panel Style */
@@ -401,6 +401,7 @@ ${formData.value.subject ? `📚 Fan: ${formData.value.subject}` : ""}
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  height: 100%;
 }
 
 .info-intro-card {
@@ -431,6 +432,7 @@ ${formData.value.subject ? `📚 Fan: ${formData.value.subject}` : ""}
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex: 1;
 }
 
 .info-item-card {
@@ -510,24 +512,28 @@ ${formData.value.subject ? `📚 Fan: ${formData.value.subject}` : ""}
 /* Right Panel Style (Form) */
 .contact-form-panel {
   background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 28px;
-  padding: 2.5rem;
-  box-shadow: 0 15px 35px -10px rgba(15, 23, 42, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 32px;
+  padding: 3rem;
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .contact-form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
+  flex: 1;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .form-group label {
@@ -542,31 +548,35 @@ ${formData.value.subject ? `📚 Fan: ${formData.value.subject}` : ""}
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1;
 }
 
 .input-icon {
   position: absolute;
-  left: 14px;
+  left: 18px;
   color: #94a3b8;
-  font-size: 1rem;
+  font-size: 1.1rem;
   pointer-events: none;
-  transition: color 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
 }
 
 input,
 select,
 textarea {
   width: 100%;
-  padding: 14px 16px 14px 44px;
-  border: 2px solid transparent;
-  border-radius: 16px;
-  font-size: 0.95rem;
-  background: #f8fafc;
+  padding: 16px 20px 16px 48px;
+  border: 2px solid rgba(226, 232, 240, 0.6);
+  border-radius: 20px;
+  font-size: 0.98rem;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #0f172a;
   outline: none;
   box-sizing: border-box;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.02), inset 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 select.custom-select {
@@ -575,20 +585,23 @@ select.custom-select {
   -moz-appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 16px center;
-  background-size: 18px;
-  padding-right: 44px;
+  background-position: right 18px center;
+  background-size: 20px;
+  padding-right: 50px;
   cursor: pointer;
 }
 
 textarea {
-  padding-top: 14px;
+  padding-top: 16px;
   resize: vertical;
   min-height: 120px;
+  flex: 1;
 }
 
 .textarea-wrapper {
   align-items: start;
+  flex: 1;
+  display: flex;
 }
 
 .textarea-wrapper .input-icon {
@@ -608,33 +621,33 @@ select:focus,
 textarea:focus {
   background: #ffffff;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 4px 12px rgba(59, 130, 246, 0.1);
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 10px 25px -5px rgba(59, 130, 246, 0.2);
+  transform: translateY(-2px);
 }
 
 input:focus + .input-icon,
 select:focus + .input-icon,
 textarea:focus + .input-icon {
   color: #3b82f6;
-  transform: scale(1.1);
+  transform: scale(1.15) translateY(-1px);
 }
 
 .submit-button {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
   border: none;
-  padding: 1.1rem;
-  font-size: 1rem;
-  font-weight: 700;
-  border-radius: 16px;
+  padding: 1.25rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  border-radius: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  box-shadow: 0 8px 25px -5px rgba(37, 99, 235, 0.4);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-top: 0.5rem;
+  gap: 10px;
+  box-shadow: 0 10px 30px -5px rgba(37, 99, 235, 0.4);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: auto;
 }
 
 .submit-button:hover:not(:disabled) {

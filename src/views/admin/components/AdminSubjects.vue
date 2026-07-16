@@ -236,18 +236,30 @@ export default {
       
       try {
         const snap = await getDocs(collection(db, 'subjects'));
-        const freshSubjects = snap.docs.map(doc => {
-          const existing = this.subjects.find(s => s.id === doc.id);
-          return {
-            id: doc.id,
-            levels: existing ? existing.levels : [],
-            levelsLoaded: existing ? existing.levelsLoaded : false,
-            loadingLevels: existing ? existing.loadingLevels : false
-          };
+        
+        const promises = snap.docs.map(async (docSnap) => {
+          const subject = { id: docSnap.id, levels: [], levelsLoaded: false, loadingLevels: true };
+          try {
+             const levelsSnap = await getDocs(collection(db, 'subjects', docSnap.id, 'levels'));
+             const levels = [];
+             for (const lvlDoc of levelsSnap.docs) {
+               const testsSnap = await getDocs(collection(db, 'subjects', docSnap.id, 'levels', lvlDoc.id, 'tests'));
+               levels.push({ id: lvlDoc.id, testCount: testsSnap.size });
+             }
+             subject.levels = sortLevels(levels);
+             subject.levelsLoaded = true;
+          } catch(e) {
+             console.error("Failed to load levels for", docSnap.id);
+          } finally {
+             subject.loadingLevels = false;
+          }
+          return subject;
         });
-        this.subjects = freshSubjects;
-        // Save only basic structure to cache
-        localStorage.setItem('admin_subjects_cache', JSON.stringify(freshSubjects.map(s => ({ id: s.id, levels: [], levelsLoaded: false, loadingLevels: false }))));
+
+        this.subjects = await Promise.all(promises);
+        
+        // Save full structure to cache so next reload is instant with badges!
+        localStorage.setItem('admin_subjects_cache', JSON.stringify(this.subjects));
       } catch(e) { 
         toast.error('Fanlarni yuklashda xatolik: ' + e.message); 
       } finally { 

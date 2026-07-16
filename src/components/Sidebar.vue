@@ -56,7 +56,7 @@
         </router-link>
 
         <router-link to="/dashboard" class="sidebar-link dash-link" v-tooltip="t('dashboard')">
-          <div class="link-icon"><i class="fas fa-chart-simple"></i></div>
+          <div class="link-icon"><i class="fas fa-chart-line"></i></div>
           <transition name="fade-slide">
             <span v-if="!isCollapsed" class="link-text">{{ t('dashboard') }}</span>
           </transition>

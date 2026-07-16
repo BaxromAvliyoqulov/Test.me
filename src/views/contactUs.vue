@@ -127,10 +127,7 @@
                 <i class="fas fa-book-open input-icon"></i>
                 <select id="subject" v-model="formData.subject" required class="custom-select">
                   <option value="" disabled hidden>{{ isRus ? 'Выберите предмет' : 'Fanni tanlang' }}</option>
-                  <option value="English">Ingliz Tili</option>
-                  <option value="math">Matematika</option>
-                  <option value="physics">Fizika</option>
-                  <option value="chemistry">Kimyo</option>
+                  <option v-for="subj in subjectsList" :key="subj" :value="subj">{{ subj }}</option>
                 </select>
               </div>
             </div>
@@ -185,6 +182,8 @@ export default {
       subject: "",
       message: "",
     });
+
+    const subjectsList = ['English', 'O\'zbek tili', 'Matematika', 'Tarix', 'Fizika', 'Informatika', 'Dasturlash', 'Kimyo'];
 
     const submitting = ref(false);
 
@@ -298,6 +297,7 @@ ${formData.value.subject ? `📚 Fan: ${formData.value.subject}` : ""}
       copyPhone,
       formatPhone,
       handleSubmit,
+      subjectsList,
     };
   },
 };
@@ -564,6 +564,14 @@ select.custom-select {
   padding-right: 40px;
 }
 select.custom-select:invalid {
+  color: #94a3b8;
+}
+
+select.custom-select option {
+  color: #0f172a;
+}
+
+select.custom-select option:disabled {
   color: #94a3b8;
 }
 

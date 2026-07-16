@@ -28,34 +28,34 @@
         </div>
       </div>
 
-      <!-- Timeline Section -->
-      <div class="ranks-timeline-container">
-        <div class="ranks-timeline">
+      <!-- Snake Timeline Section -->
+      <div class="ranks-snake-timeline-container">
+        <div 
+          v-for="rowIndex in Math.ceil(ranksList.length / 3)" 
+          :key="rowIndex"
+          class="rank-snake-row"
+          :class="rowIndex % 2 === 0 ? 'row-even' : 'row-odd'"
+        >
           <div 
-            v-for="(rank, index) in ranksList" 
+            v-for="(rank) in (rowIndex % 2 === 0 ? [...ranksList].slice((rowIndex - 1) * 3, rowIndex * 3).reverse() : ranksList.slice((rowIndex - 1) * 3, rowIndex * 3))" 
             :key="rank.id"
-            class="rank-timeline-item"
+            class="rank-snake-item"
             :class="{ 
-              'current': isCurrentRank(index), 
+              'current': isCurrentRank(ranksList.indexOf(rank)), 
               'locked': !hasReachedRank(rank),
-              'completed': hasReachedRank(rank) && !isCurrentRank(index)
+              'completed': hasReachedRank(rank) && !isCurrentRank(ranksList.indexOf(rank))
             }"
           >
-            <!-- Timeline Line -->
-            <div class="timeline-line" v-if="index < ranksList.length - 1">
-              <div class="timeline-line-fill" :style="{ height: getLineFillHeight(index) + '%' }"></div>
-            </div>
-
-            <!-- Rank Icon Bubble -->
-            <div class="rank-node" :class="rank.class">
-              <div class="rank-icon-bubble">
+            <!-- Marker Dot -->
+            <div class="rank-snake-dot-wrap">
+              <div class="rank-icon-bubble" :class="rank.class">
                 <i :class="rank.icon"></i>
               </div>
             </div>
-
+            
             <!-- Rank Details Card -->
             <div class="rank-details">
-              <div v-if="isCurrentRank(index)" class="current-indicator">
+              <div v-if="isCurrentRank(ranksList.indexOf(rank))" class="current-indicator">
                 {{ isRus ? 'Ваш текущий ранг' : 'Sizning darajangiz' }}
               </div>
               
@@ -64,7 +64,7 @@
                   <h4>{{ isRus ? rank.nameRu : rank.nameUz }}</h4>
                   <span class="rank-req">
                     <i class="fas fa-bolt"></i> 
-                    {{ index === 0 ? '0 TP' : `${rank.min} TP` }} {{ isRus ? 'и выше' : 'dan boshlab' }}
+                    {{ ranksList.indexOf(rank) === 0 ? '0 TP' : `${rank.min} TP` }}
                   </span>
                 </div>
 
@@ -91,19 +91,18 @@
                     disabled
                   >
                     <i class="fas fa-check"></i>
-                    {{ isRus ? 'Получено' : 'Olingan' }}
                   </button>
                 </div>
               </div>
 
               <!-- Progress Bar for Current Rank -->
-              <div class="rank-progress-bar-wrap" v-if="isCurrentRank(index) && index < ranksList.length - 1">
+              <div class="rank-progress-bar-wrap" v-if="isCurrentRank(ranksList.indexOf(rank)) && ranksList.indexOf(rank) < ranksList.length - 1">
                 <div class="progress-bar-bg">
                   <div class="progress-bar-fg" :style="{ width: currentRankProgressPercent + '%' }"></div>
                 </div>
                 <div class="progress-stats">
                   <span>{{ userPoints }} TP</span>
-                  <span>{{ isRus ? `Цель: ${ranksList[index+1].min} TP` : `Maqsad: ${ranksList[index+1].min} TP` }}</span>
+                  <span>{{ isRus ? `Цель: ${ranksList[ranksList.indexOf(rank)+1].min} TP` : `Maqsad: ${ranksList[ranksList.indexOf(rank)+1].min} TP` }}</span>
                 </div>
               </div>
             </div>
@@ -376,94 +375,125 @@ export default {
   margin: 0 2rem;
 }
 
-/* Timeline */
-.ranks-timeline-container {
+/* Horizontal Snake Timeline */
+.ranks-snake-timeline-container {
   background: white;
   border-radius: 32px;
-  padding: 3rem;
+  padding: 3rem 1.5rem;
   box-shadow: 0 20px 50px -20px rgba(15, 23, 42, 0.1);
   border: 1px solid #e2e8f0;
-}
-
-.ranks-timeline {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   position: relative;
-  padding-left: 10px;
 }
 
-.rank-timeline-item {
+.rank-snake-row {
   display: flex;
-  align-items: flex-start;
-  gap: 2rem;
+  width: 100%;
   position: relative;
-  padding-bottom: 3.5rem;
-}
-.rank-timeline-item:last-child {
-  padding-bottom: 0;
+  height: 290px;
 }
 
-.timeline-line {
+.rank-snake-row.row-even {
+  flex-direction: row-reverse;
+}
+
+/* Horizontal Line */
+.rank-snake-row::before {
+  content: '';
   position: absolute;
-  top: 50px;
-  bottom: -15px;
-  left: 32px;
-  width: 4px;
-  background: #e2e8f0;
-  border-radius: 4px;
+  top: 32px;
+  left: 16.66%;
+  right: 16.66%;
+  height: 6px;
+  background: #cbd5e1;
   z-index: 1;
 }
-.timeline-line-fill {
-  width: 100%;
-  background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
-  border-radius: 4px;
-  transition: height 1s ease-out;
+
+/* Curve Right */
+.rank-snake-row.row-odd:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 32px;
+  right: 16.66%;
+  width: 80px;
+  height: 290px;
+  border-top: 6px solid transparent;
+  border-right: 6px solid #cbd5e1;
+  border-bottom: 6px solid #cbd5e1;
+  border-top-right-radius: 80px;
+  border-bottom-right-radius: 80px;
+  z-index: 1;
+  transform: translateX(100%);
 }
 
-.rank-node {
+/* Curve Left */
+.rank-snake-row.row-even:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 32px;
+  left: 16.66%;
+  width: 80px;
+  height: 290px;
+  border-top: 6px solid transparent;
+  border-left: 6px solid #cbd5e1;
+  border-bottom: 6px solid #cbd5e1;
+  border-top-left-radius: 80px;
+  border-bottom-left-radius: 80px;
+  z-index: 1;
+  transform: translateX(-100%);
+}
+
+.rank-snake-item {
+  width: 33.333%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   position: relative;
   z-index: 2;
-  margin-top: 4px;
+  padding: 0 15px;
 }
-.rank-icon-bubble {
-  width: 64px;
+
+.rank-snake-dot-wrap {
   height: 64px;
-  border-radius: 50%;
-  background: white;
-  border: 4px solid #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.8rem;
-  color: #94a3b8;
-  transition: all 0.3s;
-  box-shadow: 0 0 0 6px white;
+  margin-bottom: 16px;
 }
 
 .rank-details {
   flex-grow: 1;
   background: #f8fafc;
-  padding: 1.5rem;
+  padding: 1.5rem 1rem;
   border-radius: 24px;
   border: 1px solid #e2e8f0;
   position: relative;
   transition: all 0.3s;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .details-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  flex-wrap: wrap;
+  text-align: center;
   gap: 1rem;
+  width: 100%;
 }
 
 .rank-title-group h4 {
   margin: 0 0 6px 0;
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   font-family: 'Outfit', sans-serif;
   font-weight: 800;
   color: #0f172a;
+  line-height: 1.2;
 }
 .rank-req {
   font-size: 0.85rem;
@@ -471,6 +501,7 @@ export default {
   color: #64748b;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
 }
 .rank-req i { color: #f59e0b; }
@@ -478,57 +509,63 @@ export default {
 .current-indicator {
   position: absolute;
   top: -12px;
-  left: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 800;
   padding: 4px 12px;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
   text-transform: uppercase;
   letter-spacing: 1px;
+  white-space: nowrap;
 }
 
 /* Reward UI */
 .reward-section {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
   background: white;
-  padding: 6px 6px 6px 16px;
+  padding: 6px;
   border-radius: 100px;
   border: 1px solid #e2e8f0;
 }
 .reward-badge {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-weight: 800;
   color: #3b82f6;
+  font-size: 0.9rem;
+  padding-left: 8px;
 }
 .reward-badge.claimed {
   color: #94a3b8;
   opacity: 0.7;
 }
 .reward-coin-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .claim-btn {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: white;
   border: none;
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 100px;
   font-family: inherit;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
   transition: all 0.2s;
 }
@@ -560,26 +597,27 @@ export default {
 
 /* Progress Bar */
 .rank-progress-bar-wrap {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
+  width: 100%;
 }
 .progress-bar-bg {
   width: 100%;
-  height: 10px;
+  height: 8px;
   background: #e2e8f0;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
 }
 .progress-bar-fg {
   height: 100%;
   background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-  border-radius: 10px;
+  border-radius: 8px;
   transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .progress-stats {
   display: flex;
   justify-content: space-between;
-  margin-top: 8px;
-  font-size: 0.75rem;
+  margin-top: 6px;
+  font-size: 0.7rem;
   font-weight: 700;
   color: #64748b;
 }
@@ -619,23 +657,29 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .ranks-timeline-container {
+  .ranks-snake-timeline-container {
     padding: 1.5rem;
   }
-  .rank-timeline-item {
-    gap: 1rem;
+  .rank-snake-row {
+    flex-direction: column;
+    height: auto;
   }
-  .timeline-line {
-    left: 20px;
+  .rank-snake-row.row-even {
+    flex-direction: column;
+  }
+  .rank-snake-row::before,
+  .rank-snake-row::after {
+    display: none;
+  }
+  .rank-snake-item {
+    width: 100%;
+    margin-bottom: 2.5rem;
+    padding: 0;
   }
   .rank-icon-bubble {
-    width: 44px;
-    height: 44px;
-    font-size: 1.2rem;
-  }
-  .details-header {
-    flex-direction: column;
-    align-items: flex-start;
+    width: 54px;
+    height: 54px;
+    font-size: 1.4rem;
   }
   .back-btn {
     position: relative;

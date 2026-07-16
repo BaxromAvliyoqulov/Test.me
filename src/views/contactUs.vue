@@ -95,6 +95,7 @@
                   type="tel"
                   id="phone"
                   v-model="formData.phone"
+                  @input="formatPhone"
                   required
                   placeholder="+998 90 123 45 67"
                 />
@@ -178,7 +179,7 @@ export default {
 
     const formData = ref({
       name: "",
-      phone: "",
+      phone: "+998 ",
       requestType: "",
       subject: "",
       message: "",
@@ -213,11 +214,29 @@ export default {
     const resetForm = () => {
       formData.value = {
         name: "",
-        phone: "",
+        phone: "+998 ",
         requestType: "",
         subject: "",
         message: "",
       };
+    };
+
+    const formatPhone = (event) => {
+      let val = event.target.value.replace(/\D/g, ""); 
+      
+      if (val.startsWith("998")) {
+        val = val.substring(3);
+      }
+      
+      val = val.substring(0, 9);
+      
+      let formatted = "+998 ";
+      if (val.length > 0) formatted += val.substring(0, 2);
+      if (val.length >= 3) formatted += " " + val.substring(2, 5);
+      if (val.length >= 6) formatted += " " + val.substring(5, 7);
+      if (val.length >= 8) formatted += " " + val.substring(7, 9);
+      
+      formData.value.phone = formatted.trim();
     };
 
     const handleSubmit = async () => {
@@ -276,6 +295,7 @@ ${formData.value.subject ? `📚 Fan: ${formData.value.subject}` : ""}
       handleRequestTypeChange,
       copyEmail,
       copyPhone,
+      formatPhone,
       handleSubmit,
     };
   },

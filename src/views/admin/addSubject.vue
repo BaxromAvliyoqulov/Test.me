@@ -143,8 +143,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { getAuth } from 'firebase/auth';
 import { db } from '@/config/firebase';
-import { doc, getDocs, collection, writeBatch, setDoc, getCountFromServer } from 'firebase/firestore';
+import { doc, getDoc, getDocs, collection, writeBatch, setDoc, getCountFromServer } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
 import Swal from 'sweetalert2';
 import { sortLevels } from '@/utils/sorters';
@@ -183,6 +184,7 @@ const selectedFile = ref(null);
 const parsedData = ref([]);
 const currentTestCount = ref(0);
 const loadingCount = ref(false);
+const currentUserDoc = ref(null);
 
 const canUpload = computed(() => selectedSubject.value && selectedLevel.value);
 
@@ -214,10 +216,20 @@ const fetchSubjects = async () => {
   loadingSubjects.value = true;
   try {
     const querySnapshot = await getDocs(collection(db, "subjects"));
-    subjects.value = querySnapshot.docs.map(doc => ({
+    const allSubjects = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
+    
+    if (currentUserDoc.value && currentUserDoc.value.adminRole === 'teacher_admin' && currentUserDoc.value.teacherSubject) {
+      subjects.value = allSubjects.filter(s => s.id === currentUserDoc.value.teacherSubject);
+      if (subjects.value.length > 0) {
+        selectedSubject.value = subjects.value[0];
+        fetchLevels();
+      }
+    } else {
+      subjects.value = allSubjects;
+    }
   } catch (error) {
     toast.error("Fanlarni yuklashda xatolik: " + error.message);
   } finally {
@@ -385,7 +397,14 @@ const uploadToDatabase = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  const auth = getAuth();
+  if (auth.currentUser) {
+    const docSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    if (docSnap.exists()) {
+      currentUserDoc.value = docSnap.data();
+    }
+  }
   fetchSubjects();
 });
 </script>

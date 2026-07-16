@@ -42,6 +42,14 @@
           </div>
         </div>
 
+        <div class="form-group" v-if="selectedRole === 'teacher_admin'">
+          <label>Biriktiriladigan Fan *</label>
+          <select v-model="selectedSubject" class="styled-select">
+            <option value="">-- Fanni tanlang --</option>
+            <option v-for="subj in subjects" :key="subj" :value="subj">{{ subj }}</option>
+          </select>
+        </div>
+
         <div class="form-group">
           <label>Qo'shimcha izoh (ixtiyoriy)</label>
           <input v-model="adminNote" placeholder="Masalan: Ingliz tili bo'limi uchun..." />
@@ -77,6 +85,9 @@
             <div class="admin-info">
               <span class="admin-name">{{ admin.displayName || admin.email }}</span>
               <span class="admin-email">{{ admin.email }}</span>
+              <span v-if="admin.adminRole === 'teacher_admin' && admin.teacherSubject" class="admin-note" style="color: #0ea5e9; font-weight: bold;">
+                Fan: {{ admin.teacherSubject }}
+              </span>
               <span v-if="admin.adminNote" class="admin-note">{{ admin.adminNote }}</span>
             </div>
             <div class="admin-right">
@@ -110,6 +121,15 @@
             <span class="role-name">{{ role.label }}</span>
           </div>
         </div>
+        
+        <div class="form-group" v-if="editRole === 'teacher_admin'" style="margin-top: 1rem;">
+          <label>Biriktiriladigan Fan</label>
+          <select v-model="editSubject" class="styled-select">
+            <option value="">-- Fanni tanlang --</option>
+            <option v-for="subj in subjects" :key="subj" :value="subj">{{ subj }}</option>
+          </select>
+        </div>
+
         <div class="modal-actions">
           <button class="btn-cancel" @click="editingAdmin = null">Bekor</button>
           <button class="btn-confirm" @click="saveEditRole">Saqlash</button>
@@ -143,6 +163,9 @@ export default {
       loadingAdmins: false,
       editingAdmin: null,
       editRole: '',
+      editSubject: '',
+      subjects: [],
+      selectedSubject: '',
       roles: [
         {
           key: 'boss',
@@ -167,6 +190,14 @@ export default {
           color: '#3b82f6',
           desc: 'Testlar va fanlarni boshqarish',
           permissions: ['Testlar', 'Fanlar', 'AI Seeder']
+        },
+        {
+          key: 'teacher_admin',
+          label: 'Teacher Admin',
+          icon: 'fas fa-chalkboard-teacher',
+          color: '#0ea5e9',
+          desc: 'Faqat o\'ziga biriktirilgan fan',
+          permissions: ['Test Yuklash', 'O\'z fanini boshqarish']
         },
         {
           key: 'moderator',
@@ -195,8 +226,17 @@ export default {
       ]
     };
   },
-  mounted() { this.loadAdmins(); },
+  mounted() { 
+    this.loadAdmins(); 
+    this.loadSubjects();
+  },
   methods: {
+    async loadSubjects() {
+      try {
+        const snap = await getDocs(collection(db, 'subjects'));
+        this.subjects = snap.docs.map(d => d.id);
+      } catch(e) { console.error('Error loading subjects:', e); }
+    },
     getRoleColor(role) {
       const r = this.roles.find(r => r.key === role);
       return r ? r.color : '#64748b';
@@ -228,14 +268,22 @@ export default {
         this.formStatus = { type: 'error', message: 'Foydalanuvchi topilmadi yoki rol tanlanmadi!' };
         return;
       }
+      if (this.selectedRole === 'teacher_admin' && !this.selectedSubject) {
+        this.formStatus = { type: 'error', message: 'Iltimos, o\'qituvchi uchun fan tanlang!' };
+        return;
+      }
       this.saving = true;
       this.formStatus = null;
       try {
-        await updateDoc(doc(db, 'users', this.foundUser.id), {
+        const updateData = {
           isAdmin: true,
           adminRole: this.selectedRole,
           adminNote: this.adminNote || '',
-        });
+        };
+        if (this.selectedRole === 'teacher_admin') updateData.teacherSubject = this.selectedSubject;
+        else updateData.teacherSubject = null;
+
+        await updateDoc(doc(db, 'users', this.foundUser.id), updateData);
         this.formStatus = { type: 'success', message: `${this.foundUser.displayName || this.emailInput} — "${this.getRoleLabel(this.selectedRole)}" roli berildi!` };
         this.emailInput = '';
         this.foundUser = null;
@@ -257,10 +305,19 @@ export default {
     editAdmin(admin) {
       this.editingAdmin = admin;
       this.editRole = admin.adminRole || 'viewer';
+      this.editSubject = admin.teacherSubject || '';
     },
     async saveEditRole() {
+      if (this.editRole === 'teacher_admin' && !this.editSubject) {
+        toast.error('Iltimos, o\'qituvchi uchun fan tanlang!');
+        return;
+      }
       try {
-        await updateDoc(doc(db, 'users', this.editingAdmin.id), { adminRole: this.editRole });
+        const updateData = { adminRole: this.editRole };
+        if (this.editRole === 'teacher_admin') updateData.teacherSubject = this.editSubject;
+        else updateData.teacherSubject = null;
+
+        await updateDoc(doc(db, 'users', this.editingAdmin.id), updateData);
         toast.success(`Admin roli muvaffaqiyatli yangilandi!`);
         await this.loadAdmins();
         this.editingAdmin = null;
@@ -310,6 +367,9 @@ h4 i { color: #3b82f6; }
 .email-search-wrap input { flex: 1; }
 .user-found-badge { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; padding: 8px 14px; border-radius: 10px; font-size: 0.82rem; font-weight: 700; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
 
+.styled-select { width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 0.9rem; outline: none; background: #f8fafc; cursor: pointer; transition: 0.2s; font-weight: 600; color: #334155; }
+.styled-select:focus { border-color: #8b5cf6; background: white; }
+
 /* Role Cards */
 .role-cards { display: flex; flex-direction: column; gap: 10px; }
 .role-cards.compact { flex-direction: row; flex-wrap: wrap; }
@@ -358,6 +418,7 @@ h4 i { color: #3b82f6; }
 .role-boss { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 .role-super_admin { background: #fef3c7; color: #d97706; }
 .role-content_admin { background: #eff6ff; color: #2563eb; }
+.role-teacher_admin { background: #f0f9ff; color: #0ea5e9; }
 .role-moderator { background: #f0fdf4; color: #16a34a; }
 .role-shop_admin { background: #f5f3ff; color: #7c3aed; }
 .role-viewer { background: #f1f5f9; color: #475569; }

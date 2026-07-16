@@ -149,8 +149,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import * as XLSX from 'xlsx';
+import { getAuth } from 'firebase/auth';
 import { db } from '@/config/firebase';
-import { collection, writeBatch, doc, serverTimestamp, getDocs, getCountFromServer } from 'firebase/firestore';
+import { collection, writeBatch, doc, getDoc, serverTimestamp, getDocs, getCountFromServer } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
 import Swal from 'sweetalert2';
 import { sortLevels } from '@/utils/sorters';
@@ -164,6 +165,7 @@ const selectedLevel = ref("");
 const selectedTestCount = ref("10");
 const loadingSubjects = ref(false);
 const loadingLevels = ref(false);
+const currentUserDoc = ref(null);
 
 const canUpload = computed(() => {
   return selectedSubject.value && selectedLevel.value;
@@ -233,7 +235,17 @@ const fetchSubjects = async () => {
   loadingSubjects.value = true;
   try {
     const querySnapshot = await getDocs(collection(db, "subjects"));
-    subjects.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const allSubjects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    if (currentUserDoc.value && currentUserDoc.value.adminRole === 'teacher_admin' && currentUserDoc.value.teacherSubject) {
+      subjects.value = allSubjects.filter(s => s.id === currentUserDoc.value.teacherSubject);
+      if (subjects.value.length > 0) {
+        selectedSubject.value = subjects.value[0];
+        fetchLevels();
+      }
+    } else {
+      subjects.value = allSubjects;
+    }
   } catch (error) {
     toast.error("Fanlarni yuklashda xatolik: " + error.message);
   } finally {
@@ -257,7 +269,14 @@ const fetchLevels = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  const auth = getAuth();
+  if (auth.currentUser) {
+    const docSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    if (docSnap.exists()) {
+      currentUserDoc.value = docSnap.data();
+    }
+  }
   fetchSubjects();
 });
 

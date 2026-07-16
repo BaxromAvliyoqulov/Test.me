@@ -63,6 +63,7 @@
                 </div>
                 <div class="level-actions">
                   <button class="btn-sm btn-view" @click="viewTests(subject.id, level.id)"><i class="fas fa-list"></i> Ko'rish</button>
+                  <button class="btn-sm btn-clear" @click="clearTests(subject.id, level.id)" title="Tozalash"><i class="fas fa-broom"></i></button>
                   <button class="btn-sm btn-delete" @click="deleteLevel(subject.id, level.id)"><i class="fas fa-times"></i></button>
                 </div>
               </div>
@@ -182,9 +183,10 @@
 
 <script>
 import { db } from '@/config/firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
 import { confirmDelete } from '@/utils/sweetalert';
+import { sortLevels } from '@/utils/sorters';
 
 const toast = useToast();
 
@@ -257,7 +259,7 @@ export default {
             const testsSnap = await getDocs(collection(db, 'subjects', subject.id, 'levels', lvlDoc.id, 'tests'));
             levels.push({ id: lvlDoc.id, testCount: testsSnap.size });
           }
-          subject.levels = levels;
+          subject.levels = sortLevels(levels);
           subject.levelsLoaded = true;
         }).catch(e => {
           console.warn('Prefetch failed:', e);
@@ -290,7 +292,7 @@ export default {
               const testsSnap = await getDocs(collection(db, 'subjects', subject.id, 'levels', lvlDoc.id, 'tests'));
               levels.push({ id: lvlDoc.id, testCount: testsSnap.size });
             }
-            subject.levels = levels;
+            subject.levels = sortLevels(levels);
             subject.levelsLoaded = true;
           } catch (e) {
             toast.error(`Darajalarni yuklashda xatolik: ${e.message}`);
@@ -388,6 +390,45 @@ export default {
         toast.info(`Daraja o'chirildi.`);
       } catch(e) { 
         toast.error('Xatolik: ' + e.message); 
+      }
+    },
+    
+    async clearTests(subjectId, levelId) {
+      if (!(await confirmDelete(
+        'Darajani Tozalash',
+        `DIQQAT: "${levelId}" darajasidagi barcha testlar o'chib ketadi! Buni qaytarib bo'lmaydi. Davom etamizmi?`
+      ))) return;
+      try {
+        const testsRef = collection(db, 'subjects', subjectId, 'levels', levelId, 'tests');
+        const snap = await getDocs(testsRef);
+        if (snap.empty) {
+           toast.info("Bu darajada testlar yo'q!");
+           return;
+        }
+        toast.info("Testlar tozalanmoqda, kuting...");
+        
+        let batch = writeBatch(db);
+        let count = 0;
+        for (const docSnap of snap.docs) {
+           batch.delete(docSnap.ref);
+           count++;
+           if (count % 400 === 0) {
+              await batch.commit();
+              batch = writeBatch(db);
+           }
+        }
+        if (count % 400 !== 0) {
+           await batch.commit();
+        }
+        
+        const subject = this.subjects.find(s => s.id === subjectId);
+        if(subject) {
+          const lvl = subject.levels.find(l => l.id === levelId);
+          if(lvl) lvl.testCount = 0;
+        }
+        toast.success(`${count} ta test muvaffaqiyatli tozalandi!`);
+      } catch(e) {
+        toast.error('Xatolik: ' + e.message);
       }
     },
 
@@ -497,6 +538,7 @@ export default {
 .level-actions { display: flex; gap: 6px; }
 .btn-sm { padding: 6px 10px; border-radius: 8px; border: none; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 4px; }
 .btn-view { background: #eff6ff; color: #2563eb; } .btn-view:hover { background: #dbeafe; }
+.btn-clear { background: #fffbeb; color: #d97706; } .btn-clear:hover { background: #fef3c7; }
 .btn-delete { background: #fef2f2; color: #dc2626; } .btn-delete:hover { background: #fee2e2; }
 
 .empty-levels { text-align: center; color: #94a3b8; padding: 1.5rem 1rem; font-size: 0.9rem; display: flex; flex-direction: column; align-items: center; gap: 6px; }

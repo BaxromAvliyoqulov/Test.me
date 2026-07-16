@@ -14,14 +14,7 @@ export function sortLevels(levels) {
     'a1', 'a2', 'b1', 'b2', 'c1', 'c2'
   ];
 
-  // Filter out old english text levels as requested by the user
-  const filteredLevels = levels.filter(level => {
-    const val = typeof level === 'string' ? level : level.id;
-    if (!val) return false;
-    return !englishOrder.includes(val.toLowerCase());
-  });
-
-  return filteredLevels.sort((a, b) => {
+  return [...levels].sort((a, b) => {
     const valA = typeof a === 'string' ? a : a.id;
     const valB = typeof b === 'string' ? b : b.id;
     

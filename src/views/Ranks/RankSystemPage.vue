@@ -457,6 +457,10 @@ export default {
   position: relative;
   z-index: 2;
   padding: 0 15px;
+  /* Override global rank classes from App.vue */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .rank-snake-dot-wrap {

@@ -111,8 +111,9 @@
                   v-model="formData.requestType"
                   required
                   @change="handleRequestTypeChange"
+                  class="custom-select"
                 >
-                  <option value="">{{ isRus ? 'Выберите' : 'Tanlang' }}</option>
+                  <option value="" disabled hidden>{{ isRus ? 'Выберите' : 'Tanlang' }}</option>
                   <option value="partnership">{{ isRus ? 'Предложение о сотрудничестве' : 'Hamkorlik taklifi' }}</option>
                   <option value="test">{{ isRus ? 'Проблема с тестом' : 'Test bo\'yicha muammo' }}</option>
                   <option value="platform">{{ isRus ? 'Проблема с платформой' : 'Platforma bo\'yicha muammo' }}</option>
@@ -124,8 +125,8 @@
               <label for="subject">{{ isRus ? 'Предмет' : 'Fan' }}</label>
               <div class="input-wrapper">
                 <i class="fas fa-book-open input-icon"></i>
-                <select id="subject" v-model="formData.subject" required>
-                  <option value="">{{ isRus ? 'Выберите предмет' : 'Fanni tanlang' }}</option>
+                <select id="subject" v-model="formData.subject" required class="custom-select">
+                  <option value="" disabled hidden>{{ isRus ? 'Выберите предмет' : 'Fanni tanlang' }}</option>
                   <option value="English">Ingliz Tili</option>
                   <option value="math">Matematika</option>
                   <option value="physics">Fizika</option>
@@ -550,6 +551,20 @@ textarea {
   outline: none;
   box-sizing: border-box;
   transition: all 0.3s ease;
+}
+
+select.custom-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+select.custom-select:invalid {
+  color: #94a3b8;
 }
 
 textarea {

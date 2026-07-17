@@ -179,8 +179,7 @@ import { ref, computed } from "vue";
 import { useToast } from "vue-toastification";
 import { useI18n } from "@/utils/i18n";
 
-const TELEGRAM_BOT_TOKEN = "8767460705:AAGzfj1cxyHbU3L2-e-xKE7yeCp4Idj-ZG0";
-const TELEGRAM_CHAT_ID = "587788509";
+
 
 export default {
   name: "ContactUs",
@@ -257,40 +256,25 @@ export default {
     const handleSubmit = async () => {
       submitting.value = true;
       try {
-        const messageText = `
-🆕 Yangi murojaat:
+        const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+        const { db } = await import('@/config/firebase');
 
-👤 Ismi: ${formData.value.name}
-📞 Telefon: ${formData.value.phone}
-📝 Murojaat turi: ${formData.value.requestType}
-${formData.value.subject ? `📚 Fan: ${formData.value.subject}` : ""}
-💬 Xabar: ${formData.value.message}`;
+        await addDoc(collection(db, 'supportMessages'), {
+          name: formData.value.name,
+          phone: formData.value.phone,
+          requestType: formData.value.requestType,
+          subject: formData.value.subject || null,
+          message: formData.value.message,
+          createdAt: serverTimestamp(),
+          status: 'new'
+        });
 
-        const response = await fetch(
-          `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              chat_id: TELEGRAM_CHAT_ID,
-              text: messageText,
-              parse_mode: "HTML",
-            }),
-          }
+        toast.success(
+          isRus.value
+            ? "Ваше сообщение успешно отправлено!"
+            : "Xabaringiz muvaffaqiyatli yuborildi!"
         );
-
-        if (response.ok) {
-          toast.success(
-            isRus.value
-              ? "Ваше сообщение успешно отправлено!"
-              : "Xabaringiz muvaffaqiyatli yuborildi!"
-          );
-          resetForm();
-        } else {
-          throw new Error("Xabar yuborishda xatolik yuz berdi");
-        }
+        resetForm();
       } catch (error) {
         console.error("Error:", error);
         toast.error(

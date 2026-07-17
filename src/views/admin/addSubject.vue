@@ -275,8 +275,33 @@ const processFile = (file) => {
   const reader = new FileReader();
   reader.onload = async (e) => {
     loading.value = true;
-    try {
-      const data = JSON.parse(e.target.result);
+      let rawText = e.target.result.trim();
+      
+      // 1. Markdown code bliklarini olib tashlash
+      rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+      
+      // 2. Agar foydalanuvchi bir nechta arraylarni ketma-ket qo'ygan bo'lsa ( ] [ ), ularni bitta arrayga birlashtirish
+      rawText = rawText.replace(/\]\s*\[/g, ',');
+
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (parseErr) {
+        // 3. Agar JSON oxirida yoki boshida ortiqcha matn bo'lsa, faqat array qismini qirqib olish
+        const startIdx = rawText.indexOf('[');
+        const endIdx = rawText.lastIndexOf(']');
+        if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+          const extracted = rawText.substring(startIdx, endIdx + 1);
+          try {
+            data = JSON.parse(extracted);
+          } catch (e2) {
+            throw parseErr; // Agar bu ham o'xshamasa asl xatoni ko'rsatamiz
+          }
+        } else {
+          throw parseErr;
+        }
+      }
+      
       if (!Array.isArray(data)) throw new Error("JSON ma'lumoti massiv (array) bo'lishi kerak!");
       
       const isValid = data.every(item => 

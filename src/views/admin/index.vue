@@ -7,6 +7,7 @@
       <AdminSidebar
         :currentView="currentView"
         :isCollapsed="sidebarCollapsed"
+        :adminRole="adminRole"
         @navigate="navigate"
         @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
         @logout="logout"
@@ -30,7 +31,7 @@
             <div class="topbar-time">{{ currentTime }}</div>
             <div class="admin-badge-topbar">
               <i class="fas fa-shield-halved"></i>
-              <span>Super Admin</span>
+              <span>{{ displayRole }}</span>
             </div>
           </div>
         </header>
@@ -47,7 +48,8 @@
 </template>
 
 <script>
-import { auth } from '@/config/firebase';
+import { auth, db } from '@/config/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import LoginModal from './loginModal.vue';
 import AdminSidebar from './components/AdminSidebar.vue';
 import AdminOverview from './components/AdminOverview.vue';
@@ -101,19 +103,44 @@ export default {
       currentView: 'overview',
       currentTime: '',
       timeInterval: null,
+      adminRole: 'admin',
     };
   },
   computed: {
     currentComponent() { return VIEW_MAP[this.currentView] || AdminOverview; },
-    currentViewLabel() { return LABELS[this.currentView] || this.currentView; }
+    currentViewLabel() { return LABELS[this.currentView] || this.currentView; },
+    displayRole() {
+      if (this.adminRole === 'super_admin') return 'Super Admin';
+      if (this.adminRole === 'content_admin') return 'Content Admin';
+      if (this.adminRole === 'teacher_admin') return 'Teacher Admin';
+      return 'Admin';
+    }
   },
   created() {
     const authToken = localStorage.getItem('adminAuth');
     if (authToken) this.authenticated = true;
-    auth.onAuthStateChanged(user => {
-      if (user && user.email === 'avliyoqulovbaxrom99@gmail.com') {
-        this.authenticated = true;
-        localStorage.setItem('adminAuth', 'true');
+    auth.onAuthStateChanged(async user => {
+      if (user) {
+        if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
+          this.authenticated = true;
+          this.adminRole = 'super_admin';
+          localStorage.setItem('adminAuth', 'true');
+        } else {
+          // Fetch role from Firestore
+          try {
+            const docSnap = await getDoc(doc(db, 'users', user.uid));
+            if (docSnap.exists() && docSnap.data().adminRole) {
+              this.adminRole = docSnap.data().adminRole;
+              this.authenticated = true;
+              localStorage.setItem('adminAuth', 'true');
+            } else {
+              this.authenticated = false;
+              localStorage.removeItem('adminAuth');
+            }
+          } catch(e) {
+            console.error("Admin rolni olishda xatolik:", e);
+          }
+        }
       }
     });
     this.updateTime();

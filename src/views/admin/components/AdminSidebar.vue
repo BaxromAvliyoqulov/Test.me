@@ -51,24 +51,27 @@ export default {
   props: {
     currentView: { type: String, default: 'overview' },
     isCollapsed: { type: Boolean, default: false },
-    stats: { type: Object, default: () => ({}) }
+    stats: { type: Object, default: () => ({}) },
+    adminRole: { type: String, default: 'admin' }
   },
   computed: {
     navGroups() {
-      return [
+      const isSuperAdmin = this.adminRole === 'super_admin';
+      
+      const allGroups = [
         {
           label: 'ASOSIY',
           items: [
             { key: 'overview',   label: 'Umumiy Ko\'rinish', icon: 'fas fa-chart-pie' },
-            { key: 'analytics',  label: 'Tahlil',            icon: 'fas fa-chart-line' },
-            { key: 'finance',    label: 'Moliya va Sotuv',   icon: 'fas fa-wallet' },
+            { key: 'analytics',  label: 'Tahlil',            icon: 'fas fa-chart-line', requireSuper: true },
+            { key: 'finance',    label: 'Moliya va Sotuv',   icon: 'fas fa-wallet', requireSuper: true },
           ]
         },
         {
           label: 'FOYDALANUVCHILAR',
           items: [
-            { key: 'users',      label: 'Foydalanuvchilar',  icon: 'fas fa-users' },
-            { key: 'addAdmin',   label: 'Admin Qo\'shish',   icon: 'fas fa-user-shield' },
+            { key: 'users',      label: 'Foydalanuvchilar',  icon: 'fas fa-users', requireSuper: true },
+            { key: 'addAdmin',   label: 'Admin Qo\'shish',   icon: 'fas fa-user-shield', requireSuper: true },
           ]
         },
         {
@@ -77,26 +80,34 @@ export default {
             { key: 'subjects',   label: 'Fanlar',            icon: 'fas fa-book-open' },
             { key: 'addSubject', label: 'Test Yuklash (JSON)',icon: 'fas fa-file-code' },
             { key: 'uploadExcel',label: 'Test Yuklash (Excel)',icon: 'fas fa-file-excel' },
-            { key: 'aiSeeder',   label: 'AI Test Seeder',    icon: 'fas fa-robot' },
+            { key: 'aiSeeder',   label: 'AI Test Seeder',    icon: 'fas fa-robot', requireSuper: true },
           ]
         },
         {
           label: 'DO\'KON',
           items: [
-            { key: 'shopItems',  label: 'Shop Mahsulotlari', icon: 'fas fa-store' },
-            { key: 'addProduct', label: 'Mahsulot Qo\'shish',icon: 'fas fa-plus-circle' },
-            { key: 'orders',     label: 'Buyurtmalar',       icon: 'fas fa-receipt' },
+            { key: 'shopItems',  label: 'Shop Mahsulotlari', icon: 'fas fa-store', requireSuper: true },
+            { key: 'addProduct', label: 'Mahsulot Qo\'shish',icon: 'fas fa-plus-circle', requireSuper: true },
+            { key: 'orders',     label: 'Buyurtmalar',       icon: 'fas fa-receipt', requireSuper: true },
           ]
         },
         {
           label: 'TIZIM',
           items: [
-            { key: 'notifications', label: 'Bildirishnomalar', icon: 'fas fa-bell' },
-            { key: 'certificates',  label: 'Sertifikatlar',    icon: 'fas fa-certificate' },
-            { key: 'settings',      label: 'Sozlamalar',       icon: 'fas fa-cog' },
+            { key: 'notifications', label: 'Bildirishnomalar', icon: 'fas fa-bell', requireSuper: true },
+            { key: 'certificates',  label: 'Sertifikatlar',    icon: 'fas fa-certificate', requireSuper: true },
+            { key: 'settings',      label: 'Sozlamalar',       icon: 'fas fa-cog', requireSuper: true },
           ]
         }
       ];
+
+      return allGroups.map(group => {
+         const filteredItems = group.items.filter(item => {
+            if (item.requireSuper && !isSuperAdmin) return false;
+            return true;
+         });
+         return { ...group, items: filteredItems };
+      }).filter(group => group.items.length > 0);
     }
   }
 }

@@ -108,6 +108,19 @@
         </router-link>
       </div>
 
+      <!-- ADMIN SECTION -->
+      <template v-if="adminRole">
+        <div class="nav-section-title mt-sec" v-if="!isCollapsed">ADMIN</div>
+        <div class="nav-links-list">
+          <router-link to="/admin" class="sidebar-link admin-link" v-tooltip="'Admin Panel'">
+            <div class="link-icon"><i class="fas fa-shield-halved"></i></div>
+            <transition name="fade-slide">
+              <span v-if="!isCollapsed" class="link-text">Admin Panel</span>
+            </transition>
+          </router-link>
+        </div>
+      </template>
+
       <!-- INFO SECTION -->
       <div class="nav-section-title mt-sec" v-if="!isCollapsed">INFO</div>
       <div class="nav-links-list footer-links">
@@ -186,6 +199,7 @@ export default {
       profileImage: null,
       userPoints: 0,
       shortId: null,
+      adminRole: null,
       pointsUnsub: null,
     };
   },
@@ -237,6 +251,7 @@ export default {
         if (docSnap.exists()) {
           const data = docSnap.data();
           this.userPoints = data.points || 0;
+          this.adminRole = data.adminRole || null;
           if (data.displayName) this.username = data.displayName;
           if (data.photoURL) this.profileImage = data.photoURL;
           
@@ -617,6 +632,23 @@ export default {
 
 .router-link-exact-active.sidebar-link .link-icon {
   color: white;
+}
+
+.admin-link {
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.admin-link .link-icon {
+  color: #f59e0b;
+}
+.admin-link:hover {
+  background: rgba(245, 158, 11, 0.05);
+}
+.router-link-exact-active.admin-link {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+.router-link-exact-active.admin-link .link-icon {
+  color: #f59e0b;
 }
 
 /* Logout */

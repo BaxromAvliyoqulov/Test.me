@@ -779,16 +779,55 @@ export default {
 
     getFallbackAdvice(results) {
       if (!results || results.length === 0) {
-        const textMap = {
-          UZB: "Salom! Siz hali birorta ham test topshirmadingiz. Math yoki English fanlaridan Beginner darajasida test topshirishni tavsiya qilaman.",
-          RUS: "Привет! Вы еще не прошли ни одного теста. Рекомендуем начать с диагностического теста по Math или English на уровне Beginner."
+        const type = this.mentorType || 'standard';
+        const textMaps = {
+          standard: {
+            UZB: "Salom! Siz hali birorta ham test topshirmadingiz. Math yoki English fanlaridan Beginner darajasida test topshirishni tavsiya qilaman.",
+            RUS: "Привет! Вы еще не прошли ни одного теста. Рекомендуем начать с диагностического теста по Math или English на уровне Beginner."
+          },
+          friendly: {
+            UZB: "Assalomu alaykum! Xush kelibsiz! Qani, birinchi qadamni tashlaymizmi? Istalgan fanni tanlang, masalan Math!",
+            RUS: "Приветствую! Добро пожаловать! Сделаем первый шаг? Выбери любой предмет, например Math!"
+          },
+          strict: {
+            UZB: "Hech qanday natija yo'q. Vaqtni yo'qotmang. Zudlik bilan birinchi testni topshiring.",
+            RUS: "Никаких результатов нет. Не теряйте время. Немедленно пройдите первый тест."
+          },
+          socratic: {
+            UZB: "Boshlanish — har qanday bilimning eng muhim nuqtasidir. Birinchi testingizni qachon topshirishni rejalashtiryapsiz?",
+            RUS: "Начало — самая важная точка любого знания. Когда вы планируете сдать свой первый тест?"
+          },
+          motivator: {
+            UZB: "Sizda ulkan potensial bor! Qani, o'z kuchingizni birinchi testda sinab ko'ring. Olg'a! 🚀",
+            RUS: "У тебя огромный потенциал! Давай, проверь свои силы в первом тесте. Вперед! 🚀"
+          },
+          innovator: {
+            UZB: "Tizimda yangimisiz? Qiziqarli innovatsion testlarimizdan birini sinab ko'ring. Tajriba boshlansin! 💡",
+            RUS: "Новенький в системе? Попробуй один из наших интересных инновационных тестов. Эксперимент начинается! 💡"
+          },
+          analyst: {
+            UZB: "Ma'lumotlar bazasida sizning statistikangiz 0%. Tahlilni boshlashimiz uchun kamida bitta test topshirishingiz kerak. 💻",
+            RUS: "В базе данных ваша статистика 0%. Чтобы мы могли начать анализ, вам нужно сдать хотя бы один тест. 💻"
+          },
+          sage: {
+            UZB: "Eng uzun yo'l ham birinchi qadamdan boshlanadi, farzandim. Ilm sari birinchi qadamingizni tashlang. 📜",
+            RUS: "Даже самый длинный путь начинается с первого шага, дитя мое. Сделай свой первый шаг к знаниями. 📜"
+          },
+          comedian: {
+            UZB: "Hoy, nega qarab turibsiz? Miya chirib ketmasidan oldin bitta test yechib tashlamaymizmi? 😂 Qani, ketdik!",
+            RUS: "Эй, чего ждем? Пока мозг не заржавел, может решим один тестик? 😂 Давай, поехали!"
+          }
         };
+
         const badgeMap = {
           UZB: "Birinchi test",
           RUS: "Начать тест"
         };
+
+        const fallbackMap = textMaps[type] || textMaps['standard'];
+
         return {
-          text: textMap[this.currentLocale] || textMap['UZB'],
+          text: fallbackMap[this.currentLocale] || fallbackMap['UZB'],
           badge: badgeMap[this.currentLocale] || badgeMap['UZB'],
           recommendedSubject: 'English',
           recommendedLevel: 'Beginner'

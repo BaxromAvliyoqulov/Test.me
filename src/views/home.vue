@@ -1991,4 +1991,30 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 /* Remove old action-section */
 .loading-state.small { padding: 1rem; }
 
+@media (max-width: 768px) {
+  .selection-panel {
+    padding: 1.25rem !important;
+  }
+  .dashboard-grid {
+    gap: 1.5rem !important;
+  }
+  .test-type-tabs {
+    flex-direction: column;
+  }
+  .tab-btn {
+    width: 100%;
+    padding: 12px !important;
+  }
+  .subject-grid {
+    grid-template-columns: 1fr;
+  }
+  .welcome-banner {
+    padding: 1.5rem !important;
+    border-radius: 1.25rem !important;
+  }
+  .welcome-title {
+    font-size: 1.5rem !important;
+  }
+}
 </style>
+

@@ -1,10 +1,16 @@
 <template>
-  <div :class="['main-layout-wrapper', { 'sidebar-collapsed': isSidebarCollapsed, 'no-sidebar': !showNavbar }]">
+  <div :class="['main-layout-wrapper', { 'sidebar-collapsed': isSidebarCollapsed, 'no-sidebar': !showNavbar, 'mobile-sidebar-open': isMobileSidebarOpen }]">
+    
+    <!-- Mobile Overlay Backdrop -->
+    <div class="mobile-overlay" v-if="isMobileSidebarOpen && showNavbar" @click="closeMobileSidebar"></div>
+
     <!-- Collapsible Premium Sidebar -->
     <Sidebar 
       v-if="showNavbar" 
       :is-collapsed="isSidebarCollapsed" 
+      :is-mobile-open="isMobileSidebarOpen"
       @toggle-sidebar="toggleSidebar"
+      @close-mobile="closeMobileSidebar"
     />
 
     <!-- Main Content Layout -->
@@ -12,6 +18,7 @@
       <!-- Premium Top Header -->
       <Header 
         v-if="showNavbar" 
+        @toggle-sidebar="toggleSidebar"
       />
 
       <!-- Content Area -->
@@ -34,6 +41,8 @@ export default {
   data() {
     return {
       isSidebarCollapsed: false,
+      isMobileSidebarOpen: false,
+      isMobile: false
     };
   },
   computed: {
@@ -45,17 +54,36 @@ export default {
       return !hideOnPaths.includes(this.$route.path) && !this.isAdmin;
     }
   },
-  created() {
+  mounted() {
+    this.checkIfMobile();
+    window.addEventListener('resize', this.checkIfMobile);
+    
     // Load sidebar state preference
     const savedState = localStorage.getItem('sidebar_collapsed');
     if (savedState !== null) {
       this.isSidebarCollapsed = savedState === 'true';
     }
   },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkIfMobile);
+  },
   methods: {
+    checkIfMobile() {
+      this.isMobile = window.innerWidth <= 768;
+      if (!this.isMobile) {
+        this.isMobileSidebarOpen = false;
+      }
+    },
     toggleSidebar() {
-      this.isSidebarCollapsed = !this.isSidebarCollapsed;
-      localStorage.setItem('sidebar_collapsed', this.isSidebarCollapsed);
+      if (this.isMobile) {
+        this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
+      } else {
+        this.isSidebarCollapsed = !this.isSidebarCollapsed;
+        localStorage.setItem('sidebar_collapsed', this.isSidebarCollapsed);
+      }
+    },
+    closeMobileSidebar() {
+      this.isMobileSidebarOpen = false;
     }
   }
 };
@@ -69,6 +97,19 @@ export default {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
+  position: relative;
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 998;
 }
 
 .main-layout-container {
@@ -124,16 +165,11 @@ export default {
     margin-left: 0 !important;
     width: 100% !important;
   }
-  
-  /* Sidebar on mobile covers the screen when toggled, or we can collapse it entirely offscreen */
-  .app-sidebar {
-    transform: translateX(-100%);
+
+  .mobile-overlay {
+    display: block;
   }
   
-  .sidebar-collapsed .app-sidebar {
-    transform: translateX(0);
-    width: 280px; /* Expands fully on mobile when toggled */
-  }
   .page-content {
     padding: 10px 16px 20px 16px;
   }

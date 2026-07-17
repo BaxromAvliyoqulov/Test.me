@@ -298,4 +298,19 @@ export default {
 
 .label-fade-enter-active, .label-fade-leave-active { transition: opacity 0.15s, width 0.3s; }
 .label-fade-enter-from, .label-fade-leave-to { opacity: 0; }
+@media (max-width: 900px) {
+  .admin-sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(0);
+  }
+  .admin-sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 260px; /* retain full width when offscreen */
+  }
+}
+
 </style>

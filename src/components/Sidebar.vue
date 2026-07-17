@@ -1,5 +1,5 @@
 <template>
-  <aside :class="['app-sidebar', { collapsed: isCollapsed }]">
+  <aside :class="['app-sidebar', { collapsed: isCollapsed, 'mobile-open': isMobileOpen }]">
     <!-- Brand / Logo Area -->
     <div class="sidebar-brand" @click="$emit('toggle-sidebar')" title="Menyuni ochish/yopish">
       <div class="brand-icon">
@@ -8,6 +8,10 @@
       <transition name="fade-slide">
         <span v-if="!isCollapsed" class="brand-text">Test.me</span>
       </transition>
+      
+      <button class="mobile-close-btn" @click.stop="$emit('close-mobile')">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
     <!-- User Profile Details -->
@@ -176,9 +180,13 @@ import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
 import { useToast } from 'vue-toastification';
 
 export default {
-  emits: ['toggle-sidebar'],
+  emits: ['toggle-sidebar', 'close-mobile'],
   props: {
     isCollapsed: {
+      type: Boolean,
+      default: false
+    },
+    isMobileOpen: {
       type: Boolean,
       default: false
     }
@@ -731,5 +739,37 @@ export default {
 .fade-slide-leave-to {
   opacity: 0;
   transform: translateX(-10px);
+}
+/* Mobile styles */
+.mobile-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  margin-left: auto;
+  cursor: pointer;
+  padding: 5px;
+}
+
+@media (max-width: 768px) {
+  .app-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease, width 0.3s ease;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+  }
+  
+  .app-sidebar.mobile-open {
+    transform: translateX(0);
+    width: 280px !important;
+  }
+
+  .mobile-close-btn {
+    display: block;
+  }
 }
 </style>

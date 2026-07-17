@@ -1,6 +1,9 @@
 <template>
   <header class="app-header">
     <div class="header-left">
+      <button class="mobile-toggle-btn" @click="$emit('toggle-sidebar')">
+        <i class="fas fa-bars"></i>
+      </button>
       <span class="page-title">{{ currentRouteName }}</span>
     </div>
 
@@ -135,7 +138,23 @@ export default {
   gap: 20px;
 }
 
+.mobile-toggle-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #0f172a;
+  cursor: pointer;
+  padding: 5px;
+}
 
+@media (max-width: 768px) {
+  .mobile-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
 
 .page-title {
   font-size: 1.25rem;

@@ -275,6 +275,7 @@ const processFile = (file) => {
   const reader = new FileReader();
   reader.onload = async (e) => {
     loading.value = true;
+    try {
       let rawText = e.target.result.trim();
       
       // 1. Markdown code bliklarini olib tashlash

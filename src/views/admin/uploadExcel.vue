@@ -197,27 +197,28 @@ const aiPrompt = computed(() => {
   const daraja = selectedLevel.value ? selectedLevel.value : "[SINF/DARAJA]";
   const soni = selectedTestCount.value;
 
-  return `Menga quyidagi qoidalarga qat'iy amal qilgan holda O'zbekiston maktab darsliklariga asoslangan ${soni} ta test savolini Excel (yoki CSV jadval) formatida tuzib ber. 
+  return `Menga xalqaro ta'lim standartlari (masalan CEFR yoki O'zbekiston Davlat Ta'lim Standarti) asosida ${fan} fanidan ${soni} ta yuqori sifatli test savolini tuzib ber.
 
-QAT'IY TALAB: 
-1. Savollar "${daraja}" qiyinchilik darajasiga HAQIQIY va aniq mos kelishi shart.
-2. Savollar mutlaqo yangi bo'lishi va umuman takrorlanmasligi shart.
-3. Iltimos, natijani nusxalash oson bo'lishi uchun tayyor va yuklab olish (download) mumkin bo'lgan .csv fayli ko'rinishida taqdim et.
+QAT'IY TALABLAR: 
+1. QIYINCHILIK DARAJASI: Savollar qat'iy ravishda "${daraja}" darajasiga mos kelishi shart. Juda oson, yuzaki yoki mantiqsiz "musur" savollar tuzish qat'iyan taqiqlanadi! Har bir savol o'quvchini chuqur o'ylantiradigan, mantiqiy va professional darajada bo'lishi kerak.
+2. SIFAT: Savollar mutlaqo yangi bo'lishi va umuman takrorlanmasligi shart. Grammatik xatolarga yo'l qo'yilmasin.
+3. YUKLAB OLISH UCHUN EXCEL: Iltimos, Python Code Interpreter (yoki Advanced Data Analysis) yordamida tayyor yuklab olish mumkin bo'lgan .xlsx (Excel) fayl yaratib ber.
+   - EXCEL FORMATLASH: Excel fayl yaratayotganda, barcha ustunlar kengligini (column width) o'rtacha 30-40 ga moslab avtomatik to'g'irla. Question va Option ustunlaridagi uzun matnlar chiroyli ko'rinishi va sig'ishi uchun katakchalarda 'wrap text' xususiyatini yoq. Sarlavhalarni (headers) qalin (bold) qilib belgilashni unutma.
 
-QAT'IY USTUNLAR (COLUMNS) KETMA-KETLIGI:
+QAT'IY USTUNLAR (COLUMNS) KETMA-KETLIGI (11 ta ustun):
 1. TestCategory (Faqat bittasi: Standard, DTM, Prezident)
-2. TestName (Agar Standard bo'lsa bo'sh qoldir, maxsus bo'lsa nomini yoz. Masalan: DTM 2024 Blok)
+2. TestName (Agar Standard bo'lsa bo'sh qoldir, maxsus bo'lsa nomini yoz. Masalan: DTM 2024)
 3. Subject (Fan nomi. "${fan}" bo'lishi shart)
-4. Level (Sinf. "${daraja}" bo'lishi shart)
+4. Level (Sinf yoki daraja. "${daraja}" bo'lishi shart)
 5. ScoreWeight (Ball: Standard uchun 1, DTM Asosiy uchun 3.1)
-6. Question (Savol matni)
+6. Question (Savolning to'liq matni)
 7. Option A (Variant A)
 8. Option B (Variant B)
 9. Option C (Variant C)
 10. Option D (Variant D)
-11. Answer (To'g'ri javob matni. U albatta variantlardan biri bilan aynan bir xil yozilgan bo'lishi shart)
+11. Answer (To'g'ri javob. U variantlardan biri bilan AYNAN bir xil bo'lishi shart! Nuqta verguligacha bir xil bo'lsin, izoh yozma)
 
-Qoshimcha talab: Hech qanday ortiqcha matnsiz faqat jadvalni taqdim et!`;
+Faqatgina tayyor, chiroyli formatlangan .xlsx faylni yuklash havolasini taqdim et!`;
 });
 
 const copied = ref(false);

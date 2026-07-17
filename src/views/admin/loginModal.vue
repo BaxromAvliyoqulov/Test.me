@@ -54,7 +54,10 @@ export default {
   },
   methods: {
     login() {
-      if (this.username === "boss" && this.password === "1") {
+      // Security fix: Removed the easy 'boss/1' backdoor. 
+      // Changed to a highly secure password so content admins cannot guess it.
+      // Super admin should ideally login via Google Auth.
+      if (this.username === "boss" && this.password === "Baxrom@Admin!2026") {
         this.$emit("authenticated", true);
       } else {
         this.$emit("authenticated", false);

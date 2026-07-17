@@ -107,7 +107,13 @@ export default {
     };
   },
   computed: {
-    currentComponent() { return VIEW_MAP[this.currentView] || AdminOverview; },
+    currentComponent() {
+      const superViews = ['users', 'addAdmin', 'analytics', 'finance', 'shopItems', 'addProduct', 'orders', 'notifications', 'certificates', 'settings', 'aiSeeder'];
+      if (superViews.includes(this.currentView) && this.adminRole !== 'super_admin') {
+        return AdminOverview;
+      }
+      return VIEW_MAP[this.currentView] || AdminOverview;
+    },
     currentViewLabel() { return LABELS[this.currentView] || this.currentView; },
     displayRole() {
       if (this.adminRole === 'super_admin') return 'Super Admin';
@@ -155,8 +161,14 @@ export default {
     navigate(view) { this.currentView = view; },
     handleAuthentication(status) {
       this.authenticated = status;
-      if (!status) { localStorage.removeItem('adminAuth'); this.$router.push('/'); }
-      else { localStorage.setItem('adminAuth', 'true'); }
+      if (!status) { 
+        localStorage.removeItem('adminAuth'); 
+        this.$router.push('/'); 
+      } else { 
+        localStorage.setItem('adminAuth', 'true'); 
+        // Agar modal orqali kirsa (boss), u super_admin bo'ladi.
+        this.adminRole = 'super_admin';
+      }
     },
     logout() {
       localStorage.removeItem('adminAuth');

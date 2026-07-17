@@ -159,7 +159,7 @@ export default {
           const user = userCredential.user;
           console.log('Login successful:', user);
           this.$toast.success('Tizimga muvaffaqiyatli kirdingiz!');
-          this.router.push('/');
+          window.location.href = '/';
         })
         .catch((error) => {
           this.errorMessage = 'Elektron pochta yoki parol noto\'g\'ri.';
@@ -180,12 +180,12 @@ export default {
         const result = await signInWithPopup(auth, provider);
         console.log('Google Log In successful:', result.user);
         this.$toast.success('Google orqali kirish muvaffaqiyatli yakunlandi!');
-        this.router.push('/');
+        window.location.href = '/';
       } catch (error) {
         setTimeout(() => {
           if (auth.currentUser) {
             this.$toast.success('Google orqali kirish muvaffaqiyatli yakunlandi!');
-            this.router.push('/');
+            window.location.href = '/';
           } else {
             console.error('Google LogIn failed:', error);
             this.errorMessage = 'Google orqali kirishda xatolik yuz berdi.';

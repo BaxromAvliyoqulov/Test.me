@@ -197,7 +197,7 @@ export default {
         successMessage.value = 'Ro\'yxatdan muvaffaqiyatli o\'tdingiz!';
         toast.success('Ro\'yxatdan muvaffaqiyatli o\'tdingiz!');
         console.log('Firebase Auth User ID:', user.uid);
-        router.push('/');
+        window.location.href = '/';
       } catch (error) {
         errorMessage.value = error.message;
         toast.error(error.message);
@@ -237,7 +237,7 @@ export default {
 
         successMessage.value = 'Google orqali ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi!';
         toast.success('Google orqali ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi!');
-        router.push('/');
+        window.location.href = '/';
       } catch (error) {
         errorMessage.value = 'Xatolik yuz berdi: ' + error.message;
         toast.error(errorMessage.value);

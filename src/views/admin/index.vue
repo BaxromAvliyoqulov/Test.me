@@ -137,8 +137,8 @@ export default {
           // Fetch role from Firestore
           try {
             const docSnap = await getDoc(doc(db, 'users', user.uid));
-            if (docSnap.exists() && docSnap.data().adminRole) {
-              this.adminRole = docSnap.data().adminRole;
+            if (docSnap.exists() && (docSnap.data().adminRole || docSnap.data().isAdmin)) {
+              this.adminRole = docSnap.data().adminRole || 'content_admin';
               this.authenticated = true;
             } else {
               this.authenticated = false;

@@ -109,7 +109,7 @@
       </div>
 
       <!-- ADMIN SECTION -->
-      <template v-if="adminRole">
+      <template v-if="adminRole || isAdmin">
         <div class="nav-section-title mt-sec" v-if="!isCollapsed">ADMIN</div>
         <div class="nav-links-list">
           <router-link to="/admin" class="sidebar-link admin-link" v-tooltip="'Admin Panel'">
@@ -200,6 +200,7 @@ export default {
       userPoints: 0,
       shortId: null,
       adminRole: null,
+      isAdmin: false,
       pointsUnsub: null,
     };
   },
@@ -252,8 +253,10 @@ export default {
           const data = docSnap.data();
           this.userPoints = data.points || 0;
           this.adminRole = data.adminRole || null;
+          this.isAdmin = data.isAdmin || false;
           if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
             this.adminRole = 'super_admin';
+            this.isAdmin = true;
           }
           if (data.displayName) this.username = data.displayName;
           if (data.photoURL) this.profileImage = data.photoURL;

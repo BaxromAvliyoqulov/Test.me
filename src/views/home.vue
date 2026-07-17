@@ -839,22 +839,28 @@ export default {
 
       if (this.currentLocale === 'RUS') {
         if (overallAvg < 60) {
+          let text = `Привет, ${this.userDisplayName}. Ваш средний балл составляет ${overallAvg}%. Самым сложным предметом является ${weakestSubject} (${weakestPct}%). Рекомендуем начать с уровня Beginner по этому предмету.`;
+          if (this.mentorType === 'comedian') text = `Привет, ${this.userDisplayName}! Средний балл ${overallAvg}%. С ${weakestSubject} (${weakestPct}%) у нас пока комедия, но не переживай! Погнали решать Beginner тесты, пока никто не заметил 😂`;
           return {
-            text: `Привет, ${this.userDisplayName}. Ваш средний балл составляет ${overallAvg}%. Самым сложным предметом является ${weakestSubject} (${weakestPct}%). Рекомендуем начать с уровня Beginner по этому предмету.`,
+            text,
             badge: "Закрепить базу",
             recommendedSubject: weakestSubject,
             recommendedLevel: 'Beginner'
           };
         } else if (overallAvg >= 85) {
+          let text = `Отличный результат, ${this.userDisplayName}! Средний балл — ${overallAvg}%. Особенно хороши успехи в ${strongestSubject} (${strongestPct}%). Попробуйте Advanced уровень!`;
+          if (this.mentorType === 'comedian') text = `Ого, ${this.userDisplayName}, да ты гений! Средний балл ${overallAvg}%. А в ${strongestSubject} (${strongestPct}%) вообще монстр. Давай-ка попробуем Advanced, если не боишься! 😎`;
           return {
-            text: `Отличный результат, ${this.userDisplayName}! Средний балл — ${overallAvg}%. Особенно хороши успехи в ${strongestSubject} (${strongestPct}%). Попробуйте Advanced уровень!`,
+            text,
             badge: "Сложный уровень",
             recommendedSubject: strongestSubject,
             recommendedLevel: 'Advanced'
           };
         } else {
+          let text = `Хороший темп, ${this.userDisplayName}! Средний балл — ${overallAvg}%. В последнем тесте по ${lastTest.subject} вы набрали ${lastPct}%. Проанализируйте ошибки.`;
+          if (this.mentorType === 'comedian') text = `Нормальный полет, ${this.userDisplayName}! Средний балл ${overallAvg}%. За последний тест по ${lastTest.subject} у тебя ${lastPct}%. Главное — не сдаваться, ну и посмеяться над ошибками! 😜`;
           return {
-            text: `Хороший темп, ${this.userDisplayName}! Средний балл — ${overallAvg}%. В последнем тесте по ${lastTest.subject} вы набрали ${lastPct}%. Проанализируйте ошибки.`,
+            text,
             badge: "Работа над ошибками",
             recommendedSubject: lastTest.subject,
             recommendedLevel: lastTest.level
@@ -863,22 +869,28 @@ export default {
 
       } else {
         if (overallAvg < 60) {
+          let text = `Salom, ${this.userDisplayName}. Hozirda o'rtacha ballingiz ${overallAvg}%. Eng ko'p qiynalayotgan faningiz ${weakestSubject} (${weakestPct}%). Ushbu fandan Beginner darajasida test yechishni tavsiya qilaman.`;
+          if (this.mentorType === 'comedian') text = `Salom, ${this.userDisplayName}! O'rtacha ballingiz ${overallAvg}%. ${weakestSubject} fanidagi (${weakestPct}%) holatimiz biroz yig'lagudek, lekin xavotir olmang! Beginner testlarini yechib o'zimizga kelib olamiz 😂`;
           return {
-            text: `Salom, ${this.userDisplayName}. Hozirda o'rtacha ballingiz ${overallAvg}%. Eng ko'p qiynalayotgan faningiz ${weakestSubject} (${weakestPct}%). Ushbu fandan Beginner darajasida test yechishni tavsiya qilaman.`,
+            text,
             badge: "Bazani mustahkamlash",
             recommendedSubject: weakestSubject,
             recommendedLevel: 'Beginner'
           };
         } else if (overallAvg >= 85) {
+          let text = `Ajoyib ko'rsatkich, ${this.userDisplayName}! O'rtacha natijangiz juda yuqori (${overallAvg}%). Ayniqsa ${strongestSubject} fanidan natijangiz a'lo darajada (${strongestPct}%). Advanced darajasida urinib ko'ring!`;
+          if (this.mentorType === 'comedian') text = `Vooov, ${this.userDisplayName}, siz daho ekansiz-ku! O'rtacha ${overallAvg}%. ${strongestSubject} (${strongestPct}%) fani bo'yicha sizga yetadigani yo'q! Qani, Advanced darajada ham omadni sinab ko'ramizmi? 😎`;
           return {
-            text: `Ajoyib ko'rsatkich, ${this.userDisplayName}! O'rtacha natijangiz juda yuqori (${overallAvg}%). Ayniqsa ${strongestSubject} fanidan natijangiz a'lo darajada (${strongestPct}%). Advanced darajasida urinib ko'ring!`,
+            text,
             badge: "Murakkab darajalar",
             recommendedSubject: strongestSubject,
             recommendedLevel: 'Advanced'
           };
         } else {
+          let text = `Yaxshi natija, ${this.userDisplayName}! Bilim ko'rsatkichingiz o'rtacha ${overallAvg}%. Oxirgi topshirgan ${lastTest.subject} testingizda natijangiz ${lastPct}% bo'ldi.`;
+          if (this.mentorType === 'comedian') text = `Zo'r ketyapmiz, ${this.userDisplayName}! O'rtacha ball ${overallAvg}%. Oxirgi ${lastTest.subject} testida ${lastPct}% oldik. Asosiysi - xatolardan kulib to'g'ri xulosa chiqarish! 😜`;
           return {
-            text: `Yaxshi natija, ${this.userDisplayName}! Bilim ko'rsatkichingiz o'rtacha ${overallAvg}%. Oxirgi topshirgan ${lastTest.subject} testingizda natijangiz ${lastPct}% bo'ldi.`,
+            text,
             badge: "Xatolar ustida ishlash",
             recommendedSubject: lastTest.subject,
             recommendedLevel: lastTest.level
@@ -931,7 +943,8 @@ export default {
           motivator: "You are a Motivator Coach. You use high-energy language, exclamation marks, and hype! Motivate the student heavily. 🚀",
           innovator: "You are a Creative Genius. You suggest out-of-the-box, fun, and unconventional ways to study or view the problem. 💡",
           analyst: "You are a Cyber Analyst. You speak in a highly logical, slightly robotic, tech-savvy tone. Focus on data, algorithms, and optimization. 💻",
-          sage: "You are an Ancient Sage. You speak like a wise old grandparent. Use traditional metaphors, proverbs, and tell short moral analogies. 📜"
+          sage: "You are an Ancient Sage. You speak like a wise old grandparent. Use traditional metaphors, proverbs, and tell short moral analogies. 📜",
+          comedian: "You are a Humorous Comedian. You give advice completely wrapped in jokes, sarcasm, and funny analogies. Make the user laugh! 😂"
         };
         const systemPersona = personas[this.mentorType] || personas.standard;
 
@@ -1657,6 +1670,7 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 .ai-avatar.theme-innovator { background: linear-gradient(135deg, #a78bfa, #7c3aed); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25); }
 .ai-avatar.theme-analyst { background: linear-gradient(135deg, #38bdf8, #0284c7); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25); }
 .ai-avatar.theme-sage { background: linear-gradient(135deg, #2dd4bf, #0f766e); box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25); }
+.ai-avatar.theme-comedian { background: linear-gradient(135deg, #f472b6, #db2777); box-shadow: 0 4px 12px rgba(219, 39, 119, 0.25); }
 
 .ai-title h4 { margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; }
 .online-dot { font-size: 0.75rem; color: #10b981; font-weight: 700; display: flex; align-items: center; gap: 4px; }

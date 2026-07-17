@@ -252,6 +252,9 @@ export default {
           const data = docSnap.data();
           this.userPoints = data.points || 0;
           this.adminRole = data.adminRole || null;
+          if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
+            this.adminRole = 'super_admin';
+          }
           if (data.displayName) this.username = data.displayName;
           if (data.photoURL) this.profileImage = data.photoURL;
           

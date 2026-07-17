@@ -1,8 +1,12 @@
 <template>
   <div class="admin-root">
-    <LoginModal :show="!authenticated" @authenticated="handleAuthentication" />
-
-    <template v-if="authenticated">
+    <template v-if="loadingAuth">
+      <div class="loading-overlay">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Admin huquqlari tekshirilmoqda...</p>
+      </div>
+    </template>
+    <template v-else-if="authenticated">
       <!-- Sidebar -->
       <AdminSidebar
         :currentView="currentView"
@@ -50,7 +54,6 @@
 <script>
 import { auth, db } from '@/config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import LoginModal from './loginModal.vue';
 import AdminSidebar from './components/AdminSidebar.vue';
 import AdminOverview from './components/AdminOverview.vue';
 import AdminUsers from './components/AdminUsers.vue';
@@ -95,10 +98,11 @@ const LABELS = {
 
 export default {
   name: 'AdminPanel',
-  components: { LoginModal, AdminSidebar },
+  components: { AdminSidebar },
   data() {
     return {
       authenticated: false,
+      loadingAuth: true,
       sidebarCollapsed: false,
       currentView: 'overview',
       currentTime: '',
@@ -123,14 +127,12 @@ export default {
     }
   },
   created() {
-    const authToken = localStorage.getItem('adminAuth');
-    if (authToken) this.authenticated = true;
     auth.onAuthStateChanged(async user => {
       if (user) {
         if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
           this.authenticated = true;
           this.adminRole = 'super_admin';
-          localStorage.setItem('adminAuth', 'true');
+          this.loadingAuth = false;
         } else {
           // Fetch role from Firestore
           try {
@@ -138,15 +140,22 @@ export default {
             if (docSnap.exists() && docSnap.data().adminRole) {
               this.adminRole = docSnap.data().adminRole;
               this.authenticated = true;
-              localStorage.setItem('adminAuth', 'true');
             } else {
               this.authenticated = false;
-              localStorage.removeItem('adminAuth');
+              this.$router.push('/');
             }
           } catch(e) {
             console.error("Admin rolni olishda xatolik:", e);
+            this.authenticated = false;
+            this.$router.push('/');
+          } finally {
+            this.loadingAuth = false;
           }
         }
+      } else {
+        this.authenticated = false;
+        this.loadingAuth = false;
+        this.$router.push('/login');
       }
     });
     this.updateTime();
@@ -159,20 +168,9 @@ export default {
       this.currentTime = now.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
     },
     navigate(view) { this.currentView = view; },
-    handleAuthentication(status) {
-      this.authenticated = status;
-      if (!status) { 
-        localStorage.removeItem('adminAuth'); 
-        this.$router.push('/'); 
-      } else { 
-        localStorage.setItem('adminAuth', 'true'); 
-        // Agar modal orqali kirsa (boss), u super_admin bo'ladi.
-        this.adminRole = 'super_admin';
-      }
-    },
     logout() {
-      localStorage.removeItem('adminAuth');
       this.authenticated = false;
+      this.adminRole = null;
       this.$router.push('/');
     },
   }
@@ -242,6 +240,27 @@ export default {
   padding: 28px;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(241, 245, 249, 0.9);
+  z-index: 100;
+  color: #3b82f6;
+}
+.loading-overlay i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+.loading-overlay p {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 /* Page Transition */

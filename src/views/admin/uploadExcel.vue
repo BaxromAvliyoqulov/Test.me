@@ -126,15 +126,15 @@
           <tbody>
             <tr v-for="(row, idx) in parsedData.slice(0, 5)" :key="idx">
               <td>
-                <span :class="['type-badge', (row.TestCategory || 'Standard').toLowerCase()]">
-                  {{ row.TestCategory || 'Standard' }}
+                <span :class="['type-badge', (row.testcategory || 'Standard').toLowerCase()]">
+                  {{ row.testcategory || 'Standard' }}
                 </span>
               </td>
-              <td>{{ row.TestName || '-' }}</td>
-              <td>{{ row.Subject }}</td>
-              <td>{{ row.Level }}</td>
-              <td class="truncate">{{ row.Question }}</td>
-              <td class="text-emerald font-bold">{{ row.Answer }}</td>
+              <td>{{ row.testname || '-' }}</td>
+              <td>{{ row.subject }}</td>
+              <td>{{ row.level }}</td>
+              <td class="truncate">{{ row.question }}</td>
+              <td class="text-emerald font-bold">{{ row.answer }}</td>
             </tr>
           </tbody>
         </table>
@@ -311,8 +311,28 @@ const processFile = (file) => {
       const workbook = XLSX.read(data, { type: 'array' });
       const firstSheet = workbook.SheetNames[0];
       
-      // Convert to JSON
-      const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+      // Convert to JSON with empty string fallback
+      const rawJsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: "" });
+      
+      // Normalize AI-generated column headers
+      const jsonData = rawJsonData.map(row => {
+        const newRow = {};
+        for (let key in row) {
+          const k = key.toLowerCase();
+          if (k.includes('category') || k.includes('tur')) newRow.testcategory = row[key];
+          else if (k.includes('name') || k.includes('nom')) newRow.testname = row[key];
+          else if (k.includes('subject') || k.includes('fan')) newRow.subject = row[key];
+          else if (k.includes('level') || k.includes('sinf') || k.includes('daraja')) newRow.level = row[key];
+          else if (k.includes('weight') || k.includes('ball')) newRow.scoreweight = row[key];
+          else if (k.includes('question') || k.includes('savol')) newRow.question = row[key];
+          else if (k.includes('answer') || k.includes('javob')) newRow.answer = row[key];
+          else if (/option\s*a|variant\s*a|\ba\b|7\./.test(k)) newRow.optiona = row[key];
+          else if (/option\s*b|variant\s*b|\bb\b|8\./.test(k)) newRow.optionb = row[key];
+          else if (/option\s*c|variant\s*c|\bc\b|9\./.test(k)) newRow.optionc = row[key];
+          else if (/option\s*d|variant\s*d|\bd\b|10\./.test(k)) newRow.optiond = row[key];
+        }
+        return newRow;
+      });
       
       // Basic validation
       if (jsonData.length === 0) {
@@ -321,7 +341,7 @@ const processFile = (file) => {
       }
       
       const firstRow = jsonData[0];
-      if (!firstRow.Subject || !firstRow.Question || !firstRow.Answer) {
+      if (!firstRow.subject || !firstRow.question || !firstRow.answer) {
         toast.error("Ustunlar xato! Fayl strukturasi to'g'riligiga ishonch hosil qiling.");
         return;
       }
@@ -343,20 +363,20 @@ const processFile = (file) => {
       // Strict Validation & Deduplication
       for (let i = 0; i < jsonData.length; i++) {
         const row = jsonData[i];
-        const categoryRaw = (row.TestCategory || '').trim().toLowerCase();
+        const categoryRaw = (row.testcategory || '').trim().toLowerCase();
         const category = categoryRaw === 'dtm' || categoryRaw === 'prezident' ? categoryRaw : 'standard';
         
         if (category === 'standard') {
-          const rowSubject = String(row.Subject).trim();
-          const rowLevel = String(row.Level).trim();
+          const rowSubject = String(row.subject).trim();
+          const rowLevel = String(row.level).trim();
           
-          if (rowSubject !== selectedSubject.value.id || rowLevel !== selectedLevel.value) {
+          if (rowSubject.toLowerCase() !== String(selectedSubject.value.id).toLowerCase() || rowLevel.toLowerCase() !== String(selectedLevel.value).toLowerCase()) {
             toast.error(`XATOLIK! ${i + 1}-qatordagi fan (${rowSubject}) yoki daraja (${rowLevel}) siz tanlaganiga (${selectedSubject.value.id} - ${selectedLevel.value}) mos kelmaydi!`);
             loading.value = false;
             return;
           }
 
-          const qText = String(row.Question).trim().toLowerCase();
+          const qText = String(row.question).trim().toLowerCase();
           
           // Internal Deduplication (file has same question multiple times)
           if (seenInFile.has(qText)) {
@@ -430,25 +450,25 @@ const uploadToDatabase = async () => {
     const specialTestsMap = {}; // Grouped by TestName
 
     for (const row of parsedData.value) {
-      const categoryRaw = (row.TestCategory || '').trim().toLowerCase();
+      const categoryRaw = (row.testcategory || '').trim().toLowerCase();
       const category = categoryRaw === 'dtm' || categoryRaw === 'prezident' ? categoryRaw : 'standard';
       
       const questionObj = {
-        question: String(row.Question),
+        question: String(row.question),
         options: [
-          String(row['Option A']),
-          String(row['Option B']),
-          String(row['Option C']),
-          String(row['Option D'])
+          String(row.optiona),
+          String(row.optionb),
+          String(row.optionc),
+          String(row.optiond)
         ],
-        answer: String(row.Answer),
-        scoreWeight: Number(row.ScoreWeight) || 1,
+        answer: String(row.answer),
+        scoreWeight: Number(row.scoreweight) || 1,
         createdAt: new Date().toISOString()
       };
 
       if (category === 'standard') {
-        const subjectId = String(row.Subject).trim();
-        const levelId = String(row.Level).trim();
+        const subjectId = String(row.subject).trim();
+        const levelId = String(row.level).trim();
         
         // Add to array
         standardTests.push({ subjectId, levelId, data: questionObj });
@@ -477,8 +497,8 @@ const uploadToDatabase = async () => {
 
       } else {
         // Special Tests (DTM, Prezident)
-        const testName = String(row.TestName).trim();
-        const testCategory = String(row.TestCategory).trim();
+        const testName = String(row.testname).trim();
+        const testCategory = String(row.testcategory).trim();
         
         if (!testName) {
           throw new Error("Maxsus testlar uchun 'TestName' ustuni to'ldirilishi shart!");
@@ -492,12 +512,12 @@ const uploadToDatabase = async () => {
           };
         }
 
-        const sectionKey = `${row.Subject}_${row.Level}`;
+        const sectionKey = `${row.subject}_${row.level}`;
         if (!specialTestsMap[testName].sectionsMap[sectionKey]) {
           specialTestsMap[testName].sectionsMap[sectionKey] = {
-            subject: String(row.Subject).trim(),
-            level: String(row.Level).trim(),
-            scoreWeight: Number(row.ScoreWeight) || 1,
+            subject: String(row.subject).trim(),
+            level: String(row.level).trim(),
+            scoreWeight: Number(row.scoreweight) || 1,
             questions: []
           };
         }

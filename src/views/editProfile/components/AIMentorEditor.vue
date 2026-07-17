@@ -136,6 +136,15 @@ export default {
           name: { UZB: 'Qadimiy Donishmand', RUS: 'Древний Мудрец' },
           desc: { UZB: 'Maqollar va hayotiy o\'xshatishlar orqali dono maslahatlar beradi.', RUS: 'Дает мудрые советы через пословицы и жизненные аналогии.' },
           greeting: { UZB: 'Shoshma bolam. Tomchi suv toshni teshar. Sabr bilan xatolar ustida ishlaymiz. 📜', RUS: 'Не спеши, дитя. Капля камень точит. Поработаем над ошибками с терпением. 📜' }
+        },
+        {
+          id: 'comedian',
+          icon: 'fas fa-laugh-squint',
+          color: '#ec4899',
+          premium: true,
+          name: { UZB: 'Xazilkash AI', RUS: 'Шутник ИИ' },
+          desc: { UZB: 'Faqat hazil va yumor bilan o\'rgatadi. Zerikishga yo\'l qo\'ymaydi!', RUS: 'Обучает только с юмором и шутками. Не даст заскучать!' },
+          greeting: { UZB: 'Qani, o\'zimizni kulgidan yig\'ib olib, xatolarni ko\'rib chiqamizmi? 😂', RUS: 'Ну что, посмеялись и хватит, давай разбирать ошибки? 😂' }
         }
       ]
     }

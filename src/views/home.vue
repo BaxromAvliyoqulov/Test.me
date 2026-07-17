@@ -381,7 +381,8 @@ export default {
           motivator: { nameUz: 'Motivator', nameRu: 'Мотиватор', icon: 'fas fa-fire', colorClass: 'theme-motivator' },
           innovator: { nameUz: 'Kreativ Daho', nameRu: 'Креативный Гений', icon: 'fas fa-lightbulb', colorClass: 'theme-innovator' },
           analyst: { nameUz: 'Kiber Analitik', nameRu: 'Кибер Аналитик', icon: 'fas fa-laptop-code', colorClass: 'theme-analyst' },
-          sage: { nameUz: 'Dono Chol', nameRu: 'Мудрый Старец', icon: 'fas fa-yin-yang', colorClass: 'theme-sage' }
+          sage: { nameUz: 'Dono Chol', nameRu: 'Мудрый Старец', icon: 'fas fa-yin-yang', colorClass: 'theme-sage' },
+          comedian: { nameUz: 'Xazilkash AI', nameRu: 'Шутник ИИ', icon: 'fas fa-laugh-squint', colorClass: 'theme-comedian' }
       };
       const type = this.mentorType || 'standard';
       const persona = personas[type] || personas.standard;

@@ -218,7 +218,8 @@ export default {
             motivator: "You are a Motivator Coach. Use high energy, hype, and emojis in the question text! (e.g., 'Let's crush this! What is...? 🚀').",
             innovator: "You are a Creative Genius. Frame the questions using unusual, creative, or fun scenarios. 💡",
             analyst: "You are a Cyber Analyst. Frame the questions like a system diagnostic or data query. Use tech jargon. 💻",
-            sage: "You are an Ancient Sage. Frame the questions as ancient riddles or wise inquiries. 📜"
+            sage: "You are an Ancient Sage. Frame the questions as ancient riddles or wise inquiries. 📜",
+            comedian: "You are a Humorous Comedian. Frame the questions as jokes, funny scenarios, or slightly sarcastic observations. 😂"
           };
           const systemPersona = personas[mentorType.value] || personas.standard;
 
@@ -304,7 +305,8 @@ Ensure all questions are grammatically correct and return ONLY raw JSON matching
         const result = await generateFunction({
           subject: form.subject,
           level: form.level,
-          topic: form.topic
+          topic: form.topic,
+          mentorType: mentorType.value
         });
 
         stopLoadingAnimations();

@@ -1,4 +1,11 @@
 <template>
+  <transition name="fade">
+    <div v-if="isGlobalLoading" class="global-page-loader">
+      <div class="spinner-xl"></div>
+      <h3 class="status-title">Yuklanmoqda...</h3>
+    </div>
+  </transition>
+  
   <div v-if="isAdmin" class="admin-wrapper">
     <router-view />
   </div>
@@ -14,10 +21,26 @@ export default {
   components: {
     MainLayout,
   },
+  data() {
+    return {
+      isGlobalLoading: false
+    };
+  },
   computed: {
     isAdmin() {
       return this.$route.path.startsWith('/admin');
     }
+  },
+  created() {
+    this.$router.beforeEach((to, from, next) => {
+      this.isGlobalLoading = true;
+      next();
+    });
+    this.$router.afterEach(() => {
+      setTimeout(() => {
+        this.isGlobalLoading = false;
+      }, 300);
+    });
   }
 };
 </script>
@@ -173,5 +196,40 @@ a {
   button {
     max-width: 100%;
   }
+}
+
+/* Global Loader Styles */
+.global-page-loader {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg-color);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.global-page-loader .spinner-xl {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(59, 130, 246, 0.2);
+  border-left-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.global-page-loader .status-title {
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>

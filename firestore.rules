@@ -19,9 +19,10 @@ service cloud.firestore {
     // Users collection rules
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create, delete: if isOwner(userId) || isAdmin();
+      allow create: if (isOwner(userId) && !('isAdmin' in request.resource.data)) || isAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
       allow update: if isAdmin() || 
-        (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'adminRole'])) ||
+        (isOwner(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'adminRole']))) ||
         (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['points']) && request.resource.data.points == resource.data.points + 50);
 
       // User transactions sub-collection (test rewards & purchases)
@@ -43,6 +44,16 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create, delete: if isOwner(userId);
         allow update: if false;
+      }
+
+      // User Goals sub-collection (For Edit Profile)
+      match /goals/{goalId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // User Notifications sub-collection
+      match /notifications/{notificationId} {
+        allow read, write: if isOwner(userId);
       }
     }
 

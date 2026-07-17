@@ -84,16 +84,22 @@
             </div>
           </div>
 
-          <button type="submit" class="auth-primary-btn">Kirish</button>
+          <button type="submit" class="auth-primary-btn" :disabled="loading">
+            <span v-if="loading"><i class="fas fa-spinner fa-spin"></i> Kutmoqda...</span>
+            <span v-else>Kirish</span>
+          </button>
 
           <div class="divider">
             <span>yoki quyidagilar orqali</span>
           </div>
 
           <div class="google-login">
-            <button @click.prevent="handleGoogleLog" type="button" class="google-btn">
-              <img src="../assets/img/googleIcon.svg" alt="Google Icon" />
-              Google orqali kirish
+            <button @click.prevent="handleGoogleLog" type="button" class="google-btn" :disabled="loading">
+              <span v-if="loading"><i class="fas fa-spinner fa-spin"></i> Kutmoqda...</span>
+              <template v-else>
+                <img src="../assets/img/googleIcon.svg" alt="Google Icon" />
+                Google orqali kirish
+              </template>
             </button>
           </div>
 
@@ -140,10 +146,12 @@ export default {
         password: '',
       },
       showPassword: false,
+      loading: false,
     };
   },
   methods: {
     handleLogin() {
+      this.loading = true;
       const { username, password } = this.form;
 
       signInWithEmailAndPassword(auth, username, password)
@@ -157,12 +165,16 @@ export default {
           this.errorMessage = 'Elektron pochta yoki parol noto\'g\'ri.';
           this.$toast.error(this.errorMessage);
           console.error('Login failed:', error.message);
+        })
+        .finally(() => {
+          this.loading = false;
         });
     },
     togglePasswordVisibility() {
       this.showPassword = !this.showPassword;
     },
     async handleGoogleLog() {
+      this.loading = true;
       try {
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth, provider);
@@ -170,9 +182,17 @@ export default {
         this.$toast.success('Google orqali kirish muvaffaqiyatli yakunlandi!');
         this.router.push('/');
       } catch (error) {
-        console.error('Google LogIn failed:', error.message);
-        this.errorMessage = 'Google orqali kirishda xatolik yuz berdi.';
-        this.$toast.error(this.errorMessage);
+        setTimeout(() => {
+          if (auth.currentUser) {
+            this.$toast.success('Google orqali kirish muvaffaqiyatli yakunlandi!');
+            this.router.push('/');
+          } else {
+            console.error('Google LogIn failed:', error);
+            this.errorMessage = 'Google orqali kirishda xatolik yuz berdi.';
+            this.$toast.error(this.errorMessage);
+            this.loading = false;
+          }
+        }, 1500);
       }
     },
   },

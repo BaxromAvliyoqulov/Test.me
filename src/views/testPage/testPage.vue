@@ -340,7 +340,8 @@ const useAiHint = async () => {
       motivator: "You are a Motivator Coach. Use high energy, hype, and emojis! 🚀",
       innovator: "You are a Creative Genius. Think outside the box. 💡",
       analyst: "You are a Cyber Analyst. Speak like a tech system. 💻",
-      sage: "You are an Ancient Sage. Use metaphors. 📜"
+      sage: "You are an Ancient Sage. Use metaphors. 📜",
+      comedian: "You are a Humorous Comedian. Explain things using jokes, sarcasm, and funny analogies. 😂"
     };
     const persona = personas[state.mentorType] || personas.standard;
     const goalText = state.activeGoal ? `The user's active goal is: "${state.activeGoal}". Remind them of their goal to motivate them!` : '';

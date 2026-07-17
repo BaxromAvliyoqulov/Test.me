@@ -135,7 +135,7 @@
           </div>
 
           <!-- AI Coach Card -->
-          <div class="premium-card ai-card">
+          <div class="premium-card ai-card" :class="aiMentorInfo.colorClass">
             <div class="ai-header">
               <div class="ai-avatar" :class="aiMentorInfo.colorClass">
                 <i :class="aiMentorInfo.icon"></i>
@@ -1639,9 +1639,22 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 
 /* AI Coach Card */
 .ai-card {
-  background: linear-gradient(145deg, #ffffff 0%, #eff6ff 100%);
-  border-color: #bfdbfe;
+  --mentor-rgb: 59, 130, 246; /* fallback */
+  background: linear-gradient(145deg, #ffffff 0%, rgba(var(--mentor-rgb), 0.08) 100%);
+  border-color: rgba(var(--mentor-rgb), 0.25);
+  box-shadow: 0 10px 30px -10px rgba(var(--mentor-rgb), 0.12);
+  transition: all 0.3s ease;
 }
+
+.ai-card.theme-standard { --mentor-rgb: 148, 163, 184; }
+.ai-card.theme-friendly { --mentor-rgb: 59, 130, 246; }
+.ai-card.theme-strict   { --mentor-rgb: 239, 68, 68; }
+.ai-card.theme-socratic { --mentor-rgb: 168, 85, 247; }
+.ai-card.theme-motivator{ --mentor-rgb: 245, 158, 11; }
+.ai-card.theme-innovator{ --mentor-rgb: 16, 185, 129; }
+.ai-card.theme-analyst  { --mentor-rgb: 139, 92, 246; }
+.ai-card.theme-sage     { --mentor-rgb: 217, 119, 6; }
+.ai-card.theme-comedian { --mentor-rgb: 236, 72, 153; }
 
 .ai-header {
   display: flex;
@@ -1673,8 +1686,8 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 .ai-avatar.theme-comedian { background: linear-gradient(135deg, #f472b6, #db2777); box-shadow: 0 4px 12px rgba(219, 39, 119, 0.25); }
 
 .ai-title h4 { margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; }
-.online-dot { font-size: 0.75rem; color: #10b981; font-weight: 700; display: flex; align-items: center; gap: 4px; }
-.online-dot::before { content: ''; width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+.online-dot { font-size: 0.75rem; color: rgb(var(--mentor-rgb)); font-weight: 700; display: flex; align-items: center; gap: 4px; transition: color 0.3s ease; }
+.online-dot::before { content: ''; width: 6px; height: 6px; background: rgb(var(--mentor-rgb)); border-radius: 50%; display: inline-block; animation: pulse 2s infinite; transition: background 0.3s ease; }
 
 .ai-text {
   font-size: 0.95rem;
@@ -1685,9 +1698,9 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
 }
 
 .btn-ai-action {
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
-  border: none;
+  background: rgba(var(--mentor-rgb), 0.1);
+  color: rgb(var(--mentor-rgb));
+  border: 1px solid rgba(var(--mentor-rgb), 0.2);
   padding: 8px 16px;
   border-radius: 12px;
   font-size: 0.85rem;
@@ -1696,9 +1709,14 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
-.btn-ai-action:hover { background: rgba(37, 99, 235, 0.15); transform: translateY(-2px); }
+.btn-ai-action:hover {
+  background: rgb(var(--mentor-rgb));
+  color: white;
+  box-shadow: 0 4px 12px rgba(var(--mentor-rgb), 0.25);
+  transform: translateY(-2px);
+}
 
 /* Streaks and Badges */
 .achievements-card h4 {

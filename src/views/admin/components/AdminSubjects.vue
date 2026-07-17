@@ -186,7 +186,7 @@
 
 <script>
 import { db } from '@/config/firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, getCountFromServer } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
 import { confirmDelete } from '@/utils/sweetalert';
 import { sortLevels } from '@/utils/sorters';
@@ -243,8 +243,8 @@ export default {
              const levelsSnap = await getDocs(collection(db, 'subjects', docSnap.id, 'levels'));
              const levels = [];
              for (const lvlDoc of levelsSnap.docs) {
-               const testsSnap = await getDocs(collection(db, 'subjects', docSnap.id, 'levels', lvlDoc.id, 'tests'));
-               levels.push({ id: lvlDoc.id, testCount: testsSnap.size });
+               const countSnap = await getCountFromServer(collection(db, 'subjects', docSnap.id, 'levels', lvlDoc.id, 'tests'));
+               levels.push({ id: lvlDoc.id, testCount: countSnap.data().count });
              }
              subject.levels = sortLevels(levels);
              subject.levelsLoaded = true;
@@ -275,8 +275,8 @@ export default {
         getDocs(collection(db, 'subjects', subject.id, 'levels')).then(async (levelsSnap) => {
           const levels = [];
           for (const lvlDoc of levelsSnap.docs) {
-            const testsSnap = await getDocs(collection(db, 'subjects', subject.id, 'levels', lvlDoc.id, 'tests'));
-            levels.push({ id: lvlDoc.id, testCount: testsSnap.size });
+            const countSnap = await getCountFromServer(collection(db, 'subjects', subject.id, 'levels', lvlDoc.id, 'tests'));
+            levels.push({ id: lvlDoc.id, testCount: countSnap.data().count });
           }
           subject.levels = sortLevels(levels);
           subject.levelsLoaded = true;
@@ -306,10 +306,8 @@ export default {
             const levelsSnap = await getDocs(collection(db, 'subjects', subject.id, 'levels'));
             const levels = [];
             for (const lvlDoc of levelsSnap.docs) {
-              // Fast fetch of test count using standard getDocs (since we removed getCountFromServer requirement)
-              // If test collections are huge, getCountFromServer is recommended, but we stick to robust methods.
-              const testsSnap = await getDocs(collection(db, 'subjects', subject.id, 'levels', lvlDoc.id, 'tests'));
-              levels.push({ id: lvlDoc.id, testCount: testsSnap.size });
+              const countSnap = await getCountFromServer(collection(db, 'subjects', subject.id, 'levels', lvlDoc.id, 'tests'));
+              levels.push({ id: lvlDoc.id, testCount: countSnap.data().count });
             }
             subject.levels = sortLevels(levels);
             subject.levelsLoaded = true;

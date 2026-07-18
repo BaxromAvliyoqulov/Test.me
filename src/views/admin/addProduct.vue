@@ -24,40 +24,35 @@
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      productName: "",
-      price: 0,
-      description: "",
-    };
-  },
-  methods: {
-    addProduct() {
-      // Add product logic
-      if (!this.productName || this.price <= 0 || !this.description) {
-        alert("Please fill in all fields with valid data.");
-        return;
-      }
+<script setup>
+import { ref } from 'vue';
 
-      const newProduct = {
-        name: this.productName,
-        price: this.price,
-        description: this.description,
-      };
+const productName = ref("");
+const price = ref(0);
+const description = ref("");
 
-      // Simulate saving the product (e.g., API call)
-      console.log("Product added:", newProduct);
+const addProduct = () => {
+  // Add product logic
+  if (!productName.value || price.value <= 0 || !description.value) {
+    alert("Please fill in all fields with valid data.");
+    return;
+  }
 
-      // Reset form fields
-      this.productName = "";
-      this.price = 0;
-      this.description = "";
-      alert("Product added successfully!");
-      console.log(`Adding product: ${this.productName}, Price: ${this.price}`);
-    },
-  },
+  const newProduct = {
+    name: productName.value,
+    price: price.value,
+    description: description.value,
+  };
+
+  // Simulate saving the product (e.g., API call)
+  console.log("Product added:", newProduct);
+
+  // Reset form fields
+  productName.value = "";
+  price.value = 0;
+  description.value = "";
+  alert("Product added successfully!");
+  console.log(`Adding product: ${productName.value}, Price: ${price.value}`);
 };
 </script>
 

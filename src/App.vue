@@ -14,35 +14,31 @@
   </MainLayout>
 </template>
 
-<script>
+<script setup>
+import { ref, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import MainLayout from '@/layout/mainLayout.vue';
 
-export default {
-  components: {
-    MainLayout,
-  },
-  data() {
-    return {
-      isGlobalLoading: false
-    };
-  },
-  computed: {
-    isAdmin() {
-      return this.$route.path.startsWith('/admin');
-    }
-  },
-  created() {
-    this.$router.beforeEach((to, from, next) => {
-      this.isGlobalLoading = true;
-      next();
-    });
-    this.$router.afterEach(() => {
-      setTimeout(() => {
-        this.isGlobalLoading = false;
-      }, 300);
-    });
-  }
-};
+const route = useRoute();
+const router = useRouter();
+
+const isGlobalLoading = ref(false);
+
+const isAdmin = computed(() => {
+  // Safe check if route is defined during initial load
+  return route && route.path ? route.path.startsWith('/admin') : false;
+});
+
+router.beforeEach((to, from, next) => {
+  isGlobalLoading.value = true;
+  next();
+});
+
+router.afterEach(() => {
+  setTimeout(() => {
+    isGlobalLoading.value = false;
+  }, 300);
+});
 </script>
 
 <style>

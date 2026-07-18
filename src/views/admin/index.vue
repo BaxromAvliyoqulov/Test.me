@@ -51,9 +51,12 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
 import { auth, db } from '@/config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+
 import AdminSidebar from './components/AdminSidebar.vue';
 import AdminOverview from './components/AdminOverview.vue';
 import AdminUsers from './components/AdminUsers.vue';
@@ -64,7 +67,6 @@ import AdminSettings from './components/AdminSettings.vue';
 import AdminAnalytics from './components/AdminAnalytics.vue';
 import AdminFinance from './components/AdminFinance.vue';
 
-// Re-use existing components
 import AddAdminComponent from './addAdmin.vue';
 import UploadExcelComponent from './uploadExcel.vue';
 import AddSubjectComponent from './addSubject.vue';
@@ -96,85 +98,89 @@ const LABELS = {
   certificates: "Sertifikatlar", analytics: "Tahlil", finance: "Moliya", settings: "Sozlamalar"
 };
 
-export default {
-  name: 'AdminPanel',
-  components: { AdminSidebar },
-  data() {
-    return {
-      authenticated: false,
-      loadingAuth: true,
-      sidebarCollapsed: false,
-      currentView: 'overview',
-      currentTime: '',
-      timeInterval: null,
-      adminRole: 'admin',
-    };
-  },
-  computed: {
-    currentComponent() {
-      const superViews = ['users', 'addAdmin', 'analytics', 'finance', 'shopItems', 'addProduct', 'orders', 'notifications', 'certificates', 'settings', 'aiSeeder'];
-      if (superViews.includes(this.currentView) && this.adminRole !== 'super_admin') {
-        return AdminOverview;
-      }
-      return VIEW_MAP[this.currentView] || AdminOverview;
-    },
-    currentViewLabel() { return LABELS[this.currentView] || this.currentView; },
-    displayRole() {
-      if (this.adminRole === 'super_admin') return 'Super Admin';
-      if (this.adminRole === 'content_admin') return 'Content Admin';
-      if (this.adminRole === 'teacher_admin') return 'Teacher Admin';
-      return 'Admin';
-    }
-  },
-  created() {
-    auth.onAuthStateChanged(async user => {
-      if (user) {
-        if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
-          this.authenticated = true;
-          this.adminRole = 'super_admin';
-          this.loadingAuth = false;
-        } else {
-          // Fetch role from Firestore
-          try {
-            const docSnap = await getDoc(doc(db, 'users', user.uid));
-            if (docSnap.exists() && (docSnap.data().adminRole || docSnap.data().isAdmin)) {
-              this.adminRole = docSnap.data().adminRole || 'content_admin';
-              this.authenticated = true;
-            } else {
-              this.authenticated = false;
-              this.$router.push('/');
-            }
-          } catch(e) {
-            console.error("Admin rolni olishda xatolik:", e);
-            this.authenticated = false;
-            this.$router.push('/');
-          } finally {
-            this.loadingAuth = false;
-          }
-        }
-      } else {
-        this.authenticated = false;
-        this.loadingAuth = false;
-        this.$router.push('/login');
-      }
-    });
-    this.updateTime();
-    this.timeInterval = setInterval(this.updateTime, 1000);
-  },
-  beforeUnmount() { clearInterval(this.timeInterval); },
-  methods: {
-    updateTime() {
-      const now = new Date();
-      this.currentTime = now.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
-    },
-    navigate(view) { this.currentView = view; },
-    logout() {
-      this.authenticated = false;
-      this.adminRole = null;
-      this.$router.push('/');
-    },
+const router = useRouter();
+
+const authenticated = ref(false);
+const loadingAuth = ref(true);
+const sidebarCollapsed = ref(false);
+const currentView = ref('overview');
+const currentTime = ref('');
+const adminRole = ref('admin');
+
+let timeInterval = null;
+
+const currentComponent = computed(() => {
+  const superViews = ['users', 'addAdmin', 'analytics', 'finance', 'shopItems', 'addProduct', 'orders', 'notifications', 'certificates', 'settings', 'aiSeeder'];
+  if (superViews.includes(currentView.value) && adminRole.value !== 'super_admin') {
+    return AdminOverview;
   }
+  return VIEW_MAP[currentView.value] || AdminOverview;
+});
+
+const currentViewLabel = computed(() => LABELS[currentView.value] || currentView.value);
+
+const displayRole = computed(() => {
+  if (adminRole.value === 'super_admin') return 'Super Admin';
+  if (adminRole.value === 'content_admin') return 'Content Admin';
+  if (adminRole.value === 'teacher_admin') return 'Teacher Admin';
+  return 'Admin';
+});
+
+const updateTime = () => {
+  const now = new Date();
+  currentTime.value = now.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
 };
+
+const navigate = (view) => {
+  currentView.value = view;
+};
+
+const logout = () => {
+  authenticated.value = false;
+  adminRole.value = null;
+  router.push('/');
+};
+
+onMounted(() => {
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
+        authenticated.value = true;
+        adminRole.value = 'super_admin';
+        loadingAuth.value = false;
+      } else {
+        // Fetch role from Firestore
+        try {
+          const docSnap = await getDoc(doc(db, 'users', user.uid));
+          if (docSnap.exists() && (docSnap.data().adminRole || docSnap.data().isAdmin)) {
+            adminRole.value = docSnap.data().adminRole || 'content_admin';
+            authenticated.value = true;
+          } else {
+            authenticated.value = false;
+            router.push('/');
+          }
+        } catch(e) {
+          console.error("Admin rolni olishda xatolik:", e);
+          authenticated.value = false;
+          router.push('/');
+        } finally {
+          loadingAuth.value = false;
+        }
+      }
+    } else {
+      authenticated.value = false;
+      loadingAuth.value = false;
+      router.push('/login');
+    }
+  });
+
+  updateTime();
+  timeInterval = setInterval(updateTime, 1000);
+});
+
+onBeforeUnmount(() => {
+  if (timeInterval) clearInterval(timeInterval);
+});
 </script>
 
 <style scoped>

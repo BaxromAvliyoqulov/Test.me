@@ -22,71 +22,74 @@
       />
 
       <!-- Content Area -->
-      <main :class="['page-content', { 'admin-page-content': isAdmin }]">
+      <main ref="pageContentRef" :class="['page-content', { 'admin-page-content': isAdmin }]">
         <slot />
       </main>
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import Sidebar from "../components/Sidebar.vue";
 import Header from "../components/Header.vue";
 
-export default {
-  components: {
-    Sidebar,
-    Header,
-  },
-  data() {
-    return {
-      isSidebarCollapsed: false,
-      isMobileSidebarOpen: false,
-      isMobile: false
-    };
-  },
-  computed: {
-    isAdmin() {
-      return this.$route.path.startsWith('/admin');
-    },
-    showNavbar() {
-      const hideOnPaths = ['/login', '/signup', '/SignUp'];
-      return !hideOnPaths.includes(this.$route.path) && !this.isAdmin;
-    }
-  },
-  mounted() {
-    this.checkIfMobile();
-    window.addEventListener('resize', this.checkIfMobile);
-    
-    // Load sidebar state preference
-    const savedState = localStorage.getItem('sidebar_collapsed');
-    if (savedState !== null) {
-      this.isSidebarCollapsed = savedState === 'true';
-    }
-  },
-  beforeUnmount() {
-    window.removeEventListener('resize', this.checkIfMobile);
-  },
-  methods: {
-    checkIfMobile() {
-      this.isMobile = window.innerWidth <= 768;
-      if (!this.isMobile) {
-        this.isMobileSidebarOpen = false;
-      }
-    },
-    toggleSidebar() {
-      if (this.isMobile) {
-        this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
-      } else {
-        this.isSidebarCollapsed = !this.isSidebarCollapsed;
-        localStorage.setItem('sidebar_collapsed', this.isSidebarCollapsed);
-      }
-    },
-    closeMobileSidebar() {
-      this.isMobileSidebarOpen = false;
-    }
+const route = useRoute();
+const pageContentRef = ref(null);
+
+watch(() => route.path, () => {
+  if (pageContentRef.value) {
+    pageContentRef.value.scrollTop = 0;
+  }
+});
+
+const isSidebarCollapsed = ref(false);
+const isMobileSidebarOpen = ref(false);
+const isMobile = ref(false);
+
+const isAdmin = computed(() => {
+  return route && route.path ? route.path.startsWith('/admin') : false;
+});
+
+const showNavbar = computed(() => {
+  const hideOnPaths = ['/login', '/signup', '/SignUp'];
+  return route && route.path ? !hideOnPaths.includes(route.path) && !isAdmin.value : true;
+});
+
+const checkIfMobile = () => {
+  isMobile.value = window.innerWidth <= 768;
+  if (!isMobile.value) {
+    isMobileSidebarOpen.value = false;
   }
 };
+
+const toggleSidebar = () => {
+  if (isMobile.value) {
+    isMobileSidebarOpen.value = !isMobileSidebarOpen.value;
+  } else {
+    isSidebarCollapsed.value = !isSidebarCollapsed.value;
+    localStorage.setItem('sidebar_collapsed', isSidebarCollapsed.value);
+  }
+};
+
+const closeMobileSidebar = () => {
+  isMobileSidebarOpen.value = false;
+};
+
+onMounted(() => {
+  checkIfMobile();
+  window.addEventListener('resize', checkIfMobile);
+  
+  const savedState = localStorage.getItem('sidebar_collapsed');
+  if (savedState !== null) {
+    isSidebarCollapsed.value = savedState === 'true';
+  }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkIfMobile);
+});
 </script>
 
 <style scoped>

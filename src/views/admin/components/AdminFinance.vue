@@ -159,7 +159,8 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue';
 import { db } from '@/config/firebase';
 import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { Bar, Doughnut } from 'vue-chartjs';
@@ -167,232 +168,225 @@ import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, Li
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement);
 
-export default {
-  name: 'AdminFinance',
-  components: { Bar, Doughnut },
-  data() {
-    return {
-      loading: true,
-      filterType: 'all',
-      allTransactions: [],
-      filteredTransactions: [],
-      
-      metrics: {
-        revenue: 0,
-        profit: 0,
-        expenses: 0,
-        txCount: 0
+const loading = ref(true);
+const filterType = ref('all');
+const allTransactions = ref([]);
+const filteredTransactions = ref([]);
+
+const metrics = ref({
+  revenue: 0,
+  profit: 0,
+  expenses: 0,
+  txCount: 0
+});
+
+const monthlyStats = ref([]); // For the breakdown table
+
+const barData = ref({ labels: [], datasets: [] });
+const barOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 8 } } },
+  scales: { y: { beginAtZero: true, grid: { borderDash: [4, 4] } }, x: { grid: { display: false } } },
+  borderRadius: 4
+};
+
+const doughnutData = ref({ labels: [], datasets: [] });
+const doughnutOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '70%',
+  plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } }
+};
+
+const formatMoney = (amount) => {
+  return new Intl.NumberFormat('uz-UZ').format(Math.abs(amount)) + " so'm";
+};
+
+const formatDate = (ms) => {
+  const d = new Date(ms);
+  return d.toLocaleDateString('uz-UZ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+};
+
+const buildChartsAndTables = () => {
+  // Group by Month/Year format (e.g. 'Yanvar 2026')
+  const monthlyGroups = {};
+  const sourceGroups = {};
+  
+  const monthNames = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
+  
+  filteredTransactions.value.forEach(tx => {
+     const txDate = new Date(tx.date);
+     const monthKey = `${monthNames[txDate.getMonth()]} ${txDate.getFullYear()}`;
+     
+     if (!monthlyGroups[monthKey]) {
+        monthlyGroups[monthKey] = { revenue: 0, expense: 0, timestamp: txDate.getTime() };
+     }
+     
+     if (tx.amount > 0) {
+        monthlyGroups[monthKey].revenue += tx.amount;
+        // For Doughnut chart (only count revenues)
+        sourceGroups[tx.type] = (sourceGroups[tx.type] || 0) + tx.amount;
+     } else {
+        monthlyGroups[monthKey].expense += Math.abs(tx.amount);
+     }
+  });
+  
+  // Sort months chronologically
+  const sortedMonths = Object.entries(monthlyGroups)
+                             .map(([name, data]) => ({ name, ...data }))
+                             .sort((a,b) => a.timestamp - b.timestamp);
+                             
+  // Build Monthly Breakdown Table
+  monthlyStats.value = sortedMonths.map((m, idx, arr) => {
+     const profit = m.revenue - m.expense;
+     let growth = 0;
+     if (idx > 0) {
+       const prevProfit = (arr[idx-1].revenue - arr[idx-1].expense) || 1; // avoid / 0
+       growth = Math.round(((profit - prevProfit) / Math.abs(prevProfit)) * 100);
+     }
+     return {
+       month: m.name,
+       revenue: m.revenue,
+       expense: m.expense,
+       profit: profit,
+       growth: growth
+     };
+  }).reverse(); // Show newest month first in table
+  
+  // Build Bar Chart
+  barData.value = {
+    labels: sortedMonths.map(m => m.name),
+    datasets: [
+      {
+        label: 'Daromad (Kirim)',
+        data: sortedMonths.map(m => m.revenue),
+        backgroundColor: '#10b981',
+        borderRadius: 6
       },
-      
-      monthlyStats: [], // For the breakdown table
-      
-      barData: { labels: [], datasets: [] },
-      barOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 8 } } },
-        scales: { y: { beginAtZero: true, grid: { borderDash: [4, 4] } }, x: { grid: { display: false } } },
-        borderRadius: 4
-      },
-      
-      doughnutData: { labels: [], datasets: [] },
-      doughnutOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '70%',
-        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } }
+      {
+        label: 'Xarajat (Chiqim)',
+        data: sortedMonths.map(m => m.expense),
+        backgroundColor: '#f43f5e',
+        borderRadius: 6
       }
-    };
-  },
-  async mounted() {
-    await this.fetchData();
-  },
-  methods: {
-    formatMoney(amount) {
-      return new Intl.NumberFormat('uz-UZ').format(Math.abs(amount)) + " so'm";
-    },
-    formatDate(ms) {
-      const d = new Date(ms);
-      return d.toLocaleDateString('uz-UZ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
-    },
-    
-    async seedMockPayments() {
-      // Auto-generate realistic DB data if the collection is empty so it's dynamic
-      const paymentRef = collection(db, 'payments');
-      const now = new Date();
-      const users = ['Baxrom', 'Sulton', 'Ali', 'Zamir', 'Malika', 'Kamola', 'Doston', 'Azizbek', 'Admin'];
-      const revenueTypes = ['PRO Obuna (1 Oy)', 'Sertifikat Tasdig\'i', 'PRO Obuna (Yillik)', 'Maxsus Test Paketi'];
-      const expenseTypes = ['Server (AWS)', 'SMS API', 'Marketing & Reklama', 'Yandex Cloud'];
-      
-      let promises = [];
-      
-      // Generate 80 random transactions over the last 6 months
-      for (let i = 0; i < 80; i++) {
-        // Random date in last 180 days
-        const randomDaysAgo = Math.floor(Math.random() * 180);
-        const dateMs = now.getTime() - (randomDaysAgo * 24 * 60 * 60 * 1000);
-        
-        const isExpense = Math.random() > 0.85; // 15% chance it's an expense
-        let docData = {};
-        
-        if (isExpense) {
-           docData = {
-             user: 'Test.me IT Departament',
-             date: dateMs,
-             type: expenseTypes[Math.floor(Math.random() * expenseTypes.length)],
-             amount: -1 * (Math.floor(Math.random() * 50) * 100000 + 500000) // between -500k and -5.5M
-           };
-        } else {
-           docData = {
-             user: users[Math.floor(Math.random() * users.length)],
-             date: dateMs,
-             type: revenueTypes[Math.floor(Math.random() * revenueTypes.length)],
-             amount: Math.floor(Math.random() * 15) * 15000 + 15000 // between 15k and 240k
-           };
-        }
-        promises.push(addDoc(paymentRef, docData));
-      }
-      
-      await Promise.all(promises);
-      console.log("Seeded 80 realistic payment transactions into Firestore!");
-    },
-    
-    async fetchData() {
-      this.loading = true;
-      try {
-        const snap = await getDocs(collection(db, 'payments'));
-        if (snap.empty) {
-          await this.seedMockPayments(); // Seed it once!
-          const newSnap = await getDocs(collection(db, 'payments'));
-          this.allTransactions = newSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        } else {
-          this.allTransactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        }
-        
-        // Sort newest first
-        this.allTransactions.sort((a,b) => b.date - a.date);
-        
-        this.processData();
-      } catch (err) {
-        console.error(err);
-      } finally {
-        this.loading = false;
-      }
-    },
-    
-    processData() {
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth();
-      
-      // Filter transactions based on dropdown
-      this.filteredTransactions = this.allTransactions.filter(tx => {
-        const txDate = new Date(tx.date);
-        if (this.filterType === 'year') {
-           return txDate.getFullYear() === currentYear;
-        } else if (this.filterType === 'month') {
-           return txDate.getFullYear() === currentYear && txDate.getMonth() === currentMonth;
-        }
-        return true; // 'all'
-      });
-      
-      // Calculate Top Metrics
-      let rev = 0, exp = 0;
-      this.filteredTransactions.forEach(tx => {
-        if (tx.amount > 0) rev += tx.amount;
-        else exp += Math.abs(tx.amount);
-      });
-      
-      this.metrics = {
-        revenue: rev,
-        expenses: exp,
-        profit: rev - exp,
-        txCount: this.filteredTransactions.length
-      };
-      
-      this.buildChartsAndTables();
-    },
-    
-    buildChartsAndTables() {
-      // Group by Month/Year format (e.g. 'Yanvar 2026')
-      const monthlyGroups = {};
-      const sourceGroups = {};
-      
-      const monthNames = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"];
-      
-      this.filteredTransactions.forEach(tx => {
-         const txDate = new Date(tx.date);
-         const monthKey = `${monthNames[txDate.getMonth()]} ${txDate.getFullYear()}`;
-         
-         if (!monthlyGroups[monthKey]) {
-            monthlyGroups[monthKey] = { revenue: 0, expense: 0, timestamp: txDate.getTime() };
-         }
-         
-         if (tx.amount > 0) {
-            monthlyGroups[monthKey].revenue += tx.amount;
-            // For Doughnut chart (only count revenues)
-            sourceGroups[tx.type] = (sourceGroups[tx.type] || 0) + tx.amount;
-         } else {
-            monthlyGroups[monthKey].expense += Math.abs(tx.amount);
-         }
-      });
-      
-      // Sort months chronologically
-      const sortedMonths = Object.entries(monthlyGroups)
-                                 .map(([name, data]) => ({ name, ...data }))
-                                 .sort((a,b) => a.timestamp - b.timestamp);
-                                 
-      // Build Monthly Breakdown Table
-      this.monthlyStats = sortedMonths.map((m, idx, arr) => {
-         const profit = m.revenue - m.expense;
-         let growth = 0;
-         if (idx > 0) {
-           const prevProfit = (arr[idx-1].revenue - arr[idx-1].expense) || 1; // avoid / 0
-           growth = Math.round(((profit - prevProfit) / Math.abs(prevProfit)) * 100);
-         }
-         return {
-           month: m.name,
-           revenue: m.revenue,
-           expense: m.expense,
-           profit: profit,
-           growth: growth
-         };
-      }).reverse(); // Show newest month first in table
-      
-      // Build Bar Chart
-      this.barData = {
-        labels: sortedMonths.map(m => m.name),
-        datasets: [
-          {
-            label: 'Daromad (Kirim)',
-            data: sortedMonths.map(m => m.revenue),
-            backgroundColor: '#10b981',
-            borderRadius: 6
-          },
-          {
-            label: 'Xarajat (Chiqim)',
-            data: sortedMonths.map(m => m.expense),
-            backgroundColor: '#f43f5e',
-            borderRadius: 6
-          }
-        ]
-      };
-      
-      // Build Doughnut Chart
-      const sortedSources = Object.entries(sourceGroups).sort((a,b) => b[1] - a[1]);
-      const colors = ['#6366f1', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6'];
-      this.doughnutData = {
-        labels: sortedSources.map(s => s[0]),
-        datasets: [{
-          data: sortedSources.map(s => s[1]),
-          backgroundColor: colors.slice(0, sortedSources.length),
-          borderWidth: 0,
-          hoverOffset: 6
-        }]
-      };
+    ]
+  };
+  
+  // Build Doughnut Chart
+  const sortedSources = Object.entries(sourceGroups).sort((a,b) => b[1] - a[1]);
+  const colors = ['#6366f1', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6'];
+  doughnutData.value = {
+    labels: sortedSources.map(s => s[0]),
+    datasets: [{
+      data: sortedSources.map(s => s[1]),
+      backgroundColor: colors.slice(0, sortedSources.length),
+      borderWidth: 0,
+      hoverOffset: 6
+    }]
+  };
+};
+
+const processData = () => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  
+  // Filter transactions based on dropdown
+  filteredTransactions.value = allTransactions.value.filter(tx => {
+    const txDate = new Date(tx.date);
+    if (filterType.value === 'year') {
+       return txDate.getFullYear() === currentYear;
+    } else if (filterType.value === 'month') {
+       return txDate.getFullYear() === currentYear && txDate.getMonth() === currentMonth;
     }
+    return true; // 'all'
+  });
+  
+  // Calculate Top Metrics
+  let rev = 0, exp = 0;
+  filteredTransactions.value.forEach(tx => {
+    if (tx.amount > 0) rev += tx.amount;
+    else exp += Math.abs(tx.amount);
+  });
+  
+  metrics.value = {
+    revenue: rev,
+    expenses: exp,
+    profit: rev - exp,
+    txCount: filteredTransactions.value.length
+  };
+  
+  buildChartsAndTables();
+};
+
+const seedMockPayments = async () => {
+  // Auto-generate realistic DB data if the collection is empty so it's dynamic
+  const paymentRef = collection(db, 'payments');
+  const now = new Date();
+  const users = ['Baxrom', 'Sulton', 'Ali', 'Zamir', 'Malika', 'Kamola', 'Doston', 'Azizbek', 'Admin'];
+  const revenueTypes = ['PRO Obuna (1 Oy)', 'Sertifikat Tasdig\'i', 'PRO Obuna (Yillik)', 'Maxsus Test Paketi'];
+  const expenseTypes = ['Server (AWS)', 'SMS API', 'Marketing & Reklama', 'Yandex Cloud'];
+  
+  let promises = [];
+  
+  // Generate 80 random transactions over the last 6 months
+  for (let i = 0; i < 80; i++) {
+    // Random date in last 180 days
+    const randomDaysAgo = Math.floor(Math.random() * 180);
+    const dateMs = now.getTime() - (randomDaysAgo * 24 * 60 * 60 * 1000);
+    
+    const isExpense = Math.random() > 0.85; // 15% chance it's an expense
+    let docData = {};
+    
+    if (isExpense) {
+       docData = {
+         user: 'Test.me IT Departament',
+         date: dateMs,
+         type: expenseTypes[Math.floor(Math.random() * expenseTypes.length)],
+         amount: -1 * (Math.floor(Math.random() * 50) * 100000 + 500000) // between -500k and -5.5M
+       };
+    } else {
+       docData = {
+         user: users[Math.floor(Math.random() * users.length)],
+         date: dateMs,
+         type: revenueTypes[Math.floor(Math.random() * revenueTypes.length)],
+         amount: Math.floor(Math.random() * 15) * 15000 + 15000 // between 15k and 240k
+       };
+    }
+    promises.push(addDoc(paymentRef, docData));
+  }
+  
+  await Promise.all(promises);
+  console.log("Seeded 80 realistic payment transactions into Firestore!");
+};
+
+const fetchData = async () => {
+  loading.value = true;
+  try {
+    const snap = await getDocs(collection(db, 'payments'));
+    if (snap.empty) {
+      await seedMockPayments(); // Seed it once!
+      const newSnap = await getDocs(collection(db, 'payments'));
+      allTransactions.value = newSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } else {
+      allTransactions.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+    
+    // Sort newest first
+    allTransactions.value.sort((a,b) => b.date - a.date);
+    
+    processData();
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
   }
 };
+
+onMounted(() => {
+  fetchData();
+});
 </script>
 
 <style scoped>

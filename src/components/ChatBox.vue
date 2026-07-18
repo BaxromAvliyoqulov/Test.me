@@ -38,87 +38,84 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, watch, onUnmounted, nextTick } from 'vue';
 import { db } from '@/config/firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 
-export default {
-  props: {
-    friend: { type: Object, required: true },
-    currentUser: { type: Object, required: true }
-  },
-  data() {
-    return {
-      messages: [],
-      newMessage: '',
-      loading: true,
-      unsub: null
-    };
-  },
-  computed: {
-    chatId() {
-      // Create a unique deterministic ID for the two users
-      return [this.currentUser.uid, this.friend.uid].sort().join('_');
+const props = defineProps({
+  friend: { type: Object, required: true },
+  currentUser: { type: Object, required: true }
+});
+
+const emit = defineEmits(['close']);
+
+const messagesContainer = ref(null);
+const chatInput = ref(null);
+
+const messages = ref([]);
+const newMessage = ref('');
+const loading = ref(true);
+let unsub = null;
+
+const chatId = computed(() => {
+  return [props.currentUser.uid, props.friend.uid].sort().join('_');
+});
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     }
-  },
-  watch: {
-    friend: {
-      immediate: true,
-      handler() {
-        this.listenToMessages();
-      }
-    }
-  },
-  unmounted() {
-    if (this.unsub) this.unsub();
-  },
-  methods: {
-    listenToMessages() {
-      if (this.unsub) this.unsub();
-      this.loading = true;
-      this.messages = [];
-      
-      const q = query(
-        collection(db, 'chats', this.chatId, 'messages'),
-        orderBy('timestamp', 'asc')
-      );
-      
-      this.unsub = onSnapshot(q, snap => {
-        this.messages = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        this.loading = false;
-        this.scrollToBottom();
-      });
-    },
-    async sendMessage() {
-      if (!this.newMessage.trim()) return;
-      const text = this.newMessage;
-      this.newMessage = '';
-      
-      try {
-        await addDoc(collection(db, 'chats', this.chatId, 'messages'), {
-          text,
-          senderId: this.currentUser.uid,
-          timestamp: serverTimestamp()
-        });
-        this.$refs.chatInput.focus();
-      } catch (err) {
-        console.error("Error sending message", err);
-      }
-    },
-    scrollToBottom() {
-      this.$nextTick(() => {
-        const container = this.$refs.messagesContainer;
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
-      });
-    },
-    formatTime(ts) {
-      if (!ts) return '';
-      const date = ts.toDate ? ts.toDate() : new Date(ts);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
+  });
+};
+
+const listenToMessages = () => {
+  if (unsub) unsub();
+  loading.value = true;
+  messages.value = [];
+  
+  const q = query(
+    collection(db, 'chats', chatId.value, 'messages'),
+    orderBy('timestamp', 'asc')
+  );
+  
+  unsub = onSnapshot(q, snap => {
+    messages.value = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    loading.value = false;
+    scrollToBottom();
+  });
+};
+
+watch(() => props.friend, () => {
+  listenToMessages();
+}, { immediate: true });
+
+onUnmounted(() => {
+  if (unsub) unsub();
+});
+
+const sendMessage = async () => {
+  if (!newMessage.value.trim()) return;
+  const text = newMessage.value;
+  newMessage.value = '';
+  
+  try {
+    await addDoc(collection(db, 'chats', chatId.value, 'messages'), {
+      text,
+      senderId: props.currentUser.uid,
+      timestamp: serverTimestamp()
+    });
+    chatInput.value.focus();
+  } catch (err) {
+    console.error("Error sending message", err);
   }
+};
+
+const formatTime = (ts) => {
+  if (!ts) return '';
+  const date = ts.toDate ? ts.toDate() : new Date(ts);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 </script>
 

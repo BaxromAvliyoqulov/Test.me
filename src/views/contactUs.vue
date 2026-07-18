@@ -174,131 +174,112 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, computed } from "vue";
 import { useToast } from "vue-toastification";
 import { useI18n } from "@/utils/i18n";
 
+const toast = useToast();
+const { locale } = useI18n();
 
+const isRus = computed(() => locale.value === "RUS");
 
-export default {
-  name: "ContactUs",
-  setup() {
-    const toast = useToast();
-    const { locale } = useI18n();
+const formData = ref({
+  name: "",
+  phone: "+998 ",
+  requestType: "",
+  subject: "",
+  message: "",
+});
 
-    const isRus = computed(() => locale.value === "RUS");
+const subjectsList = ['English', 'O\'zbek tili', 'Matematika', 'Tarix', 'Fizika', 'Informatika', 'Dasturlash', 'Kimyo'];
 
-    const formData = ref({
-      name: "",
-      phone: "+998 ",
-      requestType: "",
-      subject: "",
-      message: "",
+const submitting = ref(false);
+
+const handleRequestTypeChange = () => {
+  if (formData.value.requestType !== "test") {
+    formData.value.subject = "";
+  }
+};
+
+const copyEmail = () => {
+  navigator.clipboard.writeText("avliyoqulovbaxrom99@gmail.com");
+  toast.success(
+    isRus.value
+      ? "Email скопирован в буфер обмена!"
+      : "Elektron pochta nusxalandi!"
+  );
+};
+
+const copyPhone = () => {
+  navigator.clipboard.writeText("+998990746257");
+  toast.success(
+    isRus.value
+      ? "Номер телефона скопирован в буфер обмена!"
+      : "Telefon raqam nusxalandi!"
+  );
+};
+
+const resetForm = () => {
+  formData.value = {
+    name: "",
+    phone: "+998 ",
+    requestType: "",
+    subject: "",
+    message: "",
+  };
+};
+
+const formatPhone = (event) => {
+  let val = event.target.value.replace(/\D/g, ""); 
+  
+  if (val.startsWith("998")) {
+    val = val.substring(3);
+  }
+  
+  val = val.substring(0, 9);
+  
+  let formatted = "+998 ";
+  if (val.length > 0) formatted += val.substring(0, 2);
+  if (val.length >= 3) formatted += " " + val.substring(2, 5);
+  if (val.length >= 6) formatted += " " + val.substring(5, 7);
+  if (val.length >= 8) formatted += " " + val.substring(7, 9);
+  
+  formData.value.phone = formatted.trim();
+};
+
+const handleSubmit = async () => {
+  submitting.value = true;
+  try {
+    const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+    const { db } = await import('@/config/firebase');
+
+    await addDoc(collection(db, 'supportMessages'), {
+      name: formData.value.name,
+      phone: formData.value.phone,
+      requestType: formData.value.requestType,
+      subject: formData.value.subject || null,
+      message: formData.value.message,
+      createdAt: serverTimestamp(),
+      status: 'new'
     });
 
-    const subjectsList = ['English', 'O\'zbek tili', 'Matematika', 'Tarix', 'Fizika', 'Informatika', 'Dasturlash', 'Kimyo'];
-
-    const submitting = ref(false);
-
-    const handleRequestTypeChange = () => {
-      if (formData.value.requestType !== "test") {
-        formData.value.subject = "";
-      }
-    };
-
-    const copyEmail = () => {
-      navigator.clipboard.writeText("avliyoqulovbaxrom99@gmail.com");
-      toast.success(
-        isRus.value
-          ? "Email скопирован в буфер обмена!"
-          : "Elektron pochta nusxalandi!"
-      );
-    };
-
-    const copyPhone = () => {
-      navigator.clipboard.writeText("+998990746257");
-      toast.success(
-        isRus.value
-          ? "Номер телефона скопирован в буфер обмена!"
-          : "Telefon raqam nusxalandi!"
-      );
-    };
-
-    const resetForm = () => {
-      formData.value = {
-        name: "",
-        phone: "+998 ",
-        requestType: "",
-        subject: "",
-        message: "",
-      };
-    };
-
-    const formatPhone = (event) => {
-      let val = event.target.value.replace(/\D/g, ""); 
-      
-      if (val.startsWith("998")) {
-        val = val.substring(3);
-      }
-      
-      val = val.substring(0, 9);
-      
-      let formatted = "+998 ";
-      if (val.length > 0) formatted += val.substring(0, 2);
-      if (val.length >= 3) formatted += " " + val.substring(2, 5);
-      if (val.length >= 6) formatted += " " + val.substring(5, 7);
-      if (val.length >= 8) formatted += " " + val.substring(7, 9);
-      
-      formData.value.phone = formatted.trim();
-    };
-
-    const handleSubmit = async () => {
-      submitting.value = true;
-      try {
-        const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
-        const { db } = await import('@/config/firebase');
-
-        await addDoc(collection(db, 'supportMessages'), {
-          name: formData.value.name,
-          phone: formData.value.phone,
-          requestType: formData.value.requestType,
-          subject: formData.value.subject || null,
-          message: formData.value.message,
-          createdAt: serverTimestamp(),
-          status: 'new'
-        });
-
-        toast.success(
-          isRus.value
-            ? "Ваше сообщение успешно отправлено!"
-            : "Xabaringiz muvaffaqiyatli yuborildi!"
-        );
-        resetForm();
-      } catch (error) {
-        console.error("Error:", error);
-        toast.error(
-          isRus.value
-            ? "Произошла ошибка при отправке сообщения."
-            : "Xatolik yuz berdi. Iltimos qayta urinib ko'ring"
-        );
-      } finally {
-        submitting.value = false;
-      }
-    };
-
-    return {
-      formData,
-      isRus,
-      submitting,
-      handleRequestTypeChange,
-      copyEmail,
-      copyPhone,
-      formatPhone,
-      handleSubmit,
-      subjectsList,
-    };
-  },
+    toast.success(
+      isRus.value
+        ? "Ваше сообщение успешно отправлено!"
+        : "Xabaringiz muvaffaqiyatli yuborildi!"
+    );
+    resetForm();
+  } catch (error) {
+    console.error("Error:", error);
+    toast.error(
+      isRus.value
+        ? "Произошла ошибка при отправке сообщения."
+        : "Xatolik yuz berdi. Iltimos qayta urinib ko'ring"
+    );
+  } finally {
+    submitting.value = false;
+  }
 };
 </script>
 

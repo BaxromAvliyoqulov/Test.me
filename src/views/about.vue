@@ -50,86 +50,77 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from '@/utils/i18n';
 
-export default {
-  name: 'AboutPage',
-  setup() {
-    const { locale } = useI18n();
+const { locale } = useI18n();
+const router = useRouter();
 
-    const isRus = computed(() => locale.value === 'RUS');
+const isRus = computed(() => locale.value === 'RUS');
 
-    const localizedFeatures = computed(() => {
-      return [
-        {
-          icon: 'fas fa-graduation-cap',
-          iconBg: 'linear-gradient(135deg, #f5f3ff 0%, #edd9ff 100%)',
-          iconColor: '#7c3aed',
-          title: isRus.value ? 'Разнообразные тесты' : 'Xilma-xil testlar',
-          desc: isRus.value 
-            ? 'Коллекция тестов по различным предметам и уровням сложности.' 
-            : 'Turli fanlar va har xil qiyinlik darajasidagi testlar to\'plami.'
-        },
-        {
-          icon: 'fas fa-chart-line',
-          iconBg: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-          iconColor: '#3b82f6',
-          title: isRus.value ? 'Мгновенные результаты' : 'Tezkor natijalar',
-          desc: isRus.value 
-            ? 'Получение результатов за секунды и глубокий анализ ошибок.' 
-            : 'Natijalarni soniyalarda olish va xatolaringiz ustida chuqur tahlil.'
-        },
-        {
-          icon: 'fas fa-user-graduate',
-          iconBg: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-          iconColor: '#10b981',
-          title: isRus.value ? 'Личный подход' : 'Shaxsiy yondashuv',
-          desc: isRus.value 
-            ? 'Система обучения и тестов, адаптированная под ваш уровень знаний.' 
-            : 'Sizning bilim darajangizga moslashtirilgan o\'qitish va testlar tizimi.'
-        },
-        {
-          icon: 'fas fa-award',
-          iconBg: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
-          iconColor: '#f97316',
-          title: isRus.value ? 'Система достижений' : 'Yutuqlar tizimi',
-          desc: isRus.value 
-            ? 'Ваши достижения, результаты, сертификаты и система серий дней (streak).' 
-            : 'Erishgan yutuqlaringiz, cheksiz natijalar, sertifikatlar va streak tizimi.'
-        },
-        {
-          icon: 'fas fa-mobile-alt',
-          iconBg: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)',
-          iconColor: '#db2777',
-          title: isRus.value ? 'Премиум интерфейс' : 'Premium UI/UX',
-          desc: isRus.value 
-            ? 'Простой, красивый и адаптивный интерфейс под любые устройства.' 
-            : 'Sodda, chiroyli va har qanday qurilmaga moslashuvchan interfeys.'
-        },
-        {
-          icon: 'fas fa-wallet',
-          iconBg: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)',
-          iconColor: '#0d9488',
-          title: isRus.value ? 'Кошелек TP Coins' : 'TP Coins Hamyoni',
-          desc: isRus.value 
-            ? 'Приглашайте друзей, решайте тесты и получайте отличные награды.' 
-            : 'Do\'stlarni taklif qiling, test yeching va ajoyib mukofotlarga ega bo\'ling.'
-        }
-      ];
-    });
-
-    return {
-      isRus,
-      localizedFeatures
-    };
-  },
-  methods: {
-    navigateToTest() {
-      this.$router.push('/');
+const localizedFeatures = computed(() => {
+  return [
+    {
+      icon: 'fas fa-graduation-cap',
+      iconBg: 'linear-gradient(135deg, #f5f3ff 0%, #edd9ff 100%)',
+      iconColor: '#7c3aed',
+      title: isRus.value ? 'Разнообразные тесты' : 'Xilma-xil testlar',
+      desc: isRus.value 
+        ? 'Коллекция тестов по различным предметам и уровням сложности.' 
+        : 'Turli fanlar va har xil qiyinlik darajasidagi testlar to\'plami.'
     },
-  },
+    {
+      icon: 'fas fa-chart-line',
+      iconBg: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+      iconColor: '#3b82f6',
+      title: isRus.value ? 'Мгновенные результаты' : 'Tezkor natijalar',
+      desc: isRus.value 
+        ? 'Получение результатов за секунды и глубокий анализ ошибок.' 
+        : 'Natijalarni soniyalarda olish va xatolaringiz ustida chuqur tahlil.'
+    },
+    {
+      icon: 'fas fa-user-graduate',
+      iconBg: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+      iconColor: '#10b981',
+      title: isRus.value ? 'Личный подход' : 'Shaxsiy yondashuv',
+      desc: isRus.value 
+        ? 'Система обучения и тестов, адаптированная под ваш уровень знаний.' 
+        : 'Sizning bilim darajangizga moslashtirilgan o\'qitish va testlar tizimi.'
+    },
+    {
+      icon: 'fas fa-award',
+      iconBg: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+      iconColor: '#f97316',
+      title: isRus.value ? 'Система достижений' : 'Yutuqlar tizimi',
+      desc: isRus.value 
+        ? 'Ваши достижения, результаты, сертификаты и система серий дней (streak).' 
+        : 'Erishgan yutuqlaringiz, cheksiz natijalar, sertifikatlar va streak tizimi.'
+    },
+    {
+      icon: 'fas fa-mobile-alt',
+      iconBg: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)',
+      iconColor: '#db2777',
+      title: isRus.value ? 'Премиум интерфейс' : 'Premium UI/UX',
+      desc: isRus.value 
+        ? 'Простой, красивый и адаптивный интерфейс под любые устройства.' 
+        : 'Sodda, chiroyli va har qanday qurilmaga moslashuvchan interfeys.'
+    },
+    {
+      icon: 'fas fa-wallet',
+      iconBg: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)',
+      iconColor: '#0d9488',
+      title: isRus.value ? 'Кошелек TP Coins' : 'TP Coins Hamyoni',
+      desc: isRus.value 
+        ? 'Приглашайте друзей, решайте тесты и получайте отличные награды.' 
+        : 'Do\'stlarni taklif qiling, test yeching va ajoyib mukofotlarga ega bo\'ling.'
+    }
+  ];
+});
+
+const navigateToTest = () => {
+  router.push('/');
 };
 </script>
 

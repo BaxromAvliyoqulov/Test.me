@@ -55,7 +55,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { computed } from 'vue';
 import { useI18n } from '@/utils/i18n';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -63,57 +63,46 @@ import { Doughnut } from 'vue-chartjs';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-export default {
-  name: 'DashboardHero',
-  components: { Doughnut },
-  props: {
-    totalTests: { type: Number, required: true },
-    averageScorePercent: { type: Number, required: true },
-    highestScorePercent: { type: Number, required: true },
-    bestSubjectName: { type: String, required: true },
-    perfectScoreCount: { type: Number, required: true },
-    uniqueSubjectsStudied: { type: Number, required: true },
-  },
-  setup(props) {
-    const { locale, t } = useI18n();
+const props = defineProps({
+  totalTests: { type: Number, required: true },
+  averageScorePercent: { type: Number, required: true },
+  highestScorePercent: { type: Number, required: true },
+  bestSubjectName: { type: String, required: true },
+  perfectScoreCount: { type: Number, required: true },
+  uniqueSubjectsStudied: { type: Number, required: true },
+});
 
-    const chartData = computed(() => ({
-      labels: [t('averageScore'), locale.value === 'RUS' ? 'Ошибки' : 'Xatolar'],
-      datasets: [
-        {
-          data: [props.averageScorePercent, 100 - props.averageScorePercent],
-          backgroundColor: ['#3b82f6', '#e2e8f0'],
-          hoverBackgroundColor: ['#2563eb', '#cbd5e1'],
-          borderWidth: 0,
-          cutout: '75%',
-          borderRadius: 20
-        }
-      ]
-    }));
+const { locale, t } = useI18n();
+const currentLocale = locale;
 
-    const chartOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(15, 23, 42, 0.9)',
-          padding: 12,
-          cornerRadius: 12,
-          titleFont: { family: 'Outfit', size: 14 },
-          bodyFont: { family: 'Outfit', size: 14 }
-        }
-      }
-    };
+const chartData = computed(() => ({
+  labels: [t('averageScore'), locale.value === 'RUS' ? 'Ошибки' : 'Xatolar'],
+  datasets: [
+    {
+      data: [props.averageScorePercent, 100 - props.averageScorePercent],
+      backgroundColor: ['#3b82f6', '#e2e8f0'],
+      hoverBackgroundColor: ['#2563eb', '#cbd5e1'],
+      borderWidth: 0,
+      cutout: '75%',
+      borderRadius: 20
+    }
+  ]
+}));
 
-    return {
-      currentLocale: locale,
-      t,
-      chartData,
-      chartOptions
-    };
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: 'rgba(15, 23, 42, 0.9)',
+      padding: 12,
+      cornerRadius: 12,
+      titleFont: { family: 'Outfit', size: 14 },
+      bodyFont: { family: 'Outfit', size: 14 }
+    }
   }
-}
+};
 </script>
 
 <style scoped>

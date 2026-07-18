@@ -29,79 +29,78 @@
   </header>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useRoute } from 'vue-router';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import defaultUserImage from '../assets/img/user.png';
 
-export default {
-  emits: ['toggle-sidebar'],
-  data() {
-    return {
-      username: null,
-      profileImage: null,
-      userPoints: 0,
-      pointsUnsub: null,
-    };
-  },
-  computed: {
-    currentRouteName() {
-      const pathMap = {
-        '/': 'Bosh sahifa',
-        '/points': 'Ballar & Coinlar',
-        '/shop': 'Do\'kon',
-        '/badges': 'Yutuqlar',
-        '/certificates': 'Sertifikatlar',
-        '/dashboard': 'Statistika',
-        '/friends': 'Do\'stlar',
-        '/about': 'Biz haqimizda',
-        '/contactUs': 'Aloqa & Yordam',
-        '/editProfile': 'Profilni tahrirlash',
-      };
-      return pathMap[this.$route.path] || '';
-    }
-  },
-  created() {
-    this.initializeAuth();
-    window.addEventListener('profile-updated', this.handleProfileUpdated);
-    this.profileImage = defaultUserImage;
-  },
-  beforeUnmount() {
-    window.removeEventListener('profile-updated', this.handleProfileUpdated);
-    if (this.pointsUnsub) this.pointsUnsub();
-  },
-  methods: {
-    handleProfileUpdated(event) {
-      const { displayName, photoURL } = event.detail;
-      if (displayName) this.username = displayName;
-      if (photoURL) this.profileImage = photoURL;
-    },
-    initializeAuth() {
-      const auth = getAuth();
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          this.username = user.displayName || user.email || 'User';
-          this.profileImage = user.photoURL || defaultUserImage;
+const emit = defineEmits(['toggle-sidebar']);
 
-          if (this.pointsUnsub) this.pointsUnsub();
-          this.pointsUnsub = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
-            if (docSnap.exists()) {
-              const data = docSnap.data();
-              this.userPoints = data.points || 0;
-              if (data.displayName) this.username = data.displayName;
-              if (data.photoURL) this.profileImage = data.photoURL;
-            }
-          });
-        } else {
-          this.username = null;
-          this.profileImage = defaultUserImage;
-          if (this.pointsUnsub) this.pointsUnsub();
+const route = useRoute();
+
+const username = ref(null);
+const profileImage = ref(defaultUserImage);
+const userPoints = ref(0);
+let pointsUnsub = null;
+
+const currentRouteName = computed(() => {
+  const pathMap = {
+    '/': 'Bosh sahifa',
+    '/points': 'Ballar & Coinlar',
+    '/shop': 'Do\'kon',
+    '/badges': 'Yutuqlar',
+    '/certificates': 'Sertifikatlar',
+    '/dashboard': 'Statistika',
+    '/friends': 'Do\'stlar',
+    '/about': 'Biz haqimizda',
+    '/contactUs': 'Aloqa & Yordam',
+    '/editProfile': 'Profilni tahrirlash',
+  };
+  return route.path ? (pathMap[route.path] || '') : '';
+});
+
+const handleProfileUpdated = (event) => {
+  const { displayName, photoURL } = event.detail;
+  if (displayName) username.value = displayName;
+  if (photoURL) profileImage.value = photoURL;
+};
+
+const initializeAuth = () => {
+  const auth = getAuth();
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      username.value = user.displayName || user.email || 'User';
+      profileImage.value = user.photoURL || defaultUserImage;
+
+      if (pointsUnsub) pointsUnsub();
+      pointsUnsub = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          userPoints.value = data.points || 0;
+          if (data.displayName) username.value = data.displayName;
+          if (data.photoURL) profileImage.value = data.photoURL;
         }
       });
+    } else {
+      username.value = null;
+      profileImage.value = defaultUserImage;
+      if (pointsUnsub) pointsUnsub();
     }
-  }
+  });
 };
+
+onMounted(() => {
+  initializeAuth();
+  window.addEventListener('profile-updated', handleProfileUpdated);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('profile-updated', handleProfileUpdated);
+  if (pointsUnsub) pointsUnsub();
+});
 </script>
 
 <style scoped>

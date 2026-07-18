@@ -66,7 +66,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { computed } from 'vue';
 import { useI18n } from '@/utils/i18n';
 import { Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from 'chart.js';
@@ -74,97 +74,86 @@ import { Radar } from 'vue-chartjs';
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
-export default {
-  name: 'SubjectAnalytics',
-  components: { Radar },
-  props: {
-    subjectStats: { type: Array, required: true },
-    levelStats: { type: Array, required: true }
-  },
-  setup(props) {
-    const { locale, t } = useI18n();
+const props = defineProps({
+  subjectStats: { type: Array, required: true },
+  levelStats: { type: Array, required: true }
+});
 
-    const radarData = computed(() => {
-      // Limit to top 6 subjects for best radar look
-      const topSubj = [...props.subjectStats].slice(0, 6);
-      
-      return {
-        labels: topSubj.map(s => s.name),
-        datasets: [{
-          label: locale.value === 'RUS' ? 'Средний балл' : 'O\'rtacha ball',
-          data: topSubj.map(s => s.avg),
-          backgroundColor: 'rgba(99, 102, 241, 0.25)',
-          borderColor: '#6366f1',
-          pointBackgroundColor: '#ffffff',
-          pointBorderColor: '#6366f1',
-          pointHoverBackgroundColor: '#6366f1',
-          pointHoverBorderColor: '#ffffff',
-          pointBorderWidth: 3,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          borderWidth: 3,
-          tension: 0.3
-        }]
-      };
-    });
+const { locale, t } = useI18n();
+const currentLocale = locale;
 
-    const radarOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        r: {
-          angleLines: { 
-            color: 'rgba(148, 163, 184, 0.3)',
-            lineWidth: 1
-          },
-          grid: { 
-            color: 'rgba(148, 163, 184, 0.2)',
-            lineWidth: 1,
-            circular: true
-          },
-          pointLabels: {
-            font: { 
-              family: "'Outfit', 'Inter', sans-serif", 
-              size: 13, 
-              weight: '700' 
-            },
-            color: '#1e293b',
-            padding: 15
-          },
-          ticks: { 
-            display: false, 
-            min: 0, 
-            max: 100,
-            stepSize: 20
-          }
-        }
+const radarData = computed(() => {
+  // Limit to top 6 subjects for best radar look
+  const topSubj = [...props.subjectStats].slice(0, 6);
+  
+  return {
+    labels: topSubj.map(s => s.name),
+    datasets: [{
+      label: locale.value === 'RUS' ? 'Средний балл' : "O'rtacha ball",
+      data: topSubj.map(s => s.avg),
+      backgroundColor: 'rgba(99, 102, 241, 0.25)',
+      borderColor: '#6366f1',
+      pointBackgroundColor: '#ffffff',
+      pointBorderColor: '#6366f1',
+      pointHoverBackgroundColor: '#6366f1',
+      pointHoverBorderColor: '#ffffff',
+      pointBorderWidth: 3,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      borderWidth: 3,
+      tension: 0.3
+    }]
+  };
+});
+
+const radarOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    r: {
+      angleLines: { 
+        color: 'rgba(148, 163, 184, 0.3)',
+        lineWidth: 1
       },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(15, 23, 42, 0.95)',
-          titleFont: { family: "'Outfit', sans-serif", size: 14, weight: 'bold' },
-          bodyFont: { family: "'Outfit', sans-serif", size: 14 },
-          padding: 12,
-          cornerRadius: 12,
-          displayColors: false,
-          callbacks: {
-            label: function(context) {
-              return `${context.dataset.label}: ${context.raw}%`;
-            }
-          }
+      grid: { 
+        color: 'rgba(148, 163, 184, 0.2)',
+        lineWidth: 1,
+        circular: true
+      },
+      pointLabels: {
+        font: { 
+          family: "'Outfit', 'Inter', sans-serif", 
+          size: 13, 
+          weight: '700' 
+        },
+        color: '#1e293b',
+        padding: 15
+      },
+      ticks: { 
+        display: false, 
+        min: 0, 
+        max: 100,
+        stepSize: 20
+      }
+    }
+  },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: 'rgba(15, 23, 42, 0.95)',
+      titleFont: { family: "'Outfit', sans-serif", size: 14, weight: 'bold' },
+      bodyFont: { family: "'Outfit', sans-serif", size: 14 },
+      padding: 12,
+      cornerRadius: 12,
+      displayColors: false,
+      callbacks: {
+        label: function(context) {
+          return `${context.dataset.label}: ${context.raw}%`;
         }
       }
-    };
-
-    return {
-      currentLocale: locale,
-      t,
-      radarData,
-      radarOptions
     }
   }
-}
+};
 </script>
 
 <style scoped>

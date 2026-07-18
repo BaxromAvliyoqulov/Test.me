@@ -108,7 +108,8 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue';
 import { db } from '@/config/firebase';
 import { doc, getDoc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
@@ -116,86 +117,84 @@ import { confirmDelete } from '@/utils/sweetalert';
 
 const toast = useToast();
 
-export default {
-  name: 'AdminSettings',
-  data() {
-    return {
-      saving: false,
-      saveStatus: null,
-      settings: {
-        platformName: 'Test.me',
-        adminEmail: 'avliyoqulovbaxrom99@gmail.com',
-        version: '2.0.0',
-        tpPerTest: 10,
-        referralBonus: 50,
-        dailyBonus: 5,
-        features: {
-          shopEnabled: true,
-          friendsEnabled: true,
-          rankingEnabled: true,
-          certificatesEnabled: true,
-          aiTestEnabled: true,
-          maintenanceMode: false,
-        }
-      },
-      featureToggles: [
-        { key: 'shopEnabled',        label: 'Do\'kon',          desc: 'Foydalanuvchilar uchun shop sahifasini yoqish/o\'chirish' },
-        { key: 'friendsEnabled',     label: 'Do\'stlar',        desc: 'Do\'stlar va chat funksiyasini yoqish/o\'chirish' },
-        { key: 'rankingEnabled',     label: 'Reytinglar',       desc: 'Rang va reyting tizimini yoqish/o\'chirish' },
-        { key: 'certificatesEnabled',label: 'Sertifikatlar',    desc: 'Sertifikat olish imkoniyatini yoqish/o\'chirish' },
-        { key: 'aiTestEnabled',      label: 'AI Test Generator',desc: 'AI yordamida test yaratish modulini yoqish/o\'chirish' },
-        { key: 'maintenanceMode',    label: 'Texnik Ishlar Rejimi', desc: 'Yoqilsa, foydalanuvchilar kirish imkonidan mahrum bo\'ladi' },
-      ]
-    };
-  },
-  mounted() { this.loadSettings(); },
-  methods: {
-    async loadSettings() {
-      try {
-        const snap = await getDoc(doc(db, 'adminSettings', 'global'));
-        if (snap.exists()) {
-          const data = snap.data();
-          this.settings = { ...this.settings, ...data, features: { ...this.settings.features, ...(data.features || {}) } };
-        }
-      } catch(e) { console.error('Settings load error:', e); }
-    },
-    async saveSettings() {
-      this.saving = true;
-      this.saveStatus = null;
-      try {
-        await setDoc(doc(db, 'adminSettings', 'global'), this.settings);
-        this.saveStatus = { type: 'success', message: 'Sozlamalar muvaffaqiyatli saqlandi!' };
-      } catch(e) {
-        this.saveStatus = { type: 'error', message: 'Saqlashda xatolik: ' + e.message };
-      } finally { this.saving = false; }
-    },
-    async resetResults() {
-      if (!(await confirmDelete(
-        'Barcha natijalarni o\'chirish', 
-        'DIQQAT! Barcha test natijalarini o\'chirasizmi? Bu amal qaytarilmaydi!'
-      ))) return;
-
-      const code = window.prompt("Tasdiqlash uchun xavfsizlik kodini kiriting:");
-      if (code !== "123") {
-        toast.error("Xavfsizlik kodi noto'g'ri! O'chirish bekor qilindi.");
-        return;
-      }
-
-      toast.info("Natijalar o'chirilmoqda, kuting...");
-      try {
-        const snapshot = await getDocs(collection(db, 'results'));
-        
-        // Ommaviy o'chirish uchun Promise.all ishlatamiz
-        const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
-        await Promise.all(deletePromises);
-        
-        toast.success("Barcha test natijalari muvaffaqiyatli o'chirildi.");
-      } catch (e) {
-        toast.error("Xatolik: " + e.message);
-      }
-    }
+const saving = ref(false);
+const saveStatus = ref(null);
+const settings = ref({
+  platformName: 'Test.me',
+  adminEmail: 'avliyoqulovbaxrom99@gmail.com',
+  version: '2.0.0',
+  tpPerTest: 10,
+  referralBonus: 50,
+  dailyBonus: 5,
+  features: {
+    shopEnabled: true,
+    friendsEnabled: true,
+    rankingEnabled: true,
+    certificatesEnabled: true,
+    aiTestEnabled: true,
+    maintenanceMode: false,
   }
-}
+});
+
+const featureToggles = [
+  { key: 'shopEnabled',        label: 'Do\'kon',          desc: 'Foydalanuvchilar uchun shop sahifasini yoqish/o\'chirish' },
+  { key: 'friendsEnabled',     label: 'Do\'stlar',        desc: 'Do\'stlar va chat funksiyasini yoqish/o\'chirish' },
+  { key: 'rankingEnabled',     label: 'Reytinglar',       desc: 'Rang va reyting tizimini yoqish/o\'chirish' },
+  { key: 'certificatesEnabled',label: 'Sertifikatlar',    desc: 'Sertifikat olish imkoniyatini yoqish/o\'chirish' },
+  { key: 'aiTestEnabled',      label: 'AI Test Generator',desc: 'AI yordamida test yaratish modulini yoqish/o\'chirish' },
+  { key: 'maintenanceMode',    label: 'Texnik Ishlar Rejimi', desc: 'Yoqilsa, foydalanuvchilar kirish imkonidan mahrum bo\'ladi' },
+];
+
+const loadSettings = async () => {
+  try {
+    const snap = await getDoc(doc(db, 'adminSettings', 'global'));
+    if (snap.exists()) {
+      const data = snap.data();
+      settings.value = { ...settings.value, ...data, features: { ...settings.value.features, ...(data.features || {}) } };
+    }
+  } catch(e) { console.error('Settings load error:', e); }
+};
+
+const saveSettings = async () => {
+  saving.value = true;
+  saveStatus.value = null;
+  try {
+    await setDoc(doc(db, 'adminSettings', 'global'), settings.value);
+    saveStatus.value = { type: 'success', message: 'Sozlamalar muvaffaqiyatli saqlandi!' };
+  } catch(e) {
+    saveStatus.value = { type: 'error', message: 'Saqlashda xatolik: ' + e.message };
+  } finally { saving.value = false; }
+};
+
+const resetResults = async () => {
+  if (!(await confirmDelete(
+    'Barcha natijalarni o\'chirish', 
+    'DIQQAT! Barcha test natijalarini o\'chirasizmi? Bu amal qaytarilmaydi!'
+  ))) return;
+
+  const code = window.prompt("Tasdiqlash uchun xavfsizlik kodini kiriting:");
+  if (code !== "123") {
+    toast.error("Xavfsizlik kodi noto'g'ri! O'chirish bekor qilindi.");
+    return;
+  }
+
+  toast.info("Natijalar o'chirilmoqda, kuting...");
+  try {
+    const snapshot = await getDocs(collection(db, 'results'));
+    
+    // Ommaviy o'chirish uchun Promise.all ishlatamiz
+    const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
+    await Promise.all(deletePromises);
+    
+    toast.success("Barcha test natijalari muvaffaqiyatli o'chirildi.");
+  } catch (e) {
+    toast.error("Xatolik: " + e.message);
+  }
+};
+
+onMounted(() => {
+  loadSettings();
+});
 </script>
 
 <style scoped>

@@ -21,15 +21,12 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'WelcomeBanner',
-  props: {
-    welcomeTitle: { type: String, required: true },
-    welcomeSubtitle: { type: String, required: true },
-    points: { type: Number, default: 0 }
-  }
-}
+<script setup>
+const props = defineProps({
+  welcomeTitle: { type: String, required: true },
+  welcomeSubtitle: { type: String, required: true },
+  points: { type: Number, default: 0 }
+});
 </script>
 
 <style scoped>

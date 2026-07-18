@@ -15,17 +15,14 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'CertStats',
-  props: {
-    unlockedCount: { type: Number, required: true },
-    totalCount: { type: Number, required: true },
-    elementaryCount: { type: Number, required: true },
-    intermediateCount: { type: Number, required: true },
-    isRus: { type: Boolean, required: true }
-  }
-}
+<script setup>
+const props = defineProps({
+  unlockedCount: { type: Number, required: true },
+  totalCount: { type: Number, required: true },
+  elementaryCount: { type: Number, required: true },
+  intermediateCount: { type: Number, required: true },
+  isRus: { type: Boolean, required: true }
+});
 </script>
 
 <style scoped>

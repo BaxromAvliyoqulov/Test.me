@@ -61,7 +61,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted, computed } from 'vue';
 import { db } from '@/config/firebase';
 import { onSnapshot, doc, collection, updateDoc, increment, addDoc, query, where } from 'firebase/firestore';
@@ -79,223 +79,183 @@ import BuyPointsModal from './BuyPoints.vue';
 import ReferralCodeModal from './ReferralCodeModal.vue';
 import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
 
-export default {
-  name: 'PointsWallet',
-  components: {
-    WalletCards,
-    ActionGrid,
-    RewardShop,
-    TransactionSidebar,
-    ReferralModal,
-    ReferredUsersModal,
-    BuyPointsModal,
-    ReferralCodeModal,
+const points = ref(0);
+const referralCount = ref(0);
+const transactions = ref([]);
+const showReferralModal = ref(false);
+const showReferredUsers = ref(false);
+const showBuyModal = ref(false);
+const showReferralCodeModal = ref(false);
+
+const toast = useToast();
+const { locale } = useI18n();
+const auth = getAuth();
+
+const rewardItems = [
+  {
+    id: 'premium_pass',
+    nameUz: 'Premium Test Ruxsati',
+    nameRu: 'Премиум Доступ к Тестам',
+    descUz: 'Har qanday 1 ta premium testni bepul ochish imkoniyati.',
+    descRu: 'Возможность разблокировать любой 1 премиум-тест.',
+    cost: 200,
+    icon: 'fas fa-key',
+    color: '#3b82f6'
   },
+  {
+    id: 'gold_frame',
+    nameUz: 'Oltin Sertifikat Ramkasi',
+    nameRu: 'Золотая Рамка Сертификата',
+    descUz: 'Sertifikatlaringizni chiroyli oltin hoshiya bilan bezash.',
+    descRu: 'Украсьте свои сертификаты красивой золотой рамкой.',
+    cost: 500,
+    icon: 'fas fa-gem',
+    color: '#fbbf24'
+  },
+  {
+    id: 'super_badge',
+    nameUz: 'Super Aql Profili Belgisi',
+    nameRu: 'Значок Супер Мозга',
+    descUz: 'Profil ismingiz yonida maxsus toj belgisi chiqariladi.',
+    descRu: 'Специальная иконка короны рядом с именем профиля.',
+    cost: 100,
+    icon: 'fas fa-crown',
+    color: '#a855f7'
+  }
+];
 
-  setup() {
-    const points = ref(0);
-    const referralCount = ref(0);
-    const transactions = ref([]);
-    const showReferralModal = ref(false);
-    const showReferredUsers = ref(false);
-    const showBuyModal = ref(false);
-    const showReferralCodeModal = ref(false);
+onMounted(() => {
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      const userDoc = doc(db, 'users', user.uid);
+      const txRef = collection(userDoc, 'transactions');
 
-    const toast = useToast();
-    const { locale } = useI18n();
-    const auth = getAuth();
+      onSnapshot(userDoc, async (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          points.value = data.points || 0;
+          
+          const myReferralCode = data.referralCode || user.uid.slice(0, 8).toUpperCase();
+          if (!data.referralCode) {
+            await updateDoc(userDoc, {
+              referralCode: myReferralCode
+            });
+          }
 
-    const rewardItems = [
-      {
-        id: 'premium_pass',
-        nameUz: 'Premium Test Ruxsati',
-        nameRu: 'Премиум Доступ к Тестам',
-        descUz: 'Har qanday 1 ta premium testni bepul ochish imkoniyati.',
-        descRu: 'Возможность разблокировать любой 1 премиум-тест.',
-        cost: 200,
-        icon: 'fas fa-key',
-        color: '#3b82f6'
-      },
-      {
-        id: 'gold_frame',
-        nameUz: 'Oltin Sertifikat Ramkasi',
-        nameRu: 'Золотая Рамка Сертификата',
-        descUz: 'Sertifikatlaringizni chiroyli oltin hoshiya bilan bezash.',
-        descRu: 'Украсьте свои сертификаты красивой золотой рамкой.',
-        cost: 500,
-        icon: 'fas fa-gem',
-        color: '#fbbf24'
-      },
-      {
-        id: 'super_badge',
-        nameUz: 'Super Aql Profili Belgisi',
-        nameRu: 'Значок Супер Мозга',
-        descUz: 'Profil ismingiz yonida maxsus toj belgisi chiqariladi.',
-        descRu: 'Специальная иконка короны рядом с именем профиля.',
-        cost: 100,
-        icon: 'fas fa-crown',
-        color: '#a855f7'
-      }
-    ];
-
-    onMounted(() => {
-      auth.onAuthStateChanged(async (user) => {
-        if (user) {
-          const userDoc = doc(db, 'users', user.uid);
-          const txRef = collection(userDoc, 'transactions');
-
-          onSnapshot(userDoc, async (docSnap) => {
-            if (docSnap.exists()) {
-              const data = docSnap.data();
-              points.value = data.points || 0;
-              
-              const myReferralCode = data.referralCode || user.uid.slice(0, 8).toUpperCase();
-              if (!data.referralCode) {
-                await updateDoc(userDoc, {
-                  referralCode: myReferralCode
-                });
-              }
-
-              // Listen to referral counts
-              const referralsQuery = query(
-                collection(db, 'users'),
-                where('referredBy', '==', myReferralCode)
-              );
-              onSnapshot(referralsQuery, (refSnap) => {
-                referralCount.value = refSnap.size;
-              });
-            }
-          });
-
-          onSnapshot(txRef, (querySnapshot) => {
-            transactions.value = querySnapshot.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            }));
+          // Listen to referral counts
+          const referralsQuery = query(
+            collection(db, 'users'),
+            where('referredBy', '==', myReferralCode)
+          );
+          onSnapshot(referralsQuery, (refSnap) => {
+            referralCount.value = refSnap.size;
           });
         }
       });
-    });
 
-    const isRus = computed(() => locale.value === 'RUS');
-
-    const sortedTransactions = computed(() => {
-      return [...transactions.value].map(tx => {
-        // Normalize points/amount
-        const val = tx.points !== undefined ? tx.points : (tx.amount || 0);
-        
-        // Normalize action/type
-        let act = tx.action;
-        if (!act) {
-          if (tx.type === 'box_purchase') act = isRus.value ? 'Покупка коробки (Lootbox)' : 'Quti xaridi (Lootbox)';
-          else if (tx.type === 'direct_purchase') act = isRus.value ? 'Покупка в магазине' : 'Do\'kondan xarid';
-          else if (tx.type === 'quick_sell') act = isRus.value ? 'Быстрая продажа' : 'Tezkor sotish';
-          else if (tx.type === 'test_reward') act = isRus.value ? 'Награда за тест' : 'Test yechish mukofoti';
-          else act = isRus.value ? 'Транзакция' : 'Tranzaksiya';
-        }
-
-        return {
-          ...tx,
-          normalizedPoints: val,
-          normalizedAction: act
-        };
-      }).sort((a, b) => {
-        const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp).getTime();
-        const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp).getTime();
-        return timeB - timeA;
+      onSnapshot(txRef, (querySnapshot) => {
+        transactions.value = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
       });
-    });
+    }
+  });
+});
 
-    const totalSpent = computed(() => {
-      return sortedTransactions.value
-        .filter(t => t.normalizedPoints < 0)
-        .reduce((sum, t) => sum + Math.abs(t.normalizedPoints), 0);
-    });
+const isRus = computed(() => locale.value === 'RUS');
 
-    const totalEarned = computed(() => {
-      return sortedTransactions.value
-        .filter(t => t.normalizedPoints > 0)
-        .reduce((sum, t) => sum + t.normalizedPoints, 0);
-    });
-
-    const exchangeItem = async (item) => {
-      const user = auth.currentUser;
-      if (!user) {
-        toast.error(isRus.value ? 'Войдите в аккаунт' : 'Tizimga kiring');
-        return;
-      }
-
-      if (points.value < item.cost) {
-        toast.error(isRus.value ? 'Недостаточно TP Coins!' : 'TP Coinlaringiz yetarli emas!');
-        return;
-      }
-
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const txRef = collection(userDocRef, 'transactions');
-
-        await updateDoc(userDocRef, {
-          points: increment(-item.cost)
-        });
-
-        await addDoc(txRef, {
-          action: isRus.value ? `Обмен: ${item.nameRu}` : `Almashtirildi: ${item.nameUz}`,
-          points: -item.cost,
-          timestamp: new Date()
-        });
-
-        toast.success(isRus.value ? `Вы успешно обменяли на "${item.nameRu}"!` : `"${item.nameUz}" muvaffaqiyatli almashtirildi!`);
-      } catch (err) {
-        console.error(err);
-        toast.error(isRus.value ? 'Ошибка при покупке' : 'Xarid qilishda xatolik yuz berdi');
-      }
-    };
-
-    const formatDate = (timestamp) => {
-      if (!timestamp) return '';
-      let date;
-      if (typeof timestamp.toDate === 'function') {
-        date = timestamp.toDate();
-      } else {
-        date = new Date(timestamp);
-      }
-      return date.toLocaleDateString(locale.value === 'RUS' ? 'ru-RU' : 'uz-UZ', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    };
-
-    const buyPoints = () => {
-      showBuyModal.value = true;
-    };
+const sortedTransactions = computed(() => {
+  return [...transactions.value].map(tx => {
+    // Normalize points/amount
+    const val = tx.points !== undefined ? tx.points : (tx.amount || 0);
+    
+    // Normalize action/type
+    let act = tx.action;
+    if (!act) {
+      if (tx.type === 'box_purchase') act = isRus.value ? 'Покупка коробки (Lootbox)' : 'Quti xaridi (Lootbox)';
+      else if (tx.type === 'direct_purchase') act = isRus.value ? 'Покупка в магазине' : 'Do\'kondan xarid';
+      else if (tx.type === 'quick_sell') act = isRus.value ? 'Быстрая продажа' : 'Tezkor sotish';
+      else if (tx.type === 'test_reward') act = isRus.value ? 'Награда за тест' : 'Test yechish mukofoti';
+      else act = isRus.value ? 'Транзакция' : 'Tranzaksiya';
+    }
 
     return {
-      points,
-      referralCount,
-      transactions,
-      sortedTransactions,
-      totalSpent,
-      totalEarned,
-      formatDate,
-      buyPoints,
-      showReferralModal,
-      showReferredUsers,
-      showBuyModal,
-      showReferralCodeModal,
-      rewardItems,
-      exchangeItem,
-      isRus,
-      
-      // Rank wrappers
-      getRankName,
-      getRankIcon,
-      getRankClass,
-      locale,
+      ...tx,
+      normalizedPoints: val,
+      normalizedAction: act
     };
-  },
+  }).sort((a, b) => {
+    const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp).getTime();
+    const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp).getTime();
+    return timeB - timeA;
+  });
+});
+
+const totalSpent = computed(() => {
+  return sortedTransactions.value
+    .filter(t => t.normalizedPoints < 0)
+    .reduce((sum, t) => sum + Math.abs(t.normalizedPoints), 0);
+});
+
+const totalEarned = computed(() => {
+  return sortedTransactions.value
+    .filter(t => t.normalizedPoints > 0)
+    .reduce((sum, t) => sum + t.normalizedPoints, 0);
+});
+
+const exchangeItem = async (item) => {
+  const user = auth.currentUser;
+  if (!user) {
+    toast.error(isRus.value ? 'Войдите в аккаунт' : 'Tizimga kiring');
+    return;
+  }
+
+  if (points.value < item.cost) {
+    toast.error(isRus.value ? 'Недостаточно TP Coins!' : 'TP Coinlaringiz yetarli emas!');
+    return;
+  }
+
+  try {
+    const userDocRef = doc(db, 'users', user.uid);
+    const txRef = collection(userDocRef, 'transactions');
+
+    await updateDoc(userDocRef, {
+      points: increment(-item.cost)
+    });
+
+    await addDoc(txRef, {
+      action: isRus.value ? `Обмен: ${item.nameRu}` : `Almashtirildi: ${item.nameUz}`,
+      points: -item.cost,
+      timestamp: new Date()
+    });
+
+    toast.success(isRus.value ? `Вы успешно обменяли на "${item.nameRu}"!` : `"${item.nameUz}" muvaffaqiyatli almashtirildi!`);
+  } catch (err) {
+    console.error(err);
+    toast.error(isRus.value ? 'Ошибка при покупке' : 'Xarid qilishda xatolik yuz berdi');
+  }
+};
+
+const formatDate = (timestamp) => {
+  if (!timestamp) return '';
+  let date;
+  if (typeof timestamp.toDate === 'function') {
+    date = timestamp.toDate();
+  } else {
+    date = new Date(timestamp);
+  }
+  return date.toLocaleDateString(locale.value === 'RUS' ? 'ru-RU' : 'uz-UZ', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const buyPoints = () => {
+  showBuyModal.value = true;
 };
 </script>
 <style scoped>

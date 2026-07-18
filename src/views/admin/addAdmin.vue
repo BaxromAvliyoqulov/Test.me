@@ -139,7 +139,8 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue';
 import { db } from '@/config/firebase';
 import { collection, getDocs, doc, updateDoc, query, where, limit } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
@@ -147,195 +148,198 @@ import { confirmDelete } from '@/utils/sweetalert';
 
 const toast = useToast();
 
-export default {
-  name: 'AdminAddAdmin',
-  data() {
-    return {
-      emailInput: '',
-      foundUser: null,
-      searching: false,
-      searchTimeout: null,
-      selectedRole: 'content_admin',
-      adminNote: '',
-      formStatus: null,
-      saving: false,
-      admins: [],
-      loadingAdmins: false,
-      editingAdmin: null,
-      editRole: '',
-      editSubject: '',
-      subjects: [],
-      selectedSubject: '',
-      roles: [
-        {
-          key: 'boss',
-          label: 'B O S S',
-          icon: 'fas fa-chess-king',
-          color: '#dc2626',
-          desc: 'Platforma Asoschisi (Mutlaq Nazorat)',
-          permissions: ['God Mode', 'Barchasi']
-        },
-        {
-          key: 'super_admin',
-          label: 'Super Admin',
-          icon: 'fas fa-crown',
-          color: '#f59e0b',
-          desc: 'To\'liq huquq — barcha sozlamalar',
-          permissions: ['Barchasi', 'Delete', 'Settings']
-        },
-        {
-          key: 'content_admin',
-          label: 'Content Admin',
-          icon: 'fas fa-book-open',
-          color: '#3b82f6',
-          desc: 'Testlar va fanlarni boshqarish',
-          permissions: ['Testlar', 'Fanlar', 'AI Seeder']
-        },
-        {
-          key: 'teacher_admin',
-          label: 'Teacher Admin',
-          icon: 'fas fa-chalkboard-teacher',
-          color: '#0ea5e9',
-          desc: 'Faqat o\'ziga biriktirilgan fan',
-          permissions: ['Test Yuklash', 'O\'z fanini boshqarish']
-        },
-        {
-          key: 'moderator',
-          label: 'Moderator',
-          icon: 'fas fa-user-shield',
-          color: '#10b981',
-          desc: 'Foydalanuvchilar va shikoyatlar',
-          permissions: ['Users', 'Ban', 'Xabarlar']
-        },
-        {
-          key: 'shop_admin',
-          label: 'Shop Admin',
-          icon: 'fas fa-store',
-          color: '#8b5cf6',
-          desc: 'Do\'kon va mahsulotlarni boshqarish',
-          permissions: ['Shop', 'Mahsulotlar', 'Buyurtmalar']
-        },
-        {
-          key: 'viewer',
-          label: 'Viewer',
-          icon: 'fas fa-eye',
-          color: '#64748b',
-          desc: 'Faqat ko\'rish huquqi',
-          permissions: ['Ko\'rish']
-        }
-      ]
-    };
-  },
-  mounted() { 
-    this.loadAdmins(); 
-    this.loadSubjects();
-  },
-  methods: {
-    async loadSubjects() {
-      try {
-        const snap = await getDocs(collection(db, 'subjects'));
-        this.subjects = snap.docs.map(d => d.id);
-      } catch(e) { console.error('Error loading subjects:', e); }
-    },
-    getRoleColor(role) {
-      const r = this.roles.find(r => r.key === role);
-      return r ? r.color : '#64748b';
-    },
-    getRoleIcon(role) {
-      const r = this.roles.find(r => r.key === role);
-      return r ? r.icon : 'fas fa-user';
-    },
-    getRoleLabel(role) {
-      const r = this.roles.find(r => r.key === role);
-      return r ? r.label : role;
-    },
-    searchUser() {
-      clearTimeout(this.searchTimeout);
-      this.foundUser = null;
-      if (!this.emailInput.includes('@')) return;
-      this.searching = true;
-      this.searchTimeout = setTimeout(async () => {
-        try {
-          const q = query(collection(db, 'users'), where('email', '==', this.emailInput.trim()), limit(1));
-          const snap = await getDocs(q);
-          this.foundUser = snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
-        } catch(e) { this.foundUser = null; }
-        finally { this.searching = false; }
-      }, 600);
-    },
-    async assignAdmin() {
-      if (!this.foundUser || !this.selectedRole) {
-        this.formStatus = { type: 'error', message: 'Foydalanuvchi topilmadi yoki rol tanlanmadi!' };
-        return;
-      }
-      if (this.selectedRole === 'teacher_admin' && !this.selectedSubject) {
-        this.formStatus = { type: 'error', message: 'Iltimos, o\'qituvchi uchun fan tanlang!' };
-        return;
-      }
-      this.saving = true;
-      this.formStatus = null;
-      try {
-        const updateData = {
-          isAdmin: true,
-          adminRole: this.selectedRole,
-          adminNote: this.adminNote || '',
-        };
-        if (this.selectedRole === 'teacher_admin') updateData.teacherSubject = this.selectedSubject;
-        else updateData.teacherSubject = null;
+const emailInput = ref('');
+const foundUser = ref(null);
+const searching = ref(false);
+let searchTimeout = null;
+const selectedRole = ref('content_admin');
+const adminNote = ref('');
+const formStatus = ref(null);
+const saving = ref(false);
+const admins = ref([]);
+const loadingAdmins = ref(false);
+const editingAdmin = ref(null);
+const editRole = ref('');
+const editSubject = ref('');
+const subjects = ref([]);
+const selectedSubject = ref('');
 
-        await updateDoc(doc(db, 'users', this.foundUser.id), updateData);
-        this.formStatus = { type: 'success', message: `${this.foundUser.displayName || this.emailInput} — "${this.getRoleLabel(this.selectedRole)}" roli berildi!` };
-        this.emailInput = '';
-        this.foundUser = null;
-        this.adminNote = '';
-        await this.loadAdmins();
-      } catch(e) {
-        this.formStatus = { type: 'error', message: 'Xatolik: ' + e.message };
-      } finally { this.saving = false; }
-    },
-    async loadAdmins() {
-      this.loadingAdmins = true;
-      try {
-        const q = query(collection(db, 'users'), where('isAdmin', '==', true));
-        const snap = await getDocs(q);
-        this.admins = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      } catch(e) { this.admins = []; }
-      finally { this.loadingAdmins = false; }
-    },
-    editAdmin(admin) {
-      this.editingAdmin = admin;
-      this.editRole = admin.adminRole || 'viewer';
-      this.editSubject = admin.teacherSubject || '';
-    },
-    async saveEditRole() {
-      if (this.editRole === 'teacher_admin' && !this.editSubject) {
-        toast.error('Iltimos, o\'qituvchi uchun fan tanlang!');
-        return;
-      }
-      try {
-        const updateData = { adminRole: this.editRole };
-        if (this.editRole === 'teacher_admin') updateData.teacherSubject = this.editSubject;
-        else updateData.teacherSubject = null;
-
-        await updateDoc(doc(db, 'users', this.editingAdmin.id), updateData);
-        toast.success(`Admin roli muvaffaqiyatli yangilandi!`);
-        await this.loadAdmins();
-        this.editingAdmin = null;
-      } catch(e) { toast.error('Xatolik: ' + e.message); }
-    },
-    async removeAdmin(admin) {
-      if (!(await confirmDelete(
-        'Adminni o\'chirish',
-        `${admin.displayName || admin.email} foydalanuvchisidan adminlikni olasizmi?`
-      ))) return;
-      try {
-        await updateDoc(doc(db, 'users', admin.id), { isAdmin: false, adminRole: null });
-        toast.info(`${admin.displayName || admin.email} adminlar ro'yxatidan o'chirildi.`);
-        await this.loadAdmins();
-      } catch(e) { toast.error('Xatolik: ' + e.message); }
-    }
+const roles = [
+  {
+    key: 'boss',
+    label: 'B O S S',
+    icon: 'fas fa-chess-king',
+    color: '#dc2626',
+    desc: 'Platforma Asoschisi (Mutlaq Nazorat)',
+    permissions: ['God Mode', 'Barchasi']
+  },
+  {
+    key: 'super_admin',
+    label: 'Super Admin',
+    icon: 'fas fa-crown',
+    color: '#f59e0b',
+    desc: 'To\'liq huquq — barcha sozlamalar',
+    permissions: ['Barchasi', 'Delete', 'Settings']
+  },
+  {
+    key: 'content_admin',
+    label: 'Content Admin',
+    icon: 'fas fa-book-open',
+    color: '#3b82f6',
+    desc: 'Testlar va fanlarni boshqarish',
+    permissions: ['Testlar', 'Fanlar', 'AI Seeder']
+  },
+  {
+    key: 'teacher_admin',
+    label: 'Teacher Admin',
+    icon: 'fas fa-chalkboard-teacher',
+    color: '#0ea5e9',
+    desc: 'Faqat o\'ziga biriktirilgan fan',
+    permissions: ['Test Yuklash', 'O\'z fanini boshqarish']
+  },
+  {
+    key: 'moderator',
+    label: 'Moderator',
+    icon: 'fas fa-user-shield',
+    color: '#10b981',
+    desc: 'Foydalanuvchilar va shikoyatlar',
+    permissions: ['Users', 'Ban', 'Xabarlar']
+  },
+  {
+    key: 'shop_admin',
+    label: 'Shop Admin',
+    icon: 'fas fa-store',
+    color: '#8b5cf6',
+    desc: 'Do\'kon va mahsulotlarni boshqarish',
+    permissions: ['Shop', 'Mahsulotlar', 'Buyurtmalar']
+  },
+  {
+    key: 'viewer',
+    label: 'Viewer',
+    icon: 'fas fa-eye',
+    color: '#64748b',
+    desc: 'Faqat ko\'rish huquqi',
+    permissions: ['Ko\'rish']
   }
-}
+];
+
+const loadSubjects = async () => {
+  try {
+    const snap = await getDocs(collection(db, 'subjects'));
+    subjects.value = snap.docs.map(d => d.id);
+  } catch(e) { console.error('Error loading subjects:', e); }
+};
+
+const getRoleColor = (role) => {
+  const r = roles.find(r => r.key === role);
+  return r ? r.color : '#64748b';
+};
+
+const getRoleIcon = (role) => {
+  const r = roles.find(r => r.key === role);
+  return r ? r.icon : 'fas fa-user';
+};
+
+const getRoleLabel = (role) => {
+  const r = roles.find(r => r.key === role);
+  return r ? r.label : role;
+};
+
+const searchUser = () => {
+  clearTimeout(searchTimeout);
+  foundUser.value = null;
+  if (!emailInput.value.includes('@')) return;
+  searching.value = true;
+  searchTimeout = setTimeout(async () => {
+    try {
+      const q = query(collection(db, 'users'), where('email', '==', emailInput.value.trim()), limit(1));
+      const snap = await getDocs(q);
+      foundUser.value = snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+    } catch(e) { foundUser.value = null; }
+    finally { searching.value = false; }
+  }, 600);
+};
+
+const assignAdmin = async () => {
+  if (!foundUser.value || !selectedRole.value) {
+    formStatus.value = { type: 'error', message: 'Foydalanuvchi topilmadi yoki rol tanlanmadi!' };
+    return;
+  }
+  if (selectedRole.value === 'teacher_admin' && !selectedSubject.value) {
+    formStatus.value = { type: 'error', message: 'Iltimos, o\'qituvchi uchun fan tanlang!' };
+    return;
+  }
+  saving.value = true;
+  formStatus.value = null;
+  try {
+    const updateData = {
+      isAdmin: true,
+      adminRole: selectedRole.value,
+      adminNote: adminNote.value || '',
+    };
+    if (selectedRole.value === 'teacher_admin') updateData.teacherSubject = selectedSubject.value;
+    else updateData.teacherSubject = null;
+
+    await updateDoc(doc(db, 'users', foundUser.value.id), updateData);
+    formStatus.value = { type: 'success', message: `${foundUser.value.displayName || emailInput.value} — "${getRoleLabel(selectedRole.value)}" roli berildi!` };
+    emailInput.value = '';
+    foundUser.value = null;
+    adminNote.value = '';
+    await loadAdmins();
+  } catch(e) {
+    formStatus.value = { type: 'error', message: 'Xatolik: ' + e.message };
+  } finally { saving.value = false; }
+};
+
+const loadAdmins = async () => {
+  loadingAdmins.value = true;
+  try {
+    const q = query(collection(db, 'users'), where('isAdmin', '==', true));
+    const snap = await getDocs(q);
+    admins.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) { admins.value = []; }
+  finally { loadingAdmins.value = false; }
+};
+
+const editAdmin = (admin) => {
+  editingAdmin.value = admin;
+  editRole.value = admin.adminRole || 'viewer';
+  editSubject.value = admin.teacherSubject || '';
+};
+
+const saveEditRole = async () => {
+  if (editRole.value === 'teacher_admin' && !editSubject.value) {
+    toast.error('Iltimos, o\'qituvchi uchun fan tanlang!');
+    return;
+  }
+  try {
+    const updateData = { adminRole: editRole.value };
+    if (editRole.value === 'teacher_admin') updateData.teacherSubject = editSubject.value;
+    else updateData.teacherSubject = null;
+
+    await updateDoc(doc(db, 'users', editingAdmin.value.id), updateData);
+    toast.success(`Admin roli muvaffaqiyatli yangilandi!`);
+    await loadAdmins();
+    editingAdmin.value = null;
+  } catch(e) { toast.error('Xatolik: ' + e.message); }
+};
+
+const removeAdmin = async (admin) => {
+  if (!(await confirmDelete(
+    'Adminni o\'chirish',
+    `${admin.displayName || admin.email} foydalanuvchisidan adminlikni olasizmi?`
+  ))) return;
+  try {
+    await updateDoc(doc(db, 'users', admin.id), { isAdmin: false, adminRole: null });
+    toast.info(`${admin.displayName || admin.email} adminlar ro'yxatidan o'chirildi.`);
+    await loadAdmins();
+  } catch(e) { toast.error('Xatolik: ' + e.message); }
+};
+
+onMounted(() => {
+  loadAdmins();
+  loadSubjects();
+});
 </script>
 
 <style scoped>

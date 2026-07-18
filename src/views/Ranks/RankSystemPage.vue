@@ -116,7 +116,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from '@/utils/i18n';
@@ -126,130 +126,110 @@ import { db } from '@/config/firebase';
 import { ranksData, getRankName, getNextRankInfo } from '@/utils/ranks';
 import { useToast } from 'vue-toastification';
 
-export default {
-  name: 'RankSystemPage',
-  setup() {
-    const router = useRouter();
-    const { locale } = useI18n();
-    const toast = useToast();
-    const auth = getAuth();
+const router = useRouter();
+const { locale } = useI18n();
+const toast = useToast();
+const auth = getAuth();
 
-    const isRus = computed(() => locale.value === 'RUS');
-    const ranksList = ref(ranksData);
+const isRus = computed(() => locale.value === 'RUS');
+const ranksList = ref(ranksData);
+
+const userPoints = ref(0);
+const claimedRanks = ref([]);
+const claiming = ref(null);
+let authUnsub = null;
+let docUnsub = null;
+
+const currentRankName = computed(() => {
+  return getRankName(userPoints.value, locale.value);
+});
+
+const currentRankIndex = computed(() => {
+  for (let i = ranksList.value.length - 1; i >= 0; i--) {
+    if (userPoints.value >= ranksList.value[i].min) {
+      return i;
+    }
+  }
+  return 0;
+});
+
+const currentRankProgressPercent = computed(() => {
+  return getNextRankInfo(userPoints.value, locale.value).progressPercent;
+});
+
+const goBack = () => {
+  router.back();
+};
+
+const isCurrentRank = (index) => {
+  return index === currentRankIndex.value;
+};
+
+const hasReachedRank = (rank) => {
+  return userPoints.value >= rank.min;
+};
+
+const hasClaimed = (rankId) => {
+  return claimedRanks.value.includes(rankId);
+};
+
+const getLineFillHeight = (index) => {
+  if (index < currentRankIndex.value) return 100;
+  if (index === currentRankIndex.value) return currentRankProgressPercent.value;
+  return 0;
+};
+
+const claimReward = async (rank) => {
+  if (claiming.value) return;
+  
+  const user = auth.currentUser;
+  if (!user) {
+    toast.error(isRus.value ? 'Войдите в систему' : 'Tizimga kiring');
+    return;
+  }
+
+  claiming.value = rank.id;
+  
+  try {
+    const userRef = doc(db, 'users', user.uid);
+    await updateDoc(userRef, {
+      points: increment(rank.reward),
+      claimedRanks: arrayUnion(rank.id)
+    });
     
-    const userPoints = ref(0);
-    const claimedRanks = ref([]);
-    const claiming = ref(null);
-    let authUnsub = null;
-    let docUnsub = null;
-
-    const currentRankName = computed(() => {
-      return getRankName(userPoints.value, locale.value);
-    });
-
-    const currentRankIndex = computed(() => {
-      for (let i = ranksList.value.length - 1; i >= 0; i--) {
-        if (userPoints.value >= ranksList.value[i].min) {
-          return i;
-        }
-      }
-      return 0;
-    });
-
-    const currentRankProgressPercent = computed(() => {
-      return getNextRankInfo(userPoints.value, locale.value).progressPercent;
-    });
-
-    const goBack = () => {
-      router.back();
-    };
-
-    const isCurrentRank = (index) => {
-      return index === currentRankIndex.value;
-    };
-
-    const hasReachedRank = (rank) => {
-      return userPoints.value >= rank.min;
-    };
-
-    const hasClaimed = (rankId) => {
-      return claimedRanks.value.includes(rankId);
-    };
-
-    const getLineFillHeight = (index) => {
-      if (index < currentRankIndex.value) return 100;
-      if (index === currentRankIndex.value) return currentRankProgressPercent.value;
-      return 0;
-    };
-
-    const claimReward = async (rank) => {
-      if (claiming.value) return;
-      
-      const user = auth.currentUser;
-      if (!user) {
-        toast.error(isRus.value ? 'Войдите в систему' : 'Tizimga kiring');
-        return;
-      }
-
-      claiming.value = rank.id;
-      
-      try {
-        const userRef = doc(db, 'users', user.uid);
-        await updateDoc(userRef, {
-          points: increment(rank.reward),
-          claimedRanks: arrayUnion(rank.id)
-        });
-        
-        toast.success(isRus.value ? `Вы получили ${rank.reward} TP Coins!` : `Siz ${rank.reward} TP Coins oldingiz!`);
-        
-        // Optimistic UI update (optional, since onSnapshot will trigger anyway)
-        if (!claimedRanks.value.includes(rank.id)) {
-          claimedRanks.value.push(rank.id);
-        }
-      } catch (err) {
-        console.error(err);
-        toast.error(err.message);
-      } finally {
-        claiming.value = null;
-      }
-    };
-
-    onMounted(() => {
-      authUnsub = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          const userRef = doc(db, 'users', user.uid);
-          docUnsub = onSnapshot(userRef, (docSnap) => {
-            if (docSnap.exists()) {
-              const data = docSnap.data();
-              userPoints.value = data.points || 0;
-              claimedRanks.value = data.claimedRanks || [];
-            }
-          });
-        }
-      });
-    });
-
-    onUnmounted(() => {
-      if (authUnsub) authUnsub();
-      if (docUnsub) docUnsub();
-    });
-
-    return {
-      isRus,
-      ranksList,
-      userPoints,
-      currentRankName,
-      currentRankProgressPercent,
-      claiming,
-      goBack,
-      isCurrentRank,
-      hasReachedRank,
-      hasClaimed,
-      getLineFillHeight,
-      claimReward
-    };
+    toast.success(isRus.value ? `Вы получили ${rank.reward} TP Coins!` : `Siz ${rank.reward} TP Coins oldingiz!`);
+    
+    // Optimistic UI update (optional, since onSnapshot will trigger anyway)
+    if (!claimedRanks.value.includes(rank.id)) {
+      claimedRanks.value.push(rank.id);
+    }
+  } catch (err) {
+    console.error(err);
+    toast.error(err.message);
+  } finally {
+    claiming.value = null;
   }
 };
+
+onMounted(() => {
+  authUnsub = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const userRef = doc(db, 'users', user.uid);
+      docUnsub = onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          userPoints.value = data.points || 0;
+          claimedRanks.value = data.claimedRanks || [];
+        }
+      });
+    }
+  });
+});
+
+onUnmounted(() => {
+  if (authUnsub) authUnsub();
+  if (docUnsub) docUnsub();
+});
 </script>
 
 <style scoped>

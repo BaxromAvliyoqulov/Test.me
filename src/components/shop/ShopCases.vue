@@ -35,52 +35,47 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ShopCases',
-  props: {
-    userPoints: { type: Number, required: true },
-    isRus: { type: Boolean, required: true },
-    isOpening: { type: Boolean, default: false }
-  },
-  emits: ['open-case'],
-  setup() {
-    const cases = [
-      {
-        id: 'case_common',
-        nameUz: 'Oddiy G\'azna',
-        nameRu: 'Обычный Ящик',
-        descUz: 'Sertifikat ramkalari va kichik bonuslar.',
-        descRu: 'Рамки для сертификатов и мелкие бонусы.',
-        price: 150,
-        icon: 'fas fa-box',
-        color: '#3b82f6'
-      },
-      {
-        id: 'case_rare',
-        nameUz: 'Nodir G\'azna',
-        nameRu: 'Редкий Ящик',
-        descUz: 'Maxsus nishonlar va premium test ruxsatlari.',
-        descRu: 'Специальные значки и допуски к премиум тестам.',
-        price: 500,
-        icon: 'fas fa-gem',
-        color: '#8b5cf6'
-      },
-      {
-        id: 'case_epic',
-        nameUz: 'Eksklyuziv G\'azna',
-        nameRu: 'Эксклюзивный Ящик',
-        descUz: 'Noyob VIP maqom va noyob profillar.',
-        descRu: 'Уникальный VIP статус и профили.',
-        price: 1500,
-        icon: 'fas fa-crown',
-        color: '#f59e0b'
-      }
-    ];
+<script setup>
+const props = defineProps({
+  userPoints: { type: Number, required: true },
+  isRus: { type: Boolean, required: true },
+  isOpening: { type: Boolean, default: false }
+});
 
-    return { cases };
+const emit = defineEmits(['open-case']);
+
+const cases = [
+  {
+    id: 'case_common',
+    nameUz: "Oddiy G'azna",
+    nameRu: 'Обычный Ящик',
+    descUz: 'Sertifikat ramkalari va kichik bonuslar.',
+    descRu: 'Рамки для сертификатов и мелкие бонусы.',
+    price: 150,
+    icon: 'fas fa-box',
+    color: '#3b82f6'
+  },
+  {
+    id: 'case_rare',
+    nameUz: "Nodir G'azna",
+    nameRu: 'Редкий Ящик',
+    descUz: 'Maxsus nishonlar va premium test ruxsatlari.',
+    descRu: 'Специальные значки и допуски к премиум тестам.',
+    price: 500,
+    icon: 'fas fa-gem',
+    color: '#8b5cf6'
+  },
+  {
+    id: 'case_epic',
+    nameUz: "Eksklyuziv G'azna",
+    nameRu: 'Эксклюзивный Ящик',
+    descUz: 'Noyob VIP maqom va noyob profillar.',
+    descRu: 'Уникальный VIP статус и профили.',
+    price: 1500,
+    icon: 'fas fa-crown',
+    color: '#f59e0b'
   }
-}
+];
 </script>
 
 <style scoped>

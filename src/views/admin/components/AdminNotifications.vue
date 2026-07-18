@@ -104,154 +104,152 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue';
 import { db } from '@/config/firebase';
-import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, deleteDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
 import { confirmDelete } from '@/utils/sweetalert';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const toast = useToast();
 
-export default {
-  name: 'AdminNotifications',
-  data() {
-    return {
-      form: { title: '', body: '', type: 'info', target: 'all' },
-      sending: false,
-      status: null,
-      history: [],
-      loadingHistory: false,
-      
-      // AI States
-      showAIPrompt: false,
-      aiTopic: '',
-      aiLoading: false,
-      aiError: null,
-      translating: false
-    };
-  },
-  mounted() { 
-    this.loadHistory(); 
-  },
-  methods: {
-    typeEmoji(type) {
-      const map = { info: '📢', success: '✅', warning: '⚠️', update: '🆕', promo: '🎁' };
-      return map[type] || '📢';
-    },
-    formatDate(ts) {
-      if (!ts) return '';
-      const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleString('uz-UZ');
-    },
-    async initAI() {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("VITE_GEMINI_API_KEY .env faylida topilmadi.");
-      }
-      return new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: "gemini-1.5-flash" });
-    },
-    async generateWithAI() {
-      if(!this.aiTopic.trim()) return;
-      this.aiLoading = true;
-      this.aiError = null;
-      try {
-        const model = await this.initAI();
-        const prompt = `Sen o'quv platformasi administratori uchun bildirishnoma yozib beruvchi sun'iy intellektsan.
-Mavzu: "${this.aiTopic}"
+const form = ref({ title: '', body: '', type: 'info', target: 'all' });
+const sending = ref(false);
+const status = ref(null);
+const history = ref([]);
+const loadingHistory = ref(false);
+
+const showAIPrompt = ref(false);
+const aiTopic = ref('');
+const aiLoading = ref(false);
+const aiError = ref(null);
+const translating = ref(false);
+
+const typeEmoji = (type) => {
+  const map = { info: '📢', success: '✅', warning: '⚠️', update: '🆕', promo: '🎁' };
+  return map[type] || '📢';
+};
+
+const formatDate = (ts) => {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleString('uz-UZ');
+};
+
+const initAI = async () => {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("VITE_GEMINI_API_KEY .env faylida topilmadi.");
+  }
+  return new GoogleGenerativeAI(apiKey).getGenerativeModel({ model: "gemini-1.5-flash" });
+};
+
+const generateWithAI = async () => {
+  if(!aiTopic.value.trim()) return;
+  aiLoading.value = true;
+  aiError.value = null;
+  try {
+    const model = await initAI();
+    const prompt = `Sen o'quv platformasi administratori uchun bildirishnoma yozib beruvchi sun'iy intellektsan.
+Mavzu: "${aiTopic.value}"
 Foydalanuvchilarga yuborish uchun qiziqarli, emojilar bilan boyitilgan, qisqa va lo'nda matn tuzib ber.
 Iltimos, javobingni aynan shu JSON formatda qaytar (boshqa gaplarsiz):
 {"title": "Sarlavha", "body": "Asosiy matn", "type": "info, success, warning, update yoki promo"}`;
 
-        const result = await model.generateContent(prompt);
-        let text = result.response.text();
-        
-        // Clean up formatting if AI returned markdown
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(text);
-        
-        this.form.title = parsed.title;
-        this.form.body = parsed.body;
-        if(['info','success','warning','update','promo'].includes(parsed.type)) {
-          this.form.type = parsed.type;
-        }
-        
-        this.showAIPrompt = false;
-        this.aiTopic = '';
-      } catch (err) {
-        console.error(err);
-        this.aiError = err.message.includes('API_KEY') ? "API kalit kiritilmagan!" : "AI xato qildi, qayta urinib ko'ring.";
-      } finally {
-        this.aiLoading = false;
-      }
-    },
-    async translateToRu() {
-      if(!this.form.body.trim()) return;
-      this.translating = true;
-      try {
-        const model = await this.initAI();
-        const prompt = `Quyidagi bildirishnoma matnini ma'nosini saqlagan holda va emojilarni joyida qoldirib, rus tiliga tarjima qilib ber. Faqat tarjima qilingan matnni o'zini qaytar.
-Matn: "${this.form.body}"`;
-        
-        const result = await model.generateContent(prompt);
-        const translated = result.response.text().trim();
-        
-        // Update both title and body to bilingual or just Russian
-        // Let's make it bilingual for better UX
-        this.form.body = this.form.body + "\n\n" + translated;
-      } catch(err) {
-        console.error(err);
-        alert("Tarjimada xatolik: " + err.message);
-      } finally {
-        this.translating = false;
-      }
-    },
-    async loadHistory() {
-      this.loadingHistory = true;
-      try {
-        const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'));
-        const snap = await getDocs(q);
-        this.history = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      } catch(e) {
-        try {
-          const snap = await getDocs(collection(db, 'notifications'));
-          this.history = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        } catch(err) { console.error(err); }
-      } finally { this.loadingHistory = false; }
-    },
-    async sendNotification() {
-      if (!this.form.title.trim() || !this.form.body.trim()) {
-        this.status = { type: 'error', message: 'Sarlavha va xabar matni majburiy!' };
-        return;
-      }
-      this.sending = true;
-      this.status = null;
-      try {
-        await addDoc(collection(db, 'notifications'), {
-          title: this.form.title,
-          body: this.form.body,
-          type: this.form.type,
-          target: this.form.target,
-          createdAt: serverTimestamp(),
-          read: false,
-        });
-        this.status = { type: 'success', message: 'Bildirishnoma muvaffaqiyatli yuborildi!' };
-        this.form = { title: '', body: '', type: 'info', target: 'all' };
-        await this.loadHistory();
-      } catch(e) {
-        this.status = { type: 'error', message: 'Xatolik: ' + e.message };
-      } finally { this.sending = false; }
-    },
-    async deleteNotification(notif) {
-      if (!(await confirmDelete('O\'chirish', 'Bu bildirishnomani o\'chirasizmi?'))) return;
-      try {
-        await deleteDoc(doc(db, 'notifications', notif.id));
-        this.history = this.history.filter(n => n.id !== notif.id);
-        toast.success("Bildirishnoma o'chirildi");
-      } catch(e) { toast.error('Xatolik: ' + e.message); }
+    const result = await model.generateContent(prompt);
+    let text = result.response.text();
+    
+    // Clean up formatting if AI returned markdown
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const parsed = JSON.parse(text);
+    
+    form.value.title = parsed.title;
+    form.value.body = parsed.body;
+    if(['info','success','warning','update','promo'].includes(parsed.type)) {
+      form.value.type = parsed.type;
     }
+    
+    showAIPrompt.value = false;
+    aiTopic.value = '';
+  } catch (err) {
+    console.error(err);
+    aiError.value = err.message.includes('API_KEY') ? "API kalit kiritilmagan!" : "AI xato qildi, qayta urinib ko'ring.";
+  } finally {
+    aiLoading.value = false;
   }
-}
+};
+
+const translateToRu = async () => {
+  if(!form.value.body.trim()) return;
+  translating.value = true;
+  try {
+    const model = await initAI();
+    const prompt = `Quyidagi bildirishnoma matnini ma'nosini saqlagan holda va emojilarni joyida qoldirib, rus tiliga tarjima qilib ber. Faqat tarjima qilingan matnni o'zini qaytar.
+Matn: "${form.value.body}"`;
+    
+    const result = await model.generateContent(prompt);
+    const translated = result.response.text().trim();
+    
+    form.value.body = form.value.body + "\n\n" + translated;
+  } catch(err) {
+    console.error(err);
+    alert("Tarjimada xatolik: " + err.message);
+  } finally {
+    translating.value = false;
+  }
+};
+
+const loadHistory = async () => {
+  loadingHistory.value = true;
+  try {
+    const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    history.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) {
+    try {
+      const snap = await getDocs(collection(db, 'notifications'));
+      history.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch(err) { console.error(err); }
+  } finally { loadingHistory.value = false; }
+};
+
+const sendNotification = async () => {
+  if (!form.value.title.trim() || !form.value.body.trim()) {
+    status.value = { type: 'error', message: 'Sarlavha va xabar matni majburiy!' };
+    return;
+  }
+  sending.value = true;
+  status.value = null;
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      title: form.value.title,
+      body: form.value.body,
+      type: form.value.type,
+      target: form.value.target,
+      createdAt: serverTimestamp(),
+      read: false,
+    });
+    status.value = { type: 'success', message: 'Bildirishnoma muvaffaqiyatli yuborildi!' };
+    form.value = { title: '', body: '', type: 'info', target: 'all' };
+    await loadHistory();
+  } catch(e) {
+    status.value = { type: 'error', message: 'Xatolik: ' + e.message };
+  } finally { sending.value = false; }
+};
+
+const deleteNotification = async (notif) => {
+  if (!(await confirmDelete('O\'chirish', 'Bu bildirishnomani o\'chirasizmi?'))) return;
+  try {
+    await deleteDoc(doc(db, 'notifications', notif.id));
+    history.value = history.value.filter(n => n.id !== notif.id);
+    toast.success("Bildirishnoma o'chirildi");
+  } catch(e) { toast.error('Xatolik: ' + e.message); }
+};
+
+onMounted(() => {
+  loadHistory();
+});
 </script>
 
 <style scoped>

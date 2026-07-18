@@ -170,160 +170,139 @@
   </aside>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter } from 'vue-router';
 import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import defaultUserImage from '../assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
 import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
 import { useToast } from 'vue-toastification';
 
-export default {
-  emits: ['toggle-sidebar', 'close-mobile'],
-  props: {
-    isCollapsed: {
-      type: Boolean,
-      default: false
-    },
-    isMobileOpen: {
-      type: Boolean,
-      default: false
-    }
-  },
-  setup() {
-    const { locale, t, setLocale } = useI18n();
-    const toast = useToast();
-    return {
-      currentLocale: locale,
-      t,
-      setLocale,
-      toast
-    };
-  },
-  data() {
-    return {
-      username: null,
-      profileImage: null,
-      userPoints: 0,
-      shortId: null,
-      adminRole: null,
-      isAdmin: false,
-      pointsUnsub: null,
-    };
-  },
+const props = defineProps({
+  isCollapsed: { type: Boolean, default: false },
+  isMobileOpen: { type: Boolean, default: false }
+});
 
-  created() {
-    this.initializeAuth();
-    window.addEventListener('profile-updated', this.handleProfileUpdated);
-    this.profileImage = defaultUserImage;
-  },
-  beforeUnmount() {
-    window.removeEventListener('profile-updated', this.handleProfileUpdated);
-    if (this.pointsUnsub) this.pointsUnsub();
-  },
-  methods: {
-    handleProfileUpdated(event) {
-      const { displayName, photoURL } = event.detail;
-      if (displayName) this.username = displayName;
-      if (photoURL) this.profileImage = photoURL;
-    },
-    changeLocale(lang) {
-      this.setLocale(lang);
-    },
-    initializeAuth() {
-      const auth = getAuth();
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          this.handleUserAuthenticated(user);
-        } else {
-          this.handleUserNotAuthenticated();
-        }
-      });
-    },
-    async handleUserAuthenticated(user) {
+const emit = defineEmits(['toggle-sidebar', 'close-mobile']);
 
-      const userAgent = navigator.userAgent || '';
-      let os = 'Unknown';
-      if (/Windows/i.test(userAgent)) os = 'Windows';
-      else if (/Mac/i.test(userAgent)) os = 'macOS';
-      else if (/Android/i.test(userAgent)) os = 'Android';
-      else if (/iPhone|iPad|iPod/i.test(userAgent)) os = 'iOS';
-      else if (/Linux/i.test(userAgent)) os = 'Linux';
+const { locale: currentLocale, t, setLocale } = useI18n();
+const toast = useToast();
+const router = useRouter();
 
-      this.username = user.displayName || user.email || 'User';
-      this.profileImage = user.photoURL || defaultUserImage;
+const username = ref(null);
+const profileImage = ref(defaultUserImage);
+const userPoints = ref(0);
+const shortId = ref(null);
+const adminRole = ref(null);
+const isAdmin = ref(false);
+let pointsUnsub = null;
 
-      // Realtime listener for points and profile info
-      if (this.pointsUnsub) this.pointsUnsub();
-      this.pointsUnsub = onSnapshot(doc(db, 'users', user.uid), async (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          this.userPoints = data.points || 0;
-          this.adminRole = data.adminRole || null;
-          this.isAdmin = data.isAdmin || false;
-          if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
-            this.adminRole = 'super_admin';
-            this.isAdmin = true;
-          }
-          if (data.displayName) this.username = data.displayName;
-          if (data.photoURL) this.profileImage = data.photoURL;
-          
-          if (!data.shortId) {
-            const newShortId = user.uid.slice(0, 8).toUpperCase();
-            await updateDoc(doc(db, 'users', user.uid), { shortId: newShortId, deviceOS: os });
-            this.shortId = newShortId;
-          } else {
-            this.shortId = data.shortId;
-          }
-          if (data.deviceOS !== os) {
-            await updateDoc(doc(db, 'users', user.uid), { deviceOS: os });
-          }
-        }
-      });
-    },
-    handleUserNotAuthenticated() {
-      this.username = null;
-      this.profileImage = defaultUserImage;
-      if (this.pointsUnsub) this.pointsUnsub();
-    },
-    navigateTo(path) {
-      this.$router.push(path);
-    },
-    async logout() {
-      try {
-        const auth = getAuth();
-        await signOut(auth);
-        this.handleUserNotAuthenticated();
-        this.$router.push('/login');
-      } catch (error) {
-        console.error('Logout error:', error);
+const navigateTo = (path) => {
+  router.push(path);
+};
+
+const handleProfileUpdated = (event) => {
+  const { displayName, photoURL } = event.detail;
+  if (displayName) username.value = displayName;
+  if (photoURL) profileImage.value = photoURL;
+};
+
+const toggleLang = () => {
+  const newLang = currentLocale.value === 'UZB' ? 'RUS' : 'UZB';
+  setLocale(newLang);
+};
+
+const copyId = () => {
+  if (shortId.value) {
+    navigator.clipboard.writeText(shortId.value);
+    toast.success(currentLocale.value === 'RUS' ? 'ID скопирован!' : 'ID nusxalandi!');
+  }
+};
+
+const logout = async () => {
+  try {
+    const auth = getAuth();
+    await signOut(auth);
+    handleUserNotAuthenticated();
+    router.push('/login');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+};
+
+const handleUserNotAuthenticated = () => {
+  username.value = null;
+  profileImage.value = defaultUserImage;
+  if (pointsUnsub) pointsUnsub();
+};
+
+const handleUserAuthenticated = async (user) => {
+  const userAgent = navigator.userAgent || '';
+  let os = 'Unknown';
+  if (/Windows/i.test(userAgent)) os = 'Windows';
+  else if (/Mac/i.test(userAgent)) os = 'macOS';
+  else if (/Android/i.test(userAgent)) os = 'Android';
+  else if (/iPhone|iPad|iPod/i.test(userAgent)) os = 'iOS';
+  else if (/Linux/i.test(userAgent)) os = 'Linux';
+
+  username.value = user.displayName || user.email || 'User';
+  profileImage.value = user.photoURL || defaultUserImage;
+
+  if (pointsUnsub) pointsUnsub();
+  pointsUnsub = onSnapshot(doc(db, 'users', user.uid), async (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      userPoints.value = data.points || 0;
+      adminRole.value = data.adminRole || null;
+      isAdmin.value = data.isAdmin || false;
+      if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
+        adminRole.value = 'super_admin';
+        isAdmin.value = true;
       }
-    },
-    getRankName(pts, loc) { return getRankName(pts, loc); },
-    getRankClass(pts) { return getRankClass(pts); },
-    getRankIcon(pts) { return getRankIcon(pts); },
-    getRankIcon(pts) { return getRankIcon(pts); },
-    copyId() {
-      if (this.shortId) {
-        navigator.clipboard.writeText(this.shortId);
-        this.toast.success(this.currentLocale === 'RUS' ? 'ID скопирован!' : 'ID nusxalandi!');
+      if (data.displayName) username.value = data.displayName;
+      if (data.photoURL) profileImage.value = data.photoURL;
+      
+      if (!data.shortId) {
+        const newShortId = user.uid.slice(0, 8).toUpperCase();
+        await updateDoc(doc(db, 'users', user.uid), { shortId: newShortId, deviceOS: os });
+        shortId.value = newShortId;
+      } else {
+        shortId.value = data.shortId;
       }
-    },
-    toggleLang() {
-      const newLang = this.currentLocale === 'UZB' ? 'RUS' : 'UZB';
-      this.changeLocale(newLang);
-    }
-  },
-  directives: {
-    tooltip: {
-      mounted(el, binding) {
-        el.setAttribute('title', binding.value || '');
-      },
-      updated(el, binding) {
-        el.setAttribute('title', binding.value || '');
+      if (data.deviceOS !== os) {
+        await updateDoc(doc(db, 'users', user.uid), { deviceOS: os });
       }
     }
+  });
+};
+
+const initializeAuth = () => {
+  const auth = getAuth();
+  onAuthStateChanged(auth, (user) => {
+    if (user) handleUserAuthenticated(user);
+    else handleUserNotAuthenticated();
+  });
+};
+
+onMounted(() => {
+  initializeAuth();
+  window.addEventListener('profile-updated', handleProfileUpdated);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('profile-updated', handleProfileUpdated);
+  if (pointsUnsub) pointsUnsub();
+});
+
+const vTooltip = {
+  mounted(el, binding) {
+    el.setAttribute('title', binding.value || '');
+  },
+  updated(el, binding) {
+    el.setAttribute('title', binding.value || '');
   }
 };
 </script>

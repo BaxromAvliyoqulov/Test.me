@@ -56,17 +56,14 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'TransactionSidebar',
-  props: {
-    isRus: { type: Boolean, required: true },
-    totalEarned: { type: Number, required: true },
-    totalSpent: { type: Number, required: true },
-    transactions: { type: Array, required: true },
-    formatDate: { type: Function, required: true }
-  }
-}
+<script setup>
+const props = defineProps({
+  isRus: { type: Boolean, required: true },
+  totalEarned: { type: Number, required: true },
+  totalSpent: { type: Number, required: true },
+  transactions: { type: Array, required: true },
+  formatDate: { type: Function, required: true }
+});
 </script>
 
 <style scoped>

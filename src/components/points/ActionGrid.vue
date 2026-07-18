@@ -46,14 +46,12 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ActionGrid',
-  props: {
-    isRus: { type: Boolean, required: true }
-  },
-  emits: ['buy-points', 'share-referral', 'show-users', 'enter-code']
-}
+<script setup>
+const props = defineProps({
+  isRus: { type: Boolean, required: true }
+});
+
+const emit = defineEmits(['buy-points', 'share-referral', 'show-users', 'enter-code']);
 </script>
 
 <style scoped>

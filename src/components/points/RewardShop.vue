@@ -38,16 +38,14 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'RewardShop',
-  props: {
-    rewardItems: { type: Array, required: true },
-    isRus: { type: Boolean, required: true },
-    points: { type: Number, required: true }
-  },
-  emits: ['exchange']
-}
+<script setup>
+const props = defineProps({
+  rewardItems: { type: Array, required: true },
+  isRus: { type: Boolean, required: true },
+  points: { type: Number, required: true }
+});
+
+const emit = defineEmits(['exchange']);
 </script>
 
 <style scoped>

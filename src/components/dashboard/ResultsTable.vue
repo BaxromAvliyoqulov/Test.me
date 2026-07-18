@@ -147,60 +147,56 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { useI18n } from '@/utils/i18n';
 
-export default {
-  name: 'ResultsTable',
-  props: {
-    search: String,
-    filterSubject: String,
-    filterLevel: String,
-    uniqueSubjects: Array,
-    uniqueLevels: Array,
-    loading: Boolean,
-    items: Array,
-    paginatedItems: Array,
-    headers: Array,
-    sortKey: String,
-    sortOrder: String,
-    currentPage: Number,
-    totalPages: Number
-  },
-  emits: ['update:search', 'update:filterSubject', 'update:filterLevel', 'update:currentPage', 'export', 'sort', 'delete'],
-  setup() {
-    const { locale, t } = useI18n();
-    return {
-      currentLocale: locale,
-      t,
-    };
-  },
-  methods: {
-    formatDate(timestamp) {
-      if (!timestamp) return '—';
-      if (typeof timestamp.toDate === 'function') {
-        return timestamp.toDate().toLocaleString();
-      }
-      return new Date(timestamp).toLocaleString();
-    },
-    getScorePercent(score, total) {
-      if (!total || total === 0) return 0;
-      return Math.round((score / total) * 100);
-    },
-    getScoreClass(score, total) {
-      const percent = this.getScorePercent(score, total);
-      if (percent >= 85) return 'score-excellent';
-      if (percent >= 60) return 'score-good';
-      return 'score-poor';
-    },
-    getLevelClass(level) {
-      const l = String(level).toLowerCase();
-      if (l.includes('oson') || l.includes('easy') || l.includes('легко') || l.includes('low')) return 'level-easy';
-      if (l.includes('orta') || l.includes('o\'rtacha') || l.includes('medium') || l.includes('средне')) return 'level-medium';
-      return 'level-hard';
-    }
+const props = defineProps({
+  search: String,
+  filterSubject: String,
+  filterLevel: String,
+  uniqueSubjects: Array,
+  uniqueLevels: Array,
+  loading: Boolean,
+  items: Array,
+  paginatedItems: Array,
+  headers: Array,
+  sortKey: String,
+  sortOrder: String,
+  currentPage: Number,
+  totalPages: Number
+});
+
+const emit = defineEmits(['update:search', 'update:filterSubject', 'update:filterLevel', 'update:currentPage', 'export', 'sort', 'delete']);
+
+const { locale, t } = useI18n();
+const currentLocale = locale;
+
+const formatDate = (timestamp) => {
+  if (!timestamp) return '—';
+  if (typeof timestamp.toDate === 'function') {
+    return timestamp.toDate().toLocaleString();
   }
-}
+  return new Date(timestamp).toLocaleString();
+};
+
+const getScorePercent = (score, total) => {
+  if (!total || total === 0) return 0;
+  return Math.round((score / total) * 100);
+};
+
+const getScoreClass = (score, total) => {
+  const percent = getScorePercent(score, total);
+  if (percent >= 85) return 'score-excellent';
+  if (percent >= 60) return 'score-good';
+  return 'score-poor';
+};
+
+const getLevelClass = (level) => {
+  const l = String(level).toLowerCase();
+  if (l.includes('oson') || l.includes('easy') || l.includes('легко') || l.includes('low')) return 'level-easy';
+  if (l.includes('orta') || l.includes("o'rtacha") || l.includes('medium') || l.includes('средне')) return 'level-medium';
+  return 'level-hard';
+};
 </script>
 
 <style scoped>

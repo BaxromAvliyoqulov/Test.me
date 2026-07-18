@@ -140,7 +140,8 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue';
 import { db } from '@/config/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
@@ -148,103 +149,102 @@ import { confirmDelete } from '@/utils/sweetalert';
 
 const toast = useToast();
 
-export default {
-  name: 'AdminShop',
-  data() {
-    return {
-      tab: 'items',
-      allItems: [],
-      orders: [],
-      filterRarity: '',
-      filterType: '',
-      loadingItems: true,
-      loadingOrders: false,
-      savingItem: false,
-      editingItem: null,
-      formStatus: null,
-      form: { id: '', name: '', emoji: '🎁', type: 'cosmetic', rarity: 'Common', minValue: 100, maxValue: 500, description: '' }
-    };
-  },
-  computed: {
-    filteredItems() {
-      return this.allItems.filter(item => {
-        if (this.filterRarity && (item.rarity || 'Common') !== this.filterRarity) return false;
-        if (this.filterType && (item.type || 'cosmetic') !== this.filterType) return false;
-        return true;
-      });
-    }
-  },
-  mounted() { this.loadItems(); },
-  watch: {
-    tab(val) {
-      if (val === 'orders' && !this.orders.length) this.loadOrders();
-    }
-  },
-  methods: {
-    formatDate(ts) {
-      if (!ts) return '—';
-      const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleDateString('uz-UZ');
-    },
-    async loadItems() {
-      this.loadingItems = true;
-      try {
-        const snap = await getDocs(collection(db, 'shopItems'));
-        this.allItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      } catch(e) { console.error(e); }
-      finally { this.loadingItems = false; }
-    },
-    async loadOrders() {
-      this.loadingOrders = true;
-      try {
-        const snap = await getDocs(collection(db, 'shopOrders'));
-        this.orders = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => {
-          const ta = a.createdAt?.toMillis?.() || 0;
-          const tb = b.createdAt?.toMillis?.() || 0;
-          return tb - ta;
-        });
-      } catch(e) { console.error(e); }
-      finally { this.loadingOrders = false; }
-    },
-    editItem(item) {
-      this.editingItem = item;
-      this.form = { ...item };
-      this.tab = 'add';
-    },
-    cancelEdit() {
-      this.editingItem = null;
-      this.form = { id: '', name: '', emoji: '🎁', type: 'cosmetic', rarity: 'Common', minValue: 100, maxValue: 500, description: '' };
-    },
-    async deleteItem(item) {
-      if (!(await confirmDelete(
-        'Mahsulotni o\'chirish',
-        `"${item.name || item.id}" ni o'chirasizmi?`
-      ))) return;
-      try {
-        await deleteDoc(doc(db, 'shopItems', item.id));
-        this.allItems = this.allItems.filter(i => i.id !== item.id);
-      } catch(e) { alert('Xatolik: ' + e.message); }
-    },
-    async submitItem() {
-      if (!this.form.id || !this.form.name) {
-        this.formStatus = { type: 'error', message: 'ID va Nomi majburiy!' };
-        return;
-      }
-      this.savingItem = true;
-      this.formStatus = null;
-      try {
-        const data = { name: this.form.name, emoji: this.form.emoji, type: this.form.type, rarity: this.form.rarity, minValue: this.form.minValue, maxValue: this.form.maxValue, description: this.form.description };
-        await setDoc(doc(db, 'shopItems', this.form.id), data);
-        this.formStatus = { type: 'success', message: this.editingItem ? 'Muvaffaqiyatli yangilandi!' : 'Yangi mahsulot qo\'shildi!' };
-        await this.loadItems();
-        if (!this.editingItem) this.cancelEdit();
-        else this.editingItem = null;
-      } catch(e) {
-        this.formStatus = { type: 'error', message: 'Xatolik: ' + e.message };
-      } finally { this.savingItem = false; }
-    }
+const tab = ref('items');
+const allItems = ref([]);
+const orders = ref([]);
+const filterRarity = ref('');
+const filterType = ref('');
+const loadingItems = ref(true);
+const loadingOrders = ref(false);
+const savingItem = ref(false);
+const editingItem = ref(null);
+const formStatus = ref(null);
+const form = ref({ id: '', name: '', emoji: '🎁', type: 'cosmetic', rarity: 'Common', minValue: 100, maxValue: 500, description: '' });
+
+const filteredItems = computed(() => {
+  return allItems.value.filter(item => {
+    if (filterRarity.value && (item.rarity || 'Common') !== filterRarity.value) return false;
+    if (filterType.value && (item.type || 'cosmetic') !== filterType.value) return false;
+    return true;
+  });
+});
+
+const loadOrders = async () => {
+  loadingOrders.value = true;
+  try {
+    const snap = await getDocs(collection(db, 'shopOrders'));
+    orders.value = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => {
+      const ta = a.createdAt?.toMillis?.() || 0;
+      const tb = b.createdAt?.toMillis?.() || 0;
+      return tb - ta;
+    });
+  } catch(e) { console.error(e); }
+  finally { loadingOrders.value = false; }
+};
+
+watch(tab, (val) => {
+  if (val === 'orders' && !orders.value.length) loadOrders();
+});
+
+const formatDate = (ts) => {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('uz-UZ');
+};
+
+const loadItems = async () => {
+  loadingItems.value = true;
+  try {
+    const snap = await getDocs(collection(db, 'shopItems'));
+    allItems.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) { console.error(e); }
+  finally { loadingItems.value = false; }
+};
+
+const editItem = (item) => {
+  editingItem.value = item;
+  form.value = { ...item };
+  tab.value = 'add';
+};
+
+const cancelEdit = () => {
+  editingItem.value = null;
+  form.value = { id: '', name: '', emoji: '🎁', type: 'cosmetic', rarity: 'Common', minValue: 100, maxValue: 500, description: '' };
+};
+
+const deleteItem = async (item) => {
+  if (!(await confirmDelete(
+    'Mahsulotni o\'chirish',
+    `"${item.name || item.id}" ni o'chirasizmi?`
+  ))) return;
+  try {
+    await deleteDoc(doc(db, 'shopItems', item.id));
+    allItems.value = allItems.value.filter(i => i.id !== item.id);
+  } catch(e) { alert('Xatolik: ' + e.message); }
+};
+
+const submitItem = async () => {
+  if (!form.value.id || !form.value.name) {
+    formStatus.value = { type: 'error', message: 'ID va Nomi majburiy!' };
+    return;
   }
-}
+  savingItem.value = true;
+  formStatus.value = null;
+  try {
+    const data = { name: form.value.name, emoji: form.value.emoji, type: form.value.type, rarity: form.value.rarity, minValue: form.value.minValue, maxValue: form.value.maxValue, description: form.value.description };
+    await setDoc(doc(db, 'shopItems', form.value.id), data);
+    formStatus.value = { type: 'success', message: editingItem.value ? 'Muvaffaqiyatli yangilandi!' : 'Yangi mahsulot qo\'shildi!' };
+    await loadItems();
+    if (!editingItem.value) cancelEdit();
+    else editingItem.value = null;
+  } catch(e) {
+    formStatus.value = { type: 'error', message: 'Xatolik: ' + e.message };
+  } finally { savingItem.value = false; }
+};
+
+onMounted(() => {
+  loadItems();
+});
 </script>
 
 <style scoped>

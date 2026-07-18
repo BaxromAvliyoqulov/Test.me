@@ -248,305 +248,308 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue';
 import { db } from '@/config/firebase';
 import { collection, getDocs, doc, updateDoc, query, where } from 'firebase/firestore';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
-import { getRankName, getRankClass } from '@/utils/ranks';
+import { getRankName as utilGetRankName, getRankClass as utilGetRankClass } from '@/utils/ranks';
 import { useToast } from 'vue-toastification';
 import { confirmDelete } from '@/utils/sweetalert';
 
 const toast = useToast();
 
-export default {
-  name: 'AdminUsers',
-  data() {
-    return {
-      loading: true,
-      allUsers: [],
-      filteredUsers: [],
-      selectedUsers: [],
-      
-      filters: {
-        search: '',
-        role: 'all',
-        rank: 'all',
-        sortBy: 'createdAt_desc'
-      },
-      
-      currentPage: 1,
-      pageSize: 20,
-      
-      editingUser: null,
-      newPoints: 0,
-      
-      viewingUser: null,
-      activeTab: 'general',
-      loadingDetails: false,
-      userResults: [],
-      userReferrals: [],
-      
-      bulkEditPointsModal: false,
-      bulkPointsToAdd: 0
-    };
-  },
-  computed: {
-    totalCount() { return this.filteredUsers.length; },
-    activeCount() { return this.filteredUsers.filter(u => (u.points || 0) > 0).length; },
-    adminCount() { return this.filteredUsers.filter(u => u.isAdmin).length; },
-    avgPoints() {
-      if (!this.filteredUsers.length) return 0;
-      const sum = this.filteredUsers.reduce((a, u) => a + (u.points || 0), 0);
-      return Math.round(sum / this.filteredUsers.length).toLocaleString();
-    },
-    totalPages() { return Math.ceil(this.filteredUsers.length / this.pageSize); },
-    userAvgScore() {
-      if (!this.userResults || this.userResults.length === 0) return 0;
-      let totalP = 0;
-      this.userResults.forEach(r => {
-        totalP += (r.score / (r.total || 1)) * 100;
-      });
-      return Math.round(totalP / this.userResults.length);
-    },
-    paginatedUsers() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredUsers.slice(start, start + this.pageSize);
-    },
-    visiblePages() {
-      const pages = [];
-      for (let i = Math.max(1, this.currentPage - 2); i <= Math.min(this.totalPages, this.currentPage + 2); i++) {
-        pages.push(i);
-      }
-      return pages;
-    },
-    isAllSelected() {
-      return this.paginatedUsers.length > 0 && this.paginatedUsers.every(u => this.selectedUsers.includes(u.id));
-    }
-  },
-  mounted() { this.loadUsers(); },
-  methods: {
-    getRankName(p) { return getRankName(p); },
-    getRankClass(p) { return getRankClass(p); },
-    formatDate(ms) {
-      if(!ms) return 'Noma\'lum';
-      const d = ms.toMillis ? new Date(ms.toMillis()) : new Date(ms);
-      return d.toLocaleDateString('uz-UZ');
-    },
-    getRoleName(role) {
-      if (!role) return 'Admin';
-      const map = {
-        'boss': 'B O S S',
-        'super_admin': 'Super Admin',
-        'content_admin': 'Content Admin',
-        'teacher_admin': 'Teacher Admin',
-        'moderator': 'Moderator',
-        'shop_admin': 'Shop Admin',
-        'viewer': 'Viewer'
-      };
-      return map[role] || 'Admin';
-    },
-    getRoleClass(role) {
-      if (!role) return 'role-default';
-      return 'role-' + role;
-    },
-    async loadUsers() {
-      this.loading = true;
-      this.selectedUsers = [];
-      try {
-        const snap = await getDocs(collection(db, 'users'));
-        this.allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        this.applyFilters();
-      } catch(e) { 
-        toast.error('Foydalanuvchilarni yuklashda xatolik: ' + e.message); 
-      } finally { 
-        this.loading = false; 
-      }
-    },
-    applyFilters() {
-      this.currentPage = 1;
-      this.selectedUsers = []; // Clear selections on filter change
-      let result = [...this.allUsers];
-      
-      // 1. Search filter
-      if (this.filters.search.trim()) {
-        const q = this.filters.search.toLowerCase();
-        result = result.filter(u =>
-          (u.displayName || '').toLowerCase().includes(q) ||
-          (u.email || '').toLowerCase().includes(q) ||
-          (u.referralCode || '').toLowerCase().includes(q)
-        );
-      }
-      
-      // 2. Role filter
-      if (this.filters.role === 'admin') result = result.filter(u => u.isAdmin);
-      else if (this.filters.role === 'user') result = result.filter(u => !u.isAdmin);
-      
-      // 3. Rank filter
-      if (this.filters.rank !== 'all') {
-         result = result.filter(u => this.getRankName(u.points || 0) === this.filters.rank);
-      }
-      
-      // 4. Sort
-      const [field, dir] = this.filters.sortBy.split('_');
-      result.sort((a, b) => {
-        let av = a[field] || 0, bv = b[field] || 0;
-        if (field === 'name') { av = a.displayName || ''; bv = b.displayName || ''; return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av); }
-        if (field === 'createdAt') { av = a.createdAt?.toMillis?.() || 0; bv = b.createdAt?.toMillis?.() || 0; }
-        return dir === 'asc' ? av - bv : bv - av;
-      });
-      
-      this.filteredUsers = result;
-    },
-    
-    // --- Selection Logic ---
-    toggleSelectAll(e) {
-      if (e.target.checked) {
-        // Select all on current page
-        this.paginatedUsers.forEach(u => {
-          if (!this.selectedUsers.includes(u.id)) this.selectedUsers.push(u.id);
-        });
-      } else {
-        // Deselect all on current page
-        this.paginatedUsers.forEach(u => {
-          this.selectedUsers = this.selectedUsers.filter(id => id !== u.id);
-        });
-      }
-    },
-    
-    // --- Single Actions ---
-    async viewUser(user) { 
-      this.viewingUser = user; 
-      this.activeTab = 'general';
-      this.userResults = [];
-      this.userReferrals = [];
-      this.fetchUserDetails(user);
-    },
-    closeViewUser() {
-      this.viewingUser = null;
-    },
-    async fetchUserDetails(user) {
-      this.loadingDetails = true;
-      try {
-        // Fetch results
-        const resQ = query(collection(db, 'results'), where('userId', '==', user.id));
-        const resSnap = await getDocs(resQ).catch(() => ({ docs: [] }));
-        let results = resSnap.docs.map(d => d.data());
-        results.sort((a,b) => {
-           let tA = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
-           let tB = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
-           return tB - tA;
-        });
-        this.userResults = results;
-        
-        // Fetch referrals
-        const refQ = query(collection(db, 'users'), where('referredBy', '==', user.id));
-        const refSnap = await getDocs(refQ).catch(() => ({ docs: [] }));
-        let refs = refSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        refs.sort((a,b) => {
-           let tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-           let tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-           return tB - tA;
-        });
-        this.userReferrals = refs;
-        
-      } catch(e) { console.error("Details fetch error", e); }
-      finally { this.loadingDetails = false; }
-    },
-    async sendPasswordReset() {
-      if (!this.viewingUser || !this.viewingUser.email) return;
-      try {
-        const auth = getAuth();
-        await sendPasswordResetEmail(auth, this.viewingUser.email);
-        toast.success(`${this.viewingUser.email} manziliga parolni tiklash xati yuborildi!`);
-      } catch (error) {
-        toast.error(`Xatolik: ${error.message}`);
-      }
-    },
-    editPoints(user) { this.editingUser = user; this.newPoints = user.points || 0; },
-    async savePoints() {
-      if (!this.editingUser) return;
-      try {
-        const parsedPoints = Number(this.newPoints) || 0;
-        await updateDoc(doc(db, 'users', this.editingUser.id), { points: parsedPoints });
-        
-        const idx = this.allUsers.findIndex(u => u.id === this.editingUser.id);
-        if (idx !== -1) this.allUsers[idx].points = parsedPoints;
-        
-        this.applyFilters();
-        toast.success(`${this.editingUser.displayName || this.editingUser.email} uchun TP muvaffaqiyatli yangilandi!`);
-        this.editingUser = null;
-      } catch(e) { 
-        console.error(e);
-        toast.error('Xatolik yuz berdi: ' + e.message); 
-      }
-    },
-    async banUser(user) {
-      if (!(await confirmDelete(
-        'Foydalanuvchini bloklash',
-        `${user.displayName || user.email} ni bloklaysizmi?`
-      ))) return;
-        updateDoc(doc(db, 'users', user.id), { isAdmin: false }).then(() => {
-          toast.info('Foydalanuvchi admin huquqidan mahrum qilindi.');
-          this.loadUsers();
-        }).catch(e => toast.error('Xatolik yuz berdi: ' + e.message));
-    },
-    sendMail(user) {
-      toast.info(`Maktub tizimi yozilmoqda... ${user.email} ga tez orada xat yozish imkoni bo'ladi.`);
-    },
-    
-    // --- Bulk Actions ---
-    async executeBulkTP() {
-      if (this.selectedUsers.length === 0 || !this.bulkPointsToAdd) return;
-      
-      let successCount = 0;
-      for (const uid of this.selectedUsers) {
-         try {
-           const user = this.allUsers.find(u => u.id === uid);
-           if (!user) continue;
-           
-           const newTotal = (user.points || 0) + Number(this.bulkPointsToAdd);
-           await updateDoc(doc(db, 'users', uid), { points: newTotal });
-           user.points = newTotal;
-           successCount++;
-         } catch (err) {
-           console.error("Failed to update user", uid, err);
-         }
-      }
-      
-      this.applyFilters();
-      this.bulkEditPointsModal = false;
-      this.selectedUsers = [];
-      toast.success(`${successCount} ta foydalanuvchiga muvaffaqiyatli ${this.bulkPointsToAdd} TP qo'shildi!`);
-    },
-    async bulkBan() {
-      if (this.selectedUsers.length === 0) return;
-      if (!(await confirmDelete(
-        'Ommaviy Bloklash',
-        `Rostdan ham tanlangan ${this.selectedUsers.length} ta foydalanuvchini bloklamoqchimisiz?`
-      ))) return;
-        toast.warning('Ommaviy Ban qilish boshlandi...');
-        for (const uid of this.selectedUsers) {
-          try { await updateDoc(doc(db, 'users', uid), { isAdmin: false }); } 
-          catch(e) { console.error(e); }
-        }
-        toast.success("Ommaviy bloklash muvaffaqiyatli yakunlandi!");
-        this.selectedUsers = [];
-        this.loadUsers();
-    },
-    
-    exportCSV() {
-      const headers = ['#', 'Ism', 'Email', 'TP', 'Referral', 'Rol'];
-      const rows = this.filteredUsers.map((u, i) => [
-        i + 1, u.displayName || '', u.email || '', u.points || 0, u.referralCode || '', u.isAdmin ? 'Admin' : 'User'
-      ]);
-      const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'foydalanuvchilar.csv'; a.click();
-      URL.revokeObjectURL(url);
-    }
+const loading = ref(true);
+const allUsers = ref([]);
+const filteredUsers = ref([]);
+const selectedUsers = ref([]);
+
+const filters = ref({
+  search: '',
+  role: 'all',
+  rank: 'all',
+  sortBy: 'createdAt_desc'
+});
+
+const currentPage = ref(1);
+const pageSize = ref(20);
+
+const editingUser = ref(null);
+const newPoints = ref(0);
+
+const viewingUser = ref(null);
+const activeTab = ref('general');
+const loadingDetails = ref(false);
+const userResults = ref([]);
+const userReferrals = ref([]);
+
+const bulkEditPointsModal = ref(false);
+const bulkPointsToAdd = ref(0);
+
+// Computed
+const totalCount = computed(() => filteredUsers.value.length);
+const activeCount = computed(() => filteredUsers.value.filter(u => (u.points || 0) > 0).length);
+const adminCount = computed(() => filteredUsers.value.filter(u => u.isAdmin).length);
+const avgPoints = computed(() => {
+  if (!filteredUsers.value.length) return 0;
+  const sum = filteredUsers.value.reduce((a, u) => a + (u.points || 0), 0);
+  return Math.round(sum / filteredUsers.value.length).toLocaleString();
+});
+const totalPages = computed(() => Math.ceil(filteredUsers.value.length / pageSize.value));
+const userAvgScore = computed(() => {
+  if (!userResults.value || userResults.value.length === 0) return 0;
+  let totalP = 0;
+  userResults.value.forEach(r => {
+    totalP += (r.score / (r.total || 1)) * 100;
+  });
+  return Math.round(totalP / userResults.value.length);
+});
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filteredUsers.value.slice(start, start + pageSize.value);
+});
+const visiblePages = computed(() => {
+  const pages = [];
+  for (let i = Math.max(1, currentPage.value - 2); i <= Math.min(totalPages.value, currentPage.value + 2); i++) {
+    pages.push(i);
   }
-}
+  return pages;
+});
+const isAllSelected = computed(() => {
+  return paginatedUsers.value.length > 0 && paginatedUsers.value.every(u => selectedUsers.value.includes(u.id));
+});
+
+// Methods
+const getRankName = (p) => utilGetRankName(p);
+const getRankClass = (p) => utilGetRankClass(p);
+
+const formatDate = (ms) => {
+  if(!ms) return 'Noma\'lum';
+  const d = ms.toMillis ? new Date(ms.toMillis()) : new Date(ms);
+  return d.toLocaleDateString('uz-UZ');
+};
+
+const getRoleName = (role) => {
+  if (!role) return 'Admin';
+  const map = {
+    'boss': 'B O S S',
+    'super_admin': 'Super Admin',
+    'content_admin': 'Content Admin',
+    'teacher_admin': 'Teacher Admin',
+    'moderator': 'Moderator',
+    'shop_admin': 'Shop Admin',
+    'viewer': 'Viewer'
+  };
+  return map[role] || 'Admin';
+};
+
+const getRoleClass = (role) => {
+  if (!role) return 'role-default';
+  return 'role-' + role;
+};
+
+const applyFilters = () => {
+  currentPage.value = 1;
+  selectedUsers.value = []; // Clear selections on filter change
+  let result = [...allUsers.value];
+  
+  // 1. Search filter
+  if (filters.value.search.trim()) {
+    const q = filters.value.search.toLowerCase();
+    result = result.filter(u =>
+      (u.displayName || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q) ||
+      (u.referralCode || '').toLowerCase().includes(q)
+    );
+  }
+  
+  // 2. Role filter
+  if (filters.value.role === 'admin') result = result.filter(u => u.isAdmin);
+  else if (filters.value.role === 'user') result = result.filter(u => !u.isAdmin);
+  
+  // 3. Rank filter
+  if (filters.value.rank !== 'all') {
+     result = result.filter(u => getRankName(u.points || 0) === filters.value.rank);
+  }
+  
+  // 4. Sort
+  const [field, dir] = filters.value.sortBy.split('_');
+  result.sort((a, b) => {
+    let av = a[field] || 0, bv = b[field] || 0;
+    if (field === 'name') { av = a.displayName || ''; bv = b.displayName || ''; return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av); }
+    if (field === 'createdAt') { av = a.createdAt?.toMillis?.() || 0; bv = b.createdAt?.toMillis?.() || 0; }
+    return dir === 'asc' ? av - bv : bv - av;
+  });
+  
+  filteredUsers.value = result;
+};
+
+const loadUsers = async () => {
+  loading.value = true;
+  selectedUsers.value = [];
+  try {
+    const snap = await getDocs(collection(db, 'users'));
+    allUsers.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    applyFilters();
+  } catch(e) { 
+    toast.error('Foydalanuvchilarni yuklashda xatolik: ' + e.message); 
+  } finally { 
+    loading.value = false; 
+  }
+};
+
+const toggleSelectAll = (e) => {
+  if (e.target.checked) {
+    paginatedUsers.value.forEach(u => {
+      if (!selectedUsers.value.includes(u.id)) selectedUsers.value.push(u.id);
+    });
+  } else {
+    paginatedUsers.value.forEach(u => {
+      selectedUsers.value = selectedUsers.value.filter(id => id !== u.id);
+    });
+  }
+};
+
+const fetchUserDetails = async (user) => {
+  loadingDetails.value = true;
+  try {
+    const resQ = query(collection(db, 'results'), where('userId', '==', user.id));
+    const resSnap = await getDocs(resQ).catch(() => ({ docs: [] }));
+    let results = resSnap.docs.map(d => d.data());
+    results.sort((a,b) => {
+       let tA = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
+       let tB = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
+       return tB - tA;
+    });
+    userResults.value = results;
+    
+    const refQ = query(collection(db, 'users'), where('referredBy', '==', user.id));
+    const refSnap = await getDocs(refQ).catch(() => ({ docs: [] }));
+    let refs = refSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    refs.sort((a,b) => {
+       let tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+       let tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+       return tB - tA;
+    });
+    userReferrals.value = refs;
+    
+  } catch(e) { console.error("Details fetch error", e); }
+  finally { loadingDetails.value = false; }
+};
+
+const viewUser = async (user) => { 
+  viewingUser.value = user; 
+  activeTab.value = 'general';
+  userResults.value = [];
+  userReferrals.value = [];
+  fetchUserDetails(user);
+};
+
+const closeViewUser = () => {
+  viewingUser.value = null;
+};
+
+const sendPasswordReset = async () => {
+  if (!viewingUser.value || !viewingUser.value.email) return;
+  try {
+    const auth = getAuth();
+    await sendPasswordResetEmail(auth, viewingUser.value.email);
+    toast.success(`${viewingUser.value.email} manziliga parolni tiklash xati yuborildi!`);
+  } catch (error) {
+    toast.error(`Xatolik: ${error.message}`);
+  }
+};
+
+const editPoints = (user) => { editingUser.value = user; newPoints.value = user.points || 0; };
+
+const savePoints = async () => {
+  if (!editingUser.value) return;
+  try {
+    const parsedPoints = Number(newPoints.value) || 0;
+    await updateDoc(doc(db, 'users', editingUser.value.id), { points: parsedPoints });
+    
+    const idx = allUsers.value.findIndex(u => u.id === editingUser.value.id);
+    if (idx !== -1) allUsers.value[idx].points = parsedPoints;
+    
+    applyFilters();
+    toast.success(`${editingUser.value.displayName || editingUser.value.email} uchun TP muvaffaqiyatli yangilandi!`);
+    editingUser.value = null;
+  } catch(e) { 
+    console.error(e);
+    toast.error('Xatolik yuz berdi: ' + e.message); 
+  }
+};
+
+const confirmBan = async (user) => {
+  if (!(await confirmDelete(
+    'Foydalanuvchini bloklash',
+    `${user.displayName || user.email} ni bloklaysizmi?`
+  ))) return;
+  updateDoc(doc(db, 'users', user.id), { isAdmin: false }).then(() => {
+    toast.info('Foydalanuvchi admin huquqidan mahrum qilindi.');
+    loadUsers();
+  }).catch(e => toast.error('Xatolik yuz berdi: ' + e.message));
+};
+
+const sendMail = (user) => {
+  toast.info(`Maktub tizimi yozilmoqda... ${user.email} ga tez orada xat yozish imkoni bo'ladi.`);
+};
+
+const executeBulkTP = async () => {
+  if (selectedUsers.value.length === 0 || !bulkPointsToAdd.value) return;
+  
+  let successCount = 0;
+  for (const uid of selectedUsers.value) {
+     try {
+       const user = allUsers.value.find(u => u.id === uid);
+       if (!user) continue;
+       
+       const newTotal = (user.points || 0) + Number(bulkPointsToAdd.value);
+       await updateDoc(doc(db, 'users', uid), { points: newTotal });
+       user.points = newTotal;
+       successCount++;
+     } catch (err) {
+       console.error("Failed to update user", uid, err);
+     }
+  }
+  
+  applyFilters();
+  bulkEditPointsModal.value = false;
+  selectedUsers.value = [];
+  toast.success(`${successCount} ta foydalanuvchiga muvaffaqiyatli ${bulkPointsToAdd.value} TP qo'shildi!`);
+};
+
+const confirmBulkBan = async () => {
+  if (selectedUsers.value.length === 0) return;
+  if (!(await confirmDelete(
+    'Ommaviy Bloklash',
+    `Rostdan ham tanlangan ${selectedUsers.value.length} ta foydalanuvchini bloklamoqchimisiz?`
+  ))) return;
+  toast.warning('Ommaviy Ban qilish boshlandi...');
+  for (const uid of selectedUsers.value) {
+    try { await updateDoc(doc(db, 'users', uid), { isAdmin: false }); } 
+    catch(e) { console.error(e); }
+  }
+  toast.success("Ommaviy bloklash muvaffaqiyatli yakunlandi!");
+  selectedUsers.value = [];
+  loadUsers();
+};
+
+const exportCSV = () => {
+  const headers = ['#', 'Ism', 'Email', 'TP', 'Referral', 'Rol'];
+  const rows = filteredUsers.value.map((u, i) => [
+    i + 1, u.displayName || '', u.email || '', u.points || 0, u.referralCode || '', u.isAdmin ? 'Admin' : 'User'
+  ]);
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'foydalanuvchilar.csv'; a.click();
+  URL.revokeObjectURL(url);
+};
+
+onMounted(() => {
+  loadUsers();
+});
 </script>
 
 <style scoped>

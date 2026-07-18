@@ -80,7 +80,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted } from 'vue';
 import { db } from '@/config/firebase';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
@@ -90,110 +90,89 @@ import { useI18n } from '@/utils/i18n';
 import ShopCases from '@/components/shop/ShopCases.vue';
 import { getBadges } from '@/utils/badges';
 
-export default {
-  name: 'ShopPage',
-  components: { ShopCases },
-  setup() {
-    const points = ref(0);
-    const { locale } = useI18n();
-    const isRus = ref(locale.value === 'RUS');
-    const toast = useToast();
-    const auth = getAuth();
+const points = ref(0);
+const { locale } = useI18n();
+const isRus = ref(locale.value === 'RUS');
+const toast = useToast();
+const auth = getAuth();
 
-    // Animation States
-    const isOpening = ref(false);
-    const showOverlay = ref(false);
-    const isShaking = ref(false);
-    const isExploding = ref(false);
-    const rewardRevealed = ref(false);
-    
-    const activeCase = ref(null);
-    const rewardIcon = ref('');
-    const rewardName = ref('');
+// Animation States
+const isOpening = ref(false);
+const showOverlay = ref(false);
+const isShaking = ref(false);
+const isExploding = ref(false);
+const rewardRevealed = ref(false);
 
-    onMounted(async () => {
-      auth.onAuthStateChanged(async (user) => {
-        if (user) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            points.value = userDoc.data().points || 0;
-          }
-        }
-      });
-    });
+const activeCase = ref(null);
+const rewardIcon = ref('');
+const rewardName = ref('');
 
-    const handleOpenCase = async (caseItem) => {
-      if (points.value < caseItem.price) {
-        toast.error(isRus.value ? 'Недостаточно TP Coins!' : 'TP Coins yetarli emas!');
-        return;
+onMounted(async () => {
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        points.value = userDoc.data().points || 0;
       }
+    }
+  });
+});
 
-      const user = auth.currentUser;
-      if (!user) return;
-
-      isOpening.value = true;
-      showOverlay.value = true;
-      activeCase.value = caseItem;
-      isShaking.value = true;
-
-      try {
-        // Deduct points
-        const userRef = doc(db, 'users', user.uid);
-        await updateDoc(userRef, {
-          points: increment(-caseItem.price)
-        });
-        points.value -= caseItem.price;
-
-        // Mock getting a random badge for visual effect
-        // In reality, this would save to user's inventory
-        const allBadges = getBadges(100, 10, 1000);
-        const randomBadge = allBadges[Math.floor(Math.random() * allBadges.length)];
-        
-        rewardIcon.value = randomBadge.icon;
-        rewardName.value = isRus.value ? randomBadge.nameRu : randomBadge.nameUz;
-
-        // Animation timing
-        setTimeout(() => {
-          isShaking.value = false;
-          isExploding.value = true;
-          
-          setTimeout(() => {
-            rewardRevealed.value = true;
-          }, 500);
-        }, 2000);
-
-      } catch (error) {
-        console.error('Error opening case:', error);
-        toast.error('Xatolik yuz berdi!');
-        closeOverlay();
-      }
-    };
-
-    const closeOverlay = () => {
-      showOverlay.value = false;
-      isOpening.value = false;
-      isShaking.value = false;
-      isExploding.value = false;
-      rewardRevealed.value = false;
-      activeCase.value = null;
-    };
-
-    return {
-      points,
-      isRus,
-      isOpening,
-      showOverlay,
-      isShaking,
-      isExploding,
-      rewardRevealed,
-      activeCase,
-      rewardIcon,
-      rewardName,
-      handleOpenCase,
-      closeOverlay
-    };
+const handleOpenCase = async (caseItem) => {
+  if (points.value < caseItem.price) {
+    toast.error(isRus.value ? 'Недостаточно TP Coins!' : 'TP Coins yetarli emas!');
+    return;
   }
-}
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  isOpening.value = true;
+  showOverlay.value = true;
+  activeCase.value = caseItem;
+  isShaking.value = true;
+
+  try {
+    // Deduct points
+    const userRef = doc(db, 'users', user.uid);
+    await updateDoc(userRef, {
+      points: increment(-caseItem.price)
+    });
+    points.value -= caseItem.price;
+
+    // Mock getting a random badge for visual effect
+    // In reality, this would save to user's inventory
+    const allBadges = getBadges(100, 10, 1000);
+    const randomBadge = allBadges[Math.floor(Math.random() * allBadges.length)];
+    
+    rewardIcon.value = randomBadge.icon;
+    rewardName.value = isRus.value ? randomBadge.nameRu : randomBadge.nameUz;
+
+    // Animation timing
+    setTimeout(() => {
+      isShaking.value = false;
+      isExploding.value = true;
+      
+      setTimeout(() => {
+        rewardRevealed.value = true;
+      }, 500);
+    }, 2000);
+
+  } catch (error) {
+    console.error('Error opening case:', error);
+    toast.error('Xatolik yuz berdi!');
+    closeOverlay();
+  }
+};
+
+const closeOverlay = () => {
+  showOverlay.value = false;
+  isOpening.value = false;
+  isShaking.value = false;
+  isExploding.value = false;
+  rewardRevealed.value = false;
+  activeCase.value = null;
+};
 </script>
 
 <style scoped>

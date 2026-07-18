@@ -42,38 +42,34 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ReviewAnswers',
-  props: {
-    questions: { type: Array, required: true },
-    selectedAnswers: { type: Array, required: true },
-  },
-  computed: {
-    correctCount() {
-      return this.questions.reduce((count, q, i) => {
-        const selected = this.selectedAnswers[i];
-        return q.options[selected] === q.answer ? count + 1 : count;
-      }, 0);
-    },
-    incorrectCount() {
-      return this.questions.length - this.correctCount;
-    },
-  },
-  methods: {
-    isCorrectAnswer(qIndex, optIndex) {
-      return (
-        this.questions[qIndex].answer ===
-        this.questions[qIndex].options[optIndex]
-      );
-    },
-    isSelectedIncorrect(qIndex, optIndex) {
-      return (
-        this.selectedAnswers[qIndex] === optIndex &&
-        !this.isCorrectAnswer(qIndex, optIndex)
-      );
-    },
-  },
+<script setup>
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+
+const props = defineProps({
+  questions: { type: Array, required: true },
+  selectedAnswers: { type: Array, required: true },
+});
+
+const router = useRouter();
+
+const correctCount = computed(() => {
+  return props.questions.reduce((count, q, i) => {
+    const selected = props.selectedAnswers[i];
+    return q.options[selected] === q.answer ? count + 1 : count;
+  }, 0);
+});
+
+const incorrectCount = computed(() => {
+  return props.questions.length - correctCount.value;
+});
+
+const isCorrectAnswer = (qIndex, optIndex) => {
+  return props.questions[qIndex].answer === props.questions[qIndex].options[optIndex];
+};
+
+const isSelectedIncorrect = (qIndex, optIndex) => {
+  return props.selectedAnswers[qIndex] === optIndex && !isCorrectAnswer(qIndex, optIndex);
 };
 </script>
 

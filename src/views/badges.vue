@@ -124,101 +124,90 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue';
 import { db, auth } from '@/config/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useI18n } from '@/utils/i18n';
 import { getBadges } from '@/utils/badges';
 
-export default {
-  name: 'BadgesView',
-  setup() {
-    const { locale } = useI18n();
-    return { currentLocale: locale };
-  },
-  data() {
-    return {
-      totalTestsSolved: 0,
-      userPoints: 0,
-      perfectScoresCount: 0,
-      results: [],
-      loading: true,
-      searchQuery: '',
-      activeFilter: 'all'
-    };
-  },
-  computed: {
-    isRus() {
-      return this.currentLocale === 'RUS';
-    },
-    unlockedCount() {
-      return this.badges.filter(b => b.unlocked).length;
-    },
-    badges() {
-      return getBadges(this.totalTestsSolved, this.perfectScoresCount, this.userPoints, this.results);
-    },
-    filteredBadges() {
-      let result = this.badges;
-      
-      // Filter by Status
-      if (this.activeFilter === 'unlocked') {
-        result = result.filter(b => b.unlocked);
-      } else if (this.activeFilter === 'locked') {
-        result = result.filter(b => !b.unlocked);
-      }
-      
-      // Filter by Search
-      if (this.searchQuery.trim()) {
-        const query = this.searchQuery.toLowerCase().trim();
-        result = result.filter(b => {
-          const name = this.isRus ? b.nameRu : b.nameUz;
-          const desc = this.isRus ? b.descRu : b.descUz;
-          return name.toLowerCase().includes(query) || desc.toLowerCase().includes(query);
-        });
-      }
-      
-      return result;
-    }
-  },
-  methods: {
-    resetFilters() {
-      this.searchQuery = '';
-      this.activeFilter = 'all';
-    },
-    fetchStats() {
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          try {
-            // Fetch points
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists()) {
-              this.userPoints = userDoc.data().points || 0;
-            }
+const { locale } = useI18n();
 
-            // Fetch results
-            const resultsRef = collection(db, 'results');
-            const q = query(resultsRef, where('userId', '==', user.uid));
-            const querySnapshot = await getDocs(q);
-            
-            this.results = querySnapshot.docs.map(doc => doc.data());
-            this.totalTestsSolved = this.results.length;
-            
-            // Calculate perfect scores
-            this.perfectScoresCount = this.results.filter(r => r.score === r.total).length;
-          } catch (e) {
-            console.error('Error fetching statistics:', e);
-          } finally {
-            this.loading = false;
-          }
-        }
-      });
-    }
-  },
-  mounted() {
-    this.fetchStats();
+const totalTestsSolved = ref(0);
+const userPoints = ref(0);
+const perfectScoresCount = ref(0);
+const results = ref([]);
+const loading = ref(true);
+const searchQuery = ref('');
+const activeFilter = ref('all');
+
+const isRus = computed(() => locale.value === 'RUS');
+
+const badges = computed(() => getBadges(totalTestsSolved.value, perfectScoresCount.value, userPoints.value, results.value));
+
+const unlockedCount = computed(() => badges.value.filter(b => b.unlocked).length);
+
+const filteredBadges = computed(() => {
+  let result = badges.value;
+  
+  // Filter by Status
+  if (activeFilter.value === 'unlocked') {
+    result = result.filter(b => b.unlocked);
+  } else if (activeFilter.value === 'locked') {
+    result = result.filter(b => !b.unlocked);
   }
+  
+  // Filter by Search
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase().trim();
+    result = result.filter(b => {
+      const name = isRus.value ? b.nameRu : b.nameUz;
+      const desc = isRus.value ? b.descRu : b.descUz;
+      return name.toLowerCase().includes(q) || desc.toLowerCase().includes(q);
+    });
+  }
+  
+  return result;
+});
+
+const resetFilters = () => {
+  searchQuery.value = '';
+  activeFilter.value = 'all';
 };
+
+const fetchStats = () => {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      try {
+        // Fetch points
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          userPoints.value = userDoc.data().points || 0;
+        }
+
+        // Fetch results
+        const resultsRef = collection(db, 'results');
+        const q = query(resultsRef, where('userId', '==', user.uid));
+        const querySnapshot = await getDocs(q);
+        
+        results.value = querySnapshot.docs.map(doc => doc.data());
+        totalTestsSolved.value = results.value.length;
+        
+        // Calculate perfect scores
+        perfectScoresCount.value = results.value.filter(r => r.score === r.total).length;
+      } catch (e) {
+        console.error('Error fetching statistics:', e);
+      } finally {
+        loading.value = false;
+      }
+    }
+  });
+};
+
+onMounted(() => {
+  fetchStats();
+});
 </script>
 
 <style scoped>

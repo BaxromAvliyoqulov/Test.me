@@ -30,7 +30,8 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -57,101 +58,93 @@ ChartJS.register(
   Legend
 );
 
-export default {
-  name: 'AnalyticsCharts',
-  components: { Line, Radar },
-  props: {
-    resultsData: {
-      type: Array,
-      default: () => []
-    },
-    isPremium: {
-      type: Boolean,
-      default: false
-    },
-    t: {
-      type: Function,
-      default: (key, fallback) => fallback
-    }
+const props = defineProps({
+  resultsData: {
+    type: Array,
+    default: () => []
   },
-  data() {
-    return {
-      lineOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { min: 0, max: 100, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-          x: { ticks: { color: '#94a3b8', maxTicksLimit: 7 }, grid: { display: false } }
-        }
-      },
-      radarOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          r: {
-            angleLines: { color: 'rgba(255,255,255,0.1)' },
-            grid: { color: 'rgba(255,255,255,0.1)' },
-            pointLabels: { color: '#94a3b8', font: { size: 11 } },
-            ticks: { display: false, min: 0, max: 100 }
-          }
-        }
-      }
-    };
+  isPremium: {
+    type: Boolean,
+    default: false
   },
-  computed: {
-    lineData() {
-      // Dummy data if not premium or empty
-      const dataSrc = (this.resultsData.length && this.isPremium) ? this.resultsData.slice(-10) : [
-        { date: 'Mon', p: 40 }, { date: 'Tue', p: 55 }, { date: 'Wed', p: 50 },
-        { date: 'Thu', p: 70 }, { date: 'Fri', p: 65 }, { date: 'Sat', p: 85 }
-      ];
+  t: {
+    type: Function,
+    default: (key, fallback) => fallback
+  }
+});
 
-      return {
-        labels: dataSrc.map((_, i) => dataSrc[i].date || `Test ${i+1}`),
-        datasets: [
-          {
-            label: 'Accuracy %',
-            data: dataSrc.map(d => d.p || Math.round((d.score/d.total)*100)),
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.2)',
-            tension: 0.4,
-            fill: true
-          }
-        ]
-      };
-    },
-    radarData() {
-      // Calculate average per subject
-      const subs = {};
-      this.resultsData.forEach(r => {
-        if (!subs[r.subject]) subs[r.subject] = { s:0, c:0 };
-        subs[r.subject].s += Math.round((r.score/r.total)*100);
-        subs[r.subject].c++;
-      });
-      
-      let labels = Object.keys(subs);
-      let data = labels.map(l => Math.round(subs[l].s / subs[l].c));
+const lineOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    y: { min: 0, max: 100, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+    x: { ticks: { color: '#94a3b8', maxTicksLimit: 7 }, grid: { display: false } }
+  }
+};
 
-      if (!this.isPremium || labels.length < 3) {
-        labels = ['Math', 'Physics', 'History', 'Biology', 'IT'];
-        data = [70, 45, 80, 60, 90];
-      }
-
-      return {
-        labels,
-        datasets: [{
-          label: 'Mastery',
-          data,
-          backgroundColor: 'rgba(168, 85, 247, 0.4)',
-          borderColor: '#a855f7',
-          pointBackgroundColor: '#a855f7',
-        }]
-      }
+const radarOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    r: {
+      angleLines: { color: 'rgba(255,255,255,0.1)' },
+      grid: { color: 'rgba(255,255,255,0.1)' },
+      pointLabels: { color: '#94a3b8', font: { size: 11 } },
+      ticks: { display: false, min: 0, max: 100 }
     }
   }
-}
+};
+
+const lineData = computed(() => {
+  const dataSrc = (props.resultsData.length && props.isPremium) ? props.resultsData.slice(-10) : [
+    { date: 'Mon', p: 40 }, { date: 'Tue', p: 55 }, { date: 'Wed', p: 50 },
+    { date: 'Thu', p: 70 }, { date: 'Fri', p: 65 }, { date: 'Sat', p: 85 }
+  ];
+
+  return {
+    labels: dataSrc.map((_, i) => dataSrc[i].date || `Test ${i+1}`),
+    datasets: [
+      {
+        label: 'Accuracy %',
+        data: dataSrc.map(d => d.p || Math.round((d.score/d.total)*100)),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        tension: 0.4,
+        fill: true
+      }
+    ]
+  };
+});
+
+const radarData = computed(() => {
+  const subs = {};
+  props.resultsData.forEach(r => {
+    if (!subs[r.subject]) subs[r.subject] = { s:0, c:0 };
+    subs[r.subject].s += Math.round((r.score/r.total)*100);
+    subs[r.subject].c++;
+  });
+  
+  let labels = Object.keys(subs);
+  let data = labels.map(l => Math.round(subs[l].s / subs[l].c));
+
+  if (!props.isPremium || labels.length < 3) {
+    labels = ['Math', 'Physics', 'History', 'Biology', 'IT'];
+    data = [70, 45, 80, 60, 90];
+  }
+
+  return {
+    labels,
+    datasets: [{
+      label: 'Mastery',
+      data,
+      backgroundColor: 'rgba(168, 85, 247, 0.4)',
+      borderColor: '#a855f7',
+      pointBackgroundColor: '#a855f7',
+    }]
+  };
+});
 </script>
 
 <style scoped>

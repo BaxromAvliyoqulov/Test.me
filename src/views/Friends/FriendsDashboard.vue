@@ -57,128 +57,119 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
-import { collection, query, where, getDocs, addDoc, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, onSnapshot, doc, deleteDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import ChatBox from '@/components/ChatBox.vue';
 import FriendsSidebar from '@/components/friends/FriendsSidebar.vue';
 import FriendsSearchGrid from '@/components/friends/FriendsSearchGrid.vue';
 import { useI18n } from '@/utils/i18n';
+import { useRouter } from 'vue-router';
 
-export default {
-  name: 'FriendsDashboard',
-  components: { ChatBox, FriendsSidebar, FriendsSearchGrid },
-  setup() {
-    const { locale } = useI18n();
-    return { currentLocale: locale };
-  },
-  data() {
-    return {
-      searchQuery: '',
-      searchResults: [],
-      tab: 'friends',
-      friends: [],
-      pendingRequests: [],
-      activeChat: null,
-      currentUser: null,
-      unsubReq: null,
-      unsubFriends: null
-    };
-  },
-  computed: {
-    isRus() {
-      return this.currentLocale === 'RUS';
-    }
-  },
-  mounted() {
-    const auth = getAuth();
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        this.currentUser = { uid: user.uid, displayName: user.displayName || user.email };
-        this.listenForRequests();
-        this.listenForFriends();
-      } else {
-        this.$router.push('/login');
-      }
-    });
-  },
-  unmounted() {
-    if (this.unsubReq) this.unsubReq();
-    if (this.unsubFriends) this.unsubFriends();
-  },
-  methods: {
-    async searchUsers() {
-      if (!this.searchQuery.trim()) return;
-      this.activeChat = null;
-      
-      const searchTerm = this.searchQuery.trim();
-      const searchTermUpper = searchTerm.toUpperCase();
+const { locale } = useI18n();
+const router = useRouter();
 
-      const qId = query(collection(db, 'users'), where('shortId', '==', searchTermUpper));
-      const qName = query(collection(db, 'users'), where('displayName', '>=', searchTerm), where('displayName', '<=', searchTerm + '\\uf8ff'));
-      
-      const [snapId, snapName] = await Promise.all([getDocs(qId), getDocs(qName)]);
-      
-      const resultsMap = new Map();
-      
-      snapId.docs.forEach(d => {
-        if (d.id !== this.currentUser.uid) resultsMap.set(d.id, { id: d.id, ...d.data() });
-      });
-      
-      snapName.docs.forEach(d => {
-        if (d.id !== this.currentUser.uid && !resultsMap.has(d.id)) resultsMap.set(d.id, { id: d.id, ...d.data() });
-      });
-      
-      this.searchResults = Array.from(resultsMap.values());
-    },
-    
-    isFriendOrRequested(uid) {
-      return this.friends.some(f => f.uid === uid) || this.pendingRequests.some(r => r.fromUid === uid || r.toUid === uid);
-    },
-    
-    async sendRequest(targetUser) {
-      await addDoc(collection(db, 'friend_requests'), {
-        fromUid: this.currentUser.uid,
-        fromName: this.currentUser.displayName,
-        toUid: targetUser.id,
-        toName: targetUser.displayName || targetUser.email,
-        status: 'pending',
-        timestamp: serverTimestamp()
-      });
-      alert(this.isRus ? 'Запрос отправлен!' : "So'rov yuborildi!");
-      this.searchResults = [];
-    },
-    
-    listenForRequests() {
-      const q = query(collection(db, 'friend_requests'), where('toUid', '==', this.currentUser.uid), where('status', '==', 'pending'));
-      this.unsubReq = onSnapshot(q, snap => {
-        this.pendingRequests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      });
-    },
-    
-    listenForFriends() {
-      const q = query(collection(db, 'users', this.currentUser.uid, 'friends'));
-      this.unsubFriends = onSnapshot(q, snap => {
-        this.friends = snap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
-      });
-    },
-    
-    async acceptRequest(req) {
-      await setDoc(doc(db, 'users', this.currentUser.uid, 'friends', req.fromUid), { displayName: req.fromName, timestamp: serverTimestamp() });
-      await setDoc(doc(db, 'users', req.fromUid, 'friends', this.currentUser.uid), { displayName: this.currentUser.displayName, timestamp: serverTimestamp() });
-      await deleteDoc(doc(db, 'friend_requests', req.id));
-    },
-    
-    async rejectRequest(reqId) {
-      await deleteDoc(doc(db, 'friend_requests', reqId));
-    },
-    
-    openChat(friend) {
-      this.searchResults = [];
-      this.activeChat = friend;
+const searchQuery = ref('');
+const searchResults = ref([]);
+const tab = ref('friends');
+const friends = ref([]);
+const pendingRequests = ref([]);
+const activeChat = ref(null);
+const currentUser = ref(null);
+let unsubReq = null;
+let unsubFriends = null;
+
+const isRus = computed(() => locale.value === 'RUS');
+
+onMounted(() => {
+  const auth = getAuth();
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser.value = { uid: user.uid, displayName: user.displayName || user.email };
+      listenForRequests();
+      listenForFriends();
+    } else {
+      router.push('/login');
     }
-  }
+  });
+});
+
+onUnmounted(() => {
+  if (unsubReq) unsubReq();
+  if (unsubFriends) unsubFriends();
+});
+
+const searchUsers = async () => {
+  if (!searchQuery.value.trim()) return;
+  activeChat.value = null;
+  
+  const searchTerm = searchQuery.value.trim();
+  const searchTermUpper = searchTerm.toUpperCase();
+
+  const qId = query(collection(db, 'users'), where('shortId', '==', searchTermUpper));
+  const qName = query(collection(db, 'users'), where('displayName', '>=', searchTerm), where('displayName', '<=', searchTerm + '\\uf8ff'));
+  
+  const [snapId, snapName] = await Promise.all([getDocs(qId), getDocs(qName)]);
+  
+  const resultsMap = new Map();
+  
+  snapId.docs.forEach(d => {
+    if (d.id !== currentUser.value.uid) resultsMap.set(d.id, { id: d.id, ...d.data() });
+  });
+  
+  snapName.docs.forEach(d => {
+    if (d.id !== currentUser.value.uid && !resultsMap.has(d.id)) resultsMap.set(d.id, { id: d.id, ...d.data() });
+  });
+  
+  searchResults.value = Array.from(resultsMap.values());
+};
+
+const isFriendOrRequested = (uid) => {
+  return friends.value.some(f => f.uid === uid) || pendingRequests.value.some(r => r.fromUid === uid || r.toUid === uid);
+};
+
+const sendRequest = async (targetUser) => {
+  await addDoc(collection(db, 'friend_requests'), {
+    fromUid: currentUser.value.uid,
+    fromName: currentUser.value.displayName,
+    toUid: targetUser.id,
+    toName: targetUser.displayName || targetUser.email,
+    status: 'pending',
+    timestamp: serverTimestamp()
+  });
+  alert(isRus.value ? 'Запрос отправлен!' : "So'rov yuborildi!");
+  searchResults.value = [];
+};
+
+const listenForRequests = () => {
+  const q = query(collection(db, 'friend_requests'), where('toUid', '==', currentUser.value.uid), where('status', '==', 'pending'));
+  unsubReq = onSnapshot(q, snap => {
+    pendingRequests.value = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  });
+};
+
+const listenForFriends = () => {
+  const q = query(collection(db, 'users', currentUser.value.uid, 'friends'));
+  unsubFriends = onSnapshot(q, snap => {
+    friends.value = snap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+  });
+};
+
+const acceptRequest = async (req) => {
+  await setDoc(doc(db, 'users', currentUser.value.uid, 'friends', req.fromUid), { displayName: req.fromName, timestamp: serverTimestamp() });
+  await setDoc(doc(db, 'users', req.fromUid, 'friends', currentUser.value.uid), { displayName: currentUser.value.displayName, timestamp: serverTimestamp() });
+  await deleteDoc(doc(db, 'friend_requests', req.id));
+};
+
+const rejectRequest = async (reqId) => {
+  await deleteDoc(doc(db, 'friend_requests', reqId));
+};
+
+const openChat = (friend) => {
+  searchResults.value = [];
+  activeChat.value = friend;
 };
 </script>
 

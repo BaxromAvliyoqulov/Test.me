@@ -119,14 +119,14 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, watch, onMounted, nextTick, onErrorCaptured } from 'vue';
 import { db, auth } from '@/config/firebase';
 import { collection, doc, getDocs, addDoc, getDoc, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import defaultUserImage from '../assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
-import { onErrorCaptured } from 'vue';
 import { getRankName, getRankClass, getRankIcon, getNextRankInfo } from '@/utils/ranks';
 import { sortLevels } from '@/utils/sorters';
 import { getBadges } from '@/utils/badges';
@@ -139,694 +139,605 @@ import AiCoach from '@/components/home/AiCoach.vue';
 import DailyAchievements from '@/components/home/DailyAchievements.vue';
 import TestSetupModal from '@/components/home/TestSetupModal.vue';
 
+const { t, locale: currentLocale } = useI18n();
 
-export default {
-  name: 'SubjectTestSelection',
-  components: {
-    SubjectSelection,
-    SpecialTests,
-    RankProgress,
-    AiCoach,
-    DailyAchievements,
-    TestSetupModal,
-    TestPage,
-    WelcomeBanner
-  },
-  setup() {
-    const { t, locale } = useI18n();
+onErrorCaptured((err, instance, info) => {
+  console.error('Captured Vue Error:', err, info);
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;background:rgba(255,0,0,0.9);color:white;padding:40px;overflow:auto;font-size:20px;';
+  div.innerHTML = '<h1>VUE RENDER ERROR</h1><p><strong>Message:</strong> ' + err.message + '</p><pre>' + err.stack + '</pre><p><strong>Info:</strong> ' + info + '</p>';
+  document.body.appendChild(div);
+  return false;
+});
 
-    onErrorCaptured((err, instance, info) => {
-      console.error('Captured Vue Error:', err, info);
-      const div = document.createElement('div');
-      div.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99999;background:rgba(255,0,0,0.9);color:white;padding:40px;overflow:auto;font-size:20px;';
-      div.innerHTML = '<h1>VUE RENDER ERROR</h1><p><strong>Message:</strong> ' + err.message + '</p><pre>' + err.stack + '</pre><p><strong>Info:</strong> ' + info + '</p>';
-      document.body.appendChild(div);
-      return false;
-    });
-    return { t, currentLocale: locale };
-  },
-  data() {
-    return {
-      selectedSubject: null,
-      selectedLevel: '',
-      selectedQuestionCount: '',
-      showTestWizard: false,
-      questionCounts: [5, 10, 15, 20, 25, 30],
-      subjects: [],
-      levels: [],
-      loading: false,
-      loadingSubjects: false,
-      loadingLevels: false,
-      status: null,
-      startTest: false,
-      currentTab: 'standard',
-      specialTests: [],
-      loadingSpecial: false,
+const testPage = ref(null);
 
-      // User details
-      userDisplayName: '',
-      userPoints: 0,
-      aiAdvice: { text: '', badge: '' },
-      aiAdviceLoading: false,
-      userStreak: 0,
-      unlockedBadges: [],
-      weakestSubject: '',
-      strongestSubject: '',
-      aiAdviceType: '',
-      defaultSubjectId: null,
-      mentorType: 'standard'
+const selectedSubject = ref(null);
+const selectedLevel = ref('');
+const selectedQuestionCount = ref('');
+const showTestWizard = ref(false);
+const questionCounts = ref([5, 10, 15, 20, 25, 30]);
+const subjects = ref([]);
+const levels = ref([]);
+const loading = ref(false);
+const loadingSubjects = ref(false);
+const loadingLevels = ref(false);
+const status = ref(null);
+const startTest = ref(false);
+const currentTab = ref('standard');
+const specialTests = ref([]);
+const loadingSpecial = ref(false);
+
+const userDisplayName = ref('');
+const userPoints = ref(0);
+const aiAdvice = ref({ text: '', badge: '' });
+const aiAdviceLoading = ref(false);
+const userStreak = ref(0);
+const unlockedBadges = ref([]);
+const weakestSubject = ref('');
+const strongestSubject = ref('');
+const aiAdviceType = ref('');
+const defaultSubjectId = ref(null);
+const mentorType = ref('standard');
+
+const isRus = computed(() => currentLocale.value === 'RUS');
+
+const canStart = computed(() => {
+  return (
+    selectedSubject.value &&
+    selectedLevel.value &&
+    selectedQuestionCount.value &&
+    !loading.value &&
+    !loadingSubjects.value &&
+    !loadingLevels.value
+  );
+});
+
+const aiMentorInfo = computed(() => {
+  const personas = {
+      standard: { nameUz: 'Standart AI', nameRu: 'Стандартный ИИ', icon: 'fas fa-robot', colorClass: 'theme-standard' },
+      friendly: { nameUz: 'Do\'stona Mentor', nameRu: 'Дружелюбный Ментор', icon: 'fas fa-smile-beam', colorClass: 'theme-friendly' },
+      strict: { nameUz: 'Qattiqqo\'l Professor', nameRu: 'Строгий Профессор', icon: 'fas fa-user-tie', colorClass: 'theme-strict' },
+      socratic: { nameUz: 'Faylasuf Sokrat', nameRu: 'Философ Сократ', icon: 'fas fa-scroll', colorClass: 'theme-socratic' },
+      motivator: { nameUz: 'Motivator', nameRu: 'Мотиватор', icon: 'fas fa-fire', colorClass: 'theme-motivator' },
+      innovator: { nameUz: 'Kreativ Daho', nameRu: 'Креативный Гений', icon: 'fas fa-lightbulb', colorClass: 'theme-innovator' },
+      analyst: { nameUz: 'Kiber Analitik', nameRu: 'Кибер Аналитик', icon: 'fas fa-laptop-code', colorClass: 'theme-analyst' },
+      sage: { nameUz: 'Dono Chol', nameRu: 'Мудрый Старец', icon: 'fas fa-yin-yang', colorClass: 'theme-sage' },
+      comedian: { nameUz: 'Xazilkash AI', nameRu: 'Шутник ИИ', icon: 'fas fa-laugh-squint', colorClass: 'theme-comedian' }
+  };
+  const type = mentorType.value || 'standard';
+  const persona = personas[type] || personas.standard;
+  return {
+    name: isRus.value ? persona.nameRu : persona.nameUz,
+    icon: persona.icon,
+    colorClass: persona.colorClass
+  };
+});
+
+watch(currentLocale, () => {
+  fetchUserStats();
+});
+
+const getSubjectIcon = (name) => {
+  if (!name) return 'fas fa-graduation-cap';
+  const lower = name.toLowerCase();
+  if (lower.includes('matem') || lower.includes('math')) return 'fas fa-calculator';
+  if (lower.includes('fizik') || lower.includes('physics')) return 'fas fa-atom';
+  if (lower.includes('ingliz') || lower.includes('english')) return 'fas fa-globe';
+  if (lower.includes('ona tili') || lower.includes('uzbek')) return 'fas fa-book';
+  if (lower.includes('kimyo') || lower.includes('chemistry')) return 'fas fa-flask';
+  if (lower.includes('biolog') || lower.includes('biology')) return 'fas fa-dna';
+  if (lower.includes('informatika') || lower.includes('computer')) return 'fas fa-laptop-code';
+  if (lower.includes('tarix') || lower.includes('history')) return 'fas fa-landmark';
+  if (lower.includes('geografiya') || lower.includes('geography')) return 'fas fa-globe-americas';
+  if (lower.includes('adabiyot') || lower.includes('literature')) return 'fas fa-feather-alt';
+  return 'fas fa-graduation-cap';
+};
+
+const getSubjectColor = (name) => {
+  if (!name) return '#3b82f6';
+  const lower = name.toLowerCase();
+  if (lower.includes('matem') || lower.includes('math')) return '#8b5cf6';
+  if (lower.includes('fizik') || lower.includes('physics')) return '#f59e0b';
+  if (lower.includes('ingliz') || lower.includes('english')) return '#ef4444';
+  if (lower.includes('ona tili') || lower.includes('uzbek')) return '#3b82f6';
+  if (lower.includes('kimyo') || lower.includes('chemistry')) return '#10b981';
+  if (lower.includes('biolog') || lower.includes('biology')) return '#84cc16';
+  if (lower.includes('informatika') || lower.includes('computer')) return '#06b6d4';
+  if (lower.includes('tarix') || lower.includes('history')) return '#d97706';
+  if (lower.includes('geografiya') || lower.includes('geography')) return '#14b8a6';
+  if (lower.includes('adabiyot') || lower.includes('literature')) return '#ec4899';
+  return '#3b82f6';
+};
+
+const selectSubjectCard = (subject) => {
+  selectedSubject.value = subject;
+  selectedLevel.value = '';
+  selectedQuestionCount.value = '';
+  showTestWizard.value = true;
+  fetchLevels();
+};
+
+const closeWizard = () => {
+  showTestWizard.value = false;
+  setTimeout(() => {
+    selectedSubject.value = null;
+    selectedLevel.value = '';
+    selectedQuestionCount.value = '';
+  }, 300);
+};
+
+const fetchSubjects = async () => {
+  loadingSubjects.value = true;
+  status.value = null;
+  try {
+    const querySnapshot = await getDocs(collection(db, 'subjects'));
+    subjects.value = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    if (subjects.value.length === 0) {
+      status.value = {
+        type: 'info',
+        message: '⚠️ No subjects found. Please add a subject first.',
+      };
+    }
+  } catch (error) {
+    console.error('❌ Error fetching subjects:', error);
+    status.value = {
+      type: 'error',
+      message: `❌ Error fetching subjects: ${error.message}`,
     };
-  },
-  computed: {
-    isRus() {
-      return this.currentLocale === 'RUS';
-    },
-    canStart() {
-      return (
-        this.selectedSubject &&
-        this.selectedLevel &&
-        this.selectedQuestionCount &&
-        !this.loading &&
-        !this.loadingSubjects &&
-        !this.loadingLevels
-      );
-    },
-    aiMentorInfo() {
-      const personas = {
-          standard: { nameUz: 'Standart AI', nameRu: 'Стандартный ИИ', icon: 'fas fa-robot', colorClass: 'theme-standard' },
-          friendly: { nameUz: 'Do\'stona Mentor', nameRu: 'Дружелюбный Ментор', icon: 'fas fa-smile-beam', colorClass: 'theme-friendly' },
-          strict: { nameUz: 'Qattiqqo\'l Professor', nameRu: 'Строгий Профессор', icon: 'fas fa-user-tie', colorClass: 'theme-strict' },
-          socratic: { nameUz: 'Faylasuf Sokrat', nameRu: 'Философ Сократ', icon: 'fas fa-scroll', colorClass: 'theme-socratic' },
-          motivator: { nameUz: 'Motivator', nameRu: 'Мотиватор', icon: 'fas fa-fire', colorClass: 'theme-motivator' },
-          innovator: { nameUz: 'Kreativ Daho', nameRu: 'Креативный Гений', icon: 'fas fa-lightbulb', colorClass: 'theme-innovator' },
-          analyst: { nameUz: 'Kiber Analitik', nameRu: 'Кибер Аналитик', icon: 'fas fa-laptop-code', colorClass: 'theme-analyst' },
-          sage: { nameUz: 'Dono Chol', nameRu: 'Мудрый Старец', icon: 'fas fa-yin-yang', colorClass: 'theme-sage' },
-          comedian: { nameUz: 'Xazilkash AI', nameRu: 'Шутник ИИ', icon: 'fas fa-laugh-squint', colorClass: 'theme-comedian' }
-      };
-      const type = this.mentorType || 'standard';
-      const persona = personas[type] || personas.standard;
-      return {
-        name: this.isRus ? persona.nameRu : persona.nameUz,
-        icon: persona.icon,
-        colorClass: persona.colorClass
+  } finally {
+    loadingSubjects.value = false;
+  }
+};
+
+const fetchSpecialTests = async () => {
+  loadingSpecial.value = true;
+  try {
+    const querySnapshot = await getDocs(collection(db, 'special_tests'));
+    specialTests.value = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })).sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
+  } catch (error) {
+    console.error('Error fetching special tests:', error);
+  } finally {
+    loadingSpecial.value = false;
+  }
+};
+
+const startSpecialTest = (test) => {
+  loading.value = true;
+  startTest.value = true;
+  showTestWizard.value = false;
+  nextTick(() => {
+    testPage.value?.initializeTest({
+      sessionId: 'special_' + Math.random().toString(36).substring(2, 9),
+      subjectId: 'special',
+      levelId: test.category,
+      specialTestId: test.id,
+      title: test.title
+    });
+    loading.value = false;
+  });
+};
+
+const fetchLevels = async () => {
+  if (!selectedSubject.value) return;
+
+  loadingLevels.value = true;
+  selectedLevel.value = '';
+  levels.value = [];
+  status.value = null;
+
+  try {
+    const subjectRef = doc(db, 'subjects', selectedSubject.value.id);
+    const levelsCollection = await getDocs(
+      collection(subjectRef, 'levels')
+    );
+
+    const fetchedLevels = levelsCollection.docs.map((doc) => doc.id);
+    levels.value = sortLevels(fetchedLevels);
+
+    if (levels.value.length === 0) {
+      status.value = {
+        type: 'info',
+        message: '⚠️ No levels found for this subject.',
       };
     }
-  },
-  watch: {
-    currentLocale() {
-      this.fetchUserStats();
+  } catch (error) {
+    console.error('❌ Error fetching levels:', error);
+    status.value = {
+      type: 'error',
+      message: `❌ Error fetching levels: ${error.message}`,
+    };
+  } finally {
+    loadingLevels.value = false;
+  }
+};
+
+const clearStatus = () => {
+  status.value = null;
+};
+
+const startTestWithFilters = async () => {
+  if (!canStart.value) return;
+
+  loading.value = true;
+
+  try {
+    const testSession = {
+      subjectId: selectedSubject.value.id,
+      levelId: selectedLevel.value,
+      questionCount: selectedQuestionCount.value,
+      userId: auth.currentUser?.uid,
+      startedAt: new Date(),
+      status: 'in-progress',
+    };
+
+    let sessionId = 'local_' + Math.random().toString(36).substring(2, 9);
+    try {
+      const sessionsRef = collection(db, 'testSessions');
+      const docRef = await addDoc(sessionsRef, testSession);
+      sessionId = docRef.id;
+    } catch (dbErr) {
+      console.warn('⚠️ Could not save testSession to Firestore (likely permission rules), using local fallback ID:', dbErr);
     }
-  },
-  methods: {
-    getSubjectIcon(name) {
-      if (!name) return 'fas fa-graduation-cap';
-      const lower = name.toLowerCase();
-      if (lower.includes('matem') || lower.includes('math')) return 'fas fa-calculator';
-      if (lower.includes('fizik') || lower.includes('physics')) return 'fas fa-atom';
-      if (lower.includes('ingliz') || lower.includes('english')) return 'fas fa-globe';
-      if (lower.includes('ona tili') || lower.includes('uzbek')) return 'fas fa-book';
-      if (lower.includes('kimyo') || lower.includes('chemistry')) return 'fas fa-flask';
-      if (lower.includes('biolog') || lower.includes('biology')) return 'fas fa-dna';
-      if (lower.includes('informatika') || lower.includes('computer')) return 'fas fa-laptop-code';
-      if (lower.includes('tarix') || lower.includes('history')) return 'fas fa-landmark';
-      if (lower.includes('geografiya') || lower.includes('geography')) return 'fas fa-globe-americas';
-      if (lower.includes('adabiyot') || lower.includes('literature')) return 'fas fa-feather-alt';
-      return 'fas fa-graduation-cap';
-    },
 
-    getSubjectColor(name) {
-      if (!name) return '#3b82f6';
-      const lower = name.toLowerCase();
-      if (lower.includes('matem') || lower.includes('math')) return '#8b5cf6'; // Purple
-      if (lower.includes('fizik') || lower.includes('physics')) return '#f59e0b'; // Amber
-      if (lower.includes('ingliz') || lower.includes('english')) return '#ef4444'; // Red
-      if (lower.includes('ona tili') || lower.includes('uzbek')) return '#3b82f6'; // Blue
-      if (lower.includes('kimyo') || lower.includes('chemistry')) return '#10b981'; // Green
-      if (lower.includes('biolog') || lower.includes('biology')) return '#84cc16'; // Lime
-      if (lower.includes('informatika') || lower.includes('computer')) return '#06b6d4'; // Cyan
-      if (lower.includes('tarix') || lower.includes('history')) return '#d97706'; // Dark Amber
-      if (lower.includes('geografiya') || lower.includes('geography')) return '#14b8a6'; // Teal
-      if (lower.includes('adabiyot') || lower.includes('literature')) return '#ec4899'; // Pink
-      return '#3b82f6'; // Default Blue
-    },
+    startTest.value = true;
+    showTestWizard.value = false;
 
-    selectSubjectCard(subject) {
-      this.selectedSubject = subject;
-      this.selectedLevel = '';
-      this.selectedQuestionCount = '';
-      this.showTestWizard = true;
-      this.fetchLevels();
-    },
-
-    closeWizard() {
-      this.showTestWizard = false;
-      setTimeout(() => {
-        this.selectedSubject = null;
-        this.selectedLevel = '';
-        this.selectedQuestionCount = '';
-      }, 300);
-    },
-
-    async fetchSubjects() {
-      this.loadingSubjects = true;
-      this.status = null;
-      try {
-        const querySnapshot = await getDocs(collection(db, 'subjects'));
-        this.subjects = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        if (this.subjects.length === 0) {
-          this.status = {
-            type: 'info',
-            message: '⚠️ No subjects found. Please add a subject first.',
-          };
-        }
-      } catch (error) {
-        console.error('❌ Error fetching subjects:', error);
-        this.status = {
-          type: 'error',
-          message: `❌ Error fetching subjects: ${error.message}`,
-        };
-      } finally {
-        this.loadingSubjects = false;
-      }
-    },
-
-    async fetchSpecialTests() {
-      this.loadingSpecial = true;
-      try {
-        const querySnapshot = await getDocs(collection(db, 'special_tests'));
-        this.specialTests = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })).sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
-      } catch (error) {
-        console.error('Error fetching special tests:', error);
-      } finally {
-        this.loadingSpecial = false;
-      }
-    },
-
-    startSpecialTest(test) {
-      this.loading = true;
-      this.startTest = true;
-        this.showTestWizard = false;
-      this.$nextTick(() => {
-        this.$refs.testPage?.initializeTest({
-          sessionId: 'special_' + Math.random().toString(36).substring(2, 9),
-          subjectId: 'special',
-          levelId: test.category,
-          specialTestId: test.id,
-          title: test.title
-        });
-        this.loading = false;
+    nextTick(() => {
+      testPage.value?.initializeTest({
+        sessionId,
+        ...testSession,
       });
-    },
+    });
+  } catch (error) {
+    console.error('Error starting test:', error);
+    status.value = {
+      type: 'error',
+      message: '❌ Error starting test: ' + error.message,
+    };
+  } finally {
+    loading.value = false;
+  }
+};
 
-    async fetchLevels() {
-      if (!this.selectedSubject) return;
+const goBackToSelection = () => {
+  startTest.value = false;
+};
 
-      this.loadingLevels = true;
-      this.selectedLevel = '';
-      this.levels = [];
-      this.status = null;
+const handleTestCompletion = (results) => {
+  console.log('Test completed with results:', results);
+  status.value = {
+    type: 'success',
+    message: `✅ Test completed! You got ${results.correctAnswers} out of ${results.totalQuestions} questions correct.`,
+  };
+  startTest.value = false;
+  fetchUserStats();
+};
 
-      try {
-        const subjectRef = doc(db, 'subjects', this.selectedSubject.id);
-        const levelsCollection = await getDocs(
-          collection(subjectRef, 'levels')
-        );
-
-        const fetchedLevels = levelsCollection.docs.map((doc) => doc.id);
-        this.levels = sortLevels(fetchedLevels);
-
-        if (this.levels.length === 0) {
-          this.status = {
-            type: 'info',
-            message: '⚠️ No levels found for this subject.',
-          };
-        }
-      } catch (error) {
-        console.error('❌ Error fetching levels:', error);
-        this.status = {
-          type: 'error',
-          message: `❌ Error fetching levels: ${error.message}`,
-        };
-      } finally {
-        this.loadingLevels = false;
-      }
-    },
-
-    clearStatus() {
-      this.status = null;
-    },
-    
-    // Rank wrappers
-    getRankName(pts, loc) { return getRankName(pts, loc); },
-    getRankClass(pts) { return getRankClass(pts); },
-    getRankIcon(pts) { return getRankIcon(pts); },
-    getNextRankInfo(pts, loc) { return getNextRankInfo(pts, loc); },
-
-    async startTestWithFilters() {
-      if (!this.canStart) return;
-
-      this.loading = true;
-
-      try {
-        const testSession = {
-          subjectId: this.selectedSubject.id,
-          levelId: this.selectedLevel,
-          questionCount: this.selectedQuestionCount,
-          userId: auth.currentUser?.uid,
-          startedAt: new Date(),
-          status: 'in-progress',
-        };
-
-        let sessionId = 'local_' + Math.random().toString(36).substring(2, 9);
-        try {
-          const sessionsRef = collection(db, 'testSessions');
-          const docRef = await addDoc(sessionsRef, testSession);
-          sessionId = docRef.id;
-        } catch (dbErr) {
-          console.warn('⚠️ Could not save testSession to Firestore (likely permission rules), using local fallback ID:', dbErr);
-        }
-
-        this.startTest = true;
-        this.showTestWizard = false;
-
-        this.$nextTick(() => {
-          this.$refs.testPage?.initializeTest({
-            sessionId,
-            ...testSession,
-          });
-        });
-      } catch (error) {
-        console.error('Error starting test:', error);
-        this.status = {
-          type: 'error',
-          message: '❌ Error starting test: ' + error.message,
-        };
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    goBackToSelection() {
-      this.startTest = false;
-    },
-
-    handleTestCompletion(results) {
-      console.log('Test completed with results:', results);
-      this.status = {
-        type: 'success',
-        message: `✅ Test completed! You got ${results.correctAnswers} out of ${results.totalQuestions} questions correct.`,
-      };
-      this.startTest = false;
-      this.fetchUserStats();
-    },
-
-    fetchUserStats() {
-      const self = this;
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          self.userDisplayName = user.displayName || user.email.split('@')[0];
-          try {
-            // Fetch user points and preferences
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists()) {
-              const userData = userDoc.data();
-              self.userPoints = userData.points || 0;
-              if (userData.preferences) {
-                self.applyUserPreferences(userData.preferences);
-                self.mentorType = userData.preferences.mentorType || 'standard';
-              } else {
-                self.mentorType = 'standard';
+const applyUserPreferences = (prefs) => {
+  if (prefs.defaultSubject) { defaultSubjectId.value = prefs.defaultSubject; }
+  if (prefs.defaultSubject && !selectedSubject.value) {
+    const trySelect = () => {
+      const sub = subjects.value.find(s => s.id === prefs.defaultSubject);
+      if (sub) {
+        selectSubjectCard(sub);
+        
+        nextTick(() => {
+          const checkLevels = () => {
+            if (levels.value.length > 0) {
+              if (prefs.defaultLevel) {
+                selectedLevel.value = prefs.defaultLevel;
               }
+              if (prefs.dailyGoal) {
+                selectedQuestionCount.value = prefs.dailyGoal;
+              }
+            } else {
+              setTimeout(checkLevels, 100);
             }
-
-            // Fetch test results
-            const resultsRef = collection(db, 'results');
-            const q = query(resultsRef, where('userId', '==', user.uid));
-            const querySnapshot = await getDocs(q);
-            const results = querySnapshot.docs
-              .map((doc) => doc.data())
-              .sort((a, b) => {
-                const timeA = a.timestamp ? a.timestamp.toDate() : 0;
-                const timeB = b.timestamp ? b.timestamp.toDate() : 0;
-                return timeB - timeA;
-              });
-
-            // Set dynamic AI advice
-            self.fetchAiAdviceFromGemini(results);
-
-            // Calculate streak
-            self.userStreak = self.calculateStreak(results);
-
-            // Compute unlocked badges list
-            const totalTests = results.length;
-            const perfectCount = results.filter(r => r.score === r.total).length;
-            const allBadges = getBadges(totalTests, perfectCount, self.userPoints, results);
-            self.unlockedBadges = allBadges.filter(b => b.unlocked);
-            if (false) {
-            
-            const badgesConfig = [
-              { id: 'first_step', nameUz: 'Birinchi qadam', nameRu: 'Первый шаг', nameEn: 'First Step', icon: 'fas fa-walking', color: '#3b82f6', unlocked: totalTests >= 1 },
-              { id: 'persistent', nameUz: 'Tirishqoq', nameRu: 'Упорный', nameEn: 'Persistent', icon: 'fas fa-fire', color: '#f97316', unlocked: totalTests >= 5 },
-              { id: 'scholar', nameUz: 'Bilimdon', nameRu: 'Эрудит', nameEn: 'Scholar', icon: 'fas fa-book-reader', color: '#10b981', unlocked: totalTests >= 15 },
-              { id: 'perfect_score', nameUz: 'A\'lochi', nameRu: 'Отличник', nameEn: 'Perfect Score', icon: 'fas fa-star', color: '#fbbf24', unlocked: perfectCount >= 1 },
-              { id: 'coin_king', nameUz: 'Koin Qiroli', nameRu: 'Король Коинов', nameEn: 'Coin King', icon: 'fas fa-coins', color: '#a855f7', unlocked: self.userPoints >= 500 },
-              { id: 'super_brain', nameUz: 'Super Aql', nameRu: 'Супер Мозг', nameEn: 'Super Brain', icon: 'fas fa-brain', color: '#ec4899', unlocked: perfectCount >= 3 }
-            ];
-
-            }
-          } catch (e) {
-            console.error('Error fetching user stats:', e);
-          }
-        }
-      });
-    },
-
-    applyUserPreferences(prefs) {
-      if (prefs.defaultSubject) { this.defaultSubjectId = prefs.defaultSubject; }
-      if (prefs.defaultSubject && !this.selectedSubject) {
-        const trySelect = () => {
-          const sub = this.subjects.find(s => s.id === prefs.defaultSubject);
-          if (sub) {
-            this.selectSubjectCard(sub);
-            
-            this.$nextTick(() => {
-              const checkLevels = () => {
-                if (this.levels.length > 0) {
-                  if (prefs.defaultLevel) {
-                    this.selectedLevel = prefs.defaultLevel;
-                  }
-                  if (prefs.dailyGoal) {
-                    this.selectedQuestionCount = prefs.dailyGoal;
-                  }
-                } else {
-                  setTimeout(checkLevels, 100);
-                }
-              };
-              checkLevels();
-            });
-          }
-        };
-
-        if (this.subjects.length > 0) {
-          trySelect();
-        } else {
-          const unwatch = this.$watch('subjects', (newVal) => {
-            if (newVal && newVal.length > 0) {
-              trySelect();
-              unwatch();
-            }
-          });
-        }
-      }
-    },
-
-    calculateStreak(results) {
-      if (!results || results.length === 0) return 0;
-
-      // Extract unique active date strings in YYYY-MM-DD
-      const uniqueDates = Array.from(
-        new Set(
-          results
-            .map((res) => {
-              if (!res.timestamp) return null;
-              const date = res.timestamp.toDate();
-              const yyyy = date.getFullYear();
-              const mm = String(date.getMonth() + 1).padStart(2, '0');
-              const dd = String(date.getDate()).padStart(2, '0');
-              return `${yyyy}-${mm}-${dd}`;
-            })
-            .filter(Boolean)
-        )
-      ).sort((a, b) => new Date(b) - new Date(a));
-
-      if (uniqueDates.length === 0) return 0;
-
-      let streak = 0;
-      const today = new Date();
-      const yesterday = new Date();
-      yesterday.setDate(today.getDate() - 1);
-
-      const formatDateStr = (date) => {
-        const yyyy = date.getFullYear();
-        const mm = String(date.getMonth() + 1).padStart(2, '0');
-        const dd = String(date.getDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
-      };
-
-      const todayStr = formatDateStr(today);
-      const yesterdayStr = formatDateStr(yesterday);
-
-      // Check if last activity date was either today or yesterday
-      if (uniqueDates[0] !== todayStr && uniqueDates[0] !== yesterdayStr) {
-        return 0;
-      }
-
-      let checkDate = new Date(uniqueDates[0]);
-      for (let i = 0; i < uniqueDates.length; i++) {
-        const expectedStr = formatDateStr(checkDate);
-        if (uniqueDates[i] === expectedStr) {
-          streak++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else {
-          break;
-        }
-      }
-
-      return streak;
-    },
-
-    determineAdviceType(results) {
-      if (!results || results.length === 0) return 'first_test';
-      let totalCorrect = 0;
-      let totalQuestions = 0;
-      results.forEach((res) => {
-        totalCorrect += res.score;
-        totalQuestions += res.total;
-      });
-      const overallAvg = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
-      if (overallAvg < 60) return 'weak';
-      if (overallAvg >= 85) return 'strong';
-      return 'normal';
-    },
-
-    getFallbackAdvice(results) {
-      if (!results || results.length === 0) {
-        const type = this.mentorType || 'standard';
-        const textMaps = {
-          standard: {
-            UZB: "Salom! Siz hali birorta ham test topshirmadingiz. Math yoki English fanlaridan Beginner darajasida test topshirishni tavsiya qilaman.",
-            RUS: "Привет! Вы еще не прошли ни одного теста. Рекомендуем начать с диагностического теста по Math или English на уровне Beginner."
-          },
-          friendly: {
-            UZB: "Assalomu alaykum! Xush kelibsiz! Qani, birinchi qadamni tashlaymizmi? Istalgan fanni tanlang, masalan Math!",
-            RUS: "Приветствую! Добро пожаловать! Сделаем первый шаг? Выбери любой предмет, например Math!"
-          },
-          strict: {
-            UZB: "Hech qanday natija yo'q. Vaqtni yo'qotmang. Zudlik bilan birinchi testni topshiring.",
-            RUS: "Никаких результатов нет. Не теряйте время. Немедленно пройдите первый тест."
-          },
-          socratic: {
-            UZB: "Boshlanish — har qanday bilimning eng muhim nuqtasidir. Birinchi testingizni qachon topshirishni rejalashtiryapsiz?",
-            RUS: "Начало — самая важная точка любого знания. Когда вы планируете сдать свой первый тест?"
-          },
-          motivator: {
-            UZB: "Sizda ulkan potensial bor! Qani, o'z kuchingizni birinchi testda sinab ko'ring. Olg'a! 🚀",
-            RUS: "У тебя огромный потенциал! Давай, проверь свои силы в первом тесте. Вперед! 🚀"
-          },
-          innovator: {
-            UZB: "Tizimda yangimisiz? Qiziqarli innovatsion testlarimizdan birini sinab ko'ring. Tajriba boshlansin! 💡",
-            RUS: "Новенький в системе? Попробуй один из наших интересных инновационных тестов. Эксперимент начинается! 💡"
-          },
-          analyst: {
-            UZB: "Ma'lumotlar bazasida sizning statistikangiz 0%. Tahlilni boshlashimiz uchun kamida bitta test topshirishingiz kerak. 💻",
-            RUS: "В базе данных ваша статистика 0%. Чтобы мы могли начать анализ, вам нужно сдать хотя бы один тест. 💻"
-          },
-          sage: {
-            UZB: "Eng uzun yo'l ham birinchi qadamdan boshlanadi, farzandim. Ilm sari birinchi qadamingizni tashlang. 📜",
-            RUS: "Даже самый длинный путь начинается с первого шага, дитя мое. Сделай свой первый шаг к знаниями. 📜"
-          },
-          comedian: {
-            UZB: "Hoy, nega qarab turibsiz? Miya chirib ketmasidan oldin bitta test yechib tashlamaymizmi? 😂 Qani, ketdik!",
-            RUS: "Эй, чего ждем? Пока мозг не заржавел, может решим один тестик? 😂 Давай, поехали!"
-          }
-        };
-
-        const badgeMap = {
-          UZB: "Birinchi test",
-          RUS: "Начать тест"
-        };
-
-        const fallbackMap = textMaps[type] || textMaps['standard'];
-
-        return {
-          text: fallbackMap[this.currentLocale] || fallbackMap['UZB'],
-          badge: badgeMap[this.currentLocale] || badgeMap['UZB'],
-          recommendedSubject: 'English',
-          recommendedLevel: 'Beginner'
-        };
-      }
-
-      let totalCorrect = 0;
-      let totalQuestions = 0;
-      const subjectStats = {};
-
-      results.forEach((res) => {
-        totalCorrect += res.score;
-        totalQuestions += res.total;
-
-        if (!subjectStats[res.subject]) {
-          subjectStats[res.subject] = { score: 0, total: 0 };
-        }
-        subjectStats[res.subject].score += res.score;
-        subjectStats[res.subject].total += res.total;
-      });
-
-      const overallAvg = Math.round((totalCorrect / totalQuestions) * 100);
-
-      let weakestSubject = '';
-      let weakestPct = 101;
-      let strongestSubject = '';
-      let strongestPct = -1;
-
-      Object.keys(subjectStats).forEach((sub) => {
-        const pct = Math.round(
-          (subjectStats[sub].score / subjectStats[sub].total) * 100
-        );
-        if (pct < weakestPct) {
-          weakestPct = pct;
-          weakestSubject = sub;
-        }
-        if (pct > strongestPct) {
-          strongestPct = pct;
-          strongestSubject = sub;
-        }
-      });
-
-      this.weakestSubject = weakestSubject;
-      this.strongestSubject = strongestSubject;
-
-      const lastTest = results[0];
-      const lastPct = Math.round((lastTest.score / lastTest.total) * 100);
-
-      if (this.currentLocale === 'RUS') {
-        if (overallAvg < 60) {
-          let text = `Привет, ${this.userDisplayName}. Ваш средний балл составляет ${overallAvg}%. Самым сложным предметом является ${weakestSubject} (${weakestPct}%). Рекомендуем начать с уровня Beginner по этому предмету.`;
-          if (this.mentorType === 'comedian') text = `Привет, ${this.userDisplayName}! Средний балл ${overallAvg}%. С ${weakestSubject} (${weakestPct}%) у нас пока комедия, но не переживай! Погнали решать Beginner тесты, пока никто не заметил 😂`;
-          return {
-            text,
-            badge: "Закрепить базу",
-            recommendedSubject: weakestSubject,
-            recommendedLevel: 'Beginner'
           };
-        } else if (overallAvg >= 85) {
-          let text = `Отличный результат, ${this.userDisplayName}! Средний балл — ${overallAvg}%. Особенно хороши успехи в ${strongestSubject} (${strongestPct}%). Попробуйте Advanced уровень!`;
-          if (this.mentorType === 'comedian') text = `Ого, ${this.userDisplayName}, да ты гений! Средний балл ${overallAvg}%. А в ${strongestSubject} (${strongestPct}%) вообще монстр. Давай-ка попробуем Advanced, если не боишься! 😎`;
-          return {
-            text,
-            badge: "Сложный уровень",
-            recommendedSubject: strongestSubject,
-            recommendedLevel: 'Advanced'
-          };
-        } else {
-          let text = `Хороший темп, ${this.userDisplayName}! Средний балл — ${overallAvg}%. В последнем тесте по ${lastTest.subject} вы набрали ${lastPct}%. Проанализируйте ошибки.`;
-          if (this.mentorType === 'comedian') text = `Нормальный полет, ${this.userDisplayName}! Средний балл ${overallAvg}%. За последний тест по ${lastTest.subject} у тебя ${lastPct}%. Главное — не сдаваться, ну и посмеяться над ошибками! 😜`;
-          return {
-            text,
-            badge: "Работа над ошибками",
-            recommendedSubject: lastTest.subject,
-            recommendedLevel: lastTest.level
-          };
-        }
-
-      } else {
-        if (overallAvg < 60) {
-          let text = `Salom, ${this.userDisplayName}. Hozirda o'rtacha ballingiz ${overallAvg}%. Eng ko'p qiynalayotgan faningiz ${weakestSubject} (${weakestPct}%). Ushbu fandan Beginner darajasida test yechishni tavsiya qilaman.`;
-          if (this.mentorType === 'comedian') text = `Salom, ${this.userDisplayName}! O'rtacha ballingiz ${overallAvg}%. ${weakestSubject} fanidagi (${weakestPct}%) holatimiz biroz yig'lagudek, lekin xavotir olmang! Beginner testlarini yechib o'zimizga kelib olamiz 😂`;
-          return {
-            text,
-            badge: "Bazani mustahkamlash",
-            recommendedSubject: weakestSubject,
-            recommendedLevel: 'Beginner'
-          };
-        } else if (overallAvg >= 85) {
-          let text = `Ajoyib ko'rsatkich, ${this.userDisplayName}! O'rtacha natijangiz juda yuqori (${overallAvg}%). Ayniqsa ${strongestSubject} fanidan natijangiz a'lo darajada (${strongestPct}%). Advanced darajasida urinib ko'ring!`;
-          if (this.mentorType === 'comedian') text = `Vooov, ${this.userDisplayName}, siz daho ekansiz-ku! O'rtacha ${overallAvg}%. ${strongestSubject} (${strongestPct}%) fani bo'yicha sizga yetadigani yo'q! Qani, Advanced darajada ham omadni sinab ko'ramizmi? 😎`;
-          return {
-            text,
-            badge: "Murakkab darajalar",
-            recommendedSubject: strongestSubject,
-            recommendedLevel: 'Advanced'
-          };
-        } else {
-          let text = `Yaxshi natija, ${this.userDisplayName}! Bilim ko'rsatkichingiz o'rtacha ${overallAvg}%. Oxirgi topshirgan ${lastTest.subject} testingizda natijangiz ${lastPct}% bo'ldi.`;
-          if (this.mentorType === 'comedian') text = `Zo'r ketyapmiz, ${this.userDisplayName}! O'rtacha ball ${overallAvg}%. Oxirgi ${lastTest.subject} testida ${lastPct}% oldik. Asosiysi - xatolardan kulib to'g'ri xulosa chiqarish! 😜`;
-          return {
-            text,
-            badge: "Xatolar ustida ishlash",
-            recommendedSubject: lastTest.subject,
-            recommendedLevel: lastTest.level
-          };
-        }
-      }
-    },
-
-    async fetchAiAdviceFromGemini(results) {
-      this.aiAdviceLoading = true;
-      
-      const fallback = this.getFallbackAdvice(results);
-      this.aiAdvice = fallback;
-      this.aiAdviceType = this.determineAdviceType(results);
-      
-      try {
-        const name = this.userDisplayName || 'User';
-        const locale = this.currentLocale || 'UZB';
-        
-        let totalCorrect = 0;
-        let totalQuestions = 0;
-        const subjectStats = {};
-        
-        results.forEach((res) => {
-          totalCorrect += res.score;
-          totalQuestions += res.total;
-          if (!subjectStats[res.subject]) {
-            subjectStats[res.subject] = { score: 0, total: 0 };
-          }
-          subjectStats[res.subject].score += res.score;
-          subjectStats[res.subject].total += res.total;
+          checkLevels();
         });
-        
-        const overallAvg = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
-        const subjectSummary = Object.keys(subjectStats).map(sub => {
-          const pct = Math.round((subjectStats[sub].score / subjectStats[sub].total) * 100);
-          return `${sub}: ${pct}%`;
-        }).join(', ');
-        
-        const latestTest = results.length > 0 ? results[0] : null;
-        const latestInfo = latestTest ? `${latestTest.subject} (${latestTest.level}) with score ${Math.round((latestTest.score / latestTest.total)*100)}%` : 'None';
-        
-        const subjectsList = this.subjects.map(s => s.id).join(', ');
-        
-        const personas = {
-          standard: "You are an objective, data-driven academic advisor. Analyze the student's statistics clearly, point out the exact numerical trends, and provide a structured, practical study plan.",
-          friendly: "You are a warm, deeply empathetic mentor. Celebrate the student's efforts, validate their struggles kindly, and provide a soft, deeply encouraging roadmap for improvement. Make them feel proud. 😊🌟",
-          strict: "You are an elite, demanding, no-nonsense professor. You expect perfection. Analyze the stats ruthlessly. Highlight their failures as unacceptable gaps in knowledge and demand immediate, disciplined action. Speak with absolute formal authority. No emojis.",
-          socratic: "You are a wise Socratic philosopher. Instead of giving a direct study plan, analyze their stats and ask deep, probing questions about why they are failing in certain areas and excelling in others. Challenge them to find their own path.",
-          motivator: "You are a high-octane, aggressive motivational coach! Look at their stats and HYPE THEM UP! If they are failing, tell them it's time for a legendary comeback! If they are winning, tell them to conquer the world! Use intense energy! 🚀🔥💪",
-          innovator: "You are a quirky, brilliant creative genius. Look at their stats and suggest completely unconventional, bizarre, or highly creative ways to study their weakest subjects. Think completely outside the box! 🧠💡",
-          analyst: "You are a Cyber-Analyst AI. Deliver the advice as a 'System Performance Report'. Use highly technical, robotic jargon (e.g., 'Efficiency at 45%', 'Recommending logic recalibration'). Be coldly logical. 💻📊",
-          sage: "You are an ancient, patient wise elder. Look at their stats and speak using deep metaphors about nature, seasons, or growing trees. Offer advice as timeless, peaceful wisdom that encourages patience and persistence. 🌿📜",
-          comedian: "You are a hilarious, slightly sarcastic stand-up comedian. Roast their bad scores playfully, make absurd jokes about their best scores, and give advice that makes them laugh out loud while still actually being helpful. 😂🎭🍿"
-        };
-        const systemPersona = personas[this.mentorType] || personas.standard;
+      }
+    };
 
-        const prompt = `${systemPersona}
+    if (subjects.value.length > 0) {
+      trySelect();
+    } else {
+      const unwatch = watch(subjects, (newVal) => {
+        if (newVal && newVal.length > 0) {
+          trySelect();
+          unwatch();
+        }
+      });
+    }
+  }
+};
+
+const calculateStreak = (results) => {
+  if (!results || results.length === 0) return 0;
+
+  const uniqueDates = Array.from(
+    new Set(
+      results
+        .map((res) => {
+          if (!res.timestamp) return null;
+          const date = res.timestamp.toDate();
+          const yyyy = date.getFullYear();
+          const mm = String(date.getMonth() + 1).padStart(2, '0');
+          const dd = String(date.getDate()).padStart(2, '0');
+          return `${yyyy}-${mm}-${dd}`;
+        })
+        .filter(Boolean)
+    )
+  ).sort((a, b) => new Date(b) - new Date(a));
+
+  if (uniqueDates.length === 0) return 0;
+
+  let streak = 0;
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  const formatDateStr = (date) => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const todayStr = formatDateStr(today);
+  const yesterdayStr = formatDateStr(yesterday);
+
+  if (uniqueDates[0] !== todayStr && uniqueDates[0] !== yesterdayStr) {
+    return 0;
+  }
+
+  let checkDate = new Date(uniqueDates[0]);
+  for (let i = 0; i < uniqueDates.length; i++) {
+    const expectedStr = formatDateStr(checkDate);
+    if (uniqueDates[i] === expectedStr) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+};
+
+const determineAdviceType = (results) => {
+  if (!results || results.length === 0) return 'first_test';
+  let totalCorrect = 0;
+  let totalQuestions = 0;
+  results.forEach((res) => {
+    totalCorrect += res.score;
+    totalQuestions += res.total;
+  });
+  const overallAvg = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+  if (overallAvg < 60) return 'weak';
+  if (overallAvg >= 85) return 'strong';
+  return 'normal';
+};
+
+const getFallbackAdvice = (results) => {
+  if (!results || results.length === 0) {
+    const type = mentorType.value || 'standard';
+    const textMaps = {
+      standard: {
+        UZB: "Salom! Siz hali birorta ham test topshirmadingiz. Math yoki English fanlaridan Beginner darajasida test topshirishni tavsiya qilaman.",
+        RUS: "Привет! Вы еще не прошли ни одного теста. Рекомендуем начать с диагностического теста по Math или English на уровне Beginner."
+      },
+      friendly: {
+        UZB: "Assalomu alaykum! Xush kelibsiz! Qani, birinchi qadamni tashlaymizmi? Istalgan fanni tanlang, masalan Math!",
+        RUS: "Приветствую! Добро пожаловать! Сделаем первый шаг? Выбери любой предмет, например Math!"
+      },
+      strict: {
+        UZB: "Hech qanday natija yo'q. Vaqtni yo'qotmang. Zudlik bilan birinchi testni topshiring.",
+        RUS: "Никаких результатов нет. Не теряйте время. Немедленно пройдите первый тест."
+      },
+      socratic: {
+        UZB: "Boshlanish — har qanday bilimning eng muhim nuqtasidir. Birinchi testingizni qachon topshirishni rejalashtiryapsiz?",
+        RUS: "Начало — самая важная точка любого знания. Когда вы планируете сдать свой первый тест?"
+      },
+      motivator: {
+        UZB: "Sizda ulkan potensial bor! Qani, o'z kuchingizni birinchi testda sinab ko'ring. Olg'a! 🚀",
+        RUS: "У тебя огромный потенциал! Давай, проверь свои силы в первом тесте. Вперед! 🚀"
+      },
+      innovator: {
+        UZB: "Tizimda yangimisiz? Qiziqarli innovatsion testlarimizdan birini sinab ko'ring. Tajriba boshlansin! 💡",
+        RUS: "Новенький в системе? Попробуй один из наших интересных инновационных тестов. Эксперимент начинается! 💡"
+      },
+      analyst: {
+        UZB: "Ma'lumotlar bazasida sizning statistikangiz 0%. Tahlilni boshlashimiz uchun kamida bitta test topshirishingiz kerak. 💻",
+        RUS: "В базе данных ваша статистика 0%. Чтобы мы могли начать анализ, вам нужно сдать хотя бы один тест. 💻"
+      },
+      sage: {
+        UZB: "Eng uzun yo'l ham birinchi qadamdan boshlanadi, farzandim. Ilm sari birinchi qadamingizni tashlang. 📜",
+        RUS: "Даже самый длинный путь начинается с первого шага, дитя мое. Сделай свой первый шаг к знаниями. 📜"
+      },
+      comedian: {
+        UZB: "Hoy, nega qarab turibsiz? Miya chirib ketmasidan oldin bitta test yechib tashlamaymizmi? 😂 Qani, ketdik!",
+        RUS: "Эй, чего ждем? Пока мозг не заржавел, может решим один тестик? 😂 Давай, поехали!"
+      }
+    };
+
+    const badgeMap = {
+      UZB: "Birinchi test",
+      RUS: "Начать тест"
+    };
+
+    const fallbackMap = textMaps[type] || textMaps['standard'];
+
+    return {
+      text: fallbackMap[currentLocale.value] || fallbackMap['UZB'],
+      badge: badgeMap[currentLocale.value] || badgeMap['UZB'],
+      recommendedSubject: 'English',
+      recommendedLevel: 'Beginner'
+    };
+  }
+
+  let totalCorrect = 0;
+  let totalQuestions = 0;
+  const subjectStats = {};
+
+  results.forEach((res) => {
+    totalCorrect += res.score;
+    totalQuestions += res.total;
+
+    if (!subjectStats[res.subject]) {
+      subjectStats[res.subject] = { score: 0, total: 0 };
+    }
+    subjectStats[res.subject].score += res.score;
+    subjectStats[res.subject].total += res.total;
+  });
+
+  const overallAvg = Math.round((totalCorrect / totalQuestions) * 100);
+
+  let wSubject = '';
+  let wPct = 101;
+  let sSubject = '';
+  let sPct = -1;
+
+  Object.keys(subjectStats).forEach((sub) => {
+    const pct = Math.round(
+      (subjectStats[sub].score / subjectStats[sub].total) * 100
+    );
+    if (pct < wPct) {
+      wPct = pct;
+      wSubject = sub;
+    }
+    if (pct > sPct) {
+      sPct = pct;
+      sSubject = sub;
+    }
+  });
+
+  weakestSubject.value = wSubject;
+  strongestSubject.value = sSubject;
+
+  const lastTest = results[0];
+  const lastPct = Math.round((lastTest.score / lastTest.total) * 100);
+
+  if (currentLocale.value === 'RUS') {
+    if (overallAvg < 60) {
+      let text = `Привет, ${userDisplayName.value}. Ваш средний балл составляет ${overallAvg}%. Самым сложным предметом является ${wSubject} (${wPct}%). Рекомендуем начать с уровня Beginner по этому предмету.`;
+      if (mentorType.value === 'comedian') text = `Привет, ${userDisplayName.value}! Средний балл ${overallAvg}%. С ${wSubject} (${wPct}%) у нас пока комедия, но не переживай! Погнали решать Beginner тесты, пока никто не заметил 😂`;
+      return {
+        text,
+        badge: "Закрепить базу",
+        recommendedSubject: wSubject,
+        recommendedLevel: 'Beginner'
+      };
+    } else if (overallAvg >= 85) {
+      let text = `Отличный результат, ${userDisplayName.value}! Средний балл — ${overallAvg}%. Особенно хороши успехи в ${sSubject} (${sPct}%). Попробуйте Advanced уровень!`;
+      if (mentorType.value === 'comedian') text = `Ого, ${userDisplayName.value}, да ты гений! Средний балл ${overallAvg}%. А в ${sSubject} (${sPct}%) вообще монстр. Давай-ка попробуем Advanced, если не боишься! 😎`;
+      return {
+        text,
+        badge: "Сложный уровень",
+        recommendedSubject: sSubject,
+        recommendedLevel: 'Advanced'
+      };
+    } else {
+      let text = `Хороший темп, ${userDisplayName.value}! Средний балл — ${overallAvg}%. В последнем тесте по ${lastTest.subject} вы набрали ${lastPct}%. Проанализируйте ошибки.`;
+      if (mentorType.value === 'comedian') text = `Нормальный полет, ${userDisplayName.value}! Средний балл ${overallAvg}%. За последний тест по ${lastTest.subject} у тебя ${lastPct}%. Главное — не сдаваться, ну и посмеяться над ошибками! 😜`;
+      return {
+        text,
+        badge: "Работа над ошибками",
+        recommendedSubject: lastTest.subject,
+        recommendedLevel: lastTest.level
+      };
+    }
+
+  } else {
+    if (overallAvg < 60) {
+      let text = `Salom, ${userDisplayName.value}. Hozirda o'rtacha ballingiz ${overallAvg}%. Eng ko'p qiynalayotgan faningiz ${wSubject} (${wPct}%). Ushbu fandan Beginner darajasida test yechishni tavsiya qilaman.`;
+      if (mentorType.value === 'comedian') text = `Salom, ${userDisplayName.value}! O'rtacha ballingiz ${overallAvg}%. ${wSubject} fanidagi (${wPct}%) holatimiz biroz yig'lagudek, lekin xavotir olmang! Beginner testlarini yechib o'zimizga kelib olamiz 😂`;
+      return {
+        text,
+        badge: "Bazani mustahkamlash",
+        recommendedSubject: wSubject,
+        recommendedLevel: 'Beginner'
+      };
+    } else if (overallAvg >= 85) {
+      let text = `Ajoyib ko'rsatkich, ${userDisplayName.value}! O'rtacha natijangiz juda yuqori (${overallAvg}%). Ayniqsa ${sSubject} fanidan natijangiz a'lo darajada (${sPct}%). Advanced darajasida urinib ko'ring!`;
+      if (mentorType.value === 'comedian') text = `Vooov, ${userDisplayName.value}, siz daho ekansiz-ku! O'rtacha ${overallAvg}%. ${sSubject} (${sPct}%) fani bo'yicha sizga yetadigani yo'q! Qani, Advanced darajada ham omadni sinab ko'ramizmi? 😎`;
+      return {
+        text,
+        badge: "Murakkab darajalar",
+        recommendedSubject: sSubject,
+        recommendedLevel: 'Advanced'
+      };
+    } else {
+      let text = `Yaxshi natija, ${userDisplayName.value}! Bilim ko'rsatkichingiz o'rtacha ${overallAvg}%. Oxirgi topshirgan ${lastTest.subject} testingizda natijangiz ${lastPct}% bo'ldi.`;
+      if (mentorType.value === 'comedian') text = `Zo'r ketyapmiz, ${userDisplayName.value}! O'rtacha ball ${overallAvg}%. Oxirgi ${lastTest.subject} testida ${lastPct}% oldik. Asosiysi - xatolardan kulib to'g'ri xulosa chiqarish! 😜`;
+      return {
+        text,
+        badge: "Xatolar ustida ishlash",
+        recommendedSubject: lastTest.subject,
+        recommendedLevel: lastTest.level
+      };
+    }
+  }
+};
+
+const fetchAiAdviceFromGemini = async (results) => {
+  aiAdviceLoading.value = true;
+  
+  const fallback = getFallbackAdvice(results);
+  aiAdvice.value = fallback;
+  aiAdviceType.value = determineAdviceType(results);
+  
+  try {
+    const name = userDisplayName.value || 'User';
+    const locale = currentLocale.value || 'UZB';
+    
+    let totalCorrect = 0;
+    let totalQuestions = 0;
+    const subjectStats = {};
+    
+    results.forEach((res) => {
+      totalCorrect += res.score;
+      totalQuestions += res.total;
+      if (!subjectStats[res.subject]) {
+        subjectStats[res.subject] = { score: 0, total: 0 };
+      }
+      subjectStats[res.subject].score += res.score;
+      subjectStats[res.subject].total += res.total;
+    });
+    
+    const overallAvg = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+    const subjectSummary = Object.keys(subjectStats).map(sub => {
+      const pct = Math.round((subjectStats[sub].score / subjectStats[sub].total) * 100);
+      return `${sub}: ${pct}%`;
+    }).join(', ');
+    
+    const latestTest = results.length > 0 ? results[0] : null;
+    const latestInfo = latestTest ? `${latestTest.subject} (${latestTest.level}) with score ${Math.round((latestTest.score / latestTest.total)*100)}%` : 'None';
+    
+    const subjectsList = subjects.value.map(s => s.id).join(', ');
+    
+    const personas = {
+      standard: "You are an objective, data-driven academic advisor. Analyze the student's statistics clearly, point out the exact numerical trends, and provide a structured, practical study plan.",
+      friendly: "You are a warm, deeply empathetic mentor. Celebrate the student's efforts, validate their struggles kindly, and provide a soft, deeply encouraging roadmap for improvement. Make them feel proud. 😊🌟",
+      strict: "You are an elite, demanding, no-nonsense professor. You expect perfection. Analyze the stats ruthlessly. Highlight their failures as unacceptable gaps in knowledge and demand immediate, disciplined action. Speak with absolute formal authority. No emojis.",
+      socratic: "You are a wise Socratic philosopher. Instead of giving a direct study plan, analyze their stats and ask deep, probing questions about why they are failing in certain areas and excelling in others. Challenge them to find their own path.",
+      motivator: "You are a high-octane, aggressive motivational coach! Look at their stats and HYPE THEM UP! If they are failing, tell them it's time for a legendary comeback! If they are winning, tell them to conquer the world! Use intense energy! 🚀🔥💪",
+      innovator: "You are a quirky, brilliant creative genius. Look at their stats and suggest completely unconventional, bizarre, or highly creative ways to study their weakest subjects. Think completely outside the box! 🧠💡",
+      analyst: "You are a Cyber-Analyst AI. Deliver the advice as a 'System Performance Report'. Use highly technical, robotic jargon (e.g., 'Efficiency at 45%', 'Recommending logic recalibration'). Be coldly logical. 💻📊",
+      sage: "You are an ancient, patient wise elder. Look at their stats and speak using deep metaphors about nature, seasons, or growing trees. Offer advice as timeless, peaceful wisdom that encourages patience and persistence. 🌿📜",
+      comedian: "You are a hilarious, slightly sarcastic stand-up comedian. Roast their bad scores playfully, make absurd jokes about their best scores, and give advice that makes them laugh out loud while still actually being helpful. 😂🎭🍿"
+    };
+    const systemPersona = personas[mentorType.value] || personas.standard;
+
+    const prompt = `${systemPersona}
 You are acting as this persona for the Test.me platform.
 Analyze the student's history stats and generate a tailored recommendation.
 
@@ -852,125 +763,146 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   "recommendedLevel": "Exact recommended level (e.g. 'Beginner', 'Elementary', 'Intermediate', 'Advanced', 'Easy', 'Medium', 'Hard')"
 }`;
 
-        const GEMINI_API_KEY = "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    { text: prompt }
-                  ]
-                }
-              ],
-              generationConfig: {
-                responseMimeType: "application/json"
-              }
-            })
-          }
-        );
-        
-        if (response.ok) {
-          const resData = await response.json();
-          const resText = resData.candidates[0].content.parts[0].text;
-          const adviceData = JSON.parse(resText.trim());
-          
-          if (adviceData.text && adviceData.badge) {
-            this.aiAdvice = {
-              text: adviceData.text,
-              badge: adviceData.badge,
-              recommendedSubject: adviceData.recommendedSubject,
-              recommendedLevel: adviceData.recommendedLevel
-            };
-            this.aiAdviceType = 'gemini';
-          }
-        }
-      } catch (err) {
-        console.error("Failed to generate dynamic AI advice with Gemini:", err);
-      } finally {
-        this.aiAdviceLoading = false;
-      }
-    },
-
-    handleAiBadgeClick() {
-      if (this.aiAdvice.recommendedSubject && this.aiAdvice.recommendedLevel) {
-        const target = this.subjects.find(
-          (s) => s.id.toLowerCase() === this.aiAdvice.recommendedSubject.toLowerCase() ||
-                 s.nameEn?.toLowerCase() === this.aiAdvice.recommendedSubject.toLowerCase() ||
-                 s.nameUz?.toLowerCase() === this.aiAdvice.recommendedSubject.toLowerCase() ||
-                 s.nameRu?.toLowerCase() === this.aiAdvice.recommendedSubject.toLowerCase()
-        );
-        if (target) {
-          this.selectSubjectCard(target);
-          setTimeout(() => {
-            const recLvl = this.aiAdvice.recommendedLevel.toLowerCase();
-            const foundLvl = this.levels.find(l => l.toLowerCase() === recLvl);
-            if (foundLvl) {
-              this.selectedLevel = foundLvl;
-            } else if (this.levels.length > 0) {
-              // Try to find approximate match
-              const approx = this.levels.find(l => l.toLowerCase().startsWith(recLvl.substring(0, 3)));
-              if (approx) {
-                this.selectedLevel = approx;
-              } else {
-                this.selectedLevel = this.levels[0];
-              }
+    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { text: prompt }
+              ]
             }
-            this.selectedQuestionCount = 10;
-            this.$nextTick(() => {
-              document.querySelector('.start-test-btn')?.scrollIntoView({ behavior: 'smooth' });
-            });
-          }, 600);
-          return;
-        }
+          ],
+          generationConfig: {
+            responseMimeType: "application/json"
+          }
+        })
       }
-
-      // Fallback handlers
-      if (this.aiAdviceType === 'first_test') {
-        if (this.subjects.length > 0) {
-          this.selectSubjectCard(this.subjects[0]);
-          this.$nextTick(() => {
-            document.querySelector('.selection-panel')?.scrollIntoView({ behavior: 'smooth' });
-          });
-        }
-      } else {
-        document.querySelector('.selection-panel')?.scrollIntoView({ behavior: 'smooth' });
-      }
-    },
-
-    getStreakText(streak) {
-      if (this.currentLocale === 'UZB') return `${streak} kun`;
+    );
+    
+    if (response.ok) {
+      const resData = await response.json();
+      const resText = resData.candidates[0].content.parts[0].text;
+      const adviceData = JSON.parse(resText.trim());
       
-      // Russian pluralization rules
-      const lastDigit = streak % 10;
-      const lastTwoDigits = streak % 100;
-      if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
-        return `${streak} дней`;
+      if (adviceData.text && adviceData.badge) {
+        aiAdvice.value = {
+          text: adviceData.text,
+          badge: adviceData.badge,
+          recommendedSubject: adviceData.recommendedSubject,
+          recommendedLevel: adviceData.recommendedLevel
+        };
+        aiAdviceType.value = 'gemini';
       }
-      if (lastDigit === 1) {
-        return `${streak} день`;
-      }
-      if (lastDigit >= 2 && lastDigit <= 4) {
-        return `${streak} дня`;
-      }
-      return `${streak} дней`;
-    },
-  },
-  mounted() {
-    this.fetchSubjects();
-    this.fetchSpecialTests();
-    this.fetchUserStats();
-  },
+    }
+  } catch (err) {
+    console.error("Failed to generate dynamic AI advice with Gemini:", err);
+  } finally {
+    aiAdviceLoading.value = false;
+  }
 };
+
+const fetchUserStats = () => {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      userDisplayName.value = user.displayName || user.email.split('@')[0];
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          userPoints.value = userData.points || 0;
+          if (userData.preferences) {
+            applyUserPreferences(userData.preferences);
+            mentorType.value = userData.preferences.mentorType || 'standard';
+          } else {
+            mentorType.value = 'standard';
+          }
+        }
+
+        const resultsRef = collection(db, 'results');
+        const q = query(resultsRef, where('userId', '==', user.uid));
+        const querySnapshot = await getDocs(q);
+        const results = querySnapshot.docs
+          .map((doc) => doc.data())
+          .sort((a, b) => {
+            const timeA = a.timestamp ? a.timestamp.toDate() : 0;
+            const timeB = b.timestamp ? b.timestamp.toDate() : 0;
+            return timeB - timeA;
+          });
+
+        fetchAiAdviceFromGemini(results);
+        userStreak.value = calculateStreak(results);
+
+        const totalTests = results.length;
+        const perfectCount = results.filter(r => r.score === r.total).length;
+        const allBadges = getBadges(totalTests, perfectCount, userPoints.value, results);
+        unlockedBadges.value = allBadges.filter(b => b.unlocked);
+      } catch (e) {
+        console.error('Error fetching user stats:', e);
+      }
+    }
+  });
+};
+
+const handleAiBadgeClick = () => {
+  if (aiAdvice.value.recommendedSubject && aiAdvice.value.recommendedLevel) {
+    const target = subjects.value.find(
+      (s) => s.id.toLowerCase() === aiAdvice.value.recommendedSubject.toLowerCase() ||
+             s.nameEn?.toLowerCase() === aiAdvice.value.recommendedSubject.toLowerCase() ||
+             s.nameUz?.toLowerCase() === aiAdvice.value.recommendedSubject.toLowerCase() ||
+             s.nameRu?.toLowerCase() === aiAdvice.value.recommendedSubject.toLowerCase()
+    );
+    if (target) {
+      selectSubjectCard(target);
+      setTimeout(() => {
+        const recLvl = aiAdvice.value.recommendedLevel.toLowerCase();
+        const foundLvl = levels.value.find(l => l.toLowerCase() === recLvl);
+        if (foundLvl) {
+          selectedLevel.value = foundLvl;
+        } else if (levels.value.length > 0) {
+          const approx = levels.value.find(l => l.toLowerCase().startsWith(recLvl.substring(0, 3)));
+          if (approx) {
+            selectedLevel.value = approx;
+          } else {
+            selectedLevel.value = levels.value[0];
+          }
+        }
+        selectedQuestionCount.value = 10;
+        nextTick(() => {
+          document.querySelector('.start-test-btn')?.scrollIntoView({ behavior: 'smooth' });
+        });
+      }, 600);
+      return;
+    }
+  }
+
+  if (aiAdviceType.value === 'first_test') {
+    if (subjects.value.length > 0) {
+      selectSubjectCard(subjects.value[0]);
+      nextTick(() => {
+        document.querySelector('.selection-panel')?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+  } else {
+    document.querySelector('.selection-panel')?.scrollIntoView({ behavior: 'smooth' });
+  }
+};
+
+onMounted(() => {
+  fetchSubjects();
+  fetchSpecialTests();
+  fetchUserStats();
+});
 </script>
 
 
-<style scoped>
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 * {

@@ -64,14 +64,13 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'CertGrid',
-  props: {
-    certificates: { type: Array, required: true },
-    isRus: { type: Boolean, required: true }
-  }
-}
+<script setup>
+const props = defineProps({
+  certificates: { type: Array, required: true },
+  isRus: { type: Boolean, required: true }
+});
+
+const emit = defineEmits(['view-cert', 'reset-filters']);
 </script>
 
 <style scoped>

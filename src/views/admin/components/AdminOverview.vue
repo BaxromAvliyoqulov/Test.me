@@ -129,7 +129,8 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue';
 import { db } from '@/config/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
@@ -137,217 +138,214 @@ import { Line } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js'
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
-export default {
-  name: 'AdminOverview',
-  components: { Line },
-  data() {
-    return {
-      loading: true,
-      cardValues: { totalUsers: 0, totalTests: 0, totalResults: 0, totalCerts: 0 },
-      platformStats: [],
-      activityFeed: [],
-      topSubjects: [],
-      bottomSubjects: [],
-      chartData: { labels: [], datasets: [] },
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        scales: {
-          y: { beginAtZero: true, grid: { borderDash: [5, 5], color: '#f1f5f9' } },
-          x: { grid: { display: false } }
-        },
-        interaction: { mode: 'nearest', axis: 'x', intersect: false },
-        elements: { line: { tension: 0.4 } } // Smooth curves
-      },
-      statCards: [
-        { key: 'totalUsers',   label: "Jami Foydalanuvchilar", icon: 'fas fa-users',         color: '#3b82f6' },
-        { key: 'totalTests',   label: "Jami Testlar",          icon: 'fas fa-file-alt',       color: '#10b981' },
-        { key: 'totalResults', label: "Jami Natijalar",        icon: 'fas fa-chart-line',     color: '#8b5cf6' },
-        { key: 'totalCerts',   label: "Jami Sertifikatlar",    icon: 'fas fa-certificate',    color: '#f59e0b' },
-      ]
-    };
+defineEmits(['navigate']);
+
+const loading = ref(true);
+const cardValues = ref({ totalUsers: 0, totalTests: 0, totalResults: 0, totalCerts: 0 });
+const platformStats = ref([]);
+const activityFeed = ref([]);
+const topSubjects = ref([]);
+const bottomSubjects = ref([]);
+const chartData = ref({ labels: [], datasets: [] });
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: { mode: 'index', intersect: false }
   },
-  async mounted() {
-    await this.loadData();
+  scales: {
+    y: { beginAtZero: true, grid: { borderDash: [5, 5], color: '#f1f5f9' } },
+    x: { grid: { display: false } }
   },
-  methods: {
-    formatNum(n) {
-      if (!n && n !== 0) return '0';
-      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-      if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-      return n.toString();
-    },
-    getTimeAgo(timestamp) {
-      if (!timestamp) return 'Yaqinda';
-      const ms = timestamp.toMillis ? timestamp.toMillis() : (timestamp.seconds ? timestamp.seconds * 1000 : new Date(timestamp).getTime());
-      const diff = Date.now() - ms;
-      const mins = Math.floor(diff / 60000);
-      if (mins < 1) return 'Hozirgina';
-      if (mins < 60) return `${mins} daqiqa oldin`;
-      const hrs = Math.floor(mins / 60);
-      if (hrs < 24) return `${hrs} soat oldin`;
-      return `${Math.floor(hrs / 24)} kun oldin`;
-    },
-    async loadData() {
-      this.loading = true;
-      try {
-        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000));
-        
-        const usersPromise = getDocs(collection(db, 'users')).catch(() => ({ docs: [], size: 0 }));
-        const subjectsPromise = getDocs(collection(db, 'subjects')).catch(() => ({ docs: [], size: 0 }));
-        const resultsPromise = getDocs(collection(db, 'results')).catch(() => ({ docs: [], size: 0 }));
-        const certsPromise = getDocs(collection(db, 'certificates')).catch(() => ({ docs: [], size: 0 }));
+  interaction: { mode: 'nearest', axis: 'x', intersect: false },
+  elements: { line: { tension: 0.4 } } // Smooth curves
+};
 
-        const [usersSnap, subjectsSnap, resultsSnap, certsSnap] = await Promise.race([
-          Promise.all([usersPromise, subjectsPromise, resultsPromise, certsPromise]),
-          timeout
-        ]);
+const statCards = [
+  { key: 'totalUsers',   label: "Jami Foydalanuvchilar", icon: 'fas fa-users',         color: '#3b82f6' },
+  { key: 'totalTests',   label: "Jami Testlar",          icon: 'fas fa-file-alt',       color: '#10b981' },
+  { key: 'totalResults', label: "Jami Natijalar",        icon: 'fas fa-chart-line',     color: '#8b5cf6' },
+  { key: 'totalCerts',   label: "Jami Sertifikatlar",    icon: 'fas fa-certificate',    color: '#f59e0b' },
+];
 
-        // Basic Stats
-        const allUsers = usersSnap.docs ? usersSnap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
-        this.cardValues.totalUsers = allUsers.length;
-        
-        let totalTests = 0;
-        try {
-          if (subjectsSnap.docs) {
-             for (const subDoc of subjectsSnap.docs) {
-               totalTests += (subDoc.data().levelCount || 1) * 3; 
-             }
-          }
-        } catch(e) {}
-        this.cardValues.totalTests = totalTests > 0 ? totalTests : 15;
+const formatNum = (n) => {
+  if (!n && n !== 0) return '0';
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n.toString();
+};
 
-        this.cardValues.totalResults = resultsSnap.size || 0;
-        this.cardValues.totalCerts = certsSnap.size || 0;
+const getTimeAgo = (timestamp) => {
+  if (!timestamp) return 'Yaqinda';
+  const ms = timestamp.toMillis ? timestamp.toMillis() : (timestamp.seconds ? timestamp.seconds * 1000 : new Date(timestamp).getTime());
+  const diff = Date.now() - ms;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Hozirgina';
+  if (mins < 60) return `${mins} daqiqa oldin`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} soat oldin`;
+  return `${Math.floor(hrs / 24)} kun oldin`;
+};
 
-        // Platform Stats calculation
-        const maxUsers = Math.max(this.cardValues.totalUsers, 1);
-        this.platformStats = [
-          { label: "Sertifikat olingan",   icon: 'fas fa-certificate',  value: this.cardValues.totalCerts,   percent: Math.min((this.cardValues.totalCerts / maxUsers) * 100, 100),   color: '#f59e0b' },
-          { label: "Test ishlagan",         icon: 'fas fa-file-alt',     value: this.cardValues.totalResults, percent: Math.min((this.cardValues.totalResults / Math.max(totalTests * 0.2, 1)) * 10, 100), color: '#8b5cf6' },
-          { label: "Jami foydalanuvchilar", icon: 'fas fa-users',        value: this.cardValues.totalUsers,   percent: 100,                                                              color: '#3b82f6' },
-          { label: "Jami testlar",          icon: 'fas fa-question',     value: this.cardValues.totalTests,   percent: Math.min(this.cardValues.totalTests / 10, 100),                   color: '#10b981' },
-        ];
+const loadData = async () => {
+  loading.value = true;
+  try {
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000));
+    
+    const usersPromise = getDocs(collection(db, 'users')).catch(() => ({ docs: [], size: 0 }));
+    const subjectsPromise = getDocs(collection(db, 'subjects')).catch(() => ({ docs: [], size: 0 }));
+    const resultsPromise = getDocs(collection(db, 'results')).catch(() => ({ docs: [], size: 0 }));
+    const certsPromise = getDocs(collection(db, 'certificates')).catch(() => ({ docs: [], size: 0 }));
 
-        // Process Chart Data (Last 7 Days User Registration)
-        const countsByDate = {};
-        const today = new Date();
-        // Initialize last 7 days with 0
-        for(let i=6; i>=0; i--) {
-          const d = new Date(today);
-          d.setDate(today.getDate() - i);
-          const dateStr = d.toLocaleDateString('uz-UZ', { month: 'short', day: 'numeric' });
-          countsByDate[dateStr] = 0;
-        }
+    const [usersSnap, subjectsSnap, resultsSnap, certsSnap] = await Promise.race([
+      Promise.all([usersPromise, subjectsPromise, resultsPromise, certsPromise]),
+      timeout
+    ]);
 
-        allUsers.forEach(u => {
-          if(u.createdAt) {
-            const ms = u.createdAt.toMillis ? u.createdAt.toMillis() : u.createdAt;
-            const d = new Date(ms);
-            // check if within last 7 days
-            const diffTime = Math.abs(today - d);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            if(diffDays <= 7) {
-              const dateStr = d.toLocaleDateString('uz-UZ', { month: 'short', day: 'numeric' });
-              if(countsByDate[dateStr] !== undefined) {
-                countsByDate[dateStr]++;
-              }
-            }
-          }
-        });
-
-        this.chartData = {
-          labels: Object.keys(countsByDate),
-          datasets: [{
-            label: "Yangi Foydalanuvchilar",
-            data: Object.values(countsByDate),
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.2)',
-            fill: true,
-            borderWidth: 3,
-            pointBackgroundColor: '#ffffff',
-            pointBorderColor: '#3b82f6',
-            pointRadius: 4,
-            pointHoverRadius: 6
-          }]
-        };
-
-        // Process Activity Feed & Subject Popularity
-        const allResults = resultsSnap.docs ? resultsSnap.docs.map(d => d.data()) : [];
-        
-        // Subject Popularity Analysis
-        const subjectCounts = {};
-        allResults.forEach(r => {
-          if (r.subject) {
-            // Also include level if exists for more detail, or just subject
-            const name = r.test_level && r.test_level !== 'General' ? `${r.subject} (${r.test_level})` : r.subject;
-            subjectCounts[name] = (subjectCounts[name] || 0) + 1;
-          }
-        });
-        
-        const sortedSubjects = Object.entries(subjectCounts).sort((a,b) => b[1] - a[1]);
-        
-        // Split into Top 5 and Bottom 5 (avoid overlap if less than 10)
-        if (sortedSubjects.length > 5) {
-          this.topSubjects = sortedSubjects.slice(0, 5).map(s => ({ name: s[0], count: s[1] }));
-          this.bottomSubjects = sortedSubjects.slice(-5).reverse().map(s => ({ name: s[0], count: s[1] }));
-        } else {
-          this.topSubjects = sortedSubjects.map(s => ({ name: s[0], count: s[1] }));
-          this.bottomSubjects = [];
-        }
-
-        let feed = [];
-        allUsers.forEach(u => {
-          if(u.createdAt) {
-            feed.push({
-              type: 'user',
-              icon: 'fas fa-user-plus',
-              color: '#3b82f6',
-              text: `<b>${u.displayName || u.email}</b> platformadan ro'yxatdan o'tdi`,
-              timestamp: u.createdAt
-            });
-          }
-        });
-        
-        // Let's grab some real results if we can parse them, otherwise mock feed items 
-        allResults.forEach(r => {
-           if(r.createdAt || r.date) {
-             const ts = r.createdAt || r.date;
-             feed.push({
-               type: 'result',
-               icon: 'fas fa-check-circle',
-               color: '#10b981',
-               text: `Foydalanuvchi test ishladi va <b>${r.score || r.correctAnswers || 0}</b> ball to'pladi`,
-               timestamp: ts
-             });
-           }
-        });
-
-        // Sort by time descending
-        feed.sort((a, b) => {
-          const ta = a.timestamp?.toMillis ? a.timestamp.toMillis() : (new Date(a.timestamp).getTime() || 0);
-          const tb = b.timestamp?.toMillis ? b.timestamp.toMillis() : (new Date(b.timestamp).getTime() || 0);
-          return tb - ta;
-        });
-
-        // Limit to 10 items
-        this.activityFeed = feed.slice(0, 8).map(f => ({
-          ...f,
-          time: this.getTimeAgo(f.timestamp)
-        }));
-
-      } catch (e) {
-        console.error('Overview load error:', e);
-      } finally {
-        this.loading = false;
+    // Basic Stats
+    const allUsers = usersSnap.docs ? usersSnap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
+    cardValues.value.totalUsers = allUsers.length;
+    
+    let totalTests = 0;
+    try {
+      if (subjectsSnap.docs) {
+         for (const subDoc of subjectsSnap.docs) {
+           totalTests += (subDoc.data().levelCount || 1) * 3; 
+         }
       }
+    } catch(e) {}
+    cardValues.value.totalTests = totalTests > 0 ? totalTests : 15;
+
+    cardValues.value.totalResults = resultsSnap.size || 0;
+    cardValues.value.totalCerts = certsSnap.size || 0;
+
+    // Platform Stats calculation
+    const maxUsers = Math.max(cardValues.value.totalUsers, 1);
+    platformStats.value = [
+      { label: "Sertifikat olingan",   icon: 'fas fa-certificate',  value: cardValues.value.totalCerts,   percent: Math.min((cardValues.value.totalCerts / maxUsers) * 100, 100),   color: '#f59e0b' },
+      { label: "Test ishlagan",         icon: 'fas fa-file-alt',     value: cardValues.value.totalResults, percent: Math.min((cardValues.value.totalResults / Math.max(totalTests * 0.2, 1)) * 10, 100), color: '#8b5cf6' },
+      { label: "Jami foydalanuvchilar", icon: 'fas fa-users',        value: cardValues.value.totalUsers,   percent: 100,                                                              color: '#3b82f6' },
+      { label: "Jami testlar",          icon: 'fas fa-question',     value: cardValues.value.totalTests,   percent: Math.min(cardValues.value.totalTests / 10, 100),                   color: '#10b981' },
+    ];
+
+    // Process Chart Data (Last 7 Days User Registration)
+    const countsByDate = {};
+    const today = new Date();
+    // Initialize last 7 days with 0
+    for(let i=6; i>=0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dateStr = d.toLocaleDateString('uz-UZ', { month: 'short', day: 'numeric' });
+      countsByDate[dateStr] = 0;
     }
+
+    allUsers.forEach(u => {
+      if(u.createdAt) {
+        const ms = u.createdAt.toMillis ? u.createdAt.toMillis() : u.createdAt;
+        const d = new Date(ms);
+        // check if within last 7 days
+        const diffTime = Math.abs(today - d);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        if(diffDays <= 7) {
+          const dateStr = d.toLocaleDateString('uz-UZ', { month: 'short', day: 'numeric' });
+          if(countsByDate[dateStr] !== undefined) {
+            countsByDate[dateStr]++;
+          }
+        }
+      }
+    });
+
+    chartData.value = {
+      labels: Object.keys(countsByDate),
+      datasets: [{
+        label: "Yangi Foydalanuvchilar",
+        data: Object.values(countsByDate),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        fill: true,
+        borderWidth: 3,
+        pointBackgroundColor: '#ffffff',
+        pointBorderColor: '#3b82f6',
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    };
+
+    // Process Activity Feed & Subject Popularity
+    const allResults = resultsSnap.docs ? resultsSnap.docs.map(d => d.data()) : [];
+    
+    // Subject Popularity Analysis
+    const subjectCounts = {};
+    allResults.forEach(r => {
+      if (r.subject) {
+        // Also include level if exists for more detail, or just subject
+        const name = r.test_level && r.test_level !== 'General' ? `${r.subject} (${r.test_level})` : r.subject;
+        subjectCounts[name] = (subjectCounts[name] || 0) + 1;
+      }
+    });
+    
+    const sortedSubjects = Object.entries(subjectCounts).sort((a,b) => b[1] - a[1]);
+    
+    // Split into Top 5 and Bottom 5 (avoid overlap if less than 10)
+    if (sortedSubjects.length > 5) {
+      topSubjects.value = sortedSubjects.slice(0, 5).map(s => ({ name: s[0], count: s[1] }));
+      bottomSubjects.value = sortedSubjects.slice(-5).reverse().map(s => ({ name: s[0], count: s[1] }));
+    } else {
+      topSubjects.value = sortedSubjects.map(s => ({ name: s[0], count: s[1] }));
+      bottomSubjects.value = [];
+    }
+
+    let feed = [];
+    allUsers.forEach(u => {
+      if(u.createdAt) {
+        feed.push({
+          type: 'user',
+          icon: 'fas fa-user-plus',
+          color: '#3b82f6',
+          text: `<b>${u.displayName || u.email}</b> platformadan ro'yxatdan o'tdi`,
+          timestamp: u.createdAt
+        });
+      }
+    });
+    
+    // Let's grab some real results if we can parse them, otherwise mock feed items 
+    allResults.forEach(r => {
+       if(r.createdAt || r.date) {
+         const ts = r.createdAt || r.date;
+         feed.push({
+           type: 'result',
+           icon: 'fas fa-check-circle',
+           color: '#10b981',
+           text: `Foydalanuvchi test ishladi va <b>${r.score || r.correctAnswers || 0}</b> ball to'pladi`,
+           timestamp: ts
+         });
+       }
+    });
+
+    // Sort by time descending
+    feed.sort((a, b) => {
+      const ta = a.timestamp?.toMillis ? a.timestamp.toMillis() : (new Date(a.timestamp).getTime() || 0);
+      const tb = b.timestamp?.toMillis ? b.timestamp.toMillis() : (new Date(b.timestamp).getTime() || 0);
+      return tb - ta;
+    });
+
+    // Limit to 10 items
+    activityFeed.value = feed.slice(0, 8).map(f => ({
+      ...f,
+      time: getTimeAgo(f.timestamp)
+    }));
+
+  } catch (e) {
+    console.error('Overview load error:', e);
+  } finally {
+    loading.value = false;
   }
-}
+};
+
+onMounted(() => {
+  loadData();
+});
 </script>
 
 <style scoped>

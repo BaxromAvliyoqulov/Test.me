@@ -20,15 +20,14 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'FriendsSearchGrid',
-  props: {
-    searchResults: Array,
-    isRus: Boolean,
-    isFriendOrRequested: Function
-  }
-}
+<script setup>
+const props = defineProps({
+  searchResults: Array,
+  isRus: Boolean,
+  isFriendOrRequested: Function
+});
+
+const emit = defineEmits(['send-request']);
 </script>
 
 <style scoped>

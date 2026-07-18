@@ -126,7 +126,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { auth, db } from '@/config/firebase';
@@ -139,125 +139,107 @@ import {
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
 
-export default {
-  name: 'Signup',
-  setup() {
-    const username = ref('');
-    const email = ref('');
-    const password = ref('');
-    const showPassword = ref(false);
-    const errorMessage = ref('');
-    const successMessage = ref('');
-    const router = useRouter();
-    const toast = useToast();
+const username = ref('');
+const email = ref('');
+const password = ref('');
+const showPassword = ref(false);
+const errorMessage = ref('');
+const successMessage = ref('');
+const router = useRouter();
+const toast = useToast();
 
-    const togglePasswordVisibility = () => {
-      showPassword.value = !showPassword.value;
-    };
+const togglePasswordVisibility = () => {
+  showPassword.value = !showPassword.value;
+};
 
-    const handleSubmit = async () => {
-      errorMessage.value = '';
-      successMessage.value = '';
+const handleSubmit = async () => {
+  errorMessage.value = '';
+  successMessage.value = '';
 
-      if (!email.value || !password.value || !username.value) {
-        errorMessage.value = 'Barcha maydonlarni to\'ldirish shart.';
-        toast.error('Barcha maydonlarni to\'ldirish shart.');
-        return;
-      }
+  if (!email.value || !password.value || !username.value) {
+    errorMessage.value = 'Barcha maydonlarni to\'ldirish shart.';
+    toast.error('Barcha maydonlarni to\'ldirish shart.');
+    return;
+  }
 
-      try {
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          email.value,
-          password.value
-        );
-        const user = userCredential.user;
+  try {
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email.value,
+      password.value
+    );
+    const user = userCredential.user;
 
-        await updateProfile(user, {
-          displayName: username.value,
-        });
+    await updateProfile(user, {
+      displayName: username.value,
+    });
 
-        await setDoc(doc(db, 'users', user.uid), {
-          username: username.value,
-          displayName: username.value,
-          email: user.email,
-          photoURL: '',
-          points: 0,
-          referralCode: user.uid.slice(0, 8).toUpperCase(),
-          shortId: user.uid.slice(0, 8).toUpperCase(),
-          preferences: {
-            defaultSubject: '',
-            defaultLevel: '',
-            dailyGoal: 10,
-            defaultLocale: 'UZB',
-          },
-          createdAt: new Date(),
-        });
+    await setDoc(doc(db, 'users', user.uid), {
+      username: username.value,
+      displayName: username.value,
+      email: user.email,
+      photoURL: '',
+      points: 0,
+      referralCode: user.uid.slice(0, 8).toUpperCase(),
+      shortId: user.uid.slice(0, 8).toUpperCase(),
+      preferences: {
+        defaultSubject: '',
+        defaultLevel: '',
+        dailyGoal: 10,
+        defaultLocale: 'UZB',
+      },
+      createdAt: new Date(),
+    });
 
-        successMessage.value = 'Ro\'yxatdan muvaffaqiyatli o\'tdingiz!';
-        toast.success('Ro\'yxatdan muvaffaqiyatli o\'tdingiz!');
-        console.log('Firebase Auth User ID:', user.uid);
-        window.location.href = '/';
-      } catch (error) {
-        errorMessage.value = error.message;
-        toast.error(error.message);
-      }
-    };
+    successMessage.value = 'Ro\'yxatdan muvaffaqiyatli o\'tdingiz!';
+    toast.success('Ro\'yxatdan muvaffaqiyatli o\'tdingiz!');
+    console.log('Firebase Auth User ID:', user.uid);
+    window.location.href = '/';
+  } catch (error) {
+    errorMessage.value = error.message;
+    toast.error(error.message);
+  }
+};
 
-    const handleGoogleSignUp = async () => {
-      errorMessage.value = '';
-      successMessage.value = '';
+const handleGoogleSignUp = async () => {
+  errorMessage.value = '';
+  successMessage.value = '';
 
-      try {
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
 
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
+    const userRef = doc(db, 'users', user.uid);
+    const userSnap = await getDoc(userRef);
 
-        if (!userSnap.exists()) {
-          await setDoc(userRef, {
-            username: user.displayName || 'Anonymous',
-            displayName: user.displayName || 'Anonymous',
-            email: user.email,
-            photoURL: user.photoURL || '',
-            points: 0,
-            referralCode: user.uid.slice(0, 8).toUpperCase(),
-            shortId: user.uid.slice(0, 8).toUpperCase(),
-            preferences: {
-              defaultSubject: '',
-              defaultLevel: '',
-              dailyGoal: 10,
-              defaultLocale: 'UZB',
-            },
-            createdAt: new Date(),
-          });
-        }
+    if (!userSnap.exists()) {
+      await setDoc(userRef, {
+        username: user.displayName || 'Anonymous',
+        displayName: user.displayName || 'Anonymous',
+        email: user.email,
+        photoURL: user.photoURL || '',
+        points: 0,
+        referralCode: user.uid.slice(0, 8).toUpperCase(),
+        shortId: user.uid.slice(0, 8).toUpperCase(),
+        preferences: {
+          defaultSubject: '',
+          defaultLevel: '',
+          dailyGoal: 10,
+          defaultLocale: 'UZB',
+        },
+        createdAt: new Date(),
+      });
+    }
 
-        successMessage.value = 'Google orqali ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi!';
-        toast.success('Google orqali ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi!');
-        window.location.href = '/';
-      } catch (error) {
-        errorMessage.value = 'Xatolik yuz berdi: ' + error.message;
-        toast.error(errorMessage.value);
-        console.error(error);
-      }
-    };
-
-    return {
-      username,
-      email,
-      password,
-      showPassword,
-      togglePasswordVisibility,
-      handleSubmit,
-      handleGoogleSignUp,
-      errorMessage,
-      successMessage,
-      router,
-    };
-  },
+    successMessage.value = 'Google orqali ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi!';
+    toast.success('Google orqali ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi!');
+    window.location.href = '/';
+  } catch (error) {
+    errorMessage.value = 'Xatolik yuz berdi: ' + error.message;
+    toast.error(errorMessage.value);
+    console.error(error);
+  }
 };
 </script>
 

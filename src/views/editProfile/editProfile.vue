@@ -135,7 +135,7 @@ const store = useStore();
 const activeTab = ref('profile');
 const profile = reactive({
   username: '',
-  password: '••••••••',
+  password: '',
   isPremium: true,
 });
 const userEmail = ref('');
@@ -405,17 +405,10 @@ const onFileChange = (e) => {
 };
 
 const togglePasswordVisibility = () => {
-  if (profile.password === '••••••••') {
-    showToast(t('passwordHiddenSecurity', 'Xavfsizlik sababli joriy parolingiz yashiringan.'), 'error');
-  }
   showPassword.value = !showPassword.value;
 };
 
 const validatePassword = () => {
-  if (profile.password === '••••••••') {
-    passwordError.value = '';
-    return;
-  }
   if (profile.password && profile.password.length < 6) {
     passwordError.value = t('passwordLengthError');
   } else {
@@ -461,14 +454,14 @@ const saveProfile = async () => {
       photoURL: authPhotoURL,
     });
 
-    if (profile.password && profile.password !== '••••••••' && profile.password.trim() !== '') {
+    if (profile.password && profile.password.trim() !== '') {
       await updatePassword(user, profile.password);
     }
 
     await store.dispatch('user/saveGoals', goalsList.value);
 
     showToast(t('profileUpdated'), 'success');
-    profile.password = '••••••••';
+    profile.password = '';
     
     window.dispatchEvent(new CustomEvent('profile-updated', {
       detail: { displayName: profile.username, photoURL: selectedPhotoURL.value }
@@ -490,7 +483,7 @@ const saveProfile = async () => {
   }
 };
 </script>
-\n<style scoped>
+\n<style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 .edit-profile-wrapper {

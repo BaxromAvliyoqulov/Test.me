@@ -54,17 +54,23 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'FriendsSidebar',
-  props: {
-    searchQuery: String,
-    tab: String,
-    friends: Array,
-    pendingRequests: Array,
-    isRus: Boolean
-  }
-}
+<script setup>
+const props = defineProps({
+  searchQuery: String,
+  tab: String,
+  friends: Array,
+  pendingRequests: Array,
+  isRus: Boolean
+});
+
+const emit = defineEmits([
+  'update:searchQuery', 
+  'update:tab', 
+  'search', 
+  'open-chat', 
+  'accept-request', 
+  'reject-request'
+]);
 </script>
 
 <style scoped>

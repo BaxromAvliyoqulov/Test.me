@@ -184,7 +184,8 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue';
 import { db } from '@/config/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, getCountFromServer } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
@@ -193,299 +194,279 @@ import { sortLevels } from '@/utils/sorters';
 
 const toast = useToast();
 
-export default {
-  name: 'AdminSubjects',
-  data() {
-    return {
-      loading: true,
-      subjects: [],
-      openSubjects: [],
-      
-      showNewSubjectForm: false,
-      newSubjectId: '',
-      savingSubject: false,
-      
-      addingLevel: null,
-      newLevelName: '',
-      savingLevel: false,
-      
-      viewingTests: null,
-      loadingTests: false,
-    };
-  },
-  mounted() { 
-    this.loadSubjects(); 
-  },
-  methods: {
-    getTotalTests(subject) {
-      if (!subject.levels) return 0;
-      return subject.levels.reduce((sum, lvl) => sum + (lvl.testCount || 0), 0);
-    },
-    // Ultimate Speed 1: Load from Cache immediately, then fetch in background
-    async loadSubjects() {
-      // Try cache first
-      const cached = localStorage.getItem('admin_subjects_cache');
-      if (cached) {
-        try {
-          this.subjects = JSON.parse(cached);
-          this.loading = false; // Turn off main loading instantly!
-        } catch(e) { console.error(e); }
-      } else {
-        this.loading = true;
-      }
-      
-      try {
-        const snap = await getDocs(collection(db, 'subjects'));
-        
-        const promises = snap.docs.map(async (docSnap) => {
-          const subject = { id: docSnap.id, levels: [], levelsLoaded: false, loadingLevels: true };
-          try {
-             const levelsSnap = await getDocs(collection(db, 'subjects', docSnap.id, 'levels'));
-             const levels = [];
-             for (const lvlDoc of levelsSnap.docs) {
-               const countSnap = await getCountFromServer(collection(db, 'subjects', docSnap.id, 'levels', lvlDoc.id, 'tests'));
-               levels.push({ id: lvlDoc.id, testCount: countSnap.data().count });
-             }
-             subject.levels = sortLevels(levels);
-             subject.levelsLoaded = true;
-          } catch(e) {
-             console.error("Failed to load levels for", docSnap.id);
-          } finally {
-             subject.loadingLevels = false;
-          }
-          return subject;
-        });
+const loading = ref(true);
+const subjects = ref([]);
+const openSubjects = ref([]);
 
-        this.subjects = await Promise.all(promises);
-        
-        // Save full structure to cache so next reload is instant with badges!
-        localStorage.setItem('admin_subjects_cache', JSON.stringify(this.subjects));
-      } catch(e) { 
-        toast.error('Fanlarni yuklashda xatolik: ' + e.message); 
-      } finally { 
-        this.loading = false; 
-      }
-    },
-    
-    // Ultimate Speed 2: Prefetch levels when mouse hovers over the card
-    prefetchSubject(subject) {
-      if (!subject.levelsLoaded && !subject.loadingLevels) {
-        subject.loadingLevels = true;
-        // Fetch silently in background
-        getDocs(collection(db, 'subjects', subject.id, 'levels')).then(async (levelsSnap) => {
-          const levels = [];
-          for (const lvlDoc of levelsSnap.docs) {
-            const countSnap = await getCountFromServer(collection(db, 'subjects', subject.id, 'levels', lvlDoc.id, 'tests'));
-            levels.push({ id: lvlDoc.id, testCount: countSnap.data().count });
-          }
-          subject.levels = sortLevels(levels);
-          subject.levelsLoaded = true;
-        }).catch(e => {
-          console.warn('Prefetch failed:', e);
-        }).finally(() => {
-          subject.loadingLevels = false;
-        });
-      }
-    },
-    
-    // Lazy Load 3: If click happens before prefetch finishes, it waits. If already fetched, it's instant!
-    async toggleSubject(subject) {
-      const isOpen = this.openSubjects.includes(subject.id);
-      
-      if (isOpen) {
-        // Close it
-        this.openSubjects = this.openSubjects.filter(id => id !== subject.id);
-      } else {
-        // Open it
-        this.openSubjects.push(subject.id);
-        
-        // Fetch levels if not loaded yet
-        if (!subject.levelsLoaded && !subject.loadingLevels) {
-          subject.loadingLevels = true;
-          try {
-            const levelsSnap = await getDocs(collection(db, 'subjects', subject.id, 'levels'));
-            const levels = [];
-            for (const lvlDoc of levelsSnap.docs) {
-              const countSnap = await getCountFromServer(collection(db, 'subjects', subject.id, 'levels', lvlDoc.id, 'tests'));
-              levels.push({ id: lvlDoc.id, testCount: countSnap.data().count });
-            }
-            subject.levels = sortLevels(levels);
-            subject.levelsLoaded = true;
-          } catch (e) {
-            toast.error(`Darajalarni yuklashda xatolik: ${e.message}`);
-          } finally {
-            subject.loadingLevels = false;
-          }
-        }
-      }
-    },
+const showNewSubjectForm = ref(false);
+const newSubjectId = ref('');
+const savingSubject = ref(false);
 
-    async createSubject() {
-      if (!this.newSubjectId.trim()) { 
-        toast.warning('Fan nomini kiriting!'); 
-        return; 
-      }
-      this.savingSubject = true;
-      try {
-        const subId = this.newSubjectId.trim();
-        await setDoc(doc(db, 'subjects', subId), { createdAt: new Date() });
-        toast.success(`"${subId}" fani muvaffaqiyatli qo'shildi!`);
-        
-        // Add to local state without full reload
-        if (!this.subjects.find(s => s.id === subId)) {
-          this.subjects.push({ id: subId, levels: [], levelsLoaded: true, loadingLevels: false });
-        }
-        
-        this.showNewSubjectForm = false;
-        this.newSubjectId = '';
-      } catch(e) { 
-        toast.error('Xatolik: ' + e.message); 
-      } finally { 
-        this.savingSubject = false; 
-      }
-    },
+const addingLevel = ref(null);
+const newLevelName = ref('');
+const savingLevel = ref(false);
 
-    openAddLevel(subjectId) { 
-      this.addingLevel = subjectId; 
-      this.newLevelName = ''; 
-    },
-    
-    async createLevel() {
-      if (!this.newLevelName.trim()) { 
-        toast.warning('Daraja nomini kiriting!'); 
-        return; 
-      }
-      this.savingLevel = true;
-      try {
-        const lvlName = this.newLevelName.trim();
-        await setDoc(doc(db, 'subjects', this.addingLevel, 'levels', lvlName), { name: lvlName });
-        toast.success('Yangi daraja yaratildi!');
-        
-        // Update local state
-        const subject = this.subjects.find(s => s.id === this.addingLevel);
-        if (subject) {
-          subject.levels.push({ id: lvlName, testCount: 0 });
-          if(!subject.levelsLoaded) subject.levelsLoaded = true;
-        }
-        
-        this.addingLevel = null;
-        this.newLevelName = '';
-      } catch(e) { 
-        toast.error('Xatolik: ' + e.message); 
-      } finally { 
-        this.savingLevel = false; 
-      }
-    },
+const viewingTests = ref(null);
+const loadingTests = ref(false);
 
-    async deleteSubject(subject) {
-      if (!(await confirmDelete(
-        'Fanni o\'chirish', 
-        `DIQQAT: "${subject.id}" fanini butunlay o'chirasizmi? Barcha testlar yo'qoladi!`
-      ))) return;
-      try { 
-        await deleteDoc(doc(db, 'subjects', subject.id)); 
-        this.subjects = this.subjects.filter(s => s.id !== subject.id);
-        toast.info(`Fanni tizimdan o'chirdingiz.`);
-      } catch(e) { 
-        toast.error('Xatolik: ' + e.message); 
-      }
-    },
+const getTotalTests = (subject) => {
+  if (!subject.levels) return 0;
+  return subject.levels.reduce((sum, lvl) => sum + (lvl.testCount || 0), 0);
+};
+
+const loadSubjects = async () => {
+  const cached = localStorage.getItem('admin_subjects_cache');
+  if (cached) {
+    try {
+      subjects.value = JSON.parse(cached);
+      loading.value = false;
+    } catch(e) { console.error(e); }
+  } else {
+    loading.value = true;
+  }
+  
+  try {
+    const snap = await getDocs(collection(db, 'subjects'));
     
-    async deleteLevel(subjectId, levelId) {
-      if (!(await confirmDelete(
-        'Darajani o\'chirish',
-        `"${levelId}" darajasini o'chirasizmi?`
-      ))) return;
-      try { 
-        await deleteDoc(doc(db, 'subjects', subjectId, 'levels', levelId)); 
-        
-        // Update local state
-        const subject = this.subjects.find(s => s.id === subjectId);
-        if (subject) {
-          subject.levels = subject.levels.filter(l => l.id !== levelId);
-        }
-        toast.info(`Daraja o'chirildi.`);
-      } catch(e) { 
-        toast.error('Xatolik: ' + e.message); 
-      }
-    },
-    
-    async clearTests(subjectId, levelId) {
-      if (!(await confirmDelete(
-        'Darajani Tozalash',
-        `DIQQAT: "${levelId}" darajasidagi barcha testlar o'chib ketadi! Buni qaytarib bo'lmaydi. Davom etamizmi?`
-      ))) return;
+    const promises = snap.docs.map(async (docSnap) => {
+      const subject = { id: docSnap.id, levels: [], levelsLoaded: false, loadingLevels: true };
       try {
-        const testsRef = collection(db, 'subjects', subjectId, 'levels', levelId, 'tests');
-        const snap = await getDocs(testsRef);
-        if (snap.empty) {
-           toast.info("Bu darajada testlar yo'q!");
-           return;
-        }
-        toast.info("Testlar tozalanmoqda, kuting...");
-        
-        let batch = writeBatch(db);
-        let count = 0;
-        for (const docSnap of snap.docs) {
-           batch.delete(docSnap.ref);
-           count++;
-           if (count % 400 === 0) {
-              await batch.commit();
-              batch = writeBatch(db);
-           }
-        }
-        if (count % 400 !== 0) {
-           await batch.commit();
-        }
-        
-        const subject = this.subjects.find(s => s.id === subjectId);
-        if(subject) {
-          const lvl = subject.levels.find(l => l.id === levelId);
-          if(lvl) lvl.testCount = 0;
-        }
-        toast.success(`${count} ta test muvaffaqiyatli tozalandi!`);
+         const levelsSnap = await getDocs(collection(db, 'subjects', docSnap.id, 'levels'));
+         const levels = [];
+         for (const lvlDoc of levelsSnap.docs) {
+           const countSnap = await getCountFromServer(collection(db, 'subjects', docSnap.id, 'levels', lvlDoc.id, 'tests'));
+           levels.push({ id: lvlDoc.id, testCount: countSnap.data().count });
+         }
+         subject.levels = sortLevels(levels);
+         subject.levelsLoaded = true;
       } catch(e) {
-        toast.error('Xatolik: ' + e.message);
+         console.error("Failed to load levels for", docSnap.id);
+      } finally {
+         subject.loadingLevels = false;
       }
-    },
+      return subject;
+    });
 
-    async viewTests(subjectId, levelId) {
-      this.viewingTests = { subjectId, levelId, tests: [] };
-      this.loadingTests = true;
-      try {
-        const snap = await getDocs(collection(db, 'subjects', subjectId, 'levels', levelId, 'tests'));
-        this.viewingTests.tests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      } catch(e) { 
-        toast.error('Testlarni yuklashda xatolik yuz berdi.'); 
-      } finally { 
-        this.loadingTests = false; 
+    subjects.value = await Promise.all(promises);
+    localStorage.setItem('admin_subjects_cache', JSON.stringify(subjects.value));
+  } catch(e) { 
+    toast.error('Fanlarni yuklashda xatolik: ' + e.message); 
+  } finally { 
+    loading.value = false; 
+  }
+};
+
+const prefetchSubject = (subject) => {
+  if (!subject.levelsLoaded && !subject.loadingLevels) {
+    subject.loadingLevels = true;
+    getDocs(collection(db, 'subjects', subject.id, 'levels')).then(async (levelsSnap) => {
+      const levels = [];
+      for (const lvlDoc of levelsSnap.docs) {
+        const countSnap = await getCountFromServer(collection(db, 'subjects', subject.id, 'levels', lvlDoc.id, 'tests'));
+        levels.push({ id: lvlDoc.id, testCount: countSnap.data().count });
       }
-    },
+      subject.levels = sortLevels(levels);
+      subject.levelsLoaded = true;
+    }).catch(e => {
+      console.warn('Prefetch failed:', e);
+    }).finally(() => {
+      subject.loadingLevels = false;
+    });
+  }
+};
 
-    async deleteTest(test) {
-      if (!(await confirmDelete(
-        'Testni o\'chirish',
-        `Ushbu test savolini bazadan butunlay o'chirib yuborasizmi?`
-      ))) return;
-      const { subjectId, levelId } = this.viewingTests;
+const toggleSubject = async (subject) => {
+  const isOpen = openSubjects.value.includes(subject.id);
+  
+  if (isOpen) {
+    openSubjects.value = openSubjects.value.filter(id => id !== subject.id);
+  } else {
+    openSubjects.value.push(subject.id);
+    
+    if (!subject.levelsLoaded && !subject.loadingLevels) {
+      subject.loadingLevels = true;
       try {
-        await deleteDoc(doc(db, 'subjects', subjectId, 'levels', levelId, 'tests', test.id));
-        this.viewingTests.tests = this.viewingTests.tests.filter(t => t.id !== test.id);
-        
-        // Update local test count
-        const subject = this.subjects.find(s => s.id === subjectId);
-        if(subject) {
-          const lvl = subject.levels.find(l => l.id === levelId);
-          if(lvl) lvl.testCount = Math.max(0, (lvl.testCount || 1) - 1);
+        const levelsSnap = await getDocs(collection(db, 'subjects', subject.id, 'levels'));
+        const levels = [];
+        for (const lvlDoc of levelsSnap.docs) {
+          const countSnap = await getCountFromServer(collection(db, 'subjects', subject.id, 'levels', lvlDoc.id, 'tests'));
+          levels.push({ id: lvlDoc.id, testCount: countSnap.data().count });
         }
-        
-        toast.success(`Test o'chirildi.`);
-      } catch(e) { 
-        toast.error('Xatolik: ' + e.message); 
+        subject.levels = sortLevels(levels);
+        subject.levelsLoaded = true;
+      } catch (e) {
+        toast.error(`Darajalarni yuklashda xatolik: ${e.message}`);
+      } finally {
+        subject.loadingLevels = false;
       }
     }
   }
-}
+};
+
+const createSubject = async () => {
+  if (!newSubjectId.value.trim()) { 
+    toast.warning('Fan nomini kiriting!'); 
+    return; 
+  }
+  savingSubject.value = true;
+  try {
+    const subId = newSubjectId.value.trim();
+    await setDoc(doc(db, 'subjects', subId), { createdAt: new Date() });
+    toast.success(`"${subId}" fani muvaffaqiyatli qo'shildi!`);
+    
+    if (!subjects.value.find(s => s.id === subId)) {
+      subjects.value.push({ id: subId, levels: [], levelsLoaded: true, loadingLevels: false });
+    }
+    
+    showNewSubjectForm.value = false;
+    newSubjectId.value = '';
+  } catch(e) { 
+    toast.error('Xatolik: ' + e.message); 
+  } finally { 
+    savingSubject.value = false; 
+  }
+};
+
+const openAddLevel = (subjectId) => { 
+  addingLevel.value = subjectId; 
+  newLevelName.value = ''; 
+};
+
+const createLevel = async () => {
+  if (!newLevelName.value.trim()) { 
+    toast.warning('Daraja nomini kiriting!'); 
+    return; 
+  }
+  savingLevel.value = true;
+  try {
+    const lvlName = newLevelName.value.trim();
+    await setDoc(doc(db, 'subjects', addingLevel.value, 'levels', lvlName), { name: lvlName });
+    toast.success('Yangi daraja yaratildi!');
+    
+    const subject = subjects.value.find(s => s.id === addingLevel.value);
+    if (subject) {
+      subject.levels.push({ id: lvlName, testCount: 0 });
+      if(!subject.levelsLoaded) subject.levelsLoaded = true;
+    }
+    
+    addingLevel.value = null;
+    newLevelName.value = '';
+  } catch(e) { 
+    toast.error('Xatolik: ' + e.message); 
+  } finally { 
+    savingLevel.value = false; 
+  }
+};
+
+const deleteSubject = async (subject) => {
+  if (!(await confirmDelete(
+    'Fanni o\'chirish', 
+    `DIQQAT: "${subject.id}" fanini butunlay o'chirasizmi? Barcha testlar yo'qoladi!`
+  ))) return;
+  try { 
+    await deleteDoc(doc(db, 'subjects', subject.id)); 
+    subjects.value = subjects.value.filter(s => s.id !== subject.id);
+    toast.info(`Fanni tizimdan o'chirdingiz.`);
+  } catch(e) { 
+    toast.error('Xatolik: ' + e.message); 
+  }
+};
+
+const deleteLevel = async (subjectId, levelId) => {
+  if (!(await confirmDelete(
+    'Darajani o\'chirish',
+    `"${levelId}" darajasini o'chirasizmi?`
+  ))) return;
+  try { 
+    await deleteDoc(doc(db, 'subjects', subjectId, 'levels', levelId)); 
+    
+    const subject = subjects.value.find(s => s.id === subjectId);
+    if (subject) {
+      subject.levels = subject.levels.filter(l => l.id !== levelId);
+    }
+    toast.info(`Daraja o'chirildi.`);
+  } catch(e) { 
+    toast.error('Xatolik: ' + e.message); 
+  }
+};
+
+const clearTests = async (subjectId, levelId) => {
+  if (!(await confirmDelete(
+    'Darajani Tozalash',
+    `DIQQAT: "${levelId}" darajasidagi barcha testlar o'chib ketadi! Buni qaytarib bo'lmaydi. Davom etamizmi?`
+  ))) return;
+  try {
+    const testsRef = collection(db, 'subjects', subjectId, 'levels', levelId, 'tests');
+    const snap = await getDocs(testsRef);
+    if (snap.empty) {
+       toast.info("Bu darajada testlar yo'q!");
+       return;
+    }
+    toast.info("Testlar tozalanmoqda, kuting...");
+    
+    let batch = writeBatch(db);
+    let count = 0;
+    for (const docSnap of snap.docs) {
+       batch.delete(docSnap.ref);
+       count++;
+       if (count % 400 === 0) {
+          await batch.commit();
+          batch = writeBatch(db);
+       }
+    }
+    if (count % 400 !== 0) {
+       await batch.commit();
+    }
+    
+    const subject = subjects.value.find(s => s.id === subjectId);
+    if(subject) {
+      const lvl = subject.levels.find(l => l.id === levelId);
+      if(lvl) lvl.testCount = 0;
+    }
+    toast.success(`${count} ta test muvaffaqiyatli tozalandi!`);
+  } catch(e) {
+    toast.error('Xatolik: ' + e.message);
+  }
+};
+
+const viewTests = async (subjectId, levelId) => {
+  viewingTests.value = { subjectId, levelId, tests: [] };
+  loadingTests.value = true;
+  try {
+    const snap = await getDocs(collection(db, 'subjects', subjectId, 'levels', levelId, 'tests'));
+    viewingTests.value.tests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) { 
+    toast.error('Testlarni yuklashda xatolik yuz berdi.'); 
+  } finally { 
+    loadingTests.value = false; 
+  }
+};
+
+const deleteTest = async (test) => {
+  if (!(await confirmDelete(
+    'Testni o\'chirish',
+    `Ushbu test savolini bazadan butunlay o'chirib yuborasizmi?`
+  ))) return;
+  const { subjectId, levelId } = viewingTests.value;
+  try {
+    await deleteDoc(doc(db, 'subjects', subjectId, 'levels', levelId, 'tests', test.id));
+    viewingTests.value.tests = viewingTests.value.tests.filter(t => t.id !== test.id);
+    
+    const subject = subjects.value.find(s => s.id === subjectId);
+    if(subject) {
+      const lvl = subject.levels.find(l => l.id === levelId);
+      if(lvl) lvl.testCount = Math.max(0, (lvl.testCount || 1) - 1);
+    }
+    
+    toast.success(`Test o'chirildi.`);
+  } catch(e) { 
+    toast.error('Xatolik: ' + e.message); 
+  }
+};
+
+onMounted(() => {
+  loadSubjects();
+});
 </script>
 
 <style scoped>

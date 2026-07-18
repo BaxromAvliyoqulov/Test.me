@@ -116,96 +116,90 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'GoalsEditor',
-  props: {
-    modelValue: {
-      type: Array,
-      default: () => []
-    },
-    t: {
-      type: Function,
-      default: (key) => key
-    }
-  },
-  emits: ['update:modelValue'],
-  data() {
-    return {
-      localGoals: [],
-      editingIndex: -1,
-      currentGoal: this.getEmptyGoal(),
-      filterTab: 'all'
-    }
-  },
-  computed: {
-    filteredGoals() {
-      if (this.filterTab === 'all') return this.localGoals;
-      return this.localGoals.filter(g => g.status === this.filterTab);
-    }
-  },
-  watch: {
-    modelValue: {
-      handler(newVal) {
-        if (JSON.stringify(newVal) !== JSON.stringify(this.localGoals)) {
-          this.localGoals = JSON.parse(JSON.stringify(newVal));
-        }
-      },
-      deep: true,
-      immediate: true
-    }
-  },
-  methods: {
-    getEmptyGoal() {
-      return {
-        id: '',
-        title: '',
-        description: '',
-        targetDate: '',
-        status: 'active'
-      }
-    },
-    statusIcon(status) {
-      if (status === 'completed') return 'fas fa-check-circle text-green-500';
-      if (status === 'failed') return 'fas fa-times-circle text-red-500';
-      return 'fas fa-spinner fa-spin text-blue-500';
-    },
-    saveGoal() {
-      if (!this.currentGoal.title.trim()) return;
+<script setup>
+import { ref, computed, watch } from 'vue';
 
-      if (this.editingIndex === -1) {
-        this.currentGoal.id = Date.now().toString();
-        this.localGoals.push({ ...this.currentGoal });
-      } else {
-        this.localGoals[this.editingIndex] = { ...this.currentGoal };
-      }
-      
-      this.emitUpdate();
-      this.cancelEdit();
-    },
-    editGoal(id) {
-      const index = this.localGoals.findIndex(g => g.id === id);
-      if (index !== -1) {
-        this.editingIndex = index;
-        this.currentGoal = { ...this.localGoals[index] };
-      }
-    },
-    removeGoal(id) {
-      const index = this.localGoals.findIndex(g => g.id === id);
-      if (index !== -1) {
-        this.localGoals.splice(index, 1);
-        this.emitUpdate();
-      }
-    },
-    cancelEdit() {
-      this.editingIndex = -1;
-      this.currentGoal = this.getEmptyGoal();
-    },
-    emitUpdate() {
-      this.$emit('update:modelValue', JSON.parse(JSON.stringify(this.localGoals)));
-    }
+const props = defineProps({
+  modelValue: {
+    type: Array,
+    default: () => []
+  },
+  t: {
+    type: Function,
+    default: (key) => key
   }
-}
+});
+
+const emit = defineEmits(['update:modelValue']);
+
+const getEmptyGoal = () => ({
+  id: '',
+  title: '',
+  description: '',
+  targetDate: '',
+  status: 'active'
+});
+
+const localGoals = ref([]);
+const editingIndex = ref(-1);
+const currentGoal = ref(getEmptyGoal());
+const filterTab = ref('all');
+
+const filteredGoals = computed(() => {
+  if (filterTab.value === 'all') return localGoals.value;
+  return localGoals.value.filter(g => g.status === filterTab.value);
+});
+
+watch(() => props.modelValue, (newVal) => {
+  if (JSON.stringify(newVal) !== JSON.stringify(localGoals.value)) {
+    localGoals.value = JSON.parse(JSON.stringify(newVal));
+  }
+}, { deep: true, immediate: true });
+
+const statusIcon = (status) => {
+  if (status === 'completed') return 'fas fa-check-circle text-green-500';
+  if (status === 'failed') return 'fas fa-times-circle text-red-500';
+  return 'fas fa-spinner fa-spin text-blue-500';
+};
+
+const emitUpdate = () => {
+  emit('update:modelValue', JSON.parse(JSON.stringify(localGoals.value)));
+};
+
+const cancelEdit = () => {
+  editingIndex.value = -1;
+  currentGoal.value = getEmptyGoal();
+};
+
+const saveGoal = () => {
+  if (!currentGoal.value.title.trim()) return;
+
+  if (editingIndex.value === -1) {
+    currentGoal.value.id = Date.now().toString();
+    localGoals.value.push({ ...currentGoal.value });
+  } else {
+    localGoals.value[editingIndex.value] = { ...currentGoal.value };
+  }
+  
+  emitUpdate();
+  cancelEdit();
+};
+
+const editGoal = (id) => {
+  const index = localGoals.value.findIndex(g => g.id === id);
+  if (index !== -1) {
+    editingIndex.value = index;
+    currentGoal.value = { ...localGoals.value[index] };
+  }
+};
+
+const removeGoal = (id) => {
+  const index = localGoals.value.findIndex(g => g.id === id);
+  if (index !== -1) {
+    localGoals.value.splice(index, 1);
+    emitUpdate();
+  }
+};
 </script>
 
 <style scoped>

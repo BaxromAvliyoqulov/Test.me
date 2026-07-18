@@ -16,62 +16,57 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Toast',
-  props: {
-    toasts: {
-      type: Array,
-      required: true,
-    },
+<script setup>
+import { watch, onBeforeUnmount } from 'vue';
+
+const props = defineProps({
+  toasts: {
+    type: Array,
+    required: true,
   },
-  emits: ['close-toast'],
-  data() {
-    return {
-      timeouts: new Map(),
-    };
-  },
-  watch: {
-    toasts: {
-      immediate: true,
-      handler(toasts) {
-        toasts.forEach((toast) => {
-          if (!this.timeouts.has(toast.id)) {
-            const timeout = setTimeout(
-              () => this.closeToast(toast.id),
-              toast.duration || 3000
-            );
-            this.timeouts.set(toast.id, timeout);
-          }
-        });
-      },
-    },
-  },
-  methods: {
-    closeToast(id) {
-      clearTimeout(this.timeouts.get(id));
-      this.timeouts.delete(id);
-      this.$emit('close-toast', id);
-    },
-    pause(id) {
-      clearTimeout(this.timeouts.get(id));
-    },
-    resume(id) {
-      const toast = this.toasts.find((t) => t.id === id);
-      if (toast) {
-        const timeout = setTimeout(
-          () => this.closeToast(id),
-          toast.duration || 3000
-        );
-        this.timeouts.set(id, timeout);
-      }
-    },
-  },
-  beforeUnmount() {
-    this.timeouts.forEach((t) => clearTimeout(t));
-    this.timeouts.clear();
-  },
+});
+
+const emit = defineEmits(['close-toast']);
+
+const timeouts = new Map();
+
+const closeToast = (id) => {
+  clearTimeout(timeouts.get(id));
+  timeouts.delete(id);
+  emit('close-toast', id);
 };
+
+const pause = (id) => {
+  clearTimeout(timeouts.get(id));
+};
+
+const resume = (id) => {
+  const toast = props.toasts.find((t) => t.id === id);
+  if (toast) {
+    const timeout = setTimeout(
+      () => closeToast(id),
+      toast.duration || 3000
+    );
+    timeouts.set(id, timeout);
+  }
+};
+
+watch(() => props.toasts, (newToasts) => {
+  newToasts.forEach((toast) => {
+    if (!timeouts.has(toast.id)) {
+      const timeout = setTimeout(
+        () => closeToast(toast.id),
+        toast.duration || 3000
+      );
+      timeouts.set(toast.id, timeout);
+    }
+  });
+}, { immediate: true });
+
+onBeforeUnmount(() => {
+  timeouts.forEach((t) => clearTimeout(t));
+  timeouts.clear();
+});
 </script>
 
 <style scoped>

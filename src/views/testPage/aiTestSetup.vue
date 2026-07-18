@@ -105,7 +105,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { reactive, ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { db, auth, functions } from '@/config/firebase';
@@ -115,115 +115,112 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useI18n } from '@/utils/i18n';
 import { useToast } from 'vue-toastification';
 
-export default {
-  name: 'AiTestSetup',
-  setup() {
-    const { locale } = useI18n();
-    const router = useRouter();
-    const toast = useToast();
+const { locale } = useI18n();
+const router = useRouter();
+const toast = useToast();
 
-    const isRus = computed(() => locale.value === 'RUS');
+const isRus = computed(() => locale.value === 'RUS');
 
-    const form = reactive({
-      subject: '',
-      level: 'intermediate',
-      topic: ''
-    });
+const form = reactive({
+  subject: '',
+  level: 'intermediate',
+  topic: ''
+});
 
-    const loading = ref(false);
-    const progressPercentage = ref(0);
-    const statusIndex = ref(0);
+const loading = ref(false);
+const progressPercentage = ref(0);
+const statusIndex = ref(0);
 
-    const subjects = ['English', 'O\'zbek tili', 'Matematika', 'Tarix', 'Fizika', 'Informatika', 'Dasturlash'];
-    
-    const levels = [
-      { id: 'elementary', nameUz: 'Boshlang\'ich', nameRu: 'Начальный', icon: 'fas fa-baby-carriage' },
-      { id: 'intermediate', nameUz: 'O\'rta', nameRu: 'Средний', icon: 'fas fa-graduation-cap' },
-      { id: 'advanced', nameUz: 'Yuqori', nameRu: 'Продвинутый', icon: 'fas fa-crown' }
-    ];
+const subjects = ['English', 'O\'zbek tili', 'Matematika', 'Tarix', 'Fizika', 'Informatika', 'Dasturlash'];
 
-    const statusMessagesUz = [
-      'Gemini AI modeli bilan bog\'lanilmoqda...',
-      'Kiritilgan mavzu tahlil qilinmoqda...',
-      '10 ta professional test savoli yozilmoqda...',
-      'Variantlar va javoblar tekshirilmoqda...',
-      'Savollar Firestore ma\'lumotlar bazasiga yozilmoqda...',
-      'Deyarli tayyor, yuklanmoqda...'
-    ];
+const levels = [
+  { id: 'elementary', nameUz: 'Boshlang\'ich', nameRu: 'Начальный', icon: 'fas fa-baby-carriage' },
+  { id: 'intermediate', nameUz: 'O\'rta', nameRu: 'Средний', icon: 'fas fa-graduation-cap' },
+  { id: 'advanced', nameUz: 'Yuqori', nameRu: 'Продвинутый', icon: 'fas fa-crown' }
+];
 
-    const statusMessagesRu = [
-      'Подключение к модели Gemini AI...',
-      'Анализ введенной темы...',
-      'Создание 10 профессиональных вопросов...',
-      'Проверка вариантов ответов...',
-      'Запись вопросов в базу данных Firestore...',
-      'Почти готово, загрузка...'
-    ];
+const statusMessagesUz = [
+  'Gemini AI modeli bilan bog\'lanilmoqda...',
+  'Kiritilgan mavzu tahlil qilinmoqda...',
+  '10 ta professional test savoli yozilmoqda...',
+  'Variantlar va javoblar tekshirilmoqda...',
+  'Savollar Firestore ma\'lumotlar bazasiga yozilmoqda...',
+  'Deyarli tayyor, yuklanmoqda...'
+];
 
-    const currentStatusMessage = computed(() => {
-      const messages = isRus.value ? statusMessagesRu : statusMessagesUz;
-      return messages[statusIndex.value] || messages[messages.length - 1];
-    });
+const statusMessagesRu = [
+  'Подключение к модели Gemini AI...',
+  'Анализ введенной темы...',
+  'Создание 10 профессиональных вопросов...',
+  'Проверка вариантов ответов...',
+  'Запись вопросов в базу данных Firestore...',
+  'Почти готово, загрузка...'
+];
 
-    let progressInterval = null;
-    let statusInterval = null;
+const currentStatusMessage = computed(() => {
+  const messages = isRus.value ? statusMessagesRu : statusMessagesUz;
+  return messages[statusIndex.value] || messages[messages.length - 1];
+});
 
-    const mentorType = ref('standard');
+let progressInterval = null;
+let statusInterval = null;
 
-    onMounted(() => {
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists() && userDoc.data().preferences) {
-            mentorType.value = userDoc.data().preferences.mentorType || 'standard';
-          }
-        }
-      });
-    });
+const mentorType = ref('standard');
 
-    const startLoadingAnimations = () => {
-      loading.value = true;
-      progressPercentage.value = 0;
-      statusIndex.value = 0;
+onMounted(() => {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists() && userDoc.data().preferences) {
+        mentorType.value = userDoc.data().preferences.mentorType || 'standard';
+      }
+    }
+  });
+});
 
-      // Status rotation
-      statusInterval = setInterval(() => {
-        if (statusIndex.value < 5) {
-          statusIndex.value++;
-        }
-      }, 2500);
+const startLoadingAnimations = () => {
+  loading.value = true;
+  progressPercentage.value = 0;
+  statusIndex.value = 0;
 
-      // Progress bar increment
-      progressInterval = setInterval(() => {
-        if (progressPercentage.value < 90) {
-          progressPercentage.value += Math.floor(Math.random() * 8) + 2;
-        }
-      }, 500);
-    };
+  // Status rotation
+  statusInterval = setInterval(() => {
+    if (statusIndex.value < 5) {
+      statusIndex.value++;
+    }
+  }, 2500);
 
-    const stopLoadingAnimations = () => {
-      clearInterval(progressInterval);
-      clearInterval(statusInterval);
-      progressPercentage.value = 100;
-    };
+  // Progress bar increment
+  progressInterval = setInterval(() => {
+    if (progressPercentage.value < 90) {
+      progressPercentage.value += Math.floor(Math.random() * 8) + 2;
+    }
+  }, 500);
+};
 
-    const generateQuestionsClientSide = async (subject, level, topic) => {
-      const GEMINI_API_KEY = "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
-      try {
-          const personas = {
-            standard: "You are an objective, academic examiner. Write clear, unambiguous, and formally structured multiple-choice questions. Ensure precise language.",
-            friendly: "You are a supportive, friendly teacher. Frame the questions warmly, adding small words of encouragement or gentle context to make the test feel less intimidating. Use a few pleasant emojis (e.g., 🌸, ✨).",
-            strict: "You are a rigorous, elite professor. Write questions that are highly challenging, strictly formal, and academically dense. Use advanced vocabulary and complex sentence structures. Absolutely no emojis.",
-            socratic: "You are a Socratic philosopher. Frame the questions as deep, philosophical inquiries or scenarios that require profound critical thinking rather than just rote memorization.",
-            motivator: "You are an intense motivational coach! Frame the questions with high energy, challenge the student to 'crush' the problem, and use hype-filled scenarios. 🚀🔥",
-            innovator: "You are a highly creative genius. Frame every question using bizarre, imaginative, out-of-the-box scenarios (e.g., time travel, aliens, futuristic inventions) to test the core concept. 💡🛸",
-            analyst: "You are a Cyber-Analyst AI. Frame the questions as 'system diagnostics', 'mission logs', or 'data decryption tasks'. Use a robotic, highly technical, and precise tone. 💻📡",
-            sage: "You are an ancient wise elder. Frame the questions as ancient riddles, fables, or moral dilemmas happening in nature or old kingdoms. 📜🏔️",
-            comedian: "You are a sarcastic stand-up comedian. Write the questions as funny scenarios, absurd everyday situations, or slightly sarcastic observations. Inject humor into the options as well! 😂🎭"
-          };
-          const systemPersona = personas[mentorType.value] || personas.standard;
+const stopLoadingAnimations = () => {
+  clearInterval(progressInterval);
+  clearInterval(statusInterval);
+  progressPercentage.value = 100;
+};
 
-          const promptText = `You are acting as the following persona: ${systemPersona}
+const generateQuestionsClientSide = async (subject, level, topic) => {
+  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
+  try {
+      const personas = {
+        standard: "You are an objective, academic examiner. Write clear, unambiguous, and formally structured multiple-choice questions. Ensure precise language.",
+        friendly: "You are a supportive, friendly teacher. Frame the questions warmly, adding small words of encouragement or gentle context to make the test feel less intimidating. Use a few pleasant emojis (e.g., 🌸, ✨).",
+        strict: "You are a rigorous, elite professor. Write questions that are highly challenging, strictly formal, and academically dense. Use advanced vocabulary and complex sentence structures. Absolutely no emojis.",
+        socratic: "You are a Socratic philosopher. Frame the questions as deep, philosophical inquiries or scenarios that require profound critical thinking rather than just rote memorization.",
+        motivator: "You are an intense motivational coach! Frame the questions with high energy, challenge the student to 'crush' the problem, and use hype-filled scenarios. 🚀🔥",
+        innovator: "You are a highly creative genius. Frame every question using bizarre, imaginative, out-of-the-box scenarios (e.g., time travel, aliens, futuristic inventions) to test the core concept. 💡🛸",
+        analyst: "You are a Cyber-Analyst AI. Frame the questions as 'system diagnostics', 'mission logs', or 'data decryption tasks'. Use a robotic, highly technical, and precise tone. 💻📡",
+        sage: "You are an ancient wise elder. Frame the questions as ancient riddles, fables, or moral dilemmas happening in nature or old kingdoms. 📜🏔️",
+        comedian: "You are a sarcastic stand-up comedian. Write the questions as funny scenarios, absurd everyday situations, or slightly sarcastic observations. Inject humor into the options as well! 😂🎭"
+      };
+      const systemPersona = personas[mentorType.value] || personas.standard;
+
+      const promptText = `You are acting as the following persona: ${systemPersona}
 
 Generate a multiple-choice quiz about the topic "${topic}" for subject "${subject}" at "${level}" difficulty level.
 Write the "question" text entirely in the tone of your persona! Make it obvious that YOU (the persona) are asking the question.
@@ -235,144 +232,131 @@ Each question object MUST contain:
 
 Ensure all questions are grammatically correct and return ONLY raw JSON matching the schema. No markdown formatting.`;
 
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              contents: [
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
                 {
-                  parts: [
-                    {
-                      text: promptText
-                    }
-                  ]
+                  text: promptText
                 }
-              ],
-              generationConfig: {
-                responseMimeType: "application/json"
-              }
-            })
-          }
-        );
-
-        if (response.ok) {
-          const resData = await response.json();
-          const text = resData.candidates[0].content.parts[0].text;
-          return JSON.parse(text.trim());
-        } else {
-          throw new Error(`Gemini API status ${response.status}`);
-        }
-      } catch (err) {
-        console.warn("Direct Gemini API call failed, using offline fallback generator:", err);
-        return getOfflineFallbackQuestions(subject, level, topic);
-      }
-    };
-
-    const getOfflineFallbackQuestions = (subject, level, topic) => {
-      const questions = [];
-      const isRuLocale = isRus.value;
-      for (let i = 1; i <= 10; i++) {
-        const qText = isRuLocale 
-          ? `Вопрос ${i} по теме "${topic}" (${subject}, уровень ${level})`
-          : `Mavzu: "${topic}" bo'yicha ${i}-savol (${subject}, daraja: ${level})`;
-        
-        const optCorrect = isRuLocale
-          ? `Правильный ответ на вопрос ${i}`
-          : `${i}-savol uchun to'g'ri javob`;
-          
-        const opt2 = isRuLocale ? `Неверный вариант A` : `Noto'g'ri variant A`;
-        const opt3 = isRuLocale ? `Неверный вариант B` : `Noto'g'ri variant B`;
-        const opt4 = isRuLocale ? `Неверный вариант C` : `Noto'g'ri variant C`;
-
-        questions.push({
-          question: qText,
-          options: [optCorrect, opt2, opt3, opt4].sort(() => Math.random() - 0.5),
-          answer: optCorrect
-        });
-      }
-      return questions;
-    };
-
-    const generateTest = async () => {
-      startLoadingAnimations();
-
-      try {
-        const generateFunction = httpsCallable(functions, 'generateAiTest');
-        const result = await generateFunction({
-          subject: form.subject,
-          level: form.level,
-          topic: form.topic,
-          mentorType: mentorType.value
-        });
-
-        stopLoadingAnimations();
-        toast.success(isRus.value ? 'Тест успешно сгенерирован!' : 'Test muvaffaqiyatli yaratildi!');
-        
-        // Wait briefly for progress bar to hit 100%
-        setTimeout(() => {
-          router.push({
-            path: '/test',
-            query: {
-              subjectId: 'ai',
-              levelId: 'ai',
-              questionCount: 10,
-              aiTestId: result.data.testId
+              ]
             }
-          });
-        }, 800);
-
-      } catch (error) {
-        console.warn("Cloud function failed, running client-side AI generator fallback:", error);
-        
-        try {
-          const questions = await generateQuestionsClientSide(form.subject, form.level, form.topic);
-          
-          const aiTestRef = await addDoc(collection(db, 'ai_tests'), {
-            creatorId: auth.currentUser?.uid || 'anonymous',
-            subject: form.subject,
-            level: form.level,
-            topic: form.topic,
-            questions: questions,
-            createdAt: serverTimestamp()
-          });
-
-          stopLoadingAnimations();
-          toast.success(isRus.value ? 'Тест успешно сгенерирован (Client fallback)!' : 'Test muvaffaqiyatli yaratildi (Client fallback)!');
-
-          setTimeout(() => {
-            router.push({
-              path: '/test',
-              query: {
-                subjectId: 'ai',
-                levelId: 'ai',
-                questionCount: 10,
-                aiTestId: aiTestRef.id
-              }
-            });
-          }, 800);
-        } catch (fallbackErr) {
-          stopLoadingAnimations();
-          loading.value = false;
-          console.error("Client-side AI generation failed:", fallbackErr);
-          toast.error(isRus.value ? 'Ошибка при генерации теста. Попробуйте еще раз.' : 'Test generatsiya qilishda xatolik yuz berdi. Qaytadan urinib ko\'ring.');
-        }
+          ],
+          generationConfig: {
+            responseMimeType: "application/json"
+          }
+        })
       }
-    };
+    );
 
-    return {
-      isRus,
-      form,
-      subjects,
-      levels,
-      loading,
-      progressPercentage,
-      currentStatusMessage,
-      generateTest
-    };
+    if (response.ok) {
+      const resData = await response.json();
+      const text = resData.candidates[0].content.parts[0].text;
+      return JSON.parse(text.trim());
+    } else {
+      throw new Error(`Gemini API status ${response.status}`);
+    }
+  } catch (err) {
+    console.warn("Direct Gemini API call failed, using offline fallback generator:", err);
+    return getOfflineFallbackQuestions(subject, level, topic);
+  }
+};
+
+const getOfflineFallbackQuestions = (subject, level, topic) => {
+  const questions = [];
+  const isRuLocale = isRus.value;
+  for (let i = 1; i <= 10; i++) {
+    const qText = isRuLocale 
+      ? `Вопрос ${i} по теме "${topic}" (${subject}, уровень ${level})`
+      : `Mavzu: "${topic}" bo'yicha ${i}-savol (${subject}, daraja: ${level})`;
+    
+    const optCorrect = isRuLocale
+      ? `Правильный ответ на вопрос ${i}`
+      : `${i}-savol uchun to'g'ri javob`;
+      
+    const opt2 = isRuLocale ? `Неверный вариант A` : `Noto'g'ri variant A`;
+    const opt3 = isRuLocale ? `Неверный вариант B` : `Noto'g'ri variant B`;
+    const opt4 = isRuLocale ? `Неверный вариант C` : `Noto'g'ri variant C`;
+
+    questions.push({
+      question: qText,
+      options: [optCorrect, opt2, opt3, opt4].sort(() => Math.random() - 0.5),
+      answer: optCorrect
+    });
+  }
+  return questions;
+};
+
+const generateTest = async () => {
+  startLoadingAnimations();
+
+  try {
+    const generateFunction = httpsCallable(functions, 'generateAiTest');
+    const result = await generateFunction({
+      subject: form.subject,
+      level: form.level,
+      topic: form.topic,
+      mentorType: mentorType.value
+    });
+
+    stopLoadingAnimations();
+    toast.success(isRus.value ? 'Тест успешно сгенерирован!' : 'Test muvaffaqiyatli yaratildi!');
+    
+    // Wait briefly for progress bar to hit 100%
+    setTimeout(() => {
+      router.push({
+        path: '/test',
+        query: {
+          subjectId: 'ai',
+          levelId: 'ai',
+          questionCount: 10,
+          aiTestId: result.data.testId
+        }
+      });
+    }, 800);
+
+  } catch (error) {
+    console.warn("Cloud function failed, running client-side AI generator fallback:", error);
+    
+    try {
+      const questions = await generateQuestionsClientSide(form.subject, form.level, form.topic);
+      
+      const aiTestRef = await addDoc(collection(db, 'ai_tests'), {
+        creatorId: auth.currentUser?.uid || 'anonymous',
+        subject: form.subject,
+        level: form.level,
+        topic: form.topic,
+        questions: questions,
+        createdAt: serverTimestamp()
+      });
+
+      stopLoadingAnimations();
+      toast.success(isRus.value ? 'Тест успешно сгенерирован (Client fallback)!' : 'Test muvaffaqiyatli yaratildi (Client fallback)!');
+
+      setTimeout(() => {
+        router.push({
+          path: '/test',
+          query: {
+            subjectId: 'ai',
+            levelId: 'ai',
+            questionCount: 10,
+            aiTestId: aiTestRef.id
+          }
+        });
+      }, 800);
+    } catch (fallbackErr) {
+      stopLoadingAnimations();
+      loading.value = false;
+      console.error("Client-side AI generation failed:", fallbackErr);
+      toast.error(isRus.value ? 'Ошибка при генерации теста. Попробуйте еще раз.' : 'Test generatsiya qilishda xatolik yuz berdi. Qaytadan urinib ko\'ring.');
+    }
   }
 };
 </script>

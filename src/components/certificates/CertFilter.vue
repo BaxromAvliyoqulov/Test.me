@@ -18,15 +18,14 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'CertFilter',
-  props: {
-    searchQuery: { type: String, required: true },
-    activeFilter: { type: String, required: true },
-    isRus: { type: Boolean, required: true }
-  }
-}
+<script setup>
+const props = defineProps({
+  searchQuery: { type: String, required: true },
+  activeFilter: { type: String, required: true },
+  isRus: { type: Boolean, required: true }
+});
+
+const emit = defineEmits(['update:searchQuery', 'update:activeFilter']);
 </script>
 
 <style scoped>

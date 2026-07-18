@@ -98,7 +98,8 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue';
 import { db, auth } from '@/config/firebase';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -108,185 +109,163 @@ import CertStats from '@/components/certificates/CertStats.vue';
 import CertFilter from '@/components/certificates/CertFilter.vue';
 import CertGrid from '@/components/certificates/CertGrid.vue';
 
-export default {
-  name: 'CertificatesView',
-  components: {
-    CertStats,
-    CertFilter,
-    CertGrid
-  },
-  setup() {
-    const { locale } = useI18n();
-    return { currentLocale: locale };
-  },
-  data() {
-    return {
-      userDisplayName: '',
-      results: [],
-      issuedCertificates: [],
-      elementaryCount: 0,
-      intermediateCount: 0,
-      totalCount: 0,
-      selectedCert: null,
-      loading: true,
-      searchQuery: '',
-      activeFilter: 'all'
-    };
-  },
-  computed: {
-    isRus() {
-      return this.currentLocale === 'RUS';
-    },
-    unlockedCount() {
-      return this.certificates.filter(c => c.unlocked).length;
-    },
-    certId() {
-      if (!this.selectedCert) return 'CERT-XXXX-XXXX';
-      const issued = this.issuedCertificates.find(c => c.certType === this.selectedCert.id);
-      if (issued) return issued.certId;
-      
-      // Fallback stable ID generator
-      const uidPart = (auth.currentUser ? auth.currentUser.uid : 'USER').substring(0, 8).toUpperCase();
-      const certPart = this.selectedCert.id.replace(/_/g, '').substring(0, 4).toUpperCase();
-      return `CERT-${uidPart}-${certPart}`;
-    },
-    formattedDate() {
-      if (!this.selectedCert) return '';
-      const issued = this.issuedCertificates.find(c => c.certType === this.selectedCert.id);
-      let date = null;
-      if (issued && issued.issuedAt) {
-        date = issued.issuedAt.toDate ? issued.issuedAt.toDate() : new Date(issued.issuedAt);
-      } else if (this.results.length > 0) {
-        // Fallback to latest test timestamp
-        const latest = this.results[0];
-        if (latest && latest.timestamp) {
-          date = latest.timestamp.toDate ? latest.timestamp.toDate() : new Date(latest.timestamp);
-        }
-      }
-      if (!date) date = new Date();
+const { locale } = useI18n();
 
-      const dd = String(date.getDate()).padStart(2, '0');
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const yyyy = date.getFullYear();
-      return `${dd}.${mm}.${yyyy}`;
-    },
-    certificates() {
-      return getCertificates(this.results);
-    },
-    filteredCertificates() {
-      let result = this.certificates;
-      
-      // Filter by Status
-      if (this.activeFilter === 'unlocked') {
-        result = result.filter(c => c.unlocked);
-      } else if (this.activeFilter === 'locked') {
-        result = result.filter(c => !c.unlocked);
-      }
-      
-      // Filter by Search
-      if (this.searchQuery.trim()) {
-        const query = this.searchQuery.toLowerCase().trim();
-        result = result.filter(c => {
-          const name = this.isRus ? c.nameRu : c.nameUz;
-          const desc = this.isRus ? c.descRu : c.descUz;
-          return name.toLowerCase().includes(query) || desc.toLowerCase().includes(query);
-        });
-      }
-      
-      return result;
+const userDisplayName = ref('');
+const results = ref([]);
+const issuedCertificates = ref([]);
+const elementaryCount = ref(0);
+const intermediateCount = ref(0);
+const advancedCount = ref(0);
+const totalCount = ref(0);
+const selectedCert = ref(null);
+const loading = ref(true);
+const searchQuery = ref('');
+const activeFilter = ref('all');
+
+const isRus = computed(() => locale.value === 'RUS');
+const certificates = computed(() => getCertificates(results.value));
+const unlockedCount = computed(() => certificates.value.filter(c => c.unlocked).length);
+
+const certId = computed(() => {
+  if (!selectedCert.value) return 'CERT-XXXX-XXXX';
+  const issued = issuedCertificates.value.find(c => c.certType === selectedCert.value.id);
+  if (issued) return issued.certId;
+  
+  const uidPart = (auth.currentUser ? auth.currentUser.uid : 'USER').substring(0, 8).toUpperCase();
+  const certPart = selectedCert.value.id.replace(/_/g, '').substring(0, 4).toUpperCase();
+  return `CERT-${uidPart}-${certPart}`;
+});
+
+const formattedDate = computed(() => {
+  if (!selectedCert.value) return '';
+  const issued = issuedCertificates.value.find(c => c.certType === selectedCert.value.id);
+  let date = null;
+  if (issued && issued.issuedAt) {
+    date = issued.issuedAt.toDate ? issued.issuedAt.toDate() : new Date(issued.issuedAt);
+  } else if (results.value.length > 0) {
+    const latest = results.value[0];
+    if (latest && latest.timestamp) {
+      date = latest.timestamp.toDate ? latest.timestamp.toDate() : new Date(latest.timestamp);
     }
-  },
-  methods: {
-    resetFilters() {
-      this.searchQuery = '';
-      this.activeFilter = 'all';
-    },
-    fetchStats() {
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          this.userDisplayName = user.displayName || user.email.split('@')[0];
-          try {
-            // Fetch test results
-            const resultsRef = collection(db, 'results');
-            const q = query(resultsRef, where('userId', '==', user.uid));
-            const querySnapshot = await getDocs(q);
-
-            this.results = querySnapshot.docs.map(doc => doc.data());
-            
-            // Sort results by timestamp desc for latest fallback date
-            this.results.sort((a, b) => {
-              const timeA = a.timestamp ? (a.timestamp.toMillis ? a.timestamp.toMillis() : new Date(a.timestamp).getTime()) : 0;
-              const timeB = b.timestamp ? (b.timestamp.toMillis ? b.timestamp.toMillis() : new Date(b.timestamp).getTime()) : 0;
-              return timeB - timeA;
-            });
-
-            this.totalCount = this.results.length;
-
-            // Calculate level completion metrics
-            this.elementaryCount = this.results.filter(r => {
-              const l = (r.test_level || '').toLowerCase();
-              return l.includes('elem') || l.includes('beg') || l.includes('boshlang');
-            }).length;
-            this.intermediateCount = this.results.filter(r => {
-              const l = (r.test_level || '').toLowerCase();
-              return l.includes('inter') || l.includes('o\'rta') || l.includes('orta');
-            }).length;
-            this.advancedCount = this.results.filter(r => {
-              const l = (r.test_level || '').toLowerCase();
-              return l.includes('adv') || l.includes('yuqori') || l.includes('prof');
-            }).length;
-
-            // Fetch secure certificates from Firestore
-            const certsRef = collection(db, 'certificates');
-            const certsQ = query(certsRef, where('userId', '==', user.uid));
-            const certsSnapshot = await getDocs(certsQ);
-            this.issuedCertificates = certsSnapshot.docs.map(doc => doc.data());
-
-            // Auto-synchronize newly unlocked certificates to Firestore
-            const newlyUnlocked = this.certificates.filter(
-              c => c.unlocked && !this.issuedCertificates.some(ic => ic.certType === c.id)
-            );
-
-            for (const cert of newlyUnlocked) {
-              const uidPart = user.uid.substring(0, 8).toUpperCase();
-              const certCode = `CERT-${uidPart}-${cert.id.substring(0, 4).toUpperCase().replace(/_/g, '')}`;
-              const newCertObj = {
-                certId: certCode,
-                userId: user.uid,
-                userName: user.displayName || user.email || 'Foydalanuvchi',
-                certType: cert.id,
-                nameUz: cert.nameUz,
-                nameRu: cert.nameRu,
-                descUz: cert.descUz,
-                descRu: cert.descRu,
-                issuedAt: new Date()
-              };
-              await addDoc(collection(db, 'certificates'), newCertObj);
-              this.issuedCertificates.push(newCertObj);
-              console.log(`Auto-synchronized certificate: ${cert.id}`);
-            }
-          } catch (e) {
-            console.error('Error fetching statistics:', e);
-          } finally {
-            this.loading = false;
-          }
-        }
-      });
-    },
-    openCertificateModal(cert) {
-      this.selectedCert = cert;
-    },
-    closeCertificateModal() {
-      this.selectedCert = null;
-    },
-    printCertificate() {
-      window.print();
-    }
-  },
-  mounted() {
-    this.fetchStats();
   }
+  if (!date) date = new Date();
+
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}.${mm}.${yyyy}`;
+});
+
+const filteredCertificates = computed(() => {
+  let result = certificates.value;
+  
+  if (activeFilter.value === 'unlocked') {
+    result = result.filter(c => c.unlocked);
+  } else if (activeFilter.value === 'locked') {
+    result = result.filter(c => !c.unlocked);
+  }
+  
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase().trim();
+    result = result.filter(c => {
+      const name = isRus.value ? c.nameRu : c.nameUz;
+      const desc = isRus.value ? c.descRu : c.descUz;
+      return name.toLowerCase().includes(q) || desc.toLowerCase().includes(q);
+    });
+  }
+  
+  return result;
+});
+
+const resetFilters = () => {
+  searchQuery.value = '';
+  activeFilter.value = 'all';
 };
+
+const fetchStats = () => {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      userDisplayName.value = user.displayName || user.email.split('@')[0];
+      try {
+        const resultsRef = collection(db, 'results');
+        const q = query(resultsRef, where('userId', '==', user.uid));
+        const querySnapshot = await getDocs(q);
+
+        results.value = querySnapshot.docs.map(doc => doc.data());
+        
+        results.value.sort((a, b) => {
+          const timeA = a.timestamp ? (a.timestamp.toMillis ? a.timestamp.toMillis() : new Date(a.timestamp).getTime()) : 0;
+          const timeB = b.timestamp ? (b.timestamp.toMillis ? b.timestamp.toMillis() : new Date(b.timestamp).getTime()) : 0;
+          return timeB - timeA;
+        });
+
+        totalCount.value = results.value.length;
+
+        elementaryCount.value = results.value.filter(r => {
+          const l = (r.test_level || '').toLowerCase();
+          return l.includes('elem') || l.includes('beg') || l.includes('boshlang');
+        }).length;
+        intermediateCount.value = results.value.filter(r => {
+          const l = (r.test_level || '').toLowerCase();
+          return l.includes('inter') || l.includes('o\'rta') || l.includes('orta');
+        }).length;
+        advancedCount.value = results.value.filter(r => {
+          const l = (r.test_level || '').toLowerCase();
+          return l.includes('adv') || l.includes('yuqori') || l.includes('prof');
+        }).length;
+
+        const certsRef = collection(db, 'certificates');
+        const certsQ = query(certsRef, where('userId', '==', user.uid));
+        const certsSnapshot = await getDocs(certsQ);
+        issuedCertificates.value = certsSnapshot.docs.map(doc => doc.data());
+
+        const newlyUnlocked = certificates.value.filter(
+          c => c.unlocked && !issuedCertificates.value.some(ic => ic.certType === c.id)
+        );
+
+        for (const cert of newlyUnlocked) {
+          const uidPart = user.uid.substring(0, 8).toUpperCase();
+          const certCode = `CERT-${uidPart}-${cert.id.substring(0, 4).toUpperCase().replace(/_/g, '')}`;
+          const newCertObj = {
+            certId: certCode,
+            userId: user.uid,
+            userName: user.displayName || user.email || 'Foydalanuvchi',
+            certType: cert.id,
+            nameUz: cert.nameUz,
+            nameRu: cert.nameRu,
+            descUz: cert.descUz,
+            descRu: cert.descRu,
+            issuedAt: new Date()
+          };
+          await addDoc(collection(db, 'certificates'), newCertObj);
+          issuedCertificates.value.push(newCertObj);
+          console.log(`Auto-synchronized certificate: ${cert.id}`);
+        }
+      } catch (e) {
+        console.error('Error fetching statistics:', e);
+      } finally {
+        loading.value = false;
+      }
+    }
+  });
+};
+
+const openCertificateModal = (cert) => {
+  selectedCert.value = cert;
+};
+
+const closeCertificateModal = () => {
+  selectedCert.value = null;
+};
+
+const printCertificate = () => {
+  window.print();
+};
+
+onMounted(() => {
+  fetchStats();
+});
 </script>
 
 <style scoped>

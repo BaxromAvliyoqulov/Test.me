@@ -91,86 +91,71 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref } from 'vue';
 import { getRankName, getRankIcon } from '@/utils/ranks';
 
-export default {
-  name: 'WalletCards',
-  props: {
-    points: { type: Number, required: true },
-    referralCount: { type: Number, required: true },
-    isRus: { type: Boolean, required: true },
-    locale: { type: String, required: true }
-  },
-  setup() {
-    const balanceStyle = ref({});
-    const balanceGlareStyle = ref({});
-    const referralStyle = ref({});
-    const referralGlareStyle = ref({});
+const props = defineProps({
+  points: { type: Number, required: true },
+  referralCount: { type: Number, required: true },
+  isRus: { type: Boolean, required: true },
+  locale: { type: String, required: true }
+});
 
-    const handleMouseMove = (e, cardType) => {
-      const card = e.currentTarget;
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left; // x position within the element.
-      const y = e.clientY - rect.top;  // y position within the element.
-      
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      
-      const rotateX = ((y - centerY) / centerY) * -15; // Max rotation 15deg
-      const rotateY = ((x - centerX) / centerX) * 15;
+const balanceStyle = ref({});
+const balanceGlareStyle = ref({});
+const referralStyle = ref({});
+const referralGlareStyle = ref({});
 
-      const glareX = (x / rect.width) * 100;
-      const glareY = (y / rect.height) * 100;
+const handleMouseMove = (e, cardType) => {
+  const card = e.currentTarget;
+  const rect = card.getBoundingClientRect();
+  const x = e.clientX - rect.left; // x position within the element.
+  const y = e.clientY - rect.top;  // y position within the element.
+  
+  const centerX = rect.width / 2;
+  const centerY = rect.height / 2;
+  
+  const rotateX = ((y - centerY) / centerY) * -15; // Max rotation 15deg
+  const rotateY = ((x - centerX) / centerX) * 15;
 
-      const transformStyle = {
-        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`,
-        transition: 'transform 0.1s ease-out'
-      };
+  const glareX = (x / rect.width) * 100;
+  const glareY = (y / rect.height) * 100;
 
-      const glare = {
-        background: `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 60%)`,
-        opacity: '1'
-      };
+  const transformStyle = {
+    transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`,
+    transition: 'transform 0.1s ease-out'
+  };
 
-      if (cardType === 'balance') {
-        balanceStyle.value = transformStyle;
-        balanceGlareStyle.value = glare;
-      } else {
-        referralStyle.value = transformStyle;
-        referralGlareStyle.value = glare;
-      }
-    };
+  const glare = {
+    background: `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 60%)`,
+    opacity: '1'
+  };
 
-    const handleMouseLeave = (cardType) => {
-      const resetStyle = {
-        transform: `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`,
-        transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)'
-      };
-      const resetGlare = { opacity: '0', transition: 'opacity 0.5s ease' };
-
-      if (cardType === 'balance') {
-        balanceStyle.value = resetStyle;
-        balanceGlareStyle.value = resetGlare;
-      } else {
-        referralStyle.value = resetStyle;
-        referralGlareStyle.value = resetGlare;
-      }
-    };
-
-    return {
-      getRankName,
-      getRankIcon,
-      handleMouseMove,
-      handleMouseLeave,
-      balanceStyle,
-      balanceGlareStyle,
-      referralStyle,
-      referralGlareStyle
-    }
+  if (cardType === 'balance') {
+    balanceStyle.value = transformStyle;
+    balanceGlareStyle.value = glare;
+  } else {
+    referralStyle.value = transformStyle;
+    referralGlareStyle.value = glare;
   }
-}
+};
+
+const handleMouseLeave = (cardType) => {
+  const resetStyle = {
+    transform: `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`,
+    transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)'
+  };
+  const resetGlare = { opacity: '0', transition: 'opacity 0.5s ease' };
+
+  if (cardType === 'balance') {
+    balanceStyle.value = resetStyle;
+    balanceGlareStyle.value = resetGlare;
+  } else {
+    referralStyle.value = resetStyle;
+    referralGlareStyle.value = resetGlare;
+  }
+};
 </script>
 
 <style scoped>

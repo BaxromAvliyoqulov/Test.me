@@ -15,6 +15,16 @@
         <span class="coin-label">TP</span>
       </div>
 
+      <!-- Quick Action: Shop -->
+      <div class="header-action-btn" @click="$router.push('/shop')" title="Do'kon">
+        <i class="fas fa-cart-shopping text-blue-500"></i>
+      </div>
+
+      <!-- Quick Action: Admin -->
+      <div class="header-action-btn admin-action-btn" v-if="isAdmin || adminRole === 'super_admin'" @click="$router.push('/admin')" title="Admin Panel">
+        <i class="fas fa-shield-halved text-amber-500"></i>
+      </div>
+
       <!-- Bell Button -->
       <div class="header-action-btn" @click="openNotifModal">
         <i class="fas fa-bell"></i>
@@ -141,6 +151,10 @@ const loadingNotifs = ref(true);
 let notifsUnsub = null;
 let currentUserId = null;
 
+// Admin state
+const isAdmin = ref(false);
+const adminRole = ref(null);
+
 const filteredNotifications = computed(() => {
   return notifications.value.filter(n => {
     if (n.target === 'all') return true;
@@ -244,6 +258,14 @@ const initializeAuth = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           userPoints.value = data.points || 0;
+          isAdmin.value = data.isAdmin || false;
+          adminRole.value = data.adminRole || null;
+          
+          if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
+            isAdmin.value = true;
+            adminRole.value = 'super_admin';
+          }
+
           if (data.displayName) username.value = data.displayName;
           if (data.photoURL) profileImage.value = data.photoURL;
           readNotifications.value = data.readNotifications || [];
@@ -405,6 +427,25 @@ onBeforeUnmount(() => {
 .header-action-btn:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+.admin-action-btn {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.admin-action-btn:hover {
+  background: rgba(245, 158, 11, 0.2);
+  color: #d97706;
+}
+
+.text-blue-500 {
+  color: #3b82f6;
+}
+
+.text-amber-500 {
+  color: #f59e0b;
 }
 
 .notification-badge {

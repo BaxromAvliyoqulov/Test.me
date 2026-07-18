@@ -4,7 +4,9 @@
     <div class="glow-bg glow-bg-1"></div>
     <div class="glow-bg glow-bg-2"></div>
 
-    <div class="dashboard-container">
+    <DashboardSkeleton v-if="loading" />
+
+    <div class="dashboard-container" v-else>
       <DashboardHero 
         :totalTests="items.length"
         :averageScorePercent="averageScorePercent"
@@ -63,6 +65,7 @@ import { confirmDelete } from '@/utils/sweetalert';
 import DashboardHero from '@/components/dashboard/DashboardHero.vue';
 import SubjectAnalytics from '@/components/dashboard/SubjectAnalytics.vue';
 import ResultsTable from '@/components/dashboard/ResultsTable.vue';
+import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton.vue';
 import { useRouter } from 'vue-router';
 
 const { locale: currentLocale, t } = useI18n();

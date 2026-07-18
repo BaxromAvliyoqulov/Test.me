@@ -117,7 +117,7 @@
         <div class="nav-section-title mt-sec" v-if="!isCollapsed">ADMIN</div>
         <div class="nav-links-list">
           <router-link to="/admin" class="sidebar-link admin-link" v-tooltip="'Admin Panel'">
-            <div class="link-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="link-icon"><i class="fas fa-user-shield"></i></div>
             <transition name="fade-slide">
               <span v-if="!isCollapsed" class="link-text">Admin Panel</span>
             </transition>

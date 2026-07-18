@@ -10,16 +10,36 @@
         <p>{{ isRus ? 'Решайте тесты, зарабатывайте баллы и открывайте новые награды!' : 'Testlarni yeching, ballar to\'plang va yangi nishonlarni qo\'lga kiriting!' }}</p>
       </div>
 
-      <!-- Stats overview -->
-      <div class="stats-overview">
-        <div class="overview-card info-card-1">
-          <div class="overview-card-icon">
-            <i class="fas fa-trophy"></i>
+      <!-- SKELETON LOADER -->
+      <div v-if="loading" class="skeleton-wrapper">
+        <div class="skeleton-stats">
+          <div class="skeleton-stat-card" v-for="i in 3" :key="'s'+i"></div>
+        </div>
+        <div class="skeleton-filter"></div>
+        <div class="skeleton-grid">
+          <div class="skeleton-badge-card" v-for="i in 6" :key="'b'+i">
+            <div class="skeleton-icon"></div>
+            <div class="skeleton-details">
+              <div class="skeleton-line title"></div>
+              <div class="skeleton-line text"></div>
+              <div class="skeleton-line text short"></div>
+            </div>
           </div>
-          <div class="overview-card-info">
-            <span class="value">{{ unlockedCount }} / {{ badges.length }}</span>
-            <span class="label">{{ isRus ? 'Открыто наград' : 'Ochilgan yutuqlar' }}</span>
-          </div>
+        </div>
+      </div>
+
+      <!-- ACTUAL CONTENT -->
+      <div v-else class="badges-content">
+        <!-- Stats overview -->
+        <div class="stats-overview">
+          <div class="overview-card info-card-1">
+            <div class="overview-card-icon">
+              <i class="fas fa-trophy"></i>
+            </div>
+            <div class="overview-card-info">
+              <span class="value">{{ unlockedCount }} / {{ badges.length }}</span>
+              <span class="label">{{ isRus ? 'Открыто наград' : 'Ochilgan yutuqlar' }}</span>
+            </div>
         </div>
         <div class="overview-card info-card-2">
           <div class="overview-card-icon">
@@ -119,6 +139,7 @@
         <h3>{{ isRus ? 'Ничего не найдено' : 'Hech narsa topilmadi' }}</h3>
         <p>{{ isRus ? 'Попробуйте изменить параметры фильтрации' : 'Qidiruv parametrlarini o\'zgartirib ko\'ring' }}</p>
         <button class="reset-btn" @click="resetFilters">{{ isRus ? 'Сбросить фильтры' : 'Filtrlarni tozalash' }}</button>
+      </div>
       </div>
     </div>
   </div>
@@ -251,6 +272,64 @@ onMounted(() => {
   width: 95%;
   margin: 0 auto;
 }
+
+/* Skeleton Styles */
+.skeleton-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.skeleton-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.skeleton-stat-card,
+.skeleton-filter,
+.skeleton-badge-card,
+.skeleton-icon,
+.skeleton-line {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 400% 100%;
+  animation: skeleton-loading 1.5s infinite ease-in-out;
+  border-radius: 24px;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-stat-card { height: 100px; }
+.skeleton-filter { height: 76px; border-radius: 20px; }
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.75rem;
+}
+.skeleton-badge-card {
+  display: flex;
+  gap: 1.25rem;
+  padding: 1.75rem 1.5rem;
+}
+.skeleton-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  flex-shrink: 0;
+}
+.skeleton-details {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.skeleton-line { height: 1rem; border-radius: 8px; }
+.skeleton-line.title { height: 1.5rem; width: 60%; }
+.skeleton-line.text { width: 90%; }
+.skeleton-line.short { width: 50%; }
 
 .header-section {
   text-align: center;

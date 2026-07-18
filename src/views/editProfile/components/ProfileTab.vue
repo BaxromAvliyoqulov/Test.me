@@ -15,6 +15,12 @@
       </div>
     </div>
 
+    <!-- ID Card Action -->
+    <button class="id-card-btn" type="button" @click="$emit('open-id-card')">
+      <i class="fas fa-id-badge"></i>
+      <span>{{ currentLocale === 'RUS' ? 'Показать ID Карту' : 'ID Kartani Ko\'rish' }}</span>
+    </button>
+
     <div class="pro-pane-header">
       <h3>{{ currentLocale === 'RUS' ? 'Личные Данные' : 'Shaxsiy Ma\'lumotlar' }}</h3>
       <p>{{ currentLocale === 'RUS' ? 'Обновите свое фото и личные данные.' : 'O\'z rasmingiz va ma\'lumotlaringizni yangilang.' }}</p>
@@ -161,7 +167,8 @@ const emit = defineEmits([
   'update:selectedPhotoURL',
   'validate-password',
   'toggle-password-visibility',
-  'file-change'
+  'file-change',
+  'open-id-card'
 ]);
 
 const profileProxy = computed({
@@ -179,3 +186,29 @@ const onFileChange = (e) => {
   emit('file-change', e);
 };
 </script>
+
+<style scoped>
+.id-card-btn {
+  width: 100%;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: white;
+  border: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.id-card-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+}
+</style>

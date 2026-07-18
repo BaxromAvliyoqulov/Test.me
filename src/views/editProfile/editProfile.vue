@@ -50,6 +50,7 @@
               @validate-password="validatePassword"
               @toggle-password-visibility="togglePasswordVisibility"
               @file-change="onFileChange"
+              @open-id-card="showIdCard = true"
             />
 
             <PreferencesTab
@@ -106,6 +107,21 @@
           </form>
         </div>
       </main>
+
+      <!-- ID Card Component -->
+      <ProfileIdCard
+        :show="showIdCard"
+        @close="showIdCard = false"
+        :userName="profile.username"
+        :profilePhoto="selectedPhotoURL || defaultUserImage"
+        :userPoints="userPoints"
+        :shortId="shortId"
+        :userRankName="getRankName(userPoints, currentLocale)"
+        :userRankIcon="getRankIcon(userPoints)"
+        :joinedDate="memberSinceStr"
+        :isRus="currentLocale === 'RUS'"
+        :defaultUserImage="defaultUserImage"
+      />
     </div>
   </div>
 </template>
@@ -127,6 +143,7 @@ import AIMentorEditor from './components/AIMentorEditor.vue';
 import ProfileTab from './components/ProfileTab.vue';
 import PreferencesTab from './components/PreferencesTab.vue';
 import AchievementsTab from './components/AchievementsTab.vue';
+import ProfileIdCard from './components/ProfileIdCard.vue';
 
 const { t, locale: currentLocale, setLocale } = useI18n();
 const router = useRouter();
@@ -146,6 +163,13 @@ const showPassword = ref(false);
 const loading = ref(false);
 const passwordError = ref('');
 const goalsList = ref([]);
+const showIdCard = ref(false);
+const shortId = ref('');
+const memberSinceStr = computed(() => {
+  if (!memberSince.value) return currentLocale.value === 'RUS' ? 'Недавно' : 'Yaqinda';
+  const d = new Date(memberSince.value);
+  return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+});
 
 const toast = reactive({ show: false, message: '', type: 'success' });
 
@@ -351,6 +375,7 @@ const initializeProfileData = () => {
           profile.username = data.displayName || data.username || user.displayName || '';
           selectedPhotoURL.value = data.photoURL || user.photoURL || '';
           userPoints.value = data.points || 0;
+          shortId.value = data.shortId || user.uid.substring(0, 8).toUpperCase();
           profile.isPremium = true;
 
           if (data.preferences) {

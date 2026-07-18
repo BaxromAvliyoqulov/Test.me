@@ -43,6 +43,9 @@
         <button class="btn btn-outline" @click="$emit('showReview')">
           <i class="fas fa-eye"></i> {{ isRus ? 'Анализ' : 'Tahlil' }}
         </button>
+        <button class="btn btn-outline share-btn" @click="shareResult">
+          <i class="fas fa-share-nodes"></i> {{ isRus ? 'Поделиться' : 'Ulashish' }}
+        </button>
         <button class="btn btn-primary" @click="$emit('goHome')">
           {{ isRus ? 'На главную' : 'Bosh Sahifa' }}
         </button>
@@ -71,6 +74,28 @@ const scorePercentage = computed(() => {
 const errors = computed(() => {
   return props.totalQuestions - props.score;
 });
+
+const shareResult = async () => {
+  const shareText = props.isRus 
+    ? `Я только что прошел тест на Test.me и набрал ${props.score}/${props.totalQuestions} баллов (${scorePercentage.value}%)! Присоединяйтесь и проверьте свои знания!`
+    : `Men Test.me platformasida test ishladim va ${props.score}/${props.totalQuestions} ball (${scorePercentage.value}%) to'pladim! O'z bilimingizni sinab ko'ring!`;
+    
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Test.me Natijasi',
+        text: shareText,
+        url: window.location.origin
+      });
+    } catch (err) {
+      console.log('Error sharing:', err);
+    }
+  } else {
+    // Fallback if Web Share API is not supported
+    navigator.clipboard.writeText(`${shareText} ${window.location.origin}`);
+    alert(props.isRus ? 'Результат скопирован в буфер обмена!' : 'Natija xotiraga nusxalandi!');
+  }
+};
 </script>
 
 <style scoped>
@@ -271,6 +296,16 @@ const errors = computed(() => {
 .btn-outline:hover {
   border-color: #cbd5e1;
   background: #f8fafc;
+}
+
+.share-btn {
+  color: #3b82f6;
+  border-color: #bfdbfe;
+}
+
+.share-btn:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
 }
 
 @media (max-width: 600px) {

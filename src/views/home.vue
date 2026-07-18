@@ -129,6 +129,7 @@ import defaultUserImage from '../assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
 import { getRankName, getRankClass, getRankIcon, getNextRankInfo } from '@/utils/ranks';
 import { sortLevels } from '@/utils/sorters';
+import { getMentorConfig } from '@/config/mentors';
 import { getBadges } from '@/utils/badges';
 import TestPage from './testPage/testPage.vue';
 import WelcomeBanner from '@/components/home/WelcomeBanner.vue';
@@ -194,23 +195,13 @@ const canStart = computed(() => {
 });
 
 const aiMentorInfo = computed(() => {
-  const personas = {
-      standard: { nameUz: 'Standart AI', nameRu: 'Стандартный ИИ', icon: 'fas fa-robot', colorClass: 'theme-standard' },
-      friendly: { nameUz: 'Do\'stona Mentor', nameRu: 'Дружелюбный Ментор', icon: 'fas fa-smile-beam', colorClass: 'theme-friendly' },
-      strict: { nameUz: 'Qattiqqo\'l Professor', nameRu: 'Строгий Профессор', icon: 'fas fa-user-tie', colorClass: 'theme-strict' },
-      socratic: { nameUz: 'Faylasuf Sokrat', nameRu: 'Философ Сократ', icon: 'fas fa-scroll', colorClass: 'theme-socratic' },
-      motivator: { nameUz: 'Motivator', nameRu: 'Мотиватор', icon: 'fas fa-fire', colorClass: 'theme-motivator' },
-      innovator: { nameUz: 'Kreativ Daho', nameRu: 'Креативный Гений', icon: 'fas fa-lightbulb', colorClass: 'theme-innovator' },
-      analyst: { nameUz: 'Kiber Analitik', nameRu: 'Кибер Аналитик', icon: 'fas fa-laptop-code', colorClass: 'theme-analyst' },
-      sage: { nameUz: 'Dono Chol', nameRu: 'Мудрый Старец', icon: 'fas fa-yin-yang', colorClass: 'theme-sage' },
-      comedian: { nameUz: 'Xazilkash AI', nameRu: 'Шутник ИИ', icon: 'fas fa-laugh-squint', colorClass: 'theme-comedian' }
-  };
   const type = mentorType.value || 'standard';
-  const persona = personas[type] || personas.standard;
+  const mentor = getMentorConfig(type);
+  
   return {
-    name: isRus.value ? persona.nameRu : persona.nameUz,
-    icon: persona.icon,
-    colorClass: persona.colorClass
+    name: mentor.name[currentLocale.value] || mentor.name['UZB'],
+    icon: mentor.icon,
+    colorClass: `theme-${mentor.id}`
   };
 });
 
@@ -250,11 +241,15 @@ const getSubjectColor = (name) => {
   return '#3b82f6';
 };
 
-const selectSubjectCard = (subject) => {
+const selectSubjectCard = (subject, showModal = true) => {
+  if (selectedSubject.value?.id !== subject.id) {
+    selectedLevel.value = '';
+    selectedQuestionCount.value = '';
+  }
   selectedSubject.value = subject;
-  selectedLevel.value = '';
-  selectedQuestionCount.value = '';
-  showTestWizard.value = true;
+  if (showModal) {
+    showTestWizard.value = true;
+  }
   fetchLevels();
 };
 
@@ -422,12 +417,22 @@ const handleTestCompletion = (results) => {
 };
 
 const applyUserPreferences = (prefs) => {
-  if (prefs.defaultSubject) { defaultSubjectId.value = prefs.defaultSubject; }
-  if (prefs.defaultSubject && !selectedSubject.value) {
+  let prefSubArray = [];
+  if (Array.isArray(prefs.defaultSubject)) {
+    prefSubArray = prefs.defaultSubject;
+  } else if (typeof prefs.defaultSubject === 'string' && prefs.defaultSubject) {
+    prefSubArray = [prefs.defaultSubject];
+  }
+
+  if (prefSubArray.length > 0) {
+    defaultSubjectId.value = prefSubArray;
+  }
+
+  if (prefSubArray.length > 0 && !selectedSubject.value) {
     const trySelect = () => {
-      const sub = subjects.value.find(s => s.id === prefs.defaultSubject);
+      const sub = subjects.value.find(s => s.id === prefSubArray[0]);
       if (sub) {
-        selectSubjectCard(sub);
+        selectSubjectCard(sub, false);
         
         nextTick(() => {
           const checkLevels = () => {
@@ -528,56 +533,17 @@ const determineAdviceType = (results) => {
 };
 
 const getFallbackAdvice = (results) => {
-  if (!results || results.length === 0) {
-    const type = mentorType.value || 'standard';
-    const textMaps = {
-      standard: {
-        UZB: "Salom! Siz hali birorta ham test topshirmadingiz. Math yoki English fanlaridan Beginner darajasida test topshirishni tavsiya qilaman.",
-        RUS: "Привет! Вы еще не прошли ни одного теста. Рекомендуем начать с диагностического теста по Math или English на уровне Beginner."
-      },
-      friendly: {
-        UZB: "Assalomu alaykum! Xush kelibsiz! Qani, birinchi qadamni tashlaymizmi? Istalgan fanni tanlang, masalan Math!",
-        RUS: "Приветствую! Добро пожаловать! Сделаем первый шаг? Выбери любой предмет, например Math!"
-      },
-      strict: {
-        UZB: "Hech qanday natija yo'q. Vaqtni yo'qotmang. Zudlik bilan birinchi testni topshiring.",
-        RUS: "Никаких результатов нет. Не теряйте время. Немедленно пройдите первый тест."
-      },
-      socratic: {
-        UZB: "Boshlanish — har qanday bilimning eng muhim nuqtasidir. Birinchi testingizni qachon topshirishni rejalashtiryapsiz?",
-        RUS: "Начало — самая важная точка любого знания. Когда вы планируете сдать свой первый тест?"
-      },
-      motivator: {
-        UZB: "Sizda ulkan potensial bor! Qani, o'z kuchingizni birinchi testda sinab ko'ring. Olg'a! 🚀",
-        RUS: "У тебя огромный потенциал! Давай, проверь свои силы в первом тесте. Вперед! 🚀"
-      },
-      innovator: {
-        UZB: "Tizimda yangimisiz? Qiziqarli innovatsion testlarimizdan birini sinab ko'ring. Tajriba boshlansin! 💡",
-        RUS: "Новенький в системе? Попробуй один из наших интересных инновационных тестов. Эксперимент начинается! 💡"
-      },
-      analyst: {
-        UZB: "Ma'lumotlar bazasida sizning statistikangiz 0%. Tahlilni boshlashimiz uchun kamida bitta test topshirishingiz kerak. 💻",
-        RUS: "В базе данных ваша статистика 0%. Чтобы мы могли начать анализ, вам нужно сдать хотя бы один тест. 💻"
-      },
-      sage: {
-        UZB: "Eng uzun yo'l ham birinchi qadamdan boshlanadi, farzandim. Ilm sari birinchi qadamingizni tashlang. 📜",
-        RUS: "Даже самый длинный путь начинается с первого шага, дитя мое. Сделай свой первый шаг к знаниями. 📜"
-      },
-      comedian: {
-        UZB: "Hoy, nega qarab turibsiz? Miya chirib ketmasidan oldin bitta test yechib tashlamaymizmi? 😂 Qani, ketdik!",
-        RUS: "Эй, чего ждем? Пока мозг не заржавел, может решим один тестик? 😂 Давай, поехали!"
-      }
-    };
+  const type = mentorType.value || 'standard';
+  const mentor = getMentorConfig(type);
 
+  if (!results || results.length === 0) {
     const badgeMap = {
       UZB: "Birinchi test",
       RUS: "Начать тест"
     };
 
-    const fallbackMap = textMaps[type] || textMaps['standard'];
-
     return {
-      text: fallbackMap[currentLocale.value] || fallbackMap['UZB'],
+      text: mentor.greeting[currentLocale.value] || mentor.greeting['UZB'],
       badge: badgeMap[currentLocale.value] || badgeMap['UZB'],
       recommendedSubject: 'English',
       recommendedLevel: 'Beginner'
@@ -724,18 +690,7 @@ const fetchAiAdviceFromGemini = async (results) => {
     
     const subjectsList = subjects.value.map(s => s.id).join(', ');
     
-    const personas = {
-      standard: "You are an objective, data-driven academic advisor. Analyze the student's statistics clearly, point out the exact numerical trends, and provide a structured, practical study plan.",
-      friendly: "You are a warm, deeply empathetic mentor. Celebrate the student's efforts, validate their struggles kindly, and provide a soft, deeply encouraging roadmap for improvement. Make them feel proud. 😊🌟",
-      strict: "You are an elite, demanding, no-nonsense professor. You expect perfection. Analyze the stats ruthlessly. Highlight their failures as unacceptable gaps in knowledge and demand immediate, disciplined action. Speak with absolute formal authority. No emojis.",
-      socratic: "You are a wise Socratic philosopher. Instead of giving a direct study plan, analyze their stats and ask deep, probing questions about why they are failing in certain areas and excelling in others. Challenge them to find their own path.",
-      motivator: "You are a high-octane, aggressive motivational coach! Look at their stats and HYPE THEM UP! If they are failing, tell them it's time for a legendary comeback! If they are winning, tell them to conquer the world! Use intense energy! 🚀🔥💪",
-      innovator: "You are a quirky, brilliant creative genius. Look at their stats and suggest completely unconventional, bizarre, or highly creative ways to study their weakest subjects. Think completely outside the box! 🧠💡",
-      analyst: "You are a Cyber-Analyst AI. Deliver the advice as a 'System Performance Report'. Use highly technical, robotic jargon (e.g., 'Efficiency at 45%', 'Recommending logic recalibration'). Be coldly logical. 💻📊",
-      sage: "You are an ancient, patient wise elder. Look at their stats and speak using deep metaphors about nature, seasons, or growing trees. Offer advice as timeless, peaceful wisdom that encourages patience and persistence. 🌿📜",
-      comedian: "You are a hilarious, slightly sarcastic stand-up comedian. Roast their bad scores playfully, make absurd jokes about their best scores, and give advice that makes them laugh out loud while still actually being helpful. 😂🎭🍿"
-    };
-    const systemPersona = personas[mentorType.value] || personas.standard;
+    const systemPersona = getMentorConfig(mentorType.value).systemPrompt;
 
     const prompt = `${systemPersona}
 You are acting as this persona for the Test.me platform.

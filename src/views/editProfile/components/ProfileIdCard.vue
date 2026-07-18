@@ -1,9 +1,14 @@
 <template>
-  <div class="id-card-wrapper" v-if="show">
-    <div class="modal-overlay" @click.self="$emit('close')">
+  <Teleport to="body" v-if="show">
+    <div class="profile-id-overlay" @click.self="$emit('close')">
       <div class="id-card-modal">
+        <!-- Close X button -->
+        <button class="modal-close-x" @click="$emit('close')">
+          <i class="fas fa-times"></i>
+        </button>
+
         <!-- The Card to be exported -->
-        <div class="id-card" id="profile-id-card">
+        <div class="id-card" id="profile-id-card" style="background-color: #0f172a;">
           <!-- Background and Glows -->
           <div class="card-bg"></div>
           <div class="glow-top"></div>
@@ -63,7 +68,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -94,7 +99,7 @@ const downloadCard = async () => {
     // Create canvas
     const canvas = await html2canvas(cardElement, {
       scale: 3, // High resolution
-      backgroundColor: null,
+      backgroundColor: '#0f172a', // Solid dark background for nice export
       useCORS: true, // For external images
       logging: false
     });
@@ -114,13 +119,13 @@ const downloadCard = async () => {
 };
 </script>
 
-<style scoped>
-.modal-overlay {
+<style>
+.profile-id-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(8px);
-  z-index: 10000;
+  z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -132,6 +137,7 @@ const downloadCard = async () => {
   flex-direction: column;
   gap: 1.5rem;
   align-items: center;
+  position: relative;
 }
 
 /* ID Card Styles */
@@ -145,6 +151,30 @@ const downloadCard = async () => {
   font-family: 'Inter', sans-serif;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-close-x {
+  position: absolute;
+  top: -40px;
+  right: -10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+.modal-close-x:hover {
+  background: rgba(239, 68, 68, 0.8);
+  border-color: #ef4444;
+  transform: scale(1.1);
 }
 
 .card-bg {

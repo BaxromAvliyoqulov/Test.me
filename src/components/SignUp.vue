@@ -183,10 +183,11 @@ const handleSubmit = async () => {
       referralCode: user.uid.slice(0, 8).toUpperCase(),
       shortId: user.uid.slice(0, 8).toUpperCase(),
       preferences: {
-        defaultSubject: '',
+        defaultSubject: [],
         defaultLevel: '',
         dailyGoal: 10,
         defaultLocale: 'UZB',
+        unlockedMentors: ['friendly']
       },
       createdAt: new Date(),
     });
@@ -223,10 +224,11 @@ const handleGoogleSignUp = async () => {
         referralCode: user.uid.slice(0, 8).toUpperCase(),
         shortId: user.uid.slice(0, 8).toUpperCase(),
         preferences: {
-          defaultSubject: '',
+          defaultSubject: [],
           defaultLevel: '',
           dailyGoal: 10,
           defaultLocale: 'UZB',
+          unlockedMentors: ['friendly']
         },
         createdAt: new Date(),
       });

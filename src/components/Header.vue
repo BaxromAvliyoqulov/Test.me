@@ -15,15 +15,7 @@
         <span class="coin-label">TP</span>
       </div>
 
-      <!-- Quick Action: Shop -->
-      <div class="header-action-btn" @click="$router.push('/shop')" title="Do'kon">
-        <i class="fas fa-cart-shopping text-blue-500"></i>
-      </div>
 
-      <!-- Quick Action: Admin -->
-      <div class="header-action-btn admin-action-btn" v-if="isAdmin || adminRole === 'super_admin'" @click="$router.push('/admin')" title="Admin Panel">
-        <i class="fas fa-shield-halved text-amber-500"></i>
-      </div>
 
       <!-- Bell Button -->
       <div class="header-action-btn" @click="openNotifModal">

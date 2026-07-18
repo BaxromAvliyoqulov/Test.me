@@ -4,7 +4,7 @@
       <div 
         v-for="mentor in mentors" 
         :key="mentor.id"
-        :class="['mentor-card', { active: localMentorType === mentor.id, locked: mentor.premium && !isPremium }]"
+        :class="['mentor-card', `card-${mentor.id}`, { active: localMentorType === mentor.id, locked: mentor.premium && !isPremium }]"
         :style="{ '--mentor-color': mentor.color }"
         @click="selectMentor(mentor)"
       >
@@ -45,11 +45,12 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { AIMentors } from '@/config/mentors';
 
 const props = defineProps({
   modelValue: {
     type: String,
-    default: 'friendly'
+    default: 'standard'
   },
   isPremium: {
     type: Boolean,
@@ -63,98 +64,16 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 
-const localMentorType = ref(props.modelValue || 'friendly');
+const localMentorType = ref(props.modelValue || 'standard');
 
-const mentors = [
-  {
-    id: 'standard',
-    icon: 'fas fa-robot',
-    color: '#64748b',
-    premium: false,
-    name: { UZB: 'Standart AI', RUS: 'Стандартный ИИ' },
-    desc: { UZB: 'Oddiy, xolis va aniq maslahatlar beruvchi standart klassik yordamchi.', RUS: 'Обычный классический помощник, дающий объективные и четкие советы.' },
-    greeting: { UZB: 'Assalomu alaykum! Men standart yordamchiman, sizga qanday yordam bera olaman?', RUS: 'Здравствуйте! Я стандартный помощник, чем могу вам помочь?' }
-  },
-  {
-    id: 'friendly',
-    icon: 'fas fa-smile-beam',
-    color: '#3b82f6',
-    premium: false,
-    name: { UZB: "Do'stona Ustoz", RUS: 'Дружелюбный Наставник' },
-    desc: { UZB: "Xatolarni muloyimlik bilan tushuntiradi va doim qo'llab-quvvatlaydi.", RUS: 'Мягко объясняет ошибки и всегда поддерживает.' },
-    greeting: { UZB: "Salom! Xato qilsangiz xavotir olmang, biz birga o'rganamiz!", RUS: 'Привет! Не переживай из-за ошибок, мы учимся вместе!' }
-  },
-  {
-    id: 'strict',
-    icon: 'fas fa-user-tie',
-    color: '#ef4444',
-    premium: true,
-    name: { UZB: 'Qattiqqo\'l Professor', RUS: 'Строгий Профессор' },
-    desc: { UZB: 'Faqat faktlar va qat\'iy qoidalar. Bosh qotirishga majbur qiladi.', RUS: 'Только факты и строгие правила. Заставляет думать.' },
-    greeting: { UZB: 'Vaqtni behuda sarflamaylik. Xatolaringizni darhol tahlil qilamiz.', RUS: 'Не будем терять время. Немедленно разберем твои ошибки.' }
-  },
-  {
-    id: 'socratic',
-    icon: 'fas fa-brain',
-    color: '#a855f7',
-    premium: true,
-    name: { UZB: 'Sokratik Faylasuf', RUS: 'Сократический Философ' },
-    desc: { UZB: 'To\'g\'ri javobni aytmaydi, o\'zingiz topishingiz uchun savollar beradi.', RUS: 'Не дает готовых ответов, а задает наводящие вопросы.' },
-    greeting: { UZB: 'Sizningcha, nima uchun bu javob xato bo\'lishi mumkin? Keling, o\'ylab ko\'ramiz.', RUS: 'Как ты думаешь, почему этот ответ неверный? Давай поразмыслим.' }
-  },
-  {
-    id: 'motivator',
-    icon: 'fas fa-rocket',
-    color: '#f59e0b',
-    premium: true,
-    name: { UZB: 'Motivator Kouch', RUS: 'Мотиватор Коуч' },
-    desc: { UZB: 'Tinimsiz harakatga undaydi. Qisqa, aniq va energiya beruvchi maslahatlar.', RUS: 'Побуждает к действию. Краткие, четкие и заряжающие энергией советы.' },
-    greeting: { UZB: 'Vaqt ketdi! Xatolar - bu shunchaki navbatdagi pog\'ona. Qani, yana bir bor olg\'a! 🚀', RUS: 'Время пошло! Ошибки - это просто ступень к успеху. Давай еще раз, вперед! 🚀' }
-  },
-  {
-    id: 'innovator',
-    icon: 'fas fa-lightbulb',
-    color: '#10b981',
-    premium: true,
-    name: { UZB: 'Kreativ Daho', RUS: 'Креативный Гений' },
-    desc: { UZB: 'Muammolarga noan\'anaviy va qiziqarli yechimlar topishni o\'rgatadi.', RUS: 'Учит находить нестандартные и интересные решения проблем.' },
-    greeting: { UZB: 'Ajoyib urinish! Ammo bu muammoni butunlay boshqacha usulda yechish haqida o\'ylab ko\'rganmisiz? 💡', RUS: 'Отличная попытка! Но думал ли ты о совершенно другом подходе к этой задаче? 💡' }
-  },
-  {
-    id: 'analyst',
-    icon: 'fas fa-terminal',
-    color: '#8b5cf6',
-    premium: true,
-    name: { UZB: 'Kiber-Analitik', RUS: 'Кибер-Аналитик' },
-    desc: { UZB: 'Faktlar, logikalar va algoritmlarga tayangan holda maslahat beradi.', RUS: 'Опирается на факты, логику и алгоритмы при даче советов.' },
-    greeting: { UZB: 'Tizim tahlil qilindi. Sizning logikangizda qandaydir xatolik mavjud. Qayta tekshiramizmi? 💻', RUS: 'Система проанализирована. В вашей логике есть ошибка. Проверим заново? 💻' }
-  },
-  {
-    id: 'sage',
-    icon: 'fas fa-scroll',
-    color: '#d97706',
-    premium: true,
-    name: { UZB: 'Qadimiy Donishmand', RUS: 'Древний Мудрец' },
-    desc: { UZB: 'Maqollar va hayotiy o\'xshatishlar orqali dono maslahatlar beradi.', RUS: 'Дает мудрые советы через пословицы и жизненные аналогии.' },
-    greeting: { UZB: 'Shoshma bolam. Tomchi suv toshni teshar. Sabr bilan xatolar ustida ishlaymiz. 📜', RUS: 'Не спеши, дитя. Капля камень точит. Поработаем над ошибками с терпением. 📜' }
-  },
-  {
-    id: 'comedian',
-    icon: 'fas fa-laugh-squint',
-    color: '#ec4899',
-    premium: true,
-    name: { UZB: 'Xazilkash AI', RUS: 'Шутник ИИ' },
-    desc: { UZB: 'Faqat hazil va yumor bilan o\'rgatadi. Zerikishga yo\'l qo\'ymaydi!', RUS: 'Обучает только с юмором и шутками. Не даст заскучать!' },
-    greeting: { UZB: 'Qani, o\'zimizni kulgidan yig\'ib olib, xatolarni ko\'rib chiqamizmi? 😂', RUS: 'Ну что, посмеялись и хватит, давай разбирать ошибки? 😂' }
-  }
-];
+const mentors = Object.values(AIMentors);
 
 const selectedMentorData = computed(() => {
   return mentors.find(m => m.id === localMentorType.value) || mentors[0];
 });
 
 watch(() => props.modelValue, (newVal) => {
-  localMentorType.value = newVal || 'friendly';
+  localMentorType.value = newVal || 'standard';
 });
 
 const selectMentor = (mentor) => {
@@ -446,4 +365,5 @@ const selectMentor = (mentor) => {
   font-style: italic;
   position: relative;
 }
+
 </style>

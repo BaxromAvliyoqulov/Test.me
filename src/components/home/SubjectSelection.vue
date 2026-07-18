@@ -14,7 +14,7 @@
       <div
         v-for="subject in subjects"
         :key="subject.id"
-        :class="['subject-card', { selected: selectedSubject && selectedSubject.id === subject.id, 'goal-active': subject.id === defaultSubjectId }]"
+        :class="['subject-card', { selected: selectedSubject && selectedSubject.id === subject.id, 'goal-active': Array.isArray(defaultSubjectId) ? defaultSubjectId.includes(subject.id) : subject.id === defaultSubjectId }]"
         :style="{ '--subject-color': getSubjectColor(subject.id) }"
         @click="$emit('select', subject)"
       >
@@ -38,7 +38,7 @@ const props = defineProps({
   subjects: { type: Array, required: true },
   loadingSubjects: { type: Boolean, default: false },
   selectedSubject: { type: Object, default: null },
-  defaultSubjectId: { type: String, default: null }
+  defaultSubjectId: { type: [String, Array], default: () => [] }
 });
 
 const emit = defineEmits(['select']);

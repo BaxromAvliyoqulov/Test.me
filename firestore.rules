@@ -132,5 +132,11 @@ service cloud.firestore {
       allow create: if isAuthenticated() && request.resource.data.from == request.auth.uid;
       allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.from || request.auth.uid == resource.data.to);
     }
+    
+    // Notifications rules
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
   }
 }

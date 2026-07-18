@@ -192,23 +192,47 @@ const onFileChange = (e) => {
   width: 100%;
   margin-top: 1rem;
   margin-bottom: 1.5rem;
-  padding: 12px;
-  border-radius: 14px;
+  padding: 14px;
+  border-radius: 16px;
   background: linear-gradient(135deg, #1e293b, #0f172a);
   color: white;
-  border: none;
-  font-weight: 700;
-  font-size: 0.95rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  font-weight: 800;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.id-card-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: all 0.4s ease;
 }
 
 .id-card-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px -5px rgba(15, 23, 42, 0.4);
+  background: linear-gradient(135deg, #283752, #0f172a);
+}
+
+.id-card-btn:hover::before {
+  left: 200%;
+  transition: left 0.8s ease;
+}
+
+.id-card-btn i {
+  font-size: 1.2rem;
+  background: linear-gradient(135deg, #60a5fa, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 </style>

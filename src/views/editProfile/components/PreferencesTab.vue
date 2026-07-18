@@ -31,17 +31,20 @@
 
       <!-- Default Target Subject Selection -->
       <div class="form-group">
-        <label for="pref-subject" class="group-label">
-          <i class="fas fa-graduation-cap"></i> {{ currentLocale === 'RUS' ? 'Предмет по умолчанию' : 'Asosiy fan' }}
+        <label class="group-label">
+          <i class="fas fa-graduation-cap"></i> {{ currentLocale === 'RUS' ? 'Предмет по умолчанию (макс. 2)' : 'Asosiy fan (maks. 2 ta)' }}
         </label>
-        <div class="input-wrapper select-wrapper">
-          <i class="fas fa-book select-icon"></i>
-          <select id="pref-subject" v-model="preferencesProxy.defaultSubject" class="styled-input select-input">
-            <option value="">{{ currentLocale === 'RUS' ? '-- Выберите предмет --' : '-- Fanni tanlang --' }}</option>
-            <option v-for="sub in subjectsList" :key="sub.id" :value="sub.id">
-              {{ sub.id }}
-            </option>
-          </select>
+        <div class="subject-chips-container">
+          <button 
+            v-for="sub in subjectsList" 
+            :key="sub.id"
+            type="button"
+            class="subject-chip"
+            :class="{ active: Array.isArray(preferencesProxy.defaultSubject) && preferencesProxy.defaultSubject.includes(sub.id) }"
+            @click="toggleSubject(sub.id)"
+          >
+            {{ sub.id }}
+          </button>
         </div>
       </div>
 
@@ -52,7 +55,7 @@
         </label>
         <div class="input-wrapper select-wrapper">
           <i class="fas fa-signal select-icon"></i>
-          <select id="pref-level" v-model="preferencesProxy.defaultLevel" class="styled-input select-input" :disabled="!preferencesProxy.defaultSubject || loadingLevels">
+          <select id="pref-level" v-model="preferencesProxy.defaultLevel" class="styled-input select-input" :disabled="!preferencesProxy.defaultSubject || !preferencesProxy.defaultSubject.length || loadingLevels">
             <option value="">
               {{ loadingLevels ? (currentLocale === 'RUS' ? 'Загрузка...' : 'Yuklanmoqda...') : (currentLocale === 'RUS' ? '-- Выберите сложность --' : '-- Qiyinchilikni tanlang --') }}
             </option>
@@ -118,4 +121,55 @@ const preferencesProxy = computed({
   get: () => props.preferences,
   set: (val) => emit('update:preferences', val)
 });
+
+const toggleSubject = (subjectId) => {
+  let current = Array.isArray(preferencesProxy.value.defaultSubject) 
+    ? [...preferencesProxy.value.defaultSubject] 
+    : [];
+    
+  if (current.includes(subjectId)) {
+    current = current.filter(id => id !== subjectId);
+  } else {
+    if (current.length >= 2) {
+      current.shift(); // Remove oldest to keep max 2
+    }
+    current.push(subjectId);
+  }
+  
+  preferencesProxy.value.defaultSubject = current;
+};
 </script>
+
+<style scoped>
+.subject-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.subject-chip {
+  padding: 0.6rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 100px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.subject-chip:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  transform: translateY(-2px);
+}
+
+.subject-chip.active {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  transform: translateY(-2px);
+}
+</style>

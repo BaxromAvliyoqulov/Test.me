@@ -7,8 +7,13 @@
     <h2 class="q-text">{{ question?.question }}</h2>
 
     <transition name="fade">
-      <div v-if="hintText" class="hint-box">
-        <i class="fas fa-lightbulb"></i> {{ hintText }}
+      <div v-if="hintText || isAiLoading" class="ai-hint-wrapper">
+        <AIBubble 
+          :message="hintText" 
+          :loading="isAiLoading" 
+          :mentorId="mentorType" 
+          :locale="isRus ? 'RUS' : 'UZB'" 
+        />
       </div>
     </transition>
 
@@ -75,8 +80,11 @@ defineProps({
   userTools: Object,
   using5050: Boolean,
   isRus: Boolean,
-  isAiLoading: Boolean
+  isAiLoading: Boolean,
+  mentorType: String
 });
+
+import AIBubble from '@/components/AIBubble.vue';
 
 defineEmits(['selectOption', 'use5050', 'useAiHint', 'goToPrev', 'submitAnswer']);
 </script>

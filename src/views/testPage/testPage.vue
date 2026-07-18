@@ -43,6 +43,7 @@
         :using5050="state.using5050"
         :isRus="isRus"
         :isAiLoading="state.isAiLoading"
+        :mentorType="state.mentorType"
         @selectOption="selectOption"
         @use5050="use5050"
         @useAiHint="useAiHint"
@@ -71,6 +72,28 @@
             <button class="rm-close" @click="state.showReviewModal = false"><i class="fas fa-times"></i></button>
           </div>
           <div class="rm-body">
+            <!-- AI Review Section -->
+            <div class="ai-review-section">
+              <button 
+                v-if="!state.postTestReviewText && !state.isPostTestReviewLoading" 
+                class="btn-primary" 
+                @click="generatePostTestReview"
+              >
+                <i class="fas fa-magic"></i> {{ isRus ? 'Запросить AI-анализ' : 'AI Tahlilini so\'rash' }}
+              </button>
+              
+              <transition name="fade">
+                <div v-if="state.postTestReviewText || state.isPostTestReviewLoading" class="ai-hint-wrapper">
+                  <AIBubble 
+                    :message="state.postTestReviewText" 
+                    :loading="state.isPostTestReviewLoading" 
+                    :mentorId="state.mentorType" 
+                    :locale="isRus ? 'RUS' : 'UZB'" 
+                  />
+                </div>
+              </transition>
+            </div>
+
             <div v-for="(question, index) in state.questions" :key="index" class="rm-q-card">
               <h4>{{ index + 1 }}. {{ question.question }}</h4>
               <div class="rm-opts">
@@ -98,6 +121,8 @@
 import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
 import TestQuestionCard from './components/TestQuestionCard.vue';
 import TestResults from './components/TestResults.vue';
+import AIBubble from '@/components/AIBubble.vue';
+import { generateMentorMessage } from '@/services/aiService';
 import { db } from '@/config/firebase';
 import { collection, getDocs, addDoc, Timestamp, query, where, doc, getDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -171,7 +196,9 @@ const state = reactive({
   userPoints: 0,
   mentorType: 'standard',
   activeGoal: null,
-  isAiLoading: false
+  isAiLoading: false,
+  postTestReviewText: null,
+  isPostTestReviewLoading: false
 });
 
 let intervalId = null;
@@ -328,50 +355,17 @@ const useAiHint = async () => {
   state.isAiLoading = true;
   
   try {
-    const GEMINI_API_KEY = "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
     const currentQ = currentQuestion.value;
-    const ans = currentQ.answer || currentQ.correctAnswer;
     
-    const personas = {
-      standard: "You are a Standard AI Assistant.",
-      friendly: "You are a Friendly Mentor. Add small encouragements or emojis 😊.",
-      strict: "You are a Strict Professor. Speak formally and rigorously.",
-      socratic: "You are a Socratic Philosopher. Ask questions to make them think.",
-      motivator: "You are a Motivator Coach. Use high energy, hype, and emojis! 🚀",
-      innovator: "You are a Creative Genius. Think outside the box. 💡",
-      analyst: "You are a Cyber Analyst. Speak like a tech system. 💻",
-      sage: "You are an Ancient Sage. Use metaphors. 📜",
-      comedian: "You are a Humorous Comedian. Explain things using jokes, sarcasm, and funny analogies. 😂"
-    };
-    const persona = personas[state.mentorType] || personas.standard;
-    const goalText = state.activeGoal ? `The user's active goal is: "${state.activeGoal}". Remind them of their goal to motivate them!` : '';
-    
-    const prompt = `You are a helpful AI tutor acting as this persona: ${persona}
-${goalText}
+    const response = await generateMentorMessage({
+      mentorId: state.mentorType,
+      context: 'hint',
+      locale: locale.value || 'UZB',
+      data: { question: currentQ }
+    });
 
-The student is currently taking a test. They are stuck on this question:
-"${currentQ.question}"
-Options: ${JSON.stringify(currentQ.options)}
-
-The correct answer is: "${ans}".
-
-Your task: Provide a clever, very short hint to guide the student toward the correct answer WITHOUT explicitly stating what the correct answer is. 
-Write the hint entirely in the language of the prompt (mostly Uzbek or Russian depending on the question), but keep it under 3 sentences. Be completely in character.`;
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      }
-    );
-
-    if (response.ok) {
-      const resData = await response.json();
-      state.hintText = resData.candidates[0].content.parts[0].text;
+    if (response && response.text) {
+      state.hintText = response.text;
       
       const auth = getAuth();
       if (auth.currentUser) {
@@ -388,13 +382,42 @@ Write the hint entirely in the language of the prompt (mostly Uzbek or Russian d
         }
       }
     } else {
-      throw new Error('Gemini API Error');
+      throw new Error('AI Service Error');
     }
   } catch (err) {
     console.error("Failed to generate ai hint", err);
     toast.error(isRus.value ? 'Ошибка при получении подсказки' : 'Yordam olishda xatolik yuz berdi');
   } finally {
     state.isAiLoading = false;
+  }
+};
+
+const generatePostTestReview = async () => {
+  if (state.postTestReviewText || state.isPostTestReviewLoading) return;
+  state.isPostTestReviewLoading = true;
+  
+  try {
+    const response = await generateMentorMessage({
+      mentorId: state.mentorType,
+      context: 'post_test',
+      locale: locale.value || 'UZB',
+      data: { 
+        score: score.value, 
+        totalQuestions: state.questions.length,
+        timeSpent: timeSpent.value
+      }
+    });
+
+    if (response && response.text) {
+      state.postTestReviewText = response.text;
+    } else {
+      throw new Error('AI Service Error');
+    }
+  } catch (err) {
+    console.error("Failed to generate post test review", err);
+    toast.error(isRus.value ? 'Ошибка AI анализа' : 'AI tahlilida xatolik yuz berdi');
+  } finally {
+    state.isPostTestReviewLoading = false;
   }
 };
 
@@ -823,12 +846,22 @@ defineExpose({ initializeTest: fetchQuestions });
 .btn-primary {
   background: #0f172a;
   color: white;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
   padding: 12px 24px;
   border-radius: 12px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
 }
+.btn-primary:hover { background: #1e293b; }
+
+.ai-review-section {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
 
 /* Review Modal Overlay */
 .review-overlay {

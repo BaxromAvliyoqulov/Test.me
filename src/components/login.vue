@@ -1,12 +1,12 @@
 <template>
   <div class="auth-page-wrapper">
-    <!-- Glowing background blobs (Soft pastel colors for light mode) -->
+    <!-- Glowing background blobs -->
     <div class="bg-blob bg-blob-1"></div>
     <div class="bg-blob bg-blob-2"></div>
     <div class="bg-blob bg-blob-3"></div>
 
     <div class="auth-card">
-      <!-- Left side: Minimalist Professional Branding Panel (Clean Royal/Sky Blue Gradient) -->
+      <!-- Left side: Brand Panel -->
       <div class="auth-brand-side">
         <div class="brand-logo" @click="router.push('/')">Test.me</div>
         
@@ -18,21 +18,15 @@
         <div class="brand-features-list">
           <div class="brand-feature-inline">
             <span class="feature-icon-wrapper"><i class="fas fa-brain"></i></span>
-            <div>
-              <strong>Sun'iy Intellekt Tahlili:</strong> Natijalaringizni AI orqali baholang va zaif nuqtalaringizni lahzada aniqlang!
-            </div>
+            <div><strong>Sun'iy Intellekt Tahlili:</strong> Natijalaringizni AI orqali baholang va zaif nuqtalaringizni lahzada aniqlang!</div>
           </div>
           <div class="brand-feature-inline">
             <span class="feature-icon-wrapper"><i class="fas fa-certificate"></i></span>
-            <div>
-              <strong>Nufuzli Sertifikatlar:</strong> Sinovlarni muvaffaqiyatli yakunlab, o'z bilimingizni tasdiqlovchi sertifikatlarga ega bo'ling.
-            </div>
+            <div><strong>Nufuzli Sertifikatlar:</strong> Sinovlarni muvaffaqiyatli yakunlab, o'z bilimingizni tasdiqlovchi sertifikatlarga ega bo'ling.</div>
           </div>
           <div class="brand-feature-inline">
             <span class="feature-icon-wrapper"><i class="fas fa-coins"></i></span>
-            <div>
-              <strong>TP Coin va Real Sovg'alar:</strong> Test topshirib ball to'plang va ularni qimmatbaho sovg'alarga almashtiring!
-            </div>
+            <div><strong>TP Coin va Real Sovg'alar:</strong> Test topshirib ball to'plang va ularni qimmatbaho sovg'alarga almashtiring!</div>
           </div>
         </div>
 
@@ -44,48 +38,62 @@
         </div>
       </div>
 
-      <!-- Right side: Form panel (Clean White/Light Theme in Uzbek) -->
+      <!-- Right side: Form panel -->
       <div class="auth-form-side">
         <div class="form-header">
           <h3>Tizimga kirish</h3>
           <p>Profilingizga kirish uchun ma'lumotlarni kiriting</p>
         </div>
 
-        <form @submit.prevent="handleLogin" class="auth-form">
+        <form @submit.prevent="handleLogin" class="auth-form" novalidate>
           <div class="input-group">
-            <label for="username">Elektron pochta</label>
-            <div class="input-wrapper">
+            <label for="email">Elektron pochta</label>
+            <div class="input-wrapper" :class="{ 'has-error': errors.email }">
               <span class="input-icon"><i class="fas fa-envelope"></i></span>
               <input
                 type="email"
-                id="username"
-                v-model="form.username"
+                id="email"
+                v-model="form.email"
                 placeholder="pochta@example.com"
-                required
-                autofocus
+                :disabled="isLoading"
+                @input="clearError('email')"
               />
             </div>
+            <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
           </div>
 
           <div class="input-group">
             <label for="password">Parol</label>
-            <div class="input-wrapper">
+            <div class="input-wrapper" :class="{ 'has-error': errors.password }">
               <span class="input-icon"><i class="fas fa-lock"></i></span>
               <input
                 :type="showPassword ? 'text' : 'password'"
                 id="password"
                 v-model="form.password"
                 placeholder="••••••••"
-                required
+                :disabled="isLoading"
+                @input="clearError('password')"
               />
-              <span class="toggle-password" @click="togglePasswordVisibility">
+              <span class="toggle-password" @click="showPassword = !showPassword">
                 <i :class="showPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
               </span>
             </div>
+            <span v-if="errors.password" class="error-text">{{ errors.password }}</span>
           </div>
 
-          <button type="submit" class="auth-primary-btn" :disabled="loading">
-            <span v-if="loading"><i class="fas fa-spinner fa-spin"></i> Kutmoqda...</span>
+          <div class="form-actions-row">
+            <label class="remember-me">
+              <input type="checkbox" v-model="form.rememberMe" :disabled="isLoading" />
+              <span class="checkmark"></span>
+              Meni eslab qol
+            </label>
+            <a href="#" class="forgot-password-link" @click.prevent="openForgotPasswordModal">
+              Parolni unutdingizmi?
+            </a>
+          </div>
+
+          <button type="submit" class="auth-primary-btn" :disabled="isLoading">
+            <span v-if="isLoading"><i class="fas fa-spinner fa-spin"></i> Kutmoqda...</span>
             <span v-else>Kirish</span>
           </button>
 
@@ -94,8 +102,8 @@
           </div>
 
           <div class="google-login">
-            <button @click.prevent="handleGoogleLog" type="button" class="google-btn" :disabled="loading">
-              <span v-if="loading"><i class="fas fa-spinner fa-spin"></i> Kutmoqda...</span>
+            <button @click.prevent="handleGoogleLog" type="button" class="google-btn" :disabled="isGoogleLoading">
+              <span v-if="isGoogleLoading"><i class="fas fa-spinner fa-spin"></i> Kutmoqda...</span>
               <template v-else>
                 <img src="../assets/img/googleIcon.svg" alt="Google Icon" />
                 Google orqali kirish
@@ -109,93 +117,206 @@
           </div>
         </form>
 
-        <div v-if="errorMessage" class="error-toast">
-          <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+        <div v-if="globalError" class="error-toast">
+          <i class="fas fa-exclamation-circle"></i> {{ globalError }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div v-if="showForgotModal" class="modal-overlay" @click.self="closeForgotPasswordModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4>Parolni tiklash</h4>
+          <button class="close-btn" @click="closeForgotPasswordModal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p>Elektron pochta manzilingizni kiriting va biz parolni tiklash havolasini yuboramiz.</p>
+          <div class="input-group">
+            <div class="input-wrapper" :class="{ 'has-error': resetError }">
+              <span class="input-icon"><i class="fas fa-envelope"></i></span>
+              <input 
+                type="email" 
+                v-model="resetEmail" 
+                placeholder="pochta@example.com" 
+                @input="resetError = ''"
+              />
+            </div>
+            <span v-if="resetError" class="error-text">{{ resetError }}</span>
+          </div>
+          <button class="auth-primary-btn reset-btn" @click="handleForgotPassword" :disabled="isResetting">
+            <span v-if="isResetting"><i class="fas fa-spinner fa-spin"></i> Yuborilmoqda...</span>
+            <span v-else>Havolani yuborish</span>
+          </button>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import { ref } from 'vue';
+<script setup>
+import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { auth } from '../config/firebase';
 import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence
 } from 'firebase/auth';
+import { useToast } from 'vue-toastification';
 
-export default {
-  setup() {
-    const router = useRouter();
-    const errorMessage = ref('');
-    const successMessage = ref('');
+const router = useRouter();
+const toast = useToast();
 
-    return {
-      errorMessage,
-      successMessage,
-      router,
-    };
-  },
-  data() {
-    return {
-      form: {
-        username: '',
-        password: '',
-      },
-      showPassword: false,
-      loading: false,
-    };
-  },
-  methods: {
-    handleLogin() {
-      this.loading = true;
-      const { username, password } = this.form;
+// State
+const form = reactive({
+  email: '',
+  password: '',
+  rememberMe: false
+});
 
-      signInWithEmailAndPassword(auth, username, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          console.log('Login successful:', user);
-          this.$toast.success('Tizimga muvaffaqiyatli kirdingiz!');
-          window.location.href = '/';
-        })
-        .catch((error) => {
-          this.errorMessage = 'Elektron pochta yoki parol noto\'g\'ri.';
-          this.$toast.error(this.errorMessage);
-          console.error('Login failed:', error.message);
-        })
-        .finally(() => {
-          this.loading = false;
-        });
-    },
-    togglePasswordVisibility() {
-      this.showPassword = !this.showPassword;
-    },
-    async handleGoogleLog() {
-      this.loading = true;
-      try {
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(auth, provider);
-        console.log('Google Log In successful:', result.user);
-        this.$toast.success('Google orqali kirish muvaffaqiyatli yakunlandi!');
-        window.location.href = '/';
-      } catch (error) {
-        setTimeout(() => {
-          if (auth.currentUser) {
-            this.$toast.success('Google orqali kirish muvaffaqiyatli yakunlandi!');
-            window.location.href = '/';
-          } else {
-            console.error('Google LogIn failed:', error);
-            this.errorMessage = 'Google orqali kirishda xatolik yuz berdi.';
-            this.$toast.error(this.errorMessage);
-            this.loading = false;
-          }
-        }, 1500);
-      }
-    },
-  },
+const errors = reactive({
+  email: '',
+  password: ''
+});
+
+const globalError = ref('');
+const showPassword = ref(false);
+const isLoading = ref(false);
+const isGoogleLoading = ref(false);
+
+// Forgot Password Modal State
+const showForgotModal = ref(false);
+const resetEmail = ref('');
+const resetError = ref('');
+const isResetting = ref(false);
+
+// Validation logic
+const isValidEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+};
+
+const validateForm = () => {
+  let isValid = true;
+  errors.email = '';
+  errors.password = '';
+  globalError.value = '';
+
+  if (!form.email) {
+    errors.email = "Elektron pochta manzilini kiriting.";
+    isValid = false;
+  } else if (!isValidEmail(form.email)) {
+    errors.email = "To'g'ri elektron pochta manzilini kiriting.";
+    isValid = false;
+  }
+
+  if (!form.password) {
+    errors.password = "Parolni kiriting.";
+    isValid = false;
+  } else if (form.password.length < 6) {
+    errors.password = "Parol kamida 6 ta belgidan iborat bo'lishi kerak.";
+    isValid = false;
+  }
+
+  return isValid;
+};
+
+const clearError = (field) => {
+  if (errors[field]) errors[field] = '';
+  if (globalError.value) globalError.value = '';
+};
+
+// Handlers
+const handleLogin = async () => {
+  if (!validateForm()) return;
+
+  isLoading.value = true;
+  
+  try {
+    // Handle Remember Me persistence
+    const persistenceType = form.rememberMe ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistenceType);
+
+    // Proceed with login
+    const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password);
+    
+    toast.success("Tizimga muvaffaqiyatli kirdingiz!");
+    router.push('/');
+  } catch (error) {
+    console.error("Login Error:", error);
+    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      globalError.value = "Elektron pochta yoki parol noto'g'ri.";
+    } else if (error.code === 'auth/too-many-requests') {
+       globalError.value = "Juda ko'p urinishlar. Iltimos, birozdan so'ng qayta urinib ko'ring.";
+    } else {
+      globalError.value = "Tizimga kirishda xatolik yuz berdi.";
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const handleGoogleLog = async () => {
+  isGoogleLoading.value = true;
+  globalError.value = '';
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+    toast.success("Google orqali kirish muvaffaqiyatli!");
+    router.push('/');
+  } catch (error) {
+    console.error('Google Auth Error:', error);
+    globalError.value = "Google orqali kirish bekor qilindi yoki xatolik yuz berdi.";
+  } finally {
+    isGoogleLoading.value = false;
+  }
+};
+
+// Forgot Password logic
+const openForgotPasswordModal = () => {
+  resetEmail.value = form.email; // Pre-fill if email is already typed
+  resetError.value = '';
+  showForgotModal.value = true;
+};
+
+const closeForgotPasswordModal = () => {
+  showForgotModal.value = false;
+  resetEmail.value = '';
+  resetError.value = '';
+};
+
+const handleForgotPassword = async () => {
+  if (!resetEmail.value) {
+    resetError.value = "Pochtani kiriting.";
+    return;
+  }
+  if (!isValidEmail(resetEmail.value)) {
+    resetError.value = "To'g'ri pochta manzilini kiriting.";
+    return;
+  }
+
+  isResetting.value = true;
+  resetError.value = '';
+
+  try {
+    await sendPasswordResetEmail(auth, resetEmail.value);
+    toast.success("Parolni tiklash havolasi pochtangizga yuborildi!");
+    closeForgotPasswordModal();
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    if (error.code === 'auth/user-not-found') {
+      resetError.value = "Bunday foydalanuvchi topilmadi.";
+    } else {
+      resetError.value = "Havola yuborishda xatolik yuz berdi.";
+    }
+  } finally {
+    isResetting.value = false;
+  }
 };
 </script>
 
@@ -218,7 +339,7 @@ export default {
   padding: 1.5rem;
 }
 
-/* Glowing background blobs (light subtle colors) */
+/* Glowing background blobs */
 .bg-blob {
   position: absolute;
   border-radius: 50%;
@@ -264,7 +385,7 @@ export default {
   box-shadow: 0 20px 50px -15px rgba(15, 23, 42, 0.08);
 }
 
-/* Left Brand Panel (Keep high contrast clean gradient for text visibility) */
+/* Left Brand Panel */
 .auth-brand-side {
   flex: 1.1;
   background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
@@ -344,7 +465,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Right Form Panel (Clean Light Mode) */
+/* Right Form Panel */
 .auth-form-side {
   flex: 1;
   padding: 2.2rem 2.5rem;
@@ -429,6 +550,25 @@ export default {
   color: #3b82f6;
 }
 
+/* Error States */
+.input-wrapper.has-error input {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+.input-wrapper.has-error input:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+.input-wrapper.has-error .input-icon {
+  color: #ef4444;
+}
+.error-text {
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 0.2rem;
+  margin-left: 0.2rem;
+}
+
 .toggle-password {
   position: absolute;
   right: 1rem;
@@ -438,6 +578,41 @@ export default {
 }
 .toggle-password:hover {
   color: #0f172a;
+}
+
+.form-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #475569;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.remember-me input {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #3b82f6;
+}
+
+.forgot-password-link {
+  color: #3b82f6;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+.forgot-password-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
 }
 
 .auth-primary-btn {
@@ -451,12 +626,20 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.auth-primary-btn:hover {
+.auth-primary-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
   background: linear-gradient(to right, #2563eb, #1d4ed8);
+}
+.auth-primary-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .divider {
@@ -476,10 +659,10 @@ export default {
   flex: 1;
   border-bottom: 1px solid #e2e8f0;
 }
-.divider:not(:empty)::before {
+.divider:not(:empty):before {
   margin-right: 0.8rem;
 }
-.divider:not(:empty)::after {
+.divider:not(:empty):after {
   margin-left: 0.8rem;
 }
 
@@ -500,12 +683,15 @@ export default {
   transition: all 0.3s ease;
 }
 
-.google-btn:hover {
+.google-btn:hover:not(:disabled) {
   background: #f8fafc;
   border-color: #94a3b8;
   transform: translateY(-1px);
 }
-
+.google-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 .google-btn img {
   width: 18px;
   height: 18px;
@@ -539,6 +725,78 @@ export default {
   border-radius: 12px;
   font-size: 0.85rem;
   margin-top: 1rem;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: modalEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+  padding: 1.5rem 1.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+.modal-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.close-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  transition: color 0.2s;
+}
+.close-btn:hover {
+  color: #0f172a;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+.modal-body p {
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0 0 1.5rem 0;
+}
+
+.reset-btn {
+  width: 100%;
+  margin-top: 1.5rem;
 }
 
 /* Responsive queries */
@@ -579,6 +837,11 @@ export default {
   }
   .auth-form-side {
     padding: 2rem 1.5rem;
+  }
+  .form-actions-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
   }
 }
 </style>

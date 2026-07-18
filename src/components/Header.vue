@@ -15,10 +15,41 @@
         <span class="coin-label">TP</span>
       </div>
 
-      <!-- Quick Action / Notification (Decorative but premium) -->
-      <div class="header-action-btn">
+      <!-- Quick Action / Notification -->
+      <div class="header-action-btn notif-container" @click="toggleNotifications">
         <i class="fas fa-bell"></i>
-        <span class="notification-badge"></span>
+        <span class="notification-badge" v-if="unreadCount > 0">{{ unreadCount }}</span>
+        
+        <!-- Notifications Dropdown -->
+        <transition name="dropdown-fade">
+          <div class="notifications-dropdown" v-if="showNotifications" @click.stop>
+            <div class="notif-header">
+              <h4>Bildirishnomalar</h4>
+              <span class="notif-count">{{ unreadCount }} yangi</span>
+            </div>
+            <div class="notif-body">
+              <div v-if="loadingNotifs" class="notif-empty">Yuklanmoqda...</div>
+              <div v-else-if="filteredNotifications.length === 0" class="notif-empty">
+                <i class="fas fa-bell-slash"></i> Hozircha xabarlar yo'q
+              </div>
+              <div 
+                v-else 
+                v-for="notif in filteredNotifications" 
+                :key="notif.id" 
+                :class="['notif-item', { unread: !readNotifications.includes(notif.id) }]"
+              >
+                <div class="notif-icon" :class="'type-' + notif.type">
+                  <i :class="getNotifIcon(notif.type)"></i>
+                </div>
+                <div class="notif-content">
+                  <h5 class="notif-title">{{ notif.title }}</h5>
+                  <p class="notif-text">{{ notif.body }}</p>
+                  <span class="notif-time">{{ formatTime(notif.createdAt) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </transition>
       </div>
 
       <!-- Small User Info -->
@@ -33,7 +64,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute } from 'vue-router';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, orderBy, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import defaultUserImage from '../assets/img/user.png';
 
@@ -45,6 +76,69 @@ const username = ref(null);
 const profileImage = ref(defaultUserImage);
 const userPoints = ref(0);
 let pointsUnsub = null;
+
+// Notifications State
+const readNotifications = ref([]);
+const notifications = ref([]);
+const showNotifications = ref(false);
+const loadingNotifs = ref(true);
+let notifsUnsub = null;
+let currentUserId = null;
+
+const filteredNotifications = computed(() => {
+  return notifications.value.filter(n => {
+    if (n.target === 'all') return true;
+    if (n.target === 'active' && userPoints.value > 100) return true;
+    if (n.target === 'new' && userPoints.value <= 100) return true;
+    return false;
+  });
+});
+
+const unreadCount = computed(() => {
+  return filteredNotifications.value.filter(n => !readNotifications.value.includes(n.id)).length;
+});
+
+const getNotifIcon = (type) => {
+  const icons = {
+    info: 'fas fa-info-circle',
+    success: 'fas fa-check-circle',
+    warning: 'fas fa-exclamation-triangle',
+    update: 'fas fa-arrow-up',
+    promo: 'fas fa-gift'
+  };
+  return icons[type] || 'fas fa-bell';
+};
+
+const formatTime = (timestamp) => {
+  if (!timestamp) return '';
+  const date = timestamp.toDate();
+  return date.toLocaleDateString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+};
+
+const toggleNotifications = async () => {
+  showNotifications.value = !showNotifications.value;
+  if (showNotifications.value && unreadCount.value > 0 && currentUserId) {
+    const unreadIds = filteredNotifications.value
+      .filter(n => !readNotifications.value.includes(n.id))
+      .map(n => n.id);
+    
+    if (unreadIds.length > 0) {
+      try {
+        await updateDoc(doc(db, 'users', currentUserId), {
+          readNotifications: arrayUnion(...unreadIds)
+        });
+      } catch (e) {
+        console.error("Error marking notifs as read:", e);
+      }
+    }
+  }
+};
+
+const closeNotifications = (e) => {
+  if (!e.target.closest('.notif-container')) {
+    showNotifications.value = false;
+  }
+};
 
 const currentRouteName = computed(() => {
   const pathMap = {
@@ -82,12 +176,24 @@ const initializeAuth = () => {
           userPoints.value = data.points || 0;
           if (data.displayName) username.value = data.displayName;
           if (data.photoURL) profileImage.value = data.photoURL;
+          readNotifications.value = data.readNotifications || [];
         }
+      });
+
+      // Fetch notifications in real-time
+      currentUserId = user.uid;
+      if (notifsUnsub) notifsUnsub();
+      const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'));
+      notifsUnsub = onSnapshot(q, (snapshot) => {
+        notifications.value = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        loadingNotifs.value = false;
       });
     } else {
       username.value = null;
       profileImage.value = defaultUserImage;
       if (pointsUnsub) pointsUnsub();
+      if (notifsUnsub) notifsUnsub();
+      currentUserId = null;
     }
   });
 };
@@ -95,11 +201,14 @@ const initializeAuth = () => {
 onMounted(() => {
   initializeAuth();
   window.addEventListener('profile-updated', handleProfileUpdated);
+  window.addEventListener('click', closeNotifications);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('profile-updated', handleProfileUpdated);
+  window.removeEventListener('click', closeNotifications);
   if (pointsUnsub) pointsUnsub();
+  if (notifsUnsub) notifsUnsub();
 });
 </script>
 
@@ -263,5 +372,183 @@ onBeforeUnmount(() => {
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: .8; transform: scale(1.05); }
+}
+
+/* Notification Dropdown */
+.notif-container {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  line-height: 1;
+}
+
+.notifications-dropdown {
+  position: absolute;
+  top: 55px;
+  right: -10px;
+  width: 340px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.15), 0 4px 20px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  overflow: hidden;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  cursor: default;
+}
+
+.notif-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.notif-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.notif-count {
+  font-size: 0.72rem;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-weight: 600;
+}
+
+.notif-body {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.notif-empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.notif-empty i {
+  font-size: 1.8rem;
+  opacity: 0.5;
+}
+
+.notif-item {
+  padding: 14px 18px;
+  border-bottom: 1px solid #f8fafc;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  transition: background 0.15s;
+  cursor: default;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-item:hover {
+  background: #f8fafc;
+}
+
+.notif-item.unread {
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+  padding-left: 15px;
+}
+
+.notif-item.unread:hover {
+  background: #dbeafe;
+}
+
+.notif-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.notif-icon.type-info { background: #e0f2fe; color: #0ea5e9; }
+.notif-icon.type-success { background: #dcfce7; color: #22c55e; }
+.notif-icon.type-warning { background: #fef3c7; color: #f59e0b; }
+.notif-icon.type-update { background: #ede9fe; color: #8b5cf6; }
+.notif-icon.type-promo { background: #fce7f3; color: #ec4899; }
+
+.notif-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.notif-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notif-text {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notif-time {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Dropdown animation */
+.dropdown-fade-enter-active,
+.dropdown-fade-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-fade-enter-from,
+.dropdown-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.96);
 }
 </style>

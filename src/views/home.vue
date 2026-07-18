@@ -1,212 +1,90 @@
 <template>
   <div class="app-root-container">
     <div class="dashboard-wrapper" v-show="!startTest">
-    <!-- Glowing background elements for premium feel -->
-    <div class="glow-bg glow-bg-1"></div>
-    <div class="glow-bg glow-bg-2"></div>
+      <!-- Glowing background elements for premium feel -->
+      <div class="glow-bg glow-bg-1"></div>
+      <div class="glow-bg glow-bg-2"></div>
 
-    <div class="test-container">
-      <!-- Welcome Banner -->
-      <WelcomeBanner 
-        :welcomeTitle="t('welcomeTitle', { name: userDisplayName || t('username') })"
-        :welcomeSubtitle="t('welcomeSubtitle')"
-        :points="userPoints"
-      />
+      <div class="test-container">
+        <!-- Welcome Banner -->
+        <WelcomeBanner 
+          :welcomeTitle="t('welcomeTitle', { name: userDisplayName || t('username') })"
+          :welcomeSubtitle="t('welcomeSubtitle')"
+          :points="userPoints"
+        />
 
-      <div class="dashboard-grid">
-        <!-- Left Side: Interactive Selection Panel -->
-        <div class="selection-panel">
-          
-          <!-- Test Type Tabs -->
-          <div class="test-type-tabs premium-tabs">
-            <button 
-              :class="['tab-btn', { active: currentTab === 'standard' }]" 
-              @click="currentTab = 'standard'"
-            >
-              <i class="fas fa-book-open"></i> {{ t('chooseSubject') || 'Asosiy Fanlar' }}
-            </button>
-            <button 
-              :class="['tab-btn', { active: currentTab === 'special' }]" 
-              @click="currentTab = 'special'"
-            >
-              <i class="fas fa-crown"></i> Maxsus Testlar
-            </button>
-          </div>
-
-          <!-- STANDARD TAB -->
-          <transition name="fade-slide" mode="out-in">
-          <div class="tab-content" v-if="currentTab === 'standard'" key="standard">
-            <div class="panel-section">
-              <div class="section-header">
-                <span class="step-badge">1</span>
-                <h3>{{ t('chooseSubject') }}</h3>
-              </div>
-              
-              <div v-if="loadingSubjects" class="loading-state">
-                <div class="spinner"></div>
-                <p>{{ t('loadingSubjects') }}</p>
-              </div>
-
-              <div class="subject-grid" v-else>
-                <div
-                  v-for="subject in subjects"
-                  :key="subject.id"
-                  :class="['subject-card', { selected: selectedSubject && selectedSubject.id === subject.id, 'goal-active': subject.id === defaultSubjectId }]"
-                  :style="{ '--subject-color': getSubjectColor(subject.id) }"
-                  @click="selectSubjectCard(subject)"
-                >
-                  <div class="card-bg-icon"><i :class="getSubjectIcon(subject.id)"></i></div>
-                  <div class="card-content">
-                    <div class="icon-wrapper"><i :class="getSubjectIcon(subject.id)"></i></div>
-                    <h4>{{ subject.id }}</h4>
-                    <span class="status-badge">{{ t('testsReady') }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            
-          </div>
-
-          <!-- SPECIAL TESTS TAB -->
-          <div class="tab-content" v-else-if="currentTab === 'special'" key="special">
-            <div class="panel-section">
-              <div class="section-header">
-                <span class="step-badge special"><i class="fas fa-star"></i></span>
-                <h3>DTM va Maxsus Imtihonlar</h3>
-              </div>
-              
-              <div v-if="loadingSpecial" class="loading-state">
-                <div class="spinner"></div>
-                <p>Maxsus testlar yuklanmoqda...</p>
-              </div>
-              
-              <div class="special-tests-list" v-else-if="specialTests.length > 0">
-                <div v-for="test in specialTests" :key="test.id" class="special-test-card" @click="startSpecialTest(test)">
-                  <div class="st-icon" :class="test.category.toLowerCase()">
-                    <i class="fas fa-graduation-cap"></i>
-                  </div>
-                  <div class="st-details">
-                    <h4>{{ test.title }}</h4>
-                    <span class="st-category">{{ test.category }}</span>
-                  </div>
-                  <button class="btn-st-start"><i class="fas fa-play"></i> Boshlash</button>
-                </div>
-              </div>
-              
-              <div class="empty-state" v-else>
-                <i class="fas fa-box-open"></i>
-                <p>Hozircha maxsus testlar yo'q.</p>
-              </div>
-            </div>
-          </div>
-          </transition>
-        </div>
-
-        <!-- Right Side: Sidebar Info & AI Coach -->
-        <div class="sidebar-panel">
-          
-          <!-- Rank Progress Card -->
-          <div class="premium-card rank-card">
-            <div class="rank-header">
-              <div class="rank-badge" :class="getRankClass(userPoints)">
-                <i :class="getRankIcon(userPoints)"></i> {{ getRankName(userPoints, currentLocale) }}
-              </div>
-              <span class="next-rank">
-                → {{ getNextRankInfo(userPoints, currentLocale).nextRankName }}
-              </span>
-            </div>
-            <div class="progress-track">
-              <div 
-                class="progress-fill" 
-                :class="getRankClass(userPoints)"
-                :style="{ width: getNextRankInfo(userPoints, currentLocale).progressPercent + '%' }"
+        <div class="dashboard-grid">
+          <!-- Left Side: Interactive Selection Panel -->
+          <div class="selection-panel">
+            <!-- Test Type Tabs -->
+            <div class="test-type-tabs premium-tabs">
+              <button 
+                :class="['tab-btn', { active: currentTab === 'standard' }]" 
+                @click="currentTab = 'standard'"
               >
-                <div class="progress-glow"></div>
-              </div>
-            </div>
-            <div class="rank-footer">
-              <span>{{ getNextRankInfo(userPoints, currentLocale).label }}</span>
-              <span v-if="getNextRankInfo(userPoints, currentLocale).pointsNeeded > 0" class="points-needed">
-                {{ currentLocale === 'RUS' ? `Нужно еще ${getNextRankInfo(userPoints, currentLocale).pointsNeeded} TP` : `Yana ${getNextRankInfo(userPoints, currentLocale).pointsNeeded} TP` }}
-              </span>
-              <span v-else class="points-needed">{{ currentLocale === 'RUS' ? 'Максимальный Ранг' : 'Maksimal Rang' }}</span>
-            </div>
-          </div>
-
-          <!-- AI Coach Card -->
-          <div class="premium-card ai-card" :class="aiMentorInfo.colorClass">
-            <div class="ai-header">
-              <div class="ai-avatar" :class="aiMentorInfo.colorClass">
-                <i :class="aiMentorInfo.icon"></i>
-              </div>
-              <div class="ai-title">
-                <h4>{{ aiMentorInfo.name }}</h4>
-                <span class="online-dot">{{ t('activeInSystem') }}</span>
-              </div>
-            </div>
-            <div class="ai-body">
-              <div v-if="aiAdviceLoading" class="ai-loading">
-                <div class="spinner-small blue"></div>
-                <span>{{ currentLocale === 'RUS' ? 'Анализ...' : 'Tahlil qilinmoqda...' }}</span>
-              </div>
-              <p v-else class="ai-text">
-                "{{ aiAdvice.text }}"
-              </p>
-              <button class="btn-ai-action" v-if="!aiAdviceLoading && aiAdvice.badge" @click="handleAiBadgeClick">
-                <i class="fas fa-magic"></i> {{ aiAdvice.badge }}
+                <i class="fas fa-book-open"></i> {{ t('chooseSubject') || 'Asosiy Fanlar' }}
+              </button>
+              <button 
+                :class="['tab-btn', { active: currentTab === 'special' }]" 
+                @click="currentTab = 'special'"
+              >
+                <i class="fas fa-crown"></i> Maxsus Testlar
               </button>
             </div>
+
+            <transition name="fade-slide" mode="out-in">
+              <!-- STANDARD TAB -->
+              <SubjectSelection 
+                v-if="currentTab === 'standard'"
+                key="standard"
+                :subjects="subjects"
+                :loadingSubjects="loadingSubjects"
+                :selectedSubject="selectedSubject"
+                :defaultSubjectId="defaultSubjectId"
+                @select="selectSubjectCard"
+              />
+
+              <!-- SPECIAL TESTS TAB -->
+              <SpecialTests
+                v-else-if="currentTab === 'special'"
+                key="special"
+                :specialTests="specialTests"
+                :loadingSpecial="loadingSpecial"
+                @start-test="startSpecialTest"
+              />
+            </transition>
           </div>
 
-          <!-- Daily Streak & Achievements Widget -->
-          <div class="premium-card achievements-card">
-            <h4>{{ t('activityAndAwards') }}</h4>
+          <!-- Right Side: Sidebar Info & AI Coach -->
+          <div class="sidebar-panel">
+            <RankProgress 
+              :userPoints="userPoints"
+              :currentLocale="currentLocale"
+            />
             
-            <!-- Streak counter -->
-            <div class="streak-box">
-              <div class="fire-icon">
-                <i class="fas fa-fire"></i>
-              </div>
-              <div class="streak-info">
-                <strong>{{ getStreakText(userStreak) }}</strong>
-                <span>{{ t('streakStreak') }}</span>
-              </div>
-            </div>
-
-            <!-- Mini Badges preview -->
-            <div class="badges-preview">
-              <h5>{{ t('latestAwards') }}</h5>
-              <div class="mini-badges-row" v-if="unlockedBadges.length > 0">
-                <div 
-                  v-for="badge in unlockedBadges.slice(0, 4)"
-                  :key="badge.id"
-                  class="badge-item"
-                  :style="{ '--badge-color': badge.color }"
-                  :title="currentLocale === 'RUS' ? badge.nameRu : badge.nameUz"
-                >
-                  <i :class="badge.icon"></i>
-                </div>
-                <router-link to="/badges" class="btn-all-badges" :title="currentLocale === 'RUS' ? 'Все награды' : 'Barcha yutuqlar'">
-                  <i class="fas fa-chevron-right"></i>
-                </router-link>
-              </div>
-              <div class="empty-state small" v-else>
-                {{ t('noBadgesYet') }}
-              </div>
-            </div>
+            <AiCoach 
+              :aiMentorInfo="aiMentorInfo"
+              :aiAdviceLoading="aiAdviceLoading"
+              :aiAdvice="aiAdvice"
+              :currentLocale="currentLocale"
+              @ai-action="handleAiBadgeClick"
+            />
+            
+            <DailyAchievements 
+              :userStreak="userStreak"
+              :unlockedBadges="unlockedBadges"
+              :currentLocale="currentLocale"
+            />
           </div>
         </div>
+
+        <transition name="slide-up">
+          <div v-if="status" :class="['toast-alert', status.type]" @click="clearStatus">
+            {{ status.message }}
+          </div>
+        </transition>
       </div>
-
-      <transition name="slide-up">
-        <div v-if="status" :class="['toast-alert', status.type]" @click="clearStatus">
-          {{ status.message }}
-        </div>
-      </transition>
     </div>
-
-        </div>
 
     <!-- Test Component -->
     <transition name="fade">
@@ -222,75 +100,23 @@
     </transition>
   
     <!-- Modal Wizard Overlay -->
-    <transition name="modal-fade">
-      <div class="premium-modal-overlay" v-if="showTestWizard" @click.self="closeWizard">
-        <div class="modal-wizard-card">
-          <div class="modal-header">
-            <div class="modal-title-wrapper">
-              <div class="m-icon-wrapper"><i :class="getSubjectIcon(selectedSubject?.id)"></i></div>
-              <div class="m-title-info">
-                <h3>{{ selectedSubject?.id }}</h3>
-                <span>{{ currentLocale === 'RUS' ? 'Настройки Теста' : 'Test Sozlamalari' }}</span>
-              </div>
-            </div>
-            <button class="m-close-btn" @click="closeWizard"><i class="fas fa-times"></i></button>
-          </div>
-          
-          <div class="modal-body">
-            <!-- Level Selection -->
-            <div class="m-section">
-              <div class="m-section-title">
-                <span class="m-step">1</span>
-                <h4>{{ t('selectLevel') }}</h4>
-              </div>
-              <div v-if="loadingLevels" class="loading-state small">
-                <div class="spinner"></div>
-              </div>
-              <div class="pills-grid" v-else>
-                <button
-                  type="button"
-                  v-for="level in levels"
-                  :key="level"
-                  :class="['pill-btn', { active: selectedLevel === level }]"
-                  @click="selectedLevel = level"
-                >
-                  {{ level }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Question count selection -->
-            <transition name="expand">
-            <div class="m-section" v-if="selectedLevel">
-              <div class="m-section-title">
-                <span class="m-step">2</span>
-                <h4>{{ t('questionCount') }}</h4>
-              </div>
-              <div class="pills-grid">
-                <button
-                  type="button"
-                  v-for="count in questionCounts"
-                  :key="count"
-                  :class="['pill-btn', { active: selectedQuestionCount === count }]"
-                  @click="selectedQuestionCount = count"
-                >
-                  {{ count }} {{ t('questions') }}
-                </button>
-              </div>
-            </div>
-            </transition>
-          </div>
-
-          <div class="modal-footer">
-             <button @click="startTestWithFilters" class="btn-start-premium" :disabled="!canStart">
-               <span v-if="!loading">{{ t('startTest') }} <i class="fas fa-play"></i></span>
-               <div v-else class="spinner-small"></div>
-             </button>
-          </div>
-        </div>
-      </div>
-    </transition>
-        </div>
+    <TestSetupModal
+      :showTestWizard="showTestWizard"
+      :selectedSubject="selectedSubject"
+      :currentLocale="currentLocale"
+      :loadingLevels="loadingLevels"
+      :levels="levels"
+      :selectedLevel="selectedLevel"
+      @update:selectedLevel="selectedLevel = $event"
+      :questionCounts="questionCounts"
+      :selectedQuestionCount="selectedQuestionCount"
+      @update:selectedQuestionCount="selectedQuestionCount = $event"
+      :canStart="canStart"
+      :loading="loading"
+      @close="closeWizard"
+      @start="startTestWithFilters"
+    />
+  </div>
 </template>
 
 <script>
@@ -306,10 +132,23 @@ import { sortLevels } from '@/utils/sorters';
 import { getBadges } from '@/utils/badges';
 import TestPage from './testPage/testPage.vue';
 import WelcomeBanner from '@/components/home/WelcomeBanner.vue';
+import SubjectSelection from '@/components/home/SubjectSelection.vue';
+import SpecialTests from '@/components/home/SpecialTests.vue';
+import RankProgress from '@/components/home/RankProgress.vue';
+import AiCoach from '@/components/home/AiCoach.vue';
+import DailyAchievements from '@/components/home/DailyAchievements.vue';
+import TestSetupModal from '@/components/home/TestSetupModal.vue';
+
 
 export default {
   name: 'SubjectTestSelection',
   components: {
+    SubjectSelection,
+    SpecialTests,
+    RankProgress,
+    AiCoach,
+    DailyAchievements,
+    TestSetupModal,
     TestPage,
     WelcomeBanner
   },
@@ -1129,6 +968,7 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   },
 };
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');

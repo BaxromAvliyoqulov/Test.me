@@ -391,4 +391,16 @@ const handleMouseLeave = (cardType) => {
 .brand-circle.right { background: #f59e0b; right: 12px; mix-blend-mode: screen; }
 .brand-circle.left-green { background: #a7f3d0; left: 0; mix-blend-mode: overlay; }
 .brand-circle.right-yellow { background: #fef08a; right: 12px; mix-blend-mode: overlay; }
+
+@media (max-width: 768px) {
+  .wallet-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .premium-wallet-card {
+    height: 200px;
+  }
+  .balance-display h2 {
+    font-size: 2rem;
+  }
+}
 </style>

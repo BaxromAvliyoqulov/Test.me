@@ -337,4 +337,13 @@ watch(filteredItems, () => {
   flex-direction: column;
   gap: 2.5rem;
 }
+
+@media (max-width: 768px) {
+  .dashboard-wrapper {
+    padding: 1.5rem 1rem;
+  }
+  .dashboard-container {
+    gap: 1.5rem;
+  }
+}
 </style>

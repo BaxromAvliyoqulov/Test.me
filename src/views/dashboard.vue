@@ -45,7 +45,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { db } from '@/config/firebase';
 import {
@@ -63,284 +63,234 @@ import { confirmDelete } from '@/utils/sweetalert';
 import DashboardHero from '@/components/dashboard/DashboardHero.vue';
 import SubjectAnalytics from '@/components/dashboard/SubjectAnalytics.vue';
 import ResultsTable from '@/components/dashboard/ResultsTable.vue';
+import { useRouter } from 'vue-router';
 
-export default {
-  name: 'Dashboard',
-  components: {
-    DashboardHero,
-    SubjectAnalytics,
-    ResultsTable
-  },
-  setup() {
-    const { locale, t } = useI18n();
-    return {
-      currentLocale: locale,
-      t,
-    };
-  },
-  data() {
-    return {
-      items: [],
-      search: '',
-      filterSubject: '',
-      filterLevel: '',
-      currentPage: 1,
-      itemsPerPage: 10,
-      sortKey: 'timestamp',
-      sortOrder: 'desc',
-      loading: true,
-    };
-  },
-  computed: {
-    headers() {
-      return [
-        { text: this.t('username'), value: 'username' },
-        { text: this.t('subject'), value: 'subject' },
-        { text: this.t('testNumber'), value: 'test_number' },
-        { text: this.t('level'), value: 'test_level' },
-        { text: this.t('score'), value: 'score' },
-        { text: this.t('date'), value: 'timestamp' },
-      ];
-    },
-    uniqueSubjects() {
-      return [...new Set(this.items.map((item) => item.subject))];
-    },
-    uniqueLevels() {
-      return [...new Set(this.items.map((item) => item.test_level))];
-    },
-    averageScorePercent() {
-      if (this.items.length === 0) return 0;
-      const sum = this.items.reduce((acc, item) => acc + this.getScorePercent(item.score, item.total), 0);
-      return Math.round(sum / this.items.length);
-    },
-    highestScorePercent() {
-      if (this.items.length === 0) return 0;
-      return Math.max(...this.items.map(item => this.getScorePercent(item.score, item.total)));
-    },
-    bestSubjectName() {
-      if (this.items.length === 0) return '—';
-      const subjectSums = {};
-      const subjectCounts = {};
-      this.items.forEach(item => {
-        const percent = this.getScorePercent(item.score, item.total);
-        subjectSums[item.subject] = (subjectSums[item.subject] || 0) + percent;
-        subjectCounts[item.subject] = (subjectCounts[item.subject] || 0) + 1;
-      });
-      let bestSub = '—';
-      let bestAvg = -1;
-      for (const sub in subjectSums) {
-        const avg = subjectSums[sub] / subjectCounts[sub];
-        if (avg > bestAvg) {
-          bestAvg = avg;
-          bestSub = sub;
-        }
-      }
-      return bestSub;
-    },
-    filteredItems() {
-      return this.items.filter((item) => {
-        const searchMatch = Object.values(item).some((value) =>
-          String(value).toLowerCase().includes(this.search.toLowerCase())
-        );
-        const subjectMatch =
-          !this.filterSubject || item.subject === this.filterSubject;
-        const levelMatch =
-          !this.filterLevel || item.test_level === this.filterLevel;
-        return searchMatch && subjectMatch && levelMatch;
-      });
-    },
-    sortedItems() {
-      return [...this.filteredItems].sort((a, b) => {
-        let aVal = a[this.sortKey];
-        let bVal = b[this.sortKey];
-        
-        // Handle firestore Timestamp conversion for sorting
-        if (aVal && typeof aVal.toDate === 'function') {
-          aVal = aVal.toDate().getTime();
-        }
-        if (bVal && typeof bVal.toDate === 'function') {
-          bVal = bVal.toDate().getTime();
-        }
+const { locale: currentLocale, t } = useI18n();
+const router = useRouter();
 
-        if (typeof aVal === 'string') {
-          aVal = aVal.toLowerCase();
-          bVal = bVal.toLowerCase();
-        }
-        return this.sortOrder === 'asc'
-          ? aVal > bVal
-            ? 1
-            : -1
-          : aVal < bVal
-          ? 1
-          : -1;
-      });
-    },
-    paginatedAndFilteredItems() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      return this.sortedItems.slice(start, start + this.itemsPerPage);
-    },
-    totalPages() {
-      return Math.ceil(this.filteredItems.length / this.itemsPerPage) || 1;
-    },
-    perfectScoreCount() {
-      return this.items.filter(i => i.total > 0 && i.score === i.total).length;
-    },
-    uniqueSubjectsStudied() {
-      return new Set(this.items.map(i => i.subject)).size;
-    },
-    bestStreak() {
-      let streak = 0, best = 0;
-      [...this.items].sort((a,b) => {
-        const ta = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp).getTime();
-        const tb = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp).getTime();
-        return ta - tb;
-      }).forEach(i => {
-        const pct = i.total > 0 ? Math.round((i.score/i.total)*100) : 0;
-        if (pct >= 60) { streak++; if (streak > best) best = streak; } else streak = 0;
-      });
-      return best;
-    },
-    subjectStats() {
-      const icons = { english: 'fas fa-globe', matematik: 'fas fa-calculator', tarix: 'fas fa-landmark', fizika: 'fas fa-atom', rus: 'fas fa-feather', 'o\'zbek': 'fas fa-book', ozbek: 'fas fa-book', dasturlash: 'fas fa-code', informatika: 'fas fa-desktop', ai: 'fas fa-robot' };
-      const colors = ['#3b82f6','#10b981','#f59e0b','#ec4899','#8b5cf6','#14b8a6','#f97316','#06b6d4','#6366f1','#84cc16'];
-      const map = {};
-      this.items.forEach(i => {
-        const s = i.subject || 'Other';
-        if (!map[s]) map[s] = { name: s, scores: [], color: '', icon: 'fas fa-book' };
-        map[s].scores.push(i.total > 0 ? Math.round((i.score/i.total)*100) : 0);
-      });
-      return Object.values(map).map((s, idx) => {
-        const key = Object.keys(icons).find(k => s.name.toLowerCase().includes(k));
-        return { name: s.name, count: s.scores.length, avg: s.scores.length ? Math.round(s.scores.reduce((a,b)=>a+b,0)/s.scores.length) : 0, best: s.scores.length ? Math.max(...s.scores) : 0, perfectCount: s.scores.filter(p=>p===100).length, color: colors[idx % colors.length], icon: key ? icons[key] : 'fas fa-book' };
-      }).sort((a,b) => b.count - a.count);
-    },
-    levelStats() {
-      const map = {};
-      this.items.forEach(i => {
-        const l = i.test_level || 'Other';
-        if (!map[l]) map[l] = { name: l, scores: [] };
-        map[l].scores.push(i.total > 0 ? Math.round((i.score/i.total)*100) : 0);
-      });
-      return Object.values(map).map(l => {
-        const lc = l.name.toLowerCase();
-        let cls = 'level-hard';
-        if (lc.includes('elem') || lc.includes('beg') || lc.includes('boshlang') || lc.includes('easy')) cls = 'level-easy';
-        else if (lc.includes('inter') || lc.includes('orta') || lc.includes('medium')) cls = 'level-medium';
-        return { name: l.name, count: l.scores.length, avg: l.scores.length ? Math.round(l.scores.reduce((a,b)=>a+b,0)/l.scores.length) : 0, perfectCount: l.scores.filter(p=>p===100).length, cls };
-      });
-    },
-  },
-  methods: {
-    async fetchResults() {
-      this.loading = true;
-      try {
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (!user) return;
-        const q = query(
-          collection(db, 'results'),
-          where('userId', '==', user.uid)
-        );
-        const snapshot = await getDocs(q);
-        this.items = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-      } catch (error) {
-        console.error('Error fetching results:', error);
-      } finally {
-        this.loading = false;
-      }
-    },
-    formatDate(timestamp) {
-      if (!timestamp) return '—';
-      if (typeof timestamp.toDate === 'function') {
-        return timestamp.toDate().toLocaleString();
-      }
-      return new Date(timestamp).toLocaleString();
-    },
-    getScorePercent(score, total) {
-      if (!total || total === 0) return 0;
-      return Math.round((score / total) * 100);
-    },
-    getScoreClass(score, total) {
-      const percent = this.getScorePercent(score, total);
-      if (percent >= 85) return 'score-excellent';
-      if (percent >= 60) return 'score-good';
-      return 'score-poor';
-    },
-    getLevelClass(level) {
-      const l = String(level).toLowerCase();
-      if (l.includes('oson') || l.includes('easy') || l.includes('легко') || l.includes('low')) {
-        return 'level-easy';
-      }
-      if (l.includes('orta') || l.includes('o\'rtacha') || l.includes('medium') || l.includes('средне') || l.includes('middle')) {
-        return 'level-medium';
-      }
-      return 'level-hard';
-    },
-    sortBy(key) {
-      if (this.sortKey === key) {
-        this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-      } else {
-        this.sortKey = key;
-        this.sortOrder = 'asc';
-      }
-    },
-    async deleteItem(item) {
-      if (!(await confirmDelete(this.t('deleteConfirm'), "Bu amalni ortga qaytarib bo'lmaydi!"))) return;
-      try {
-        await deleteDoc(doc(db, 'results', item.id));
-        this.fetchResults();
-      } catch (error) {
-        console.error('Error deleting result:', error);
-      }
-    },
-    async exportToExcel() {
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(
-        this.sortedItems.map((item) => ({
-          [this.t('username')]: item.username,
-          [this.t('subject')]: item.subject,
-          [this.t('testNumber')]: item.test_number,
-          [this.t('level')]: item.test_level,
-          [`${this.t('score')} (%)`]: this.getScorePercent(item.score, item.total),
-          [this.t('date')]: this.formatDate(item.timestamp),
-        }))
-      );
+// State
+const items = ref([]);
+const search = ref('');
+const filterSubject = ref('');
+const filterLevel = ref('');
+const currentPage = ref(1);
+const itemsPerPage = 10;
+const sortKey = ref('timestamp');
+const sortOrder = ref('desc');
+const loading = ref(true);
 
-      ws['!cols'] = [
-        { width: 20 }, // Username
-        { width: 15 }, // Subject
-        { width: 12 }, // Test Number
-        { width: 12 }, // Level
-        { width: 15 }, // Score
-        { width: 22 }, // Date
-      ];
+// Computed
+const headers = computed(() => [
+  { text: t('username'), value: 'username' },
+  { text: t('subject'), value: 'subject' },
+  { text: t('testNumber'), value: 'test_number' },
+  { text: t('level'), value: 'test_level' },
+  { text: t('score'), value: 'score' },
+  { text: t('date'), value: 'timestamp' },
+]);
 
-      XLSX.utils.book_append_sheet(wb, ws, this.t('testResults'));
-      XLSX.writeFile(
-        wb,
-        `test_results_${new Date().toLocaleDateString()}.xlsx`
-      );
-    },
-  },
-  mounted() {
-    const auth = getAuth();
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        this.fetchResults();
-      } else {
-        this.$router.push('/login');
-      }
-    });
-  },
-  watch: {
-    filteredItems() {
-      this.currentPage = 1;
-    },
-  },
+const uniqueSubjects = computed(() => [...new Set(items.value.map((item) => item.subject))]);
+const uniqueLevels = computed(() => [...new Set(items.value.map((item) => item.test_level))]);
+
+const getScorePercent = (score, total) => {
+  if (!total || total === 0) return 0;
+  return Math.round((score / total) * 100);
 };
+
+const averageScorePercent = computed(() => {
+  if (items.value.length === 0) return 0;
+  const sum = items.value.reduce((acc, item) => acc + getScorePercent(item.score, item.total), 0);
+  return Math.round(sum / items.value.length);
+});
+
+const highestScorePercent = computed(() => {
+  if (items.value.length === 0) return 0;
+  return Math.max(...items.value.map(item => getScorePercent(item.score, item.total)));
+});
+
+const bestSubjectName = computed(() => {
+  if (items.value.length === 0) return '—';
+  const subjectSums = {};
+  const subjectCounts = {};
+  items.value.forEach(item => {
+    const percent = getScorePercent(item.score, item.total);
+    subjectSums[item.subject] = (subjectSums[item.subject] || 0) + percent;
+    subjectCounts[item.subject] = (subjectCounts[item.subject] || 0) + 1;
+  });
+  let bestSub = '—';
+  let bestAvg = -1;
+  for (const sub in subjectSums) {
+    const avg = subjectSums[sub] / subjectCounts[sub];
+    if (avg > bestAvg) {
+      bestAvg = avg;
+      bestSub = sub;
+    }
+  }
+  return bestSub;
+});
+
+const filteredItems = computed(() => {
+  return items.value.filter((item) => {
+    const searchMatch = Object.values(item).some((value) =>
+      String(value).toLowerCase().includes(search.value.toLowerCase())
+    );
+    const subjectMatch = !filterSubject.value || item.subject === filterSubject.value;
+    const levelMatch = !filterLevel.value || item.test_level === filterLevel.value;
+    return searchMatch && subjectMatch && levelMatch;
+  });
+});
+
+const sortedItems = computed(() => {
+  return [...filteredItems.value].sort((a, b) => {
+    let aVal = a[sortKey.value];
+    let bVal = b[sortKey.value];
+    
+    if (aVal && typeof aVal.toDate === 'function') aVal = aVal.toDate().getTime();
+    if (bVal && typeof bVal.toDate === 'function') bVal = bVal.toDate().getTime();
+
+    if (typeof aVal === 'string') {
+      aVal = aVal.toLowerCase();
+      bVal = bVal.toLowerCase();
+    }
+    return sortOrder.value === 'asc' ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
+  });
+});
+
+const paginatedAndFilteredItems = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  return sortedItems.value.slice(start, start + itemsPerPage);
+});
+
+const totalPages = computed(() => Math.ceil(filteredItems.value.length / itemsPerPage) || 1);
+
+const perfectScoreCount = computed(() => items.value.filter(i => i.total > 0 && i.score === i.total).length);
+const uniqueSubjectsStudied = computed(() => new Set(items.value.map(i => i.subject)).size);
+
+const subjectStats = computed(() => {
+  const icons = { english: 'fas fa-globe', matematik: 'fas fa-calculator', tarix: 'fas fa-landmark', fizika: 'fas fa-atom', rus: 'fas fa-feather', 'o\'zbek': 'fas fa-book', ozbek: 'fas fa-book', dasturlash: 'fas fa-code', informatika: 'fas fa-desktop', ai: 'fas fa-robot' };
+  const colors = ['#3b82f6','#10b981','#f59e0b','#ec4899','#8b5cf6','#14b8a6','#f97316','#06b6d4','#6366f1','#84cc16'];
+  const map = {};
+  items.value.forEach(i => {
+    const s = i.subject || 'Other';
+    if (!map[s]) map[s] = { name: s, scores: [], color: '', icon: 'fas fa-book' };
+    map[s].scores.push(i.total > 0 ? Math.round((i.score/i.total)*100) : 0);
+  });
+  return Object.values(map).map((s, idx) => {
+    const key = Object.keys(icons).find(k => s.name.toLowerCase().includes(k));
+    return { name: s.name, count: s.scores.length, avg: s.scores.length ? Math.round(s.scores.reduce((a,b)=>a+b,0)/s.scores.length) : 0, best: s.scores.length ? Math.max(...s.scores) : 0, perfectCount: s.scores.filter(p=>p===100).length, color: colors[idx % colors.length], icon: key ? icons[key] : 'fas fa-book' };
+  }).sort((a,b) => b.count - a.count);
+});
+
+const levelStats = computed(() => {
+  const map = {};
+  items.value.forEach(i => {
+    const l = i.test_level || 'Other';
+    if (!map[l]) map[l] = { name: l, scores: [] };
+    map[l].scores.push(i.total > 0 ? Math.round((i.score/i.total)*100) : 0);
+  });
+  return Object.values(map).map(l => {
+    const lc = l.name.toLowerCase();
+    let cls = 'level-hard';
+    if (lc.includes('elem') || lc.includes('beg') || lc.includes('boshlang') || lc.includes('easy')) cls = 'level-easy';
+    else if (lc.includes('inter') || lc.includes('orta') || lc.includes('medium')) cls = 'level-medium';
+    return { name: l.name, count: l.scores.length, avg: l.scores.length ? Math.round(l.scores.reduce((a,b)=>a+b,0)/l.scores.length) : 0, perfectCount: l.scores.filter(p=>p===100).length, cls };
+  });
+});
+
+// Methods
+const fetchResults = async () => {
+  loading.value = true;
+  try {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) return;
+    const q = query(
+      collection(db, 'results'),
+      where('userId', '==', user.uid)
+    );
+    const snapshot = await getDocs(q);
+    items.value = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error('Error fetching results:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const formatDate = (timestamp) => {
+  if (!timestamp) return '—';
+  if (typeof timestamp.toDate === 'function') {
+    return timestamp.toDate().toLocaleString();
+  }
+  return new Date(timestamp).toLocaleString();
+};
+
+const sortBy = (key) => {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey.value = key;
+    sortOrder.value = 'asc';
+  }
+};
+
+const deleteItem = async (item) => {
+  if (!(await confirmDelete(t('deleteConfirm'), "Bu amalni ortga qaytarib bo'lmaydi!"))) return;
+  try {
+    await deleteDoc(doc(db, 'results', item.id));
+    fetchResults();
+  } catch (error) {
+    console.error('Error deleting result:', error);
+  }
+};
+
+const exportToExcel = () => {
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(
+    sortedItems.value.map((item) => ({
+      [t('username')]: item.username,
+      [t('subject')]: item.subject,
+      [t('testNumber')]: item.test_number,
+      [t('level')]: item.test_level,
+      [`${t('score')} (%)`]: getScorePercent(item.score, item.total),
+      [t('date')]: formatDate(item.timestamp),
+    }))
+  );
+
+  ws['!cols'] = [
+    { width: 20 },
+    { width: 15 },
+    { width: 12 },
+    { width: 12 },
+    { width: 15 },
+    { width: 22 },
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, t('testResults'));
+  XLSX.writeFile(
+    wb,
+    `test_results_${new Date().toLocaleDateString()}.xlsx`
+  );
+};
+
+// Lifecycle & Watchers
+onMounted(() => {
+  const auth = getAuth();
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      fetchResults();
+    } else {
+      router.push('/login');
+    }
+  });
+});
+
+watch(filteredItems, () => {
+  currentPage.value = 1;
+});
 </script>
 
 <style scoped>

@@ -1,10 +1,8 @@
 <template>
   <div class="edit-profile-wrapper">
-    <!-- Glowing background blobs matching the premium theme -->
     <div class="glow-bg glow-bg-1"></div>
     <div class="glow-bg glow-bg-2"></div>
 
-    <!-- Custom Toast Notifications -->
     <Transition name="toast-fade">
       <div v-if="toast.show" :class="['toast-notification', toast.type]">
         <i :class="toast.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
@@ -12,313 +10,71 @@
       </div>
     </Transition>
 
-
-
-    <!-- Clean SaaS Layout Container -->
-        <!-- Clean SaaS Layout Container -->
     <div class="edit-profile-container layout-v4">
-      
-      <!-- Top Navbar -->
       <nav class="pro-top-navbar">
-        <button 
-          type="button" 
-          :class="['pro-nav-link', { active: activeTab === 'profile' }]" 
-          @click="activeTab = 'profile'"
-        >
-          <i class="fas fa-user-cog"></i> 
-          <span>{{ currentLocale === 'RUS' ? 'Профиль' : 'Profil' }}</span>
+        <button type="button" :class="['pro-nav-link', { active: activeTab === 'profile' }]" @click="activeTab = 'profile'">
+          <i class="fas fa-user-cog"></i> <span>{{ currentLocale === 'RUS' ? 'Профиль' : 'Profil' }}</span>
         </button>
-        <button 
-          type="button" 
-          :class="['pro-nav-link', { active: activeTab === 'preferences' }]" 
-          @click="activeTab = 'preferences'"
-        >
-          <i class="fas fa-sliders-h"></i> 
-          <span>{{ currentLocale === 'RUS' ? 'Настройки' : 'Sozlamalar' }}</span>
+        <button type="button" :class="['pro-nav-link', { active: activeTab === 'preferences' }]" @click="activeTab = 'preferences'">
+          <i class="fas fa-sliders-h"></i> <span>{{ currentLocale === 'RUS' ? 'Настройки' : 'Sozlamalar' }}</span>
         </button>
-        <button 
-          type="button" 
-          :class="['pro-nav-link', { active: activeTab === 'goals' }]" 
-          @click="activeTab = 'goals'"
-        >
-          <i class="fas fa-bullseye"></i> 
-          <span>{{ currentLocale === 'RUS' ? 'Цели' : 'Maqsadlar' }}</span>
+        <button type="button" :class="['pro-nav-link', { active: activeTab === 'goals' }]" @click="activeTab = 'goals'">
+          <i class="fas fa-bullseye"></i> <span>{{ currentLocale === 'RUS' ? 'Цели' : 'Maqsadlar' }}</span>
         </button>
-        <button 
-          type="button" 
-          :class="['pro-nav-link', { active: activeTab === 'mentor' }]" 
-          @click="activeTab = 'mentor'"
-        >
-          <i class="fas fa-robot"></i> 
-          <span>{{ currentLocale === 'RUS' ? 'AI Ментор' : 'AI Ustoz' }}</span>
+        <button type="button" :class="['pro-nav-link', { active: activeTab === 'mentor' }]" @click="activeTab = 'mentor'">
+          <i class="fas fa-robot"></i> <span>{{ currentLocale === 'RUS' ? 'AI Ментор' : 'AI Ustoz' }}</span>
         </button>
-        <button 
-          type="button" 
-          :class="['pro-nav-link', { active: activeTab === 'achievements' }]" 
-          @click="activeTab = 'achievements'"
-        >
-          <i class="fas fa-award"></i> 
-          <span>{{ currentLocale === 'RUS' ? 'Достижения' : 'Yutuqlar' }}</span>
+        <button type="button" :class="['pro-nav-link', { active: activeTab === 'achievements' }]" @click="activeTab = 'achievements'">
+          <i class="fas fa-award"></i> <span>{{ currentLocale === 'RUS' ? 'Достижения' : 'Yutuqlar' }}</span>
         </button>
       </nav>
 
-      <!-- Middle Column: Main Forms -->
       <main class="profile-main-v4">
         <div class="pro-form-card">
           <form @submit.prevent="saveProfile" class="profile-form">
             
-            <!-- TAB 1: Profile Details -->
-            <div v-show="activeTab === 'profile'" class="tab-pane-content">
-              <!-- Minimal Rank Progress Banner -->
-              <div class="minimal-rank-progress-banner" @click="goToRanksPage">
-                <div class="minimal-rank-header">
-                  <span class="rank-lbl">{{ currentLocale === 'RUS' ? 'Ваш Ранг' : 'Sizning Rangingiz' }}</span>
-                  <span class="rank-val">{{ getRankName(userPoints, currentLocale) }}</span>
-                </div>
-                <div class="minimal-progress-bar">
-                  <div class="minimal-progress-fill" :style="{ width: getNextRankInfo(userPoints, currentLocale).progressPercent + '%' }"></div>
-                </div>
-                <div class="minimal-rank-footer">
-                  <span>{{ userPoints }} TP</span>
-                  <span class="text-blue-500">→ {{ getNextRankInfo(userPoints, currentLocale).nextRankName }}</span>
-                </div>
-              </div>
+            <ProfileTab
+              v-show="activeTab === 'profile'"
+              v-model:profile="profile"
+              v-model:selectedPhotoURL="selectedPhotoURL"
+              :userPoints="userPoints"
+              :currentLocale="currentLocale"
+              :defaultUserImage="defaultUserImage"
+              :presets="presets"
+              :userEmail="userEmail"
+              :showPassword="showPassword"
+              :passwordError="passwordError"
+              :passwordStrength="passwordStrength"
+              :t="t"
+              @go-to-ranks-page="goToRanksPage"
+              @validate-password="validatePassword"
+              @toggle-password-visibility="togglePasswordVisibility"
+              @file-change="onFileChange"
+            />
 
-              <div class="pro-pane-header">
-                <h3>{{ currentLocale === 'RUS' ? 'Личные Данные' : 'Shaxsiy Ma\'lumotlar' }}</h3>
-                <p>{{ currentLocale === 'RUS' ? 'Обновите свое фото и личные данные.' : 'O\'z rasmingiz va ma\'lumotlaringizni yangilang.' }}</p>
-              </div>
+            <PreferencesTab
+              v-show="activeTab === 'preferences'"
+              v-model:preferences="preferences"
+              :profile="profile"
+              :currentLocale="currentLocale"
+              :subjectsList="subjectsList"
+              :levelsList="levelsList"
+              :loadingLevels="loadingLevels"
+              :t="t"
+              @set-interface-locale="setInterfaceLocale"
+            />
 
-              <!-- Avatar Settings Row -->
-              <div class="pro-avatar-section">
-                <div class="pro-avatar-preview">
-                  <img :src="selectedPhotoURL || defaultUserImage" alt="Avatar" />
-                </div>
-                <div class="pro-avatar-actions">
-                  <div class="custom-uploader-wrap">
-                    <button type="button" class="pro-btn-outline" @click="triggerFileInput">
-                      <i class="fas fa-cloud-upload-alt"></i> {{ t('customAvatar') }}
-                    </button>
-                    <input type="file" ref="fileInput" @change="onFileChange" accept="image/*" class="hidden-file-input" />
-                  </div>
-                  <div class="avatar-presets-mini">
-                    <button
-                      type="button"
-                      v-for="preset in presets.slice(0, 4)"
-                      :key="preset.id"
-                      :class="['preset-btn-mini', { active: selectedPhotoURL === preset.id }]"
-                      @click="selectPreset(preset.id)"
-                    >
-                      <img :src="preset.id" class="preset-img" alt="Preset" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="pro-form-body">
-                <!-- Username Field -->
-              <div class="form-group">
-                <label for="username" class="group-label">
-                  <i class="fas fa-user"></i> {{ t('usernameLabel') }}
-                </label>
-                <div class="input-wrapper">
-                  <i class="fas fa-user-edit input-icon"></i>
-                  <input
-                    type="text"
-                    id="username"
-                    v-model="profile.username"
-                    class="styled-input"
-                    style="padding-right: 3.5rem;"
-                    required
-                    placeholder="Enter username"
-                    maxlength="16"
-                    autocomplete="off"
-                  />
-                  <span class="char-count">{{ profile.username.length }}/16</span>
-                </div>
-              </div>
-
-              <!-- Email Field (Read-only) -->
-              <div class="form-group">
-                <label class="group-label">
-                  <i class="fas fa-envelope"></i> {{ t('emailLabel') }}
-                </label>
-                <div class="input-wrapper disabled-wrapper">
-                  <i class="fas fa-at input-icon"></i>
-                  <input
-                    type="text"
-                    :value="userEmail"
-                    disabled
-                    class="styled-input disabled-input"
-                    style="padding-right: 6rem;"
-                  />
-                  <span class="secure-badge">
-                    <i class="fas fa-shield-alt"></i> Secure
-                  </span>
-                </div>
-              </div>
-
-              <!-- Password Field -->
-              <div class="form-group">
-                <label for="password" class="group-label">
-                  <i class="fas fa-key"></i> {{ t('password') }}
-                </label>
-                <div class="input-wrapper">
-                  <i class="fas fa-lock input-icon"></i>
-                  <input
-                    :type="showPassword ? 'text' : 'password'"
-                    id="password"
-                    v-model="profile.password"
-                    :class="['styled-input', { error: passwordError }]"
-                    style="padding-right: 3rem;"
-                    @input="validatePassword"
-                    :placeholder="currentLocale === 'RUS' ? '••••••••' : '••••••••'"
-                    autocomplete="new-password"
-                  />
-                  <i
-                    :class="['toggle-eye-icon', showPassword ? 'fas fa-eye-slash' : 'fas fa-eye']"
-                    @click="togglePasswordVisibility"
-                  ></i>
-                </div>
-                <span class="error-message" v-if="passwordError">
-                  <i class="fas fa-times-circle"></i> {{ passwordError }}
-                </span>
-
-                <!-- Password Strength Indicator -->
-                <div class="strength-indicator-wrap" v-if="profile.password">
-                  <div class="strength-bar-bg">
-                    <div 
-                      class="strength-bar-fg" 
-                      :style="{ 
-                        width: (passwordStrength.score * 33.3) + '%', 
-                        backgroundColor: passwordStrength.color 
-                      }"
-                    ></div>
-                  </div>
-                  <span class="strength-label" :style="{ color: passwordStrength.color }">
-                    {{ passwordStrength.text }}
-                  </span>
-                </div>
-                
-                <p class="hintText">{{ t('passwordHint') }}</p>
-              </div>
-            </div>
-            </div>
-
-            <!-- TAB 2: Learning Preferences -->
-            <div v-show="activeTab === 'preferences'" class="tab-pane-content">
-              <div class="pro-pane-header">
-                <h3><i class="fas fa-sliders-h text-blue"></i> {{ t('preferences') }}</h3>
-                <p>{{ currentLocale === 'RUS' ? 'Настройте платформу под себя.' : 'Platformani o\'zingizga moslashtiring.' }}</p>
-              </div>
-
-              <div class="pro-form-body">
-              <!-- System Language Toggle -->
-              <div class="form-group">
-                <label class="group-label">
-                  <i class="fas fa-language"></i> {{ currentLocale === 'RUS' ? 'Язык интерфейса' : 'Tizim tili' }}
-                </label>
-                <div class="language-selection-toggle">
-                  <button 
-                    type="button"
-                    :class="['lang-toggle-btn', { active: preferences.defaultLocale === 'UZB' }]"
-                    @click="setInterfaceLocale('UZB')"
-                  >
-                    O'zbekcha (UZB)
-                  </button>
-                  <button 
-                    type="button"
-                    :class="['lang-toggle-btn', { active: preferences.defaultLocale === 'RUS' }]"
-                    @click="setInterfaceLocale('RUS')"
-                  >
-                    Русский (RUS)
-                  </button>
-                </div>
-              </div>
-
-              <!-- Default Target Subject Selection -->
-              <div class="form-group">
-                <label for="pref-subject" class="group-label">
-                  <i class="fas fa-graduation-cap"></i> {{ currentLocale === 'RUS' ? 'Предмет по умолчанию' : 'Asosiy fan' }}
-                </label>
-                <div class="input-wrapper select-wrapper">
-                  <i class="fas fa-book select-icon"></i>
-                  <select id="pref-subject" v-model="preferences.defaultSubject" class="styled-input select-input">
-                    <option value="">{{ currentLocale === 'RUS' ? '-- Выберите предмет --' : '-- Fanni tanlang --' }}</option>
-                    <option v-for="sub in subjectsList" :key="sub.id" :value="sub.id">
-                      {{ sub.id }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Default Target Level Selection -->
-              <div class="form-group">
-                <label for="pref-level" class="group-label">
-                  <i class="fas fa-layer-group"></i> {{ currentLocale === 'RUS' ? 'Уровень сложности' : 'Qiyinchilik darajasi' }}
-                </label>
-                <div class="input-wrapper select-wrapper">
-                  <i class="fas fa-signal select-icon"></i>
-                  <select id="pref-level" v-model="preferences.defaultLevel" class="styled-input select-input" :disabled="!preferences.defaultSubject || loadingLevels">
-                    <option value="">
-                      {{ loadingLevels ? (currentLocale === 'RUS' ? 'Загрузка...' : 'Yuklanmoqda...') : (currentLocale === 'RUS' ? '-- Выберите сложность --' : '-- Qiyinchilikni tanlang --') }}
-                    </option>
-                    <option v-for="level in levelsList" :key="level.id" :value="level.id">
-                      {{ level.id }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Daily Goal Question Counts -->
-              <div class="form-group">
-                <label for="pref-daily-goal" class="group-label">
-                  <i class="fas fa-bullseye"></i> {{ currentLocale === 'RUS' ? 'Ежедневная цель (Кол-во вопросов)' : 'Kunlik maqsad (Savollar soni)' }}
-                </label>
-                <div class="input-wrapper select-wrapper">
-                  <i class="fas fa-list-ol select-icon"></i>
-                  <select id="pref-daily-goal" v-model="preferences.dailyGoal" class="styled-input select-input">
-                    <option :value="5">5 {{ currentLocale === 'RUS' ? 'Вопросов' : 'ta savol' }}</option>
-                    <option :value="10">10 {{ currentLocale === 'RUS' ? 'Вопросов' : 'ta savol' }}</option>
-                    <option :value="15">15 {{ currentLocale === 'RUS' ? 'Вопросов' : 'ta savol' }}</option>
-                    <option :value="20">20 {{ currentLocale === 'RUS' ? 'Вопросов' : 'ta savol' }}</option>
-                    <option :value="25">25 {{ currentLocale === 'RUS' ? 'Вопросов' : 'ta savol' }}</option>
-                    <option :value="30">30 {{ currentLocale === 'RUS' ? 'Вопросов' : 'ta savol' }}</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Offline Mode Toggle (Premium) -->
-              <div class="form-group">
-                <label class="group-label">
-                  <i class="fas fa-wifi"></i> {{ currentLocale === 'RUS' ? 'Офлайн режим (Premium)' : 'Oflayn rejim (Premium)' }}
-                </label>
-                <div class="offline-toggle-box" :class="{ 'locked': !profile.isPremium }">
-                  <label class="switch">
-                    <input type="checkbox" v-model="preferences.offlineMode" :disabled="!profile.isPremium">
-                    <span class="slider round"></span>
-                  </label>
-                  <span>{{ currentLocale === 'RUS' ? 'Кэшировать тесты для работы без интернета' : 'Internetsiz ishlash uchun testlarni keshga saqlash' }}</span>
-                  <i v-if="!profile.isPremium" class="fas fa-lock text-red-500 ml-2"></i>
-                </div>
-              </div>
-            </div>
-            </div>
-
-            <!-- TAB: Goals -->
             <div v-show="activeTab === 'goals'" class="tab-pane-content">
               <div class="pro-form-body">
                 <GoalsEditor v-model="goalsList" :t="t" />
               </div>
             </div>
 
-            <!-- TAB: AI Mentor -->
             <div v-show="activeTab === 'mentor'" class="tab-pane-content">
               <div class="pro-pane-header">
                 <h3><i class="fas fa-robot text-purple"></i> {{ currentLocale === 'RUS' ? 'AI Ментор' : 'AI Ustoz' }}</h3>
                 <p>{{ currentLocale === 'RUS' ? 'Выберите характер вашего ИИ-наставника.' : 'O\'zingiz uchun AI ustoz xarakterini tanlang.' }}</p>
               </div>
-              
               <div class="pro-form-body">
                 <AIMentorEditor 
                   v-model="preferences.mentorType" 
@@ -328,84 +84,16 @@
               </div>
             </div>
 
-            <!-- TAB 3: Academic Achievements & Milestones -->
-            <div v-show="activeTab === 'achievements'" class="tab-pane-content">
-              <div class="pro-form-body">
-                <!-- Grid Statistics Cards -->
-                <div class="stats-mini-grid">
-                  <div class="stat-mini-card">
-                    <i class="fas fa-clipboard-list stat-mini-icon text-blue"></i>
-                    <div class="stat-mini-info">
-                      <span class="stat-mini-lbl">{{ currentLocale === 'RUS' ? 'Всего тестов' : 'Jami testlar' }}</span>
-                      <span class="stat-mini-val">{{ stats.totalTests }}</span>
-                    </div>
-                  </div>
-                
-                <div class="stat-mini-card">
-                  <i class="fas fa-percentage stat-mini-icon text-orange"></i>
-                  <div class="stat-mini-info">
-                    <span class="stat-mini-lbl">{{ currentLocale === 'RUS' ? 'Ср. Точность' : 'O\'rtacha aniqlik' }}</span>
-                    <span class="stat-mini-val">{{ stats.averageAccuracy }}%</span>
-                  </div>
-                </div>
+            <AchievementsTab
+              v-show="activeTab === 'achievements'"
+              :currentLocale="currentLocale"
+              :stats="stats"
+              :badges="badges"
+              :rawResults="rawResults"
+              :profile="profile"
+              :t="t"
+            />
 
-                <div class="stat-mini-card">
-                  <i class="fas fa-trophy stat-mini-icon text-gold"></i>
-                  <div class="stat-mini-info">
-                    <span class="stat-mini-lbl">{{ currentLocale === 'RUS' ? 'Лучший результат' : 'Eng yuqori ball' }}</span>
-                    <span class="stat-mini-val">{{ stats.highestAccuracy }}%</span>
-                  </div>
-                </div>
-
-                <div class="stat-mini-card">
-                  <i class="fas fa-star stat-mini-icon text-purple"></i>
-                  <div class="stat-mini-info">
-                    <span class="stat-mini-lbl">{{ currentLocale === 'RUS' ? 'Лучший предмет' : 'Eng yaxshi fan' }}</span>
-                    <span class="stat-mini-val text-truncate" :title="stats.bestSubject">{{ stats.bestSubject }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Unlocked Badges Gallery Grid -->
-              <div class="badges-gallery-wrap">
-                <h3 class="badges-gallery-title">
-                  <i class="fas fa-ribbon"></i> {{ currentLocale === 'RUS' ? 'Мои Награды' : 'Mening mukofotlarim' }}
-                </h3>
-                <div class="badges-gallery-grid">
-                  <div 
-                    v-for="badge in badges" 
-                    :key="badge.id" 
-                    :class="['badge-gallery-item', { locked: !badge.unlocked }]"
-                  >
-                    <div 
-                      class="badge-icon-bubble"
-                      :style="{ 
-                        backgroundColor: badge.unlocked ? badge.color + '15' : '#f1f5f9',
-                        borderColor: badge.unlocked ? badge.color : '#e2e8f0',
-                        color: badge.unlocked ? badge.color : '#94a3b8'
-                      }"
-                    >
-                      <i :class="badge.icon"></i>
-                      <i v-if="!badge.unlocked" class="fas fa-lock badge-lock-icon"></i>
-                    </div>
-                    <div class="badge-gallery-meta">
-                      <span class="badge-gallery-name">{{ badge.name }}</span>
-                      <span class="badge-gallery-desc">{{ badge.desc }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Advanced Analytics Charts -->
-              <AnalyticsCharts 
-                :results-data="rawResults" 
-                :is-premium="profile.isPremium" 
-                :t="t"
-              />
-              </div>
-            </div>
-
-            <!-- Actions buttons -->
             <div class="pro-form-actions">
               <button type="button" class="pro-btn-secondary" @click="goBack" :disabled="loading">
                 Cancel
@@ -418,16 +106,16 @@
           </form>
         </div>
       </main>
-
-      
-
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, watch, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import { getAuth, updatePassword, updateProfile, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../config/firebase.js';
 import { useI18n } from '@/utils/i18n';
 import { getRankName, getRankClass, getRankIcon, getNextRankInfo, ranksData } from '@/utils/ranks.js';
@@ -436,548 +124,373 @@ import { sortLevels } from '@/utils/sorters';
 import defaultUserImage from '../../assets/img/user.png';
 import GoalsEditor from './components/GoalsEditor.vue';
 import AIMentorEditor from './components/AIMentorEditor.vue';
-import AnalyticsCharts from './components/AnalyticsCharts.vue';
-import { mapState, mapActions } from 'vuex';
+import ProfileTab from './components/ProfileTab.vue';
+import PreferencesTab from './components/PreferencesTab.vue';
+import AchievementsTab from './components/AchievementsTab.vue';
 
-export default {
-  name: 'EditProfile',
-  components: {
-    GoalsEditor,
-    AIMentorEditor,
-    AnalyticsCharts
-  },
-  setup() {
-    const { t, locale, setLocale } = useI18n();
-    return {
-      t,
-      currentLocale: locale,
-      changeLocale: setLocale
-    };
-  },
-  data() {
-    return {
-      activeTab: 'profile', // active tab: profile, preferences, achievements
-      profile: {
-        username: '',
-        password: '••••••••',
-        isPremium: true, // TEMPORARY UNLOCK
-      },
-      userEmail: '',
-      memberSince: null,
-      userPoints: 0,
-      selectedPhotoURL: '',
-      defaultUserImage,
-      showPassword: false,
-      loading: false,
-      passwordError: '',
-      ranksList: ranksData,
-      goalsList: [],
-      
-      // Toast notification status
-      toast: {
-        show: false,
-        message: '',
-        type: 'success',
-      },
+const { t, locale: currentLocale, setLocale } = useI18n();
+const router = useRouter();
+const store = useStore();
 
-      // Learning preferences
-      preferences: {
-        defaultSubject: '',
-        defaultLevel: '',
-        dailyGoal: 10,
-        defaultLocale: '',
-        mentorType: 'friendly',
-        offlineMode: false,
-      },
-      subjectsList: [], // List of subjects fetched from db
-      levelsList: [], // List of levels for the selected subject
-      loadingLevels: false,
+const activeTab = ref('profile');
+const profile = reactive({
+  username: '',
+  password: '••••••••',
+  isPremium: true,
+});
+const userEmail = ref('');
+const memberSince = ref(null);
+const userPoints = ref(0);
+const selectedPhotoURL = ref('');
+const showPassword = ref(false);
+const loading = ref(false);
+const passwordError = ref('');
+const goalsList = ref([]);
 
-      // Academic metrics
-      stats: {
-        totalTests: 0,
-        averageAccuracy: 0,
-        highestAccuracy: 0,
-        perfectCount: 0,
-        bestSubject: '—',
-        streak: 0,
-        streakFreezes: 0,
-      },
-      rawResults: [],
+const toast = reactive({ show: false, message: '', type: 'success' });
 
-      // Predefined avatar selections
-      presets: [
-        { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Cookie', color: '#3b82f6' },
-        { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Buster', color: '#10b981' },
-        { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Oliver', color: '#f59e0b' },
-        { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Gizmo', color: '#ec4899' },
-        { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Bella', color: '#a855f7' },
-        { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Coco', color: '#f97316' },
-        { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Smokey', color: '#06b6d4' },
-        { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Rocky', color: '#64748b' }
-      ],
-    };
-  },
-  computed: {
-    ...mapState('user', ['goals']),
-    passwordStrength() {
-      const pwd = this.profile.password;
-      if (!pwd) return { score: 0, text: '', color: '#cbd5e1' };
-      
-      let score = 0;
-      if (pwd.length >= 6) score++;
-      if (/[0-9]/.test(pwd)) score++;
-      if (/[A-Z]/.test(pwd) || /[^A-Za-z0-9]/.test(pwd)) score++;
+const preferences = reactive({
+  defaultSubject: '',
+  defaultLevel: '',
+  dailyGoal: 10,
+  defaultLocale: '',
+  mentorType: 'friendly',
+  offlineMode: false,
+});
+const subjectsList = ref([]);
+const levelsList = ref([]);
+const loadingLevels = ref(false);
 
-      if (score === 1) {
-        return { 
-          score: 1, 
-          text: this.currentLocale === 'RUS' ? 'Слабый (Weak)' : 'Kuchsiz (Weak)', 
-          color: '#ef4444' 
-        };
-      }
-      if (score === 2) {
-        return { 
-          score: 2, 
-          text: this.currentLocale === 'RUS' ? 'Средний (Medium)' : "O'rtacha (Medium)", 
-          color: '#f97316' 
-        };
-      }
-      if (score === 3) {
-        return { 
-          score: 3, 
-          text: this.currentLocale === 'RUS' ? 'Сильный (Strong)' : 'Kuchli (Strong)', 
-          color: '#10b981' 
-        };
-      }
-      return { score: 0, text: '', color: '#cbd5e1' };
-    },
-    badges() {
-      const total = this.stats.totalTests;
-      const perfect = this.stats.perfectCount;
-      const pts = this.userPoints;
-      
-      return [
-        { 
-          id: 'first_step', 
-          name: this.currentLocale === 'RUS' ? 'Первый шаг' : 'Birinchi qadam', 
-          desc: this.currentLocale === 'RUS' ? 'Решите хотя бы 1 тест' : 'Kamida 1 ta test yeching',
-          icon: 'fas fa-walking', 
-          color: '#3b82f6', 
-          unlocked: total >= 1 
-        },
-        { 
-          id: 'persistent', 
-          name: this.currentLocale === 'RUS' ? 'Упорный' : 'Tirishqoq', 
-          desc: this.currentLocale === 'RUS' ? 'Решите 5 тестов' : '5 ta test yeching',
-          icon: 'fas fa-fire', 
-          color: '#f97316', 
-          unlocked: total >= 5 
-        },
-        { 
-          id: 'scholar', 
-          name: this.currentLocale === 'RUS' ? 'Эрудит' : 'Bilimdon', 
-          desc: this.currentLocale === 'RUS' ? 'Решите 15 тестов' : '15 ta test yeching',
-          icon: 'fas fa-book-reader', 
-          color: '#10b981', 
-          unlocked: total >= 15 
-        },
-        { 
-          id: 'perfect_score', 
-          name: this.currentLocale === 'RUS' ? 'Отличник' : "A'lochi", 
-          desc: this.currentLocale === 'RUS' ? 'Наберите 100% в тесте' : 'Testda 100% natija ko\'rsating',
-          icon: 'fas fa-star', 
-          color: '#fbbf24', 
-          unlocked: perfect >= 1 
-        },
-        { 
-          id: 'coin_king', 
-          name: this.currentLocale === 'RUS' ? 'Король Коинов' : 'Koin Qiroli', 
-          desc: this.currentLocale === 'RUS' ? 'Наберите 500 очков' : '500 ball to\'plang',
-          icon: 'fas fa-coins', 
-          color: '#a855f7', 
-          unlocked: pts >= 500 
-        },
-        { 
-          id: 'super_brain', 
-          name: this.currentLocale === 'RUS' ? 'Супер Мозг' : 'Super Aql', 
-          desc: this.currentLocale === 'RUS' ? 'Наберите 100% в 3 тестах' : '3 ta testda 100% natija ko\'rsating',
-          icon: 'fas fa-brain', 
-          color: '#ec4899', 
-          unlocked: perfect >= 3 
-        }
-      ];
-    },
+const stats = reactive({
+  totalTests: 0,
+  averageAccuracy: 0,
+  highestAccuracy: 0,
+  perfectCount: 0,
+  bestSubject: '—',
+  streak: 0,
+  streakFreezes: 0,
+});
+const rawResults = ref([]);
 
-  },
-  watch: {
-    'preferences.defaultSubject'(newSub, oldSub) {
-      if (newSub && newSub !== oldSub) {
-        this.fetchLevelsForSubject(newSub);
-      } else if (!newSub) {
-        this.levelsList = [];
-        this.preferences.defaultLevel = '';
-      }
+const presets = [
+  { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Cookie', color: '#3b82f6' },
+  { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Buster', color: '#10b981' },
+  { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Oliver', color: '#f59e0b' },
+  { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Gizmo', color: '#ec4899' },
+  { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Bella', color: '#a855f7' },
+  { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Coco', color: '#f97316' },
+  { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Smokey', color: '#06b6d4' },
+  { id: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Rocky', color: '#64748b' }
+];
+
+const passwordStrength = computed(() => {
+  const pwd = profile.password;
+  if (!pwd) return { score: 0, text: '', color: '#cbd5e1' };
+  
+  let score = 0;
+  if (pwd.length >= 6) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[A-Z]/.test(pwd) || /[^A-Za-z0-9]/.test(pwd)) score++;
+
+  if (score === 1) return { score: 1, text: currentLocale.value === 'RUS' ? 'Слабый (Weak)' : 'Kuchsiz (Weak)', color: '#ef4444' };
+  if (score === 2) return { score: 2, text: currentLocale.value === 'RUS' ? 'Средний (Medium)' : "O'rtacha (Medium)", color: '#f97316' };
+  if (score === 3) return { score: 3, text: currentLocale.value === 'RUS' ? 'Сильный (Strong)' : 'Kuchli (Strong)', color: '#10b981' };
+  return { score: 0, text: '', color: '#cbd5e1' };
+});
+
+const badges = computed(() => {
+  const total = stats.totalTests;
+  const perfect = stats.perfectCount;
+  const pts = userPoints.value;
+  return [
+    { id: 'first_step', name: currentLocale.value === 'RUS' ? 'Первый шаг' : 'Birinchi qadam', desc: currentLocale.value === 'RUS' ? 'Решите хотя бы 1 тест' : 'Kamida 1 ta test yeching', icon: 'fas fa-walking', color: '#3b82f6', unlocked: total >= 1 },
+    { id: 'persistent', name: currentLocale.value === 'RUS' ? 'Упорный' : 'Tirishqoq', desc: currentLocale.value === 'RUS' ? 'Решите 5 тестов' : '5 ta test yeching', icon: 'fas fa-fire', color: '#f97316', unlocked: total >= 5 },
+    { id: 'scholar', name: currentLocale.value === 'RUS' ? 'Эрудит' : 'Bilimdon', desc: currentLocale.value === 'RUS' ? 'Решите 15 тестов' : '15 ta test yeching', icon: 'fas fa-book-reader', color: '#10b981', unlocked: total >= 15 },
+    { id: 'perfect_score', name: currentLocale.value === 'RUS' ? 'Отличник' : "A'lochi", desc: currentLocale.value === 'RUS' ? 'Наберите 100% в тесте' : 'Testda 100% natija ko\'rsating', icon: 'fas fa-star', color: '#fbbf24', unlocked: perfect >= 1 },
+    { id: 'coin_king', name: currentLocale.value === 'RUS' ? 'Король Коинов' : 'Koin Qiroli', desc: currentLocale.value === 'RUS' ? 'Наберите 500 очков' : '500 ball to\'plang', icon: 'fas fa-coins', color: '#a855f7', unlocked: pts >= 500 },
+    { id: 'super_brain', name: currentLocale.value === 'RUS' ? 'Супер Мозг' : 'Super Aql', desc: currentLocale.value === 'RUS' ? 'Наберите 100% в 3 тестах' : '3 ta testda 100% natija ko\'rsating', icon: 'fas fa-brain', color: '#ec4899', unlocked: perfect >= 3 }
+  ];
+});
+
+watch(() => preferences.defaultSubject, (newSub, oldSub) => {
+  if (newSub && newSub !== oldSub) {
+    fetchLevelsForSubject(newSub);
+  } else if (!newSub) {
+    levelsList.value = [];
+    preferences.defaultLevel = '';
+  }
+});
+
+const showToast = (message, type = 'success') => {
+  toast.message = message;
+  toast.type = type;
+  toast.show = true;
+  setTimeout(() => toast.show = false, 3500);
+};
+
+const goBack = () => router.back();
+const goToRanksPage = () => router.push('/ranks');
+
+const fetchLevelsForSubject = async (subjectId, preserveLevel = null) => {
+  if (!subjectId) return;
+  loadingLevels.value = true;
+  try {
+    const querySnapshot = await getDocs(collection(db, `subjects/${subjectId}/levels`));
+    const fetchedLevels = querySnapshot.docs.map(doc => ({ id: doc.id }));
+    const rawIds = fetchedLevels.map(l => l.id);
+    const sortedIds = sortLevels(rawIds);
+    levelsList.value = sortedIds.map(id => ({ id }));
+    
+    const currentSelected = preserveLevel || preferences.defaultLevel;
+    if (currentSelected && !levelsList.value.find(l => l.id === currentSelected)) {
+      preferences.defaultLevel = '';
+    } else if (preserveLevel) {
+      preferences.defaultLevel = preserveLevel;
     }
-  },
-  created() {
-    this.initializeProfileData();
-    this.fetchSubjects();
-  },
-  methods: {
-    ...mapActions('user', ['fetchUserData', 'saveGoals']),
-    initializeProfileData() {
-      const auth = getAuth();
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          this.userEmail = user.email;
-          this.memberSince = user.metadata.creationTime;
-          
-          try {
-            // Load stats from results collection
-            this.fetchUserResults(user.uid);
+  } catch (err) {
+    console.error('Error fetching levels:', err);
+  } finally {
+    loadingLevels.value = false;
+  }
+};
 
-            // Fetch Vuex User Data (Profile + Goals)
-            await this.fetchUserData();
-            if (this.goals) {
-              this.goalsList = JSON.parse(JSON.stringify(this.goals));
+const fetchSubjects = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'subjects'));
+    subjectsList.value = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (err) {
+    console.error('Error fetching subjects list:', err);
+  }
+};
+
+const fetchUserResults = async (userId) => {
+  try {
+    const q = query(collection(db, 'results'), where('userId', '==', userId));
+    const querySnapshot = await getDocs(q);
+    const results = querySnapshot.docs.map(doc => doc.data());
+    
+    rawResults.value = results;
+    stats.totalTests = results.length;
+    if (results.length > 0) {
+      const sum = results.reduce((acc, item) => acc + Math.round((item.score / item.total) * 100), 0);
+      stats.averageAccuracy = Math.round(sum / results.length);
+
+      const accuracies = results.map(item => Math.round((item.score / item.total) * 100));
+      stats.highestAccuracy = Math.max(...accuracies);
+      stats.perfectCount = results.filter(item => item.score === item.total).length;
+
+      const subjectSums = {};
+      const subjectCounts = {};
+      results.forEach(item => {
+        const pct = Math.round((item.score / item.total) * 100);
+        subjectSums[item.subject] = (subjectSums[item.subject] || 0) + pct;
+        subjectCounts[item.subject] = (subjectCounts[item.subject] || 0) + 1;
+      });
+      
+      let bestSub = '—';
+      let bestAvg = -1;
+      for (const sub in subjectSums) {
+        const avg = subjectSums[sub] / subjectCounts[sub];
+        if (avg > bestAvg) {
+          bestAvg = avg;
+          bestSub = sub;
+        }
+      }
+      stats.bestSubject = bestSub;
+      
+      const sorted = results
+        .map(r => r.timestamp?.toDate ? r.timestamp.toDate() : new Date(r.timestamp || Date.now()))
+        .sort((a, b) => b - a);
+      
+      let currentStreak = 0;
+      let checkDate = new Date();
+      checkDate.setHours(0,0,0,0);
+      
+      let dateSet = new Set(sorted.map(d => {
+        const dt = new Date(d);
+        dt.setHours(0,0,0,0);
+        return dt.getTime();
+      }));
+
+      let hasTodayOrYesterday = dateSet.has(checkDate.getTime()) || dateSet.has(checkDate.getTime() - 86400000);
+      if (hasTodayOrYesterday) {
+        let testDate = checkDate.getTime();
+        if (!dateSet.has(testDate)) testDate -= 86400000;
+        while (dateSet.has(testDate)) {
+          currentStreak++;
+          testDate -= 86400000;
+        }
+      }
+      stats.streak = currentStreak;
+    }
+  } catch (err) {
+    console.error('Error loading academic statistics:', err);
+  }
+};
+
+const initializeProfileData = () => {
+  const auth = getAuth();
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      userEmail.value = user.email;
+      memberSince.value = user.metadata.creationTime;
+      
+      try {
+        fetchUserResults(user.uid);
+        await store.dispatch('user/fetchUserData');
+        if (store.state.user.goals) {
+          goalsList.value = JSON.parse(JSON.stringify(store.state.user.goals));
+        }
+
+        const docSnap = await getDoc(doc(db, 'users', user.uid));
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          profile.username = data.displayName || data.username || user.displayName || '';
+          selectedPhotoURL.value = data.photoURL || user.photoURL || '';
+          userPoints.value = data.points || 0;
+          profile.isPremium = true;
+
+          if (data.preferences) {
+            preferences.defaultSubject = data.preferences.defaultSubject || '';
+            preferences.defaultLevel = data.preferences.defaultLevel || '';
+            preferences.dailyGoal = data.preferences.dailyGoal || 10;
+            preferences.defaultLocale = data.preferences.defaultLocale || currentLocale.value;
+            preferences.mentorType = data.preferences.mentorType || 'friendly';
+            preferences.offlineMode = data.preferences.offlineMode || false;
+            
+            if (preferences.defaultSubject) {
+              fetchLevelsForSubject(preferences.defaultSubject, preferences.defaultLevel);
             }
-
-            const docSnap = await getDoc(doc(db, 'users', user.uid));
-            if (docSnap.exists()) {
-              const data = docSnap.data();
-              this.profile.username = data.displayName || data.username || user.displayName || '';
-              this.selectedPhotoURL = data.photoURL || user.photoURL || '';
-              this.userPoints = data.points || 0;
-              this.profile.isPremium = true; // data.isPremium || false; TEMPORARY UNLOCK
-
-
-              // Load preferences
-              if (data.preferences) {
-                this.preferences.defaultSubject = data.preferences.defaultSubject || '';
-                this.preferences.defaultLevel = data.preferences.defaultLevel || '';
-                this.preferences.dailyGoal = data.preferences.dailyGoal || 10;
-                this.preferences.defaultLocale = data.preferences.defaultLocale || this.currentLocale;
-                this.preferences.mentorType = data.preferences.mentorType || 'friendly';
-                this.preferences.offlineMode = data.preferences.offlineMode || false;
-                
-                if (this.preferences.defaultSubject) {
-                  this.fetchLevelsForSubject(this.preferences.defaultSubject, this.preferences.defaultLevel);
-                }
-              } else {
-                this.preferences.defaultLocale = this.currentLocale;
-              }
-            } else {
-              this.profile.username = user.displayName || '';
-              this.selectedPhotoURL = user.photoURL || '';
-              this.userPoints = 0;
-              this.preferences.defaultLocale = this.currentLocale;
-            }
-          } catch (error) {
-            console.error('Error fetching user document:', error);
-            this.profile.username = user.displayName || '';
-            this.selectedPhotoURL = user.photoURL || '';
+          } else {
+            preferences.defaultLocale = currentLocale.value;
           }
         } else {
-          this.$router.push('/login');
+          profile.username = user.displayName || '';
+          selectedPhotoURL.value = user.photoURL || '';
+          userPoints.value = 0;
+          preferences.defaultLocale = currentLocale.value;
         }
-      });
-    },
-    async fetchSubjects() {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'subjects'));
-        this.subjectsList = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-      } catch (err) {
-        console.error('Error fetching subjects list:', err);
+      } catch (error) {
+        console.error('Error fetching user document:', error);
       }
-    },
-    async fetchLevelsForSubject(subjectId, preserveLevel = null) {
-      if (!subjectId) return;
-      this.loadingLevels = true;
-      try {
-        const querySnapshot = await getDocs(collection(db, `subjects/${subjectId}/levels`));
-        const fetchedLevels = querySnapshot.docs.map(doc => ({ id: doc.id }));
-        
-        // Use our sort logic which handles strings. We extract IDs, sort them, then reconstruct objects
-        const rawIds = fetchedLevels.map(l => l.id);
-        const sortedIds = sortLevels(rawIds);
-        this.levelsList = sortedIds.map(id => ({ id }));
-        
-        const currentSelected = preserveLevel || this.preferences.defaultLevel;
-        if (currentSelected && !this.levelsList.find(l => l.id === currentSelected)) {
-          this.preferences.defaultLevel = '';
-        } else if (preserveLevel) {
-          this.preferences.defaultLevel = preserveLevel;
-        }
-      } catch (err) {
-        console.error('Error fetching levels:', err);
-      } finally {
-        this.loadingLevels = false;
-      }
-    },
-    async fetchUserResults(userId) {
-      try {
-        const resultsRef = collection(db, 'results');
-        const q = query(resultsRef, where('userId', '==', userId));
-        const querySnapshot = await getDocs(q);
-        const results = querySnapshot.docs.map(doc => doc.data());
-        
-        this.rawResults = results;
-        this.stats.totalTests = results.length;
-        if (results.length > 0) {
-          // Average accuracy
-          const sum = results.reduce((acc, item) => acc + Math.round((item.score / item.total) * 100), 0);
-          this.stats.averageAccuracy = Math.round(sum / results.length);
-
-          // Highest accuracy
-          const accuracies = results.map(item => Math.round((item.score / item.total) * 100));
-          this.stats.highestAccuracy = Math.max(...accuracies);
-
-          // Perfect tests count
-          this.stats.perfectCount = results.filter(item => item.score === item.total).length;
-
-          // Best subject
-          const subjectSums = {};
-          const subjectCounts = {};
-          results.forEach(item => {
-            const pct = Math.round((item.score / item.total) * 100);
-            subjectSums[item.subject] = (subjectSums[item.subject] || 0) + pct;
-            subjectCounts[item.subject] = (subjectCounts[item.subject] || 0) + 1;
-          });
-          
-          let bestSub = '—';
-          let bestAvg = -1;
-          for (const sub in subjectSums) {
-            const avg = subjectSums[sub] / subjectCounts[sub];
-            if (avg > bestAvg) {
-              bestAvg = avg;
-              bestSub = sub;
-            }
-          }
-          this.stats.bestSubject = bestSub;
-          
-          // Streak Calculation
-          if (results.length > 0) {
-            // Sort by date descending (assuming timestamp is stored)
-            const sorted = results
-              .map(r => r.timestamp?.toDate ? r.timestamp.toDate() : new Date(r.timestamp || Date.now()))
-              .sort((a, b) => b - a);
-            
-            let currentStreak = 0;
-            let checkDate = new Date();
-            checkDate.setHours(0,0,0,0);
-            
-            // simple continuous day check
-            let dateSet = new Set(sorted.map(d => {
-              const dt = new Date(d);
-              dt.setHours(0,0,0,0);
-              return dt.getTime();
-            }));
-
-            let hasTodayOrYesterday = dateSet.has(checkDate.getTime()) || dateSet.has(checkDate.getTime() - 86400000);
-            if (hasTodayOrYesterday) {
-              let testDate = checkDate.getTime();
-              if (!dateSet.has(testDate)) {
-                testDate -= 86400000; // start from yesterday if not played today
-              }
-              while (dateSet.has(testDate)) {
-                currentStreak++;
-                testDate -= 86400000;
-              }
-            }
-            this.stats.streak = currentStreak;
-          }
-        }
-      } catch (err) {
-        console.error('Error loading academic statistics:', err);
-      }
-    },
-    setInterfaceLocale(lang) {
-      this.preferences.defaultLocale = lang;
-      this.changeLocale(lang);
-    },
-    selectPreset(presetUrl) {
-      this.selectedPhotoURL = presetUrl;
-    },
-    triggerFileInput() {
-      this.$refs.fileInput.click();
-    },
-    onFileChange(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      if (file.size > 1.5 * 1024 * 1024) {
-        const errorMsg = this.currentLocale === 'RUS' 
-          ? 'Размер файла превышает 1.5 МБ' 
-          : 'Fayl hajmi 1.5 MB dan oshmasligi kerak';
-        this.showToast(errorMsg, 'error');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        this.selectedPhotoURL = event.target.result;
-      };
-      reader.readAsDataURL(file);
-    },
-    togglePasswordVisibility() {
-      if (this.profile.password === '••••••••') {
-        this.showToast(this.t('passwordHiddenSecurity', 'Xavfsizlik sababli joriy parolingiz yashiringan. Yangisini kiriting.'), 'error');
-        // Still toggle it just so they know the button works, but they just see dots
-      }
-      this.showPassword = !this.showPassword;
-    },
-    validatePassword() {
-      if (this.profile.password === '••••••••') {
-        this.passwordError = '';
-        return;
-      }
-      if (this.profile.password && this.profile.password.length < 6) {
-        this.passwordError = this.t('passwordLengthError');
-      } else {
-        this.passwordError = '';
-      }
-    },
-    showToast(message, type = 'success') {
-      this.toast.message = message;
-      this.toast.type = type;
-      this.toast.show = true;
-      
-      setTimeout(() => {
-        this.toast.show = false;
-      }, 3500);
-    },
-    goBack() {
-      this.$router.back();
-    },
-    goToRanksPage() {
-      this.$router.push('/ranks');
-    },
-    async saveProfile() {
-      if (this.loading) return;
-      if (this.passwordError) return;
-
-      this.loading = true;
-      try {
-        const auth = getAuth();
-        const user = auth.currentUser;
-
-        if (!user) {
-          this.showToast('User session expired', 'error');
-          return;
-        }
-
-        // Determine if photoURL is a Base64 string (too long for Firebase Auth)
-        // Firebase Auth only accepts HTTP/HTTPS URLs for photoURL, not Base64 data URIs
-        const isBase64Photo = this.selectedPhotoURL && this.selectedPhotoURL.startsWith('data:');
-        
-        // The URL to pass to Firebase Auth (only if it's a real URL, not Base64)
-        const authPhotoURL = isBase64Photo ? (user.photoURL || '') : (this.selectedPhotoURL || '');
-
-        // 1. Update Firestore users document — stores full photoURL including Base64
-        await setDoc(
-          doc(db, 'users', user.uid),
-          {
-            username: this.profile.username,
-            displayName: this.profile.username,
-            photoURL: this.selectedPhotoURL,  // Full Base64 or URL stored here
-            preferences: {
-              defaultSubject: this.preferences.defaultSubject,
-              defaultLevel: this.preferences.defaultLevel,
-              dailyGoal: Number(this.preferences.dailyGoal),
-              defaultLocale: this.preferences.defaultLocale,
-              mentorType: this.preferences.mentorType,
-              offlineMode: this.preferences.offlineMode,
-            },
-            updatedAt: new Date(),
-          },
-          { merge: true }
-        );
-
-        // 2. Update Firebase Auth Profile — only pass short HTTP URLs, NOT Base64
-        await updateProfile(user, {
-          displayName: this.profile.username,
-          photoURL: authPhotoURL,
-        });
-
-        // 3. Update Password if specified and modified
-        if (this.profile.password && this.profile.password !== '••••••••' && this.profile.password.trim() !== '') {
-          await updatePassword(user, this.profile.password);
-        }
-
-        // 4. Save Goals via Vuex Action
-        await this.saveGoals(this.goalsList);
-
-        this.showToast(this.t('profileUpdated'), 'success');
-        this.profile.password = '••••••••';
-        
-        // Triggers UI navbar updates instantly using a global CustomEvent
-        // Use the full selectedPhotoURL (even Base64) for the live preview
-        window.dispatchEvent(new CustomEvent('profile-updated', {
-          detail: {
-            displayName: this.profile.username,
-            photoURL: this.selectedPhotoURL
-          }
-        }));
-
-        // Triggers storage backup update
-        localStorage.setItem('user', JSON.stringify({
-          uid: user.uid,
-          email: user.email,
-          displayName: this.profile.username,
-          photoURL: this.selectedPhotoURL,
-        }));
-
-        setTimeout(() => {
-          this.$router.push('/');
-        }, 1500);
-      } catch (err) {
-        console.error('Error updating user profile:', err);
-        this.showToast(this.t('profileError') + ': ' + err.message, 'error');
-      } finally {
-        this.loading = false;
-      }
-    },
-    
-    // External Rank Helpers wrapper
-    getRankName(pts, loc) { return getRankName(pts, loc); },
-    getRankClass(pts) { return getRankClass(pts); },
-    getRankIcon(pts) { return getRankIcon(pts); },
-    getNextRankInfo(pts, loc) { return getNextRankInfo(pts, loc); },
-
-    // Parallax 3D Card tilt logic
-    handleMouseMove(e) {
-      const card = e.currentTarget.querySelector('.id-card');
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const xc = rect.width / 2;
-      const yc = rect.height / 2;
-      const rotateX = -(y - yc) / 8; 
-      const rotateY = (x - xc) / 8;
-
-      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-    },
-    handleMouseLeave(e) {
-      const card = e.currentTarget.querySelector('.id-card');
-      card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
-    },
-
-    getMemberSince(creationTime) {
-      if (!creationTime) return '—';
-      const date = new Date(creationTime);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      return `${year}-${month}`;
+    } else {
+      router.push('/login');
     }
+  });
+};
+
+onMounted(() => {
+  initializeProfileData();
+  fetchSubjects();
+});
+
+const setInterfaceLocale = (lang) => {
+  preferences.defaultLocale = lang;
+  setLocale(lang);
+};
+
+const onFileChange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 1.5 * 1024 * 1024) {
+    showToast(currentLocale.value === 'RUS' ? 'Размер файла превышает 1.5 МБ' : 'Fayl hajmi 1.5 MB dan oshmasligi kerak', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (event) => selectedPhotoURL.value = event.target.result;
+  reader.readAsDataURL(file);
+};
+
+const togglePasswordVisibility = () => {
+  if (profile.password === '••••••••') {
+    showToast(t('passwordHiddenSecurity', 'Xavfsizlik sababli joriy parolingiz yashiringan.'), 'error');
+  }
+  showPassword.value = !showPassword.value;
+};
+
+const validatePassword = () => {
+  if (profile.password === '••••••••') {
+    passwordError.value = '';
+    return;
+  }
+  if (profile.password && profile.password.length < 6) {
+    passwordError.value = t('passwordLengthError');
+  } else {
+    passwordError.value = '';
+  }
+};
+
+const saveProfile = async () => {
+  if (loading.value || passwordError.value) return;
+  loading.value = true;
+  try {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      showToast('User session expired', 'error');
+      return;
+    }
+
+    const isBase64Photo = selectedPhotoURL.value && selectedPhotoURL.value.startsWith('data:');
+    const authPhotoURL = isBase64Photo ? (user.photoURL || '') : (selectedPhotoURL.value || '');
+
+    await setDoc(
+      doc(db, 'users', user.uid),
+      {
+        username: profile.username,
+        displayName: profile.username,
+        photoURL: selectedPhotoURL.value,
+        preferences: {
+          defaultSubject: preferences.defaultSubject,
+          defaultLevel: preferences.defaultLevel,
+          dailyGoal: Number(preferences.dailyGoal),
+          defaultLocale: preferences.defaultLocale,
+          mentorType: preferences.mentorType,
+          offlineMode: preferences.offlineMode,
+        },
+        updatedAt: new Date(),
+      },
+      { merge: true }
+    );
+
+    await updateProfile(user, {
+      displayName: profile.username,
+      photoURL: authPhotoURL,
+    });
+
+    if (profile.password && profile.password !== '••••••••' && profile.password.trim() !== '') {
+      await updatePassword(user, profile.password);
+    }
+
+    await store.dispatch('user/saveGoals', goalsList.value);
+
+    showToast(t('profileUpdated'), 'success');
+    profile.password = '••••••••';
+    
+    window.dispatchEvent(new CustomEvent('profile-updated', {
+      detail: { displayName: profile.username, photoURL: selectedPhotoURL.value }
+    }));
+
+    localStorage.setItem('user', JSON.stringify({
+      uid: user.uid,
+      email: user.email,
+      displayName: profile.username,
+      photoURL: selectedPhotoURL.value,
+    }));
+
+    setTimeout(() => router.push('/'), 1500);
+  } catch (err) {
+    console.error('Error updating profile:', err);
+    showToast(t('profileError') + ': ' + err.message, 'error');
+  } finally {
+    loading.value = false;
   }
 };
 </script>
-
-<style scoped>
+\n<style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 .edit-profile-wrapper {

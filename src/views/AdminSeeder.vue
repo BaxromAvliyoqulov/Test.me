@@ -10,310 +10,195 @@
       </div>
     </div>
 
-    <div class="controls-card">
-      <div class="form-group api-key-group">
-        <label><i class="fas fa-key"></i> Gemini API Key</label>
-        <input v-model="geminiApiKey" type="password" placeholder="Paste your AIza... key here" />
-      </div>
-      <div class="form-group">
-        <label><i class="fas fa-book"></i> Subject ID</label>
-        <select v-model="subjectId" @change="onSubjectChange" class="subject-select" :disabled="isRunning || subjects.length === 0">
-          <option value="" disabled>Select a subject</option>
-          <option v-for="sub in subjects" :key="sub.id" :value="sub.id">{{ sub.title || sub.id }}</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label><i class="fas fa-bullseye"></i> Target Count (All)</label>
-        <input v-model.number="globalTargetCount" type="number" @input="updateAllTargets" class="no-spinners" />
-      </div>
-      <button 
-        @click="startSeeding" 
-        class="start-btn" 
-        :disabled="isRunning || !subjectId || levels.length === 0"
-        v-if="!isRunning"
-      >
-        <i class="fas fa-play"></i>
-        Start Generating Tests
-      </button>
-      
-      <div v-if="isRunning" class="action-buttons">
-        <button v-if="!isPaused" @click="pauseSeeding" class="pause-btn">
-          <i class="fas fa-pause"></i> Pause
-        </button>
-        <button v-if="isPaused" @click="resumeSeeding" class="resume-btn">
-          <i class="fas fa-play"></i> Resume
-        </button>
-        <button @click="stopSeeding" class="stop-btn">
-          <i class="fas fa-stop"></i> Stop
-        </button>
-      </div>
-    </div>
+    <SeederControls 
+      v-model:geminiApiKey="geminiApiKey"
+      v-model:subjectId="subjectId"
+      v-model:globalTargetCount="globalTargetCount"
+      :subjects="subjects"
+      :isRunning="isRunning"
+      :isPaused="isPaused"
+      :levels="levels"
+      @start="startSeeding"
+      @pause="pauseSeeding"
+      @resume="resumeSeeding"
+      @stop="stopSeeding"
+    />
 
-    <!-- Live Activity Console -->
-    <div class="activity-log-card" v-if="isRunning || activityLogs.length > 0">
-      <div class="log-header">
-        <h3><i class="fas fa-terminal"></i> Live Activity Console</h3>
-        <span class="pulse-indicator" :class="{ active: isRunning && !isPaused }"></span>
-      </div>
-      <div class="log-window">
-        <div v-for="log in activityLogs" :key="log.id" :class="['log-item', 'log-' + log.type]">
-          <span class="log-time">[{{ log.time }}]</span>
-          <span class="log-msg">{{ log.msg }}</span>
-        </div>
-        <div v-if="activityLogs.length === 0" class="log-empty">Waiting for tasks to begin...</div>
-      </div>
-    </div>
+    <ActivityConsole 
+      :activityLogs="activityLogs"
+      :isRunning="isRunning"
+      :isPaused="isPaused"
+    />
 
     <div v-if="errorMessage" class="error-banner">
       <i class="fas fa-exclamation-triangle"></i>
       {{ errorMessage }}
     </div>
 
-    <div class="db-status-card">
-      <div class="status-header">
-        <h3><i class="fas fa-database"></i> Database Status <span v-if="subjectId">({{ subjectId }})</span></h3>
-        <button @click="fetchDbStats" class="refresh-btn" title="Refresh DB Stats" :disabled="!subjectId">
-          <i class="fas fa-sync-alt" :class="{ 'fa-spin': isFetchingStats }"></i> Refresh
-        </button>
-      </div>
-      <div class="stats-grid" v-if="dbStats.length > 0">
-        <div 
-          v-for="stat in dbStats" 
-          :key="stat.id" 
-          class="stat-item" 
-          :class="getStatColor(stat.count)"
-        >
-          <span class="stat-level">{{ stat.id.toUpperCase() }}</span>
-          <span class="stat-count">{{ stat.count }} tests</span>
-        </div>
-      </div>
-      <div v-else class="empty-stats">
-        Please select a subject to see database status.
-      </div>
-    </div>
+    <DbStatus 
+      :dbStats="dbStats"
+      :subjectId="subjectId"
+      :isFetchingStats="isFetchingStats"
+      @fetch-stats="fetchDbStats"
+    />
 
-    <div class="progress-grid">
-      <div v-for="level in levels" :key="level.id" class="level-card">
-        <div class="level-header">
-          <h3>{{ level.id.toUpperCase() }}</h3>
-          <span class="status-badge" :class="level.status">
-            {{ level.status }}
-          </span>
-        </div>
-        
-        <div class="level-target-input">
-          <label><i class="fas fa-bullseye"></i> Target Tests</label>
-          <input v-model.number="level.targetCount" type="number" class="no-spinners" :disabled="isRunning" />
-        </div>
-
-        <div class="progress-wrapper">
-          <div class="progress-stats">
-            <span>{{ level.current }} / {{ level.targetCount }} generated</span>
-            <span>{{ Math.round((level.current / Math.max(1, level.targetCount)) * 100) }}%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div 
-              class="progress-bar-fill" 
-              :style="{ width: `${Math.min((level.current / Math.max(1, level.targetCount)) * 100, 100)}%` }"
-              :class="{ 'finished': level.current >= level.targetCount }"
-            ></div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ProgressGrid 
+      :levels="levels"
+      :isRunning="isRunning"
+      @update-level="onLevelUpdate"
+    />
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, watch, onMounted } from 'vue';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { db } from '@/config/firebase';
 import { collection, doc, writeBatch, getDocs, getCountFromServer } from 'firebase/firestore';
 import { sortLevels } from '@/utils/sorters';
 
-export default {
-  name: 'AdminSeeder',
-  data() {
-    return {
-      geminiApiKey: localStorage.getItem('geminiApiKey') || '',
-      subjectId: localStorage.getItem('adminSeederSubjectId') || '',
-      subjects: [],
-      globalTargetCount: parseInt(localStorage.getItem('adminSeederTargetCount')) || 1000,
-      isRunning: false,
-      isPaused: false,
-      shouldStop: false,
-      isFetchingStats: false,
-      errorMessage: '',
-      dbStats: [],
-      levels: [],
-      activityLogs: []
-    };
-  },
-  async mounted() {
-    await this.fetchSubjects();
-  },
-  watch: {
-    geminiApiKey(newKey) {
-      localStorage.setItem('geminiApiKey', newKey);
-    },
-    subjectId(newVal) {
-      localStorage.setItem('adminSeederSubjectId', newVal || '');
-    },
-    globalTargetCount(newVal) {
-      localStorage.setItem('adminSeederTargetCount', newVal || 1000);
+import SeederControls from '@/components/admin/SeederControls.vue';
+import ActivityConsole from '@/components/admin/ActivityConsole.vue';
+import DbStatus from '@/components/admin/DbStatus.vue';
+import ProgressGrid from '@/components/admin/ProgressGrid.vue';
+
+const geminiApiKey = ref(localStorage.getItem('geminiApiKey') || '');
+const subjectId = ref(localStorage.getItem('adminSeederSubjectId') || '');
+const subjects = ref([]);
+const globalTargetCount = ref(parseInt(localStorage.getItem('adminSeederTargetCount')) || 1000);
+const isRunning = ref(false);
+const isPaused = ref(false);
+const shouldStop = ref(false);
+const isFetchingStats = ref(false);
+const errorMessage = ref('');
+const dbStats = ref([]);
+const levels = ref([]);
+const activityLogs = ref([]);
+
+watch(geminiApiKey, (newKey) => localStorage.setItem('geminiApiKey', newKey));
+watch(subjectId, (newVal) => localStorage.setItem('adminSeederSubjectId', newVal || ''));
+watch(globalTargetCount, (newVal) => {
+  localStorage.setItem('adminSeederTargetCount', newVal || 1000);
+  levels.value.forEach(level => level.targetCount = newVal || 1000);
+});
+watch(subjectId, async (newVal) => {
+  if (!newVal) return;
+  levels.value = [];
+  dbStats.value = [];
+  try {
+    const subjectRef = doc(db, 'subjects', newVal);
+    const levelsCollection = await getDocs(collection(subjectRef, 'levels'));
+    const fetchedLevels = levelsCollection.docs.map((doc) => doc.id);
+    const sorted = sortLevels(fetchedLevels);
+    levels.value = sorted.map(id => ({ id, status: 'pending', current: 0, targetCount: globalTargetCount.value }));
+    fetchDbStats();
+  } catch (error) {
+    console.error('Error fetching levels:', error);
+    errorMessage.value = 'Failed to load levels for subject.';
+  }
+});
+
+const fetchSubjects = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'subjects'));
+    subjects.value = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error fetching subjects:', error);
+    errorMessage.value = 'Failed to load subjects.';
+  }
+};
+
+onMounted(async () => {
+  await fetchSubjects();
+  if (subjectId.value && subjects.value.some(s => s.id === subjectId.value)) {
+    // Manually trigger the fetch for the initial loaded subject ID
+    const subjectRef = doc(db, 'subjects', subjectId.value);
+    const levelsCollection = await getDocs(collection(subjectRef, 'levels'));
+    const fetchedLevels = levelsCollection.docs.map((doc) => doc.id);
+    const sorted = sortLevels(fetchedLevels);
+    levels.value = sorted.map(id => ({ id, status: 'pending', current: 0, targetCount: globalTargetCount.value }));
+    fetchDbStats();
+  } else {
+    subjectId.value = '';
+  }
+});
+
+const onLevelUpdate = ({ id, count }) => {
+  const lvl = levels.value.find(l => l.id === id);
+  if (lvl) lvl.targetCount = count;
+};
+
+const fetchDbStats = async () => {
+  if (!subjectId.value || levels.value.length === 0) return;
+  isFetchingStats.value = true;
+  const stats = [];
+  for (let level of levels.value) {
+    try {
+      const coll = collection(db, 'subjects', subjectId.value, 'levels', level.id, 'tests');
+      const snapshot = await getCountFromServer(coll);
+      stats.push({ id: level.id, count: snapshot.data().count });
+    } catch (err) {
+      stats.push({ id: level.id, count: 0 });
     }
-  },
-  methods: {
-    async fetchSubjects() {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'subjects'));
-        this.subjects = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        
-        // Auto-load previously selected subject if it still exists
-        if (this.subjectId && this.subjects.some(s => s.id === this.subjectId)) {
-          await this.onSubjectChange();
-        } else {
-          this.subjectId = '';
-        }
-      } catch (error) {
-        console.error('Error fetching subjects:', error);
-        this.errorMessage = 'Failed to load subjects.';
-      }
-    },
-    async onSubjectChange() {
-      if (!this.subjectId) return;
-      this.levels = [];
-      this.dbStats = [];
-      
-      try {
-        const subjectRef = doc(db, 'subjects', this.subjectId);
-        const levelsCollection = await getDocs(collection(subjectRef, 'levels'));
-        
-        const fetchedLevels = levelsCollection.docs.map((doc) => doc.id);
-        const sorted = sortLevels(fetchedLevels);
-        
-        this.levels = sorted.map(id => ({
-          id: id,
-          status: 'pending',
-          current: 0,
-          targetCount: this.globalTargetCount
-        }));
-        
-        this.fetchDbStats();
-      } catch (error) {
-        console.error('Error fetching levels:', error);
-        this.errorMessage = 'Failed to load levels for subject.';
-      }
-    },
-    updateAllTargets() {
-      if (!this.globalTargetCount) return;
-      this.levels.forEach(level => {
-        level.targetCount = this.globalTargetCount;
+  }
+  dbStats.value = stats;
+  isFetchingStats.value = false;
+};
+
+const pauseSeeding = () => { isPaused.value = true; logActivity('Generation Paused by Admin.', 'warn'); };
+const resumeSeeding = () => { isPaused.value = false; errorMessage.value = ''; logActivity('Generation Resumed.', 'success'); };
+const stopSeeding = () => { shouldStop.value = true; isPaused.value = false; logActivity('Generation manually Stopped.', 'error'); };
+
+const logActivity = (msg, type = 'info') => {
+  const time = new Date().toLocaleTimeString([], { hour12: false });
+  activityLogs.value.unshift({ id: Date.now() + Math.random(), time, msg, type });
+  if (activityLogs.value.length > 50) activityLogs.value.pop();
+};
+
+const startSeeding = async () => {
+  if (!geminiApiKey.value) { errorMessage.value = "Please enter your Gemini API Key first!"; return; }
+  if (!subjectId.value) { errorMessage.value = "Please select a subject!"; return; }
+
+  isRunning.value = true;
+  isPaused.value = false;
+  shouldStop.value = false;
+  errorMessage.value = '';
+  activityLogs.value = [];
+  
+  logActivity(`Session started for ${subjectId.value}.`, 'success');
+  
+  const genAI = new GoogleGenerativeAI(geminiApiKey.value);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+  for (let level of levels.value) {
+    if (shouldStop.value) break;
+    if (level.current >= level.targetCount) continue;
+
+    level.status = 'generating';
+    logActivity(`Fetching existing tests for ${level.id.toUpperCase()} to prevent duplicates...`, 'info');
+    const seenQuestions = new Set();
+    try {
+      const existingDocs = await getDocs(collection(db, 'subjects', subjectId.value, 'levels', level.id, 'tests'));
+      existingDocs.forEach(doc => {
+        if (doc.data().question) seenQuestions.add(doc.data().question.trim().toLowerCase());
       });
-    },
-    getStatColor(count) {
-      if (count < 100) return 'status-red';
-      if (count < 500) return 'status-yellow';
-      return 'status-green';
-    },
-    async fetchDbStats() {
-      if (!this.subjectId || this.levels.length === 0) return;
+      logActivity(`Loaded ${seenQuestions.size} existing questions for deduplication.`, 'success');
+    } catch(e) {
+      logActivity(`Warning: Could not fetch existing docs.`, 'warn');
+    }
+    
+    while (level.current < level.targetCount && !shouldStop.value) {
+      while (isPaused.value && !shouldStop.value) {
+        level.status = 'paused';
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      if (shouldStop.value) break;
       
-      this.isFetchingStats = true;
-      const stats = [];
-      for (let level of this.levels) {
-        try {
-          const coll = collection(db, 'subjects', this.subjectId, 'levels', level.id, 'tests');
-          const snapshot = await getCountFromServer(coll);
-          stats.push({ id: level.id, count: snapshot.data().count });
-        } catch (err) {
-          stats.push({ id: level.id, count: 0 });
-        }
-      }
-      this.dbStats = stats;
-      this.isFetchingStats = false;
-    },
-    pauseSeeding() {
-      this.isPaused = true;
-      this.logActivity('Generation Paused by Admin.', 'warn');
-    },
-    resumeSeeding() {
-      this.isPaused = false;
-      this.errorMessage = '';
-      this.logActivity('Generation Resumed.', 'success');
-    },
-    stopSeeding() {
-      this.shouldStop = true;
-      this.isPaused = false;
-      this.logActivity('Generation manually Stopped.', 'error');
-    },
-    logActivity(msg, type = 'info') {
-      const time = new Date().toLocaleTimeString([], { hour12: false });
-      this.activityLogs.unshift({ id: Date.now() + Math.random(), time, msg, type });
-      if (this.activityLogs.length > 50) {
-        this.activityLogs.pop();
-      }
-    },
-    async startSeeding() {
-      if (!this.geminiApiKey) {
-        this.errorMessage = "Please enter your Gemini API Key first!";
-        return;
-      }
-      if (!this.subjectId) {
-        this.errorMessage = "Please select a subject!";
-        return;
-      }
-
-      this.isRunning = true;
-      this.isPaused = false;
-      this.shouldStop = false;
-      this.errorMessage = '';
-      this.activityLogs = [];
+      level.status = 'generating';
+      const batchSize = Math.min(30, level.targetCount - level.current);
+      logActivity(`Requesting Gemini for ${batchSize} tests for ${level.id.toUpperCase()}...`, 'info');
       
-      this.logActivity(`Session started for ${this.subjectId}.`, 'success');
-      
-      const genAI = new GoogleGenerativeAI(this.geminiApiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-      for (let level of this.levels) {
-        if (this.shouldStop) break;
-        if (level.current >= level.targetCount) continue;
-
-        level.status = 'generating';
-        
-        // 1. Fetch all existing questions for deduplication
-        this.logActivity(`Fetching existing tests for ${level.id.toUpperCase()} to prevent duplicates...`, 'info');
-        const seenQuestions = new Set();
-        try {
-          const existingDocs = await getDocs(collection(db, 'subjects', this.subjectId, 'levels', level.id, 'tests'));
-          existingDocs.forEach(doc => {
-            if (doc.data().question) {
-              seenQuestions.add(doc.data().question.trim().toLowerCase());
-            }
-          });
-          this.logActivity(`Loaded ${seenQuestions.size} existing questions for deduplication.`, 'success');
-        } catch(e) {
-          this.logActivity(`Warning: Could not fetch existing docs.`, 'warn');
-          console.warn("Could not fetch existing docs for deduplication:", e);
-        }
-        
-        while (level.current < level.targetCount && !this.shouldStop) {
-          
-          while (this.isPaused && !this.shouldStop) {
-            level.status = 'paused';
-            await new Promise(r => setTimeout(r, 1000));
-          }
-          if (this.shouldStop) break;
-          
-          level.status = 'generating';
-          
-          const batchSize = Math.min(30, level.targetCount - level.current);
-          
-          this.logActivity(`Requesting Gemini for ${batchSize} tests for ${level.id.toUpperCase()}...`, 'info');
-          
-          const prompt = `Siz professional test tuzuvchisiz. "${this.subjectId}" fani bo'yicha "${level.id.toUpperCase()}" qiyinchilik darajasiga HAQIQIY va QAT'IY mos keladigan ${batchSize} ta test savolini O'zbek tilida tuzing.
+      const prompt = `Siz professional test tuzuvchisiz. "${subjectId.value}" fani bo'yicha "${level.id.toUpperCase()}" qiyinchilik darajasiga HAQIQIY va QAT'IY mos keladigan ${batchSize} ta test savolini O'zbek tilida tuzing.
 
 QAT'IY TALABLAR:
 1. Savollar butunlay yangi bo'lishi va bir-birini umuman takrorlamasligi shart.
@@ -330,123 +215,87 @@ Format:
   }
 ]`;
 
-          try {
-            const result = await model.generateContent(prompt);
-            const responseText = result.response.text();
-            
-            // Clean markdown if AI included it
-            let jsonString = responseText;
-            if (jsonString.includes('```json')) {
-              jsonString = jsonString.split('```json')[1].split('```')[0].trim();
-            } else if (jsonString.includes('```')) {
-              jsonString = jsonString.split('```')[1].split('```')[0].trim();
-            }
-            
-            const questions = JSON.parse(jsonString);
-            
-            if (!Array.isArray(questions) || questions.length === 0) {
-              throw new Error("Invalid output format");
-            }
-
-            // Save to Firestore in a batch
-            const batch = writeBatch(db);
-            const testsRef = collection(db, 'subjects', this.subjectId, 'levels', level.id, 'tests');
-            
-            let insertedCount = 0;
-            let skippedCount = 0;
-            
-            questions.forEach(q => {
-              const normalizedQ = q.question.trim().toLowerCase();
-              if (seenQuestions.has(normalizedQ)) {
-                // Deduplication: skip duplicate question
-                skippedCount++;
-                return;
-              }
-              
-              seenQuestions.add(normalizedQ);
-              insertedCount++;
-              
-              const docRef = doc(testsRef);
-              batch.set(docRef, {
-                question: q.question,
-                options: q.options,
-                correctAnswer: q.correctAnswer,
-                explanation: q.explanation,
-                createdAt: new Date()
-              });
-            });
-
-            if (insertedCount > 0) {
-              await batch.commit();
-            }
-            
-            level.current += insertedCount;
-            this.errorMessage = ''; // clear error on success
-            
-            this.logActivity(`Success: +${insertedCount} added. ${skippedCount > 0 ? `(Skipped ${skippedCount} duplicates)` : ''}`, 'success');
-            
-            // Update dbStats dynamically
-            const statObj = this.dbStats.find(s => s.id === level.id);
-            if (statObj) {
-              statObj.count += insertedCount;
-            }
-            
-            // Smart Rate Limiting: 60 seconds / 15 requests = 4 seconds per request.
-            // By waiting 4.5 seconds here, we naturally throttle ourselves and NEVER hit the limit!
-            if (level.current < level.targetCount) {
-              this.logActivity(`Applying 4.5s smart delay to avoid API limits...`, 'info');
-              await new Promise(r => setTimeout(r, 4500));
-            }
-            
-          } catch (err) {
-            console.error(`Error generating for ${level.id}:`, err);
-            
-            const errMsg = err.message || "";
-            if (errMsg.includes('PerDay') || errMsg.includes('GenerateRequestsPerDay')) {
-              this.logActivity(`FATAL: Daily API Limit Reached! Limit is exhausted for today.`, 'error');
-              this.errorMessage = `KUNLIK LIMIT TUGADI! Google API ushbu kalit uchun kunlik limitni (Daily Quota) tugatdi. Iltimos, boshqa Google akkauntdan yangi API Key oling yoki ertagacha kuting.`;
-              this.shouldStop = true; // Stop everything
-              this.isRunning = false;
-              break;
-            } else if (errMsg.includes('429') || errMsg.includes('quota')) {
-              this.logActivity(`API Quota reached. Halting for 60 seconds to clear 1-minute limit...`, 'error');
-              // Visible countdown so the user doesn't think it's frozen
-              for (let i = 60; i > 0; i--) {
-                if (this.shouldStop) break;
-                this.errorMessage = `API Limit (15 requests/min) reached. Waiting ${i} seconds to reset...`;
-                await new Promise(r => setTimeout(r, 1000));
-              }
-              this.errorMessage = `Retrying ${level.id.toUpperCase()} now...`;
-              this.logActivity(`Resuming generation after 60s wait...`, 'info');
-            } else if (errMsg.includes('503') || errMsg.includes('high demand')) {
-              this.logActivity(`Google Server busy (503). Retrying in 10 seconds...`, 'warn');
-              this.errorMessage = `Google API band (503). 10 soniyadan so'ng qayta urinilmoqda...`;
-              for (let i = 10; i > 0; i--) {
-                if (this.shouldStop) break;
-                await new Promise(r => setTimeout(r, 1000));
-              }
-            } else {
-              this.logActivity(`Error: ${errMsg}`, 'error');
-              this.errorMessage = `Error in ${level.id.toUpperCase()}: ${errMsg}`;
-              await new Promise(r => setTimeout(r, 4000));
-            }
-          }
-        }
+      try {
+        const result = await model.generateContent(prompt);
+        let jsonString = result.response.text();
+        if (jsonString.includes('```json')) jsonString = jsonString.split('```json')[1].split('```')[0].trim();
+        else if (jsonString.includes('```')) jsonString = jsonString.split('```')[1].split('```')[0].trim();
         
-        if (level.current >= level.targetCount) {
-          level.status = 'done';
-          this.logActivity(`Completed all targets for ${level.id.toUpperCase()}!`, 'success');
+        const questions = JSON.parse(jsonString);
+        if (!Array.isArray(questions) || questions.length === 0) throw new Error("Invalid output format");
+
+        const batch = writeBatch(db);
+        const testsRef = collection(db, 'subjects', subjectId.value, 'levels', level.id, 'tests');
+        
+        let insertedCount = 0;
+        let skippedCount = 0;
+        
+        questions.forEach(q => {
+          const normalizedQ = q.question.trim().toLowerCase();
+          if (seenQuestions.has(normalizedQ)) { skippedCount++; return; }
+          seenQuestions.add(normalizedQ);
+          insertedCount++;
+          batch.set(doc(testsRef), {
+            question: q.question, options: q.options, correctAnswer: q.correctAnswer,
+            explanation: q.explanation, createdAt: new Date()
+          });
+        });
+
+        if (insertedCount > 0) await batch.commit();
+        level.current += insertedCount;
+        errorMessage.value = ''; 
+        
+        logActivity(`Success: +${insertedCount} added. ${skippedCount > 0 ? `(Skipped ${skippedCount} duplicates)` : ''}`, 'success');
+        
+        const statObj = dbStats.value.find(s => s.id === level.id);
+        if (statObj) statObj.count += insertedCount;
+        
+        if (level.current < level.targetCount) {
+          logActivity(`Applying 4.5s smart delay to avoid API limits...`, 'info');
+          await new Promise(r => setTimeout(r, 4500));
+        }
+      } catch (err) {
+        console.error(`Error generating for ${level.id}:`, err);
+        const errMsg = err.message || "";
+        if (errMsg.includes('PerDay') || errMsg.includes('GenerateRequestsPerDay')) {
+          logActivity(`FATAL: Daily API Limit Reached! Limit is exhausted for today.`, 'error');
+          errorMessage.value = `KUNLIK LIMIT TUGADI! Google API ushbu kalit uchun kunlik limitni (Daily Quota) tugatdi. Iltimos, boshqa Google akkauntdan yangi API Key oling yoki ertagacha kuting.`;
+          shouldStop.value = true; 
+          isRunning.value = false;
+          break;
+        } else if (errMsg.includes('429') || errMsg.includes('quota')) {
+          logActivity(`API Quota reached. Halting for 60 seconds to clear 1-minute limit...`, 'error');
+          for (let i = 60; i > 0; i--) {
+            if (shouldStop.value) break;
+            errorMessage.value = `API Limit (15 requests/min) reached. Waiting ${i} seconds to reset...`;
+            await new Promise(r => setTimeout(r, 1000));
+          }
+          errorMessage.value = `Retrying ${level.id.toUpperCase()} now...`;
+          logActivity(`Resuming generation after 60s wait...`, 'info');
+        } else if (errMsg.includes('503') || errMsg.includes('high demand')) {
+          logActivity(`Google Server busy (503). Retrying in 10 seconds...`, 'warn');
+          errorMessage.value = `Google API band (503). 10 soniyadan so'ng qayta urinilmoqda...`;
+          for (let i = 10; i > 0; i--) {
+            if (shouldStop.value) break;
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        } else {
+          logActivity(`Error: ${errMsg}`, 'error');
+          errorMessage.value = `Error in ${level.id.toUpperCase()}: ${errMsg}`;
+          await new Promise(r => setTimeout(r, 4000));
         }
       }
-      
-      this.isRunning = false;
-      this.logActivity('Generation Session Ended.', 'info');
+    }
+    if (level.current >= level.targetCount) {
+      level.status = 'done';
+      logActivity(`Completed all targets for ${level.id.toUpperCase()}!`, 'success');
     }
   }
+  isRunning.value = false;
+  logActivity('Generation Session Ended.', 'info');
 };
 </script>
-
-<style scoped>
+\n<style scoped>
 .seeder-container {
   max-width: 1200px;
   width: 100%;

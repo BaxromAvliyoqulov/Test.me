@@ -1,20 +1,19 @@
-<template>
+﻿<template>
   <div class="premium-layout shop-wrapper">
-    <!-- Glowing background elements for premium feel -->
     <div class="glow-bg glow-bg-1"></div>
     <div class="glow-bg glow-bg-2"></div>
 
     <div class="shop-container">
       <div class="header-section">
-        <h1>🛍️ {{ isRus ? 'Магазин' : 'Do\'kon' }}</h1>
-        <p>{{ isRus ? 'Обменивайте TP Coins на кейсы и получайте уникальные награды!' : 'TP Coin larni g\'aznalarga almashtiring va noyob yutuqlarni qolga kiriting!' }}</p>
+        <h1>рџ›ЌпёЏ {{ isRus ? 'РњР°РіР°Р·РёРЅ' : "Do'kon" }}</h1>
+        <p>{{ isRus ? 'РћР±РјРµРЅРёРІР°Р№С‚Рµ TP Coins РЅР° РЅР°СЃС‚Р°РІРЅРёРєРѕРІ Рё РЅР°РіСЂР°РґС‹!' : "TP Coin larni AI ustozlar va sovg'alarga almashtiring!" }}</p>
       </div>
 
       <div class="shop-content">
         <!-- Balance Header -->
         <div class="balance-bento">
           <div class="balance-left">
-            <span class="balance-label">{{ isRus ? 'ВАШ БАЛАНС' : 'SIZNING BALANSINGIZ' }}</span>
+            <span class="balance-label">{{ isRus ? 'Р’РђРЁ Р‘РђР›РђРќРЎ' : 'SIZNING BALANSINGIZ' }}</span>
             <div class="balance-val">
               <img src="@/assets/img/tpCoin.png" alt="TP Coin" class="animate-spin-slow" />
               <h2>{{ points }}</h2>
@@ -22,73 +21,137 @@
             </div>
           </div>
           <button class="earn-more-btn" @click="$router.push('/points')">
-            <i class="fas fa-plus"></i> {{ isRus ? 'Заработать' : 'Ishlash' }}
+            <i class="fas fa-plus"></i> {{ isRus ? 'Р—Р°СЂР°Р±РѕС‚Р°С‚СЊ' : 'Ishlash' }}
           </button>
         </div>
 
-        <!-- Coming Soon State -->
-        <div class="coming-soon-wrapper">
+        <!-- Shop Tabs -->
+        <div class="shop-tabs">
+          <button :class="['shop-tab', { active: activeTab === 'mentors' }]" @click="activeTab = 'mentors'">
+            <i class="fas fa-robot"></i> {{ isRus ? 'AI РќР°СЃС‚Р°РІРЅРёРєРё' : 'AI Ustozlar' }}
+          </button>
+          <button :class="['shop-tab', { active: activeTab === 'cases' }]" @click="activeTab = 'cases'">
+            <i class="fas fa-box-open"></i> {{ isRus ? 'РљРµР№СЃС‹' : "G'aznalar" }}
+            <span class="soon-badge">Soon</span>
+          </button>
+        </div>
+
+        <!-- AI MENTORS TAB -->
+        <div v-if="activeTab === 'mentors'" class="mentors-shop">
+          <div class="mentors-grid">
+            <div
+              v-for="mentor in allMentors"
+              :key="mentor.id"
+              :class="['mentor-shop-card', `card-${mentor.id}`, {
+                owned: isOwned(mentor.id),
+                active: activeMentorId === mentor.id,
+                free: mentor.price === 0
+              }]"
+              :style="{ '--mc': mentor.color }"
+            >
+              <!-- Icon -->
+              <div class="msc-icon">
+                <i :class="mentor.icon"></i>
+              </div>
+
+              <!-- Info -->
+              <div class="msc-info">
+                <h4>{{ mentor.name[isRus ? 'RUS' : 'UZB'] }}</h4>
+                <p>{{ mentor.desc[isRus ? 'RUS' : 'UZB'] }}</p>
+              </div>
+
+              <!-- Price / Status -->
+              <div class="msc-footer">
+                <!-- Active badge -->
+                <div v-if="activeMentorId === mentor.id" class="msc-active-badge">
+                  <i class="fas fa-check-circle"></i> {{ isRus ? 'РђРєС‚РёРІРµРЅ' : 'Faol' }}
+                </div>
+                <!-- Activate if owned -->
+                <button
+                  v-else-if="isOwned(mentor.id)"
+                  class="msc-btn msc-btn-activate"
+                  @click="activateMentor(mentor.id)"
+                  :disabled="activating"
+                >
+                  <i class="fas fa-bolt"></i> {{ isRus ? 'РђРєС‚РёРІРёСЂРѕРІР°С‚СЊ' : 'Faollashtirish' }}
+                </button>
+                <!-- Buy button -->
+                <button
+                  v-else
+                  class="msc-btn msc-btn-buy"
+                  @click="buyMentor(mentor)"
+                  :disabled="buying === mentor.id || points < mentor.price"
+                >
+                  <span v-if="buying === mentor.id"><i class="fas fa-circle-notch fa-spin"></i></span>
+                  <span v-else-if="mentor.price === 0">
+                    <i class="fas fa-gift"></i> {{ isRus ? 'Р‘РµСЃРїР»Р°С‚РЅРѕ' : 'Bepul' }}
+                  </span>
+                  <span v-else>
+                    <img src="@/assets/img/tpCoin.png" style="width:16px;vertical-align:middle" /> {{ mentor.price }} TP
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CASES TAB -->
+        <div v-if="activeTab === 'cases'" class="coming-soon-wrapper">
           <div class="coming-soon-card">
             <div class="icon-glow-ring">
               <i class="fas fa-rocket text-blue floating-icon"></i>
             </div>
-            <h2>{{ isRus ? 'Магазин скоро откроется!' : 'Do\'kon tez kunda ishga tushadi!' }}</h2>
-            <p>{{ isRus ? 'Мы готовим для вас невероятные награды, уникальные аватары и секретные ящики. Копите TP Coins — скоро они вам понадобятся!' : 'Biz siz uchun ajoyib yutuqlar, noyob avatarlar va sirli g\'aznalar tayyorlayapmiz. TP Coinlarni yig\'ishda davom eting — tez orada ular sizga asqotadi!' }}</p>
-            
+            <h2>{{ isRus ? 'РњР°РіР°Р·РёРЅ СЃРєРѕСЂРѕ РѕС‚РєСЂРѕРµС‚СЃСЏ!' : "Do'kon tez kunda ishga tushadi!" }}</h2>
+            <p>{{ isRus ? 'РњС‹ РіРѕС‚РѕРІРёРј РґР»СЏ РІР°СЃ РЅРµРІРµСЂРѕСЏС‚РЅС‹Рµ РЅР°РіСЂР°РґС‹, СѓРЅРёРєР°Р»СЊРЅС‹Рµ Р°РІР°С‚Р°СЂС‹ Рё СЃРµРєСЂРµС‚РЅС‹Рµ СЏС‰РёРєРё.' : "Biz siz uchun ajoyib yutuqlar va sirli g'aznalar tayyorlayapmiz." }}</p>
             <div class="features-preview">
-              <div class="feature-item">
-                <i class="fas fa-box-open text-blue"></i>
-                <span>{{ isRus ? 'Секретные Ящики' : 'Sirli G\'aznalar' }}</span>
-              </div>
-              <div class="feature-item">
-                <i class="fas fa-gem text-purple"></i>
-                <span>{{ isRus ? 'Редкие Аватары' : 'Nodir Avatarlar' }}</span>
-              </div>
-              <div class="feature-item">
-                <i class="fas fa-certificate text-orange"></i>
-                <span>{{ isRus ? 'VIP Статусы' : 'VIP Maqomlar' }}</span>
-              </div>
+              <div class="feature-item"><i class="fas fa-box-open text-blue"></i><span>{{ isRus ? 'РЎРµРєСЂРµС‚РЅС‹Рµ РЇС‰РёРєРё' : "Sirli G'aznalar" }}</span></div>
+              <div class="feature-item"><i class="fas fa-gem text-purple"></i><span>{{ isRus ? 'Р РµРґРєРёРµ РђРІР°С‚Р°СЂС‹' : 'Nodir Avatarlar' }}</span></div>
+              <div class="feature-item"><i class="fas fa-certificate text-orange"></i><span>{{ isRus ? 'VIP РЎС‚Р°С‚СѓСЃС‹' : 'VIP Maqomlar' }}</span></div>
             </div>
-
-            <button class="back-btn" @click="$router.push('/dashboard')">
-              <i class="fas fa-arrow-left"></i> {{ isRus ? 'Вернуться в панель' : 'Panelga qaytish' }}
-            </button>
           </div>
         </div>
+
       </div>
     </div>
+
+    <!-- Toast notification -->
+    <transition name="slide-up">
+      <div v-if="toastMsg" :class="['shop-toast', toastType]">
+        {{ toastMsg }}
+      </div>
+    </transition>
 
     <!-- Lootbox Opening Animation Overlay -->
     <div v-if="showOverlay" class="lootbox-overlay">
       <div class="lootbox-animation-container">
-        <h2 class="opening-text">{{ isRus ? 'Открытие...' : 'Ochilmoqda...' }}</h2>
+        <h2 class="opening-text">{{ isRus ? 'РћС‚РєСЂС‹С‚РёРµ...' : 'Ochilmoqda...' }}</h2>
         <div class="box-shaker" :class="{ 'shake': isShaking, 'explode': isExploding }">
           <i :class="activeCase.icon" :style="{ color: activeCase.color }"></i>
         </div>
-        
         <div v-if="rewardRevealed" class="reward-reveal animate-pop-in">
-          <h3>{{ isRus ? 'ПОЗДРАВЛЯЕМ!' : 'TABRIKLAYMIZ!' }}</h3>
-          <p>{{ isRus ? 'Вы получили новый значок!' : 'Siz yangi nishonni qolga kiritdingiz!' }}</p>
+          <h3>{{ isRus ? 'РџРћР—Р”Р РђР’Р›РЇР•Рњ!' : 'TABRIKLAYMIZ!' }}</h3>
+          <p>{{ isRus ? 'Р’С‹ РїРѕР»СѓС‡РёР»Рё РЅРѕРІС‹Р№ Р·РЅР°С‡РѕРє!' : 'Siz yangi nishonni qolga kiritdingiz!' }}</p>
           <div class="reward-item">
             <i :class="rewardIcon"></i>
             <span>{{ rewardName }}</span>
           </div>
-          <button class="claim-btn" @click="closeOverlay">{{ isRus ? 'Забрать' : 'Olish' }}</button>
+          <button class="claim-btn" @click="closeOverlay">{{ isRus ? 'Р—Р°Р±СЂР°С‚СЊ' : 'Olish' }}</button>
         </div>
       </div>
     </div>
   </div>
 </template>
 
+
 <script setup>
 import { ref, onMounted } from 'vue';
 import { db } from '@/config/firebase';
-import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useToast } from 'vue-toastification';
 import { useI18n } from '@/utils/i18n';
-import ShopCases from '@/components/shop/ShopCases.vue';
 import { getBadges } from '@/utils/badges';
+import { AIMentors } from '@/config/mentors';
 
 const points = ref(0);
 const { locale } = useI18n();
@@ -96,72 +159,97 @@ const isRus = ref(locale.value === 'RUS');
 const toast = useToast();
 const auth = getAuth();
 
+const activeTab = ref('mentors');
+const allMentors = Object.values(AIMentors);
+const unlockedMentors = ref(['standard', 'friendly']);
+const activeMentorId = ref('standard');
+const buying = ref(null);
+const activating = ref(false);
+const toastMsg = ref('');
+const toastType = ref('success');
+
 // Animation States
 const isOpening = ref(false);
 const showOverlay = ref(false);
 const isShaking = ref(false);
 const isExploding = ref(false);
 const rewardRevealed = ref(false);
-
 const activeCase = ref(null);
 const rewardIcon = ref('');
 const rewardName = ref('');
 
+let currentUser = null;
+
+const showToast = (msg, type = 'success') => {
+  toastMsg.value = msg;
+  toastType.value = type;
+  setTimeout(() => { toastMsg.value = ''; }, 3000);
+};
+
+const isOwned = (id) => unlockedMentors.value.includes(id);
+
 onMounted(async () => {
   auth.onAuthStateChanged(async (user) => {
     if (user) {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        points.value = userDoc.data().points || 0;
-      }
+      currentUser = user;
+      onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          points.value = data.points || 0;
+          const prefs = data.preferences || {};
+          unlockedMentors.value = prefs.unlockedMentors || ['standard', 'friendly'];
+          activeMentorId.value = prefs.mentorType || 'standard';
+        }
+      });
     }
   });
 });
 
-const handleOpenCase = async (caseItem) => {
-  if (points.value < caseItem.price) {
-    toast.error(isRus.value ? 'Недостаточно TP Coins!' : 'TP Coins yetarli emas!');
+const buyMentor = async (mentor) => {
+  if (!currentUser) return;
+  if (mentor.price === 0) {
+    // Free mentor вЂ” just unlock
+    if (!isOwned(mentor.id)) {
+      const newList = [...unlockedMentors.value, mentor.id];
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        'preferences.unlockedMentors': newList
+      });
+      showToast(isRus.value ? 'РќР°СЃС‚Р°РІРЅРёРє СЂР°Р·Р±Р»РѕРєРёСЂРѕРІР°РЅ!' : "Ustoz qo'shildi!", 'success');
+    }
     return;
   }
-
-  const user = auth.currentUser;
-  if (!user) return;
-
-  isOpening.value = true;
-  showOverlay.value = true;
-  activeCase.value = caseItem;
-  isShaking.value = true;
-
+  if (points.value < mentor.price) {
+    showToast(isRus.value ? 'TP Coins yetarli emas!' : 'TP Coins yetarli emas!', 'error');
+    return;
+  }
+  buying.value = mentor.id;
   try {
-    // Deduct points
-    const userRef = doc(db, 'users', user.uid);
-    await updateDoc(userRef, {
-      points: increment(-caseItem.price)
+    const newList = [...unlockedMentors.value, mentor.id];
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      points: increment(-mentor.price),
+      'preferences.unlockedMentors': newList
     });
-    points.value -= caseItem.price;
+    showToast(isRus.value ? `${mentor.name.RUS} razblokРёСЂРѕРІР°РЅ! рџЋ‰` : `${mentor.name.UZB} qo'shildi! рџЋ‰`, 'success');
+  } catch (e) {
+    console.error(e);
+    showToast('Xatolik yuz berdi!', 'error');
+  } finally {
+    buying.value = null;
+  }
+};
 
-    // Mock getting a random badge for visual effect
-    // In reality, this would save to user's inventory
-    const allBadges = getBadges(100, 10, 1000);
-    const randomBadge = allBadges[Math.floor(Math.random() * allBadges.length)];
-    
-    rewardIcon.value = randomBadge.icon;
-    rewardName.value = isRus.value ? randomBadge.nameRu : randomBadge.nameUz;
-
-    // Animation timing
-    setTimeout(() => {
-      isShaking.value = false;
-      isExploding.value = true;
-      
-      setTimeout(() => {
-        rewardRevealed.value = true;
-      }, 500);
-    }, 2000);
-
-  } catch (error) {
-    console.error('Error opening case:', error);
-    toast.error('Xatolik yuz berdi!');
-    closeOverlay();
+const activateMentor = async (id) => {
+  if (!currentUser) return;
+  activating.value = true;
+  try {
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      'preferences.mentorType': id
+    });
+    showToast(isRus.value ? 'РќР°СЃС‚Р°РІРЅРёРє Р°РєС‚РёРІРёСЂРѕРІР°РЅ!' : 'Ustoz faollashtirildi! вњ…', 'success');
+  } catch (e) {
+    showToast('Xatolik!', 'error');
+  } finally {
+    activating.value = false;
   }
 };
 
@@ -622,4 +710,35 @@ const closeOverlay = () => {
   background: #2563eb;
   transform: translateY(-2px);
 }
-</style>
+
+/* ===== SHOP TABS ===== */
+.shop-tabs { display: flex; gap: 12px; margin-bottom: 2rem; }
+.shop-tab { display: flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: #fff; font-size: 0.95rem; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.25s; }
+.shop-tab.active { background: #0f172a; color: #fff; border-color: #0f172a; box-shadow: 0 8px 20px -4px rgba(15,23,42,0.25); }
+.soon-badge { font-size: 0.65rem; font-weight: 800; background: #f59e0b; color: #fff; padding: 2px 7px; border-radius: 20px; }
+
+/* ===== MENTORS GRID ===== */
+.mentors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
+.mentor-shop-card { background: rgba(255,255,255,0.9); border: 1.5px solid rgba(226,232,240,0.8); border-radius: 24px; padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem; transition: all 0.4s cubic-bezier(0.16,1,0.3,1); position: relative; overflow: hidden; }
+.mentor-shop-card::before { content: ''; position: absolute; top: -60px; right: -60px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--mc) 20%, transparent), transparent 70%); pointer-events: none; }
+.mentor-shop-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -10px color-mix(in srgb, var(--mc) 20%, rgba(0,0,0,0.08)); border-color: color-mix(in srgb, var(--mc) 40%, transparent); }
+.mentor-shop-card.owned { border-color: color-mix(in srgb, var(--mc) 50%, transparent); background: color-mix(in srgb, var(--mc) 4%, #fff); }
+.mentor-shop-card.active { border-color: var(--mc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc) 20%, transparent), 0 20px 40px -10px color-mix(in srgb, var(--mc) 25%, transparent); }
+.msc-icon { width: 60px; height: 60px; border-radius: 18px; background: linear-gradient(135deg, var(--mc), color-mix(in srgb, var(--mc) 60%, white)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--mc) 50%, transparent); }
+.msc-info h4 { font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+.msc-info p { font-size: 0.83rem; color: #64748b; line-height: 1.5; }
+.msc-active-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 12px; background: color-mix(in srgb, var(--mc) 12%, transparent); color: var(--mc); font-weight: 800; font-size: 0.9rem; }
+.msc-btn { width: 100%; padding: 12px 18px; border-radius: 14px; border: none; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.msc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.msc-btn-buy { background: linear-gradient(135deg, var(--mc), color-mix(in srgb, var(--mc) 70%, #000)); color: #fff; box-shadow: 0 6px 16px -4px color-mix(in srgb, var(--mc) 50%, transparent); }
+.msc-btn-buy:hover:not(:disabled) { transform: translateY(-2px); }
+.msc-btn-activate { background: #f1f5f9; color: #334155; border: 1.5px solid #e2e8f0; }
+.msc-btn-activate:hover:not(:disabled) { background: #0f172a; color: #fff; border-color: transparent; }
+
+/* ===== TOAST ===== */
+.shop-toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); padding: 14px 28px; border-radius: 16px; font-weight: 700; font-size: 0.95rem; z-index: 9999; box-shadow: 0 8px 30px rgba(0,0,0,0.15); white-space: nowrap; }
+.shop-toast.success { background: #0f172a; color: #fff; }
+.shop-toast.error { background: #ef4444; color: #fff; }
+.slide-up-enter-active, .slide-up-leave-active { transition: all 0.35s ease; }
+.slide-up-enter-from, .slide-up-leave-to { opacity: 0; transform: translate(-50%, 20px); }</style>
+

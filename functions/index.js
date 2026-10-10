@@ -318,3 +318,197 @@ function generateFallbackQuestions(subject, level, topic) {
     }
   ];
 }
+
+/**
+ * HTML belgilarini Telegram xabari uchun tozalash
+ */
+function escapeTgHtml(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * 🎯 Firestore supportMessages trigger:
+ * Foydalanuvchi saytdan (contactUs.vue) murojaat yuborganda,
+ * Telegram bot orqali adminga xavfsiz xabarnoma yuboradi.
+ * Token hech qachon mijoz (frontend) kodiga chiqmaydi.
+ */
+exports.onSupportMessageCreated = functions.firestore
+  .document('supportMessages/{messageId}')
+  .onCreate(async (snapshot, context) => {
+    const data = snapshot.data();
+    if (!data) return null;
+
+    const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID || '587788509';
+
+    if (!BOT_TOKEN) {
+      console.warn('TELEGRAM_BOT_TOKEN env topilmadi. Telegramga xabar yuborilmadi.');
+      return null;
+    }
+
+    const reqTypeLabels = {
+      test: '📚 Test bo\'yicha taklif/savol',
+      cooperation: '🤝 Hamkorlik',
+      bug: '⚠️ Texnik nosozlik / Xatolik',
+      other: '💬 Boshqa murojaat'
+    };
+
+    const typeLabel = reqTypeLabels[data.requestType] || data.requestType || 'Umumiy';
+    const timeStr = new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' });
+
+    const messageText = 
+      `📬 <b>YANGI MUROJAAT (Test.me Support)</b>\n\n` +
+      `👤 <b>Ism:</b> ${escapeTgHtml(data.name || 'Noma\'lum')}\n` +
+      `📞 <b>Telefon:</b> ${escapeTgHtml(data.phone || 'Ko\'rsatilmadi')}\n` +
+      `📌 <b>Murojaat turi:</b> ${escapeTgHtml(typeLabel)}\n` +
+      (data.subject ? `📖 <b>Fan:</b> ${escapeTgHtml(data.subject)}\n` : '') +
+      `💬 <b>Xabar matni:</b>\n<i>${escapeTgHtml(data.message || '')}</i>\n\n` +
+      `🆔 <b>ID:</b> <code>${context.params.messageId}</code>\n` +
+      `🕒 <b>Vaqt:</b> ${timeStr}`;
+
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: ADMIN_CHAT_ID,
+          text: messageText,
+          parse_mode: 'HTML'
+        })
+      });
+
+      const resData = await response.json();
+      if (!resData.ok) {
+        console.error('Telegram API error:', resData);
+      } else {
+        console.log(`Telegram notification sent successfully for message ${context.params.messageId}`);
+      }
+    } catch (error) {
+      console.error('Failed to notify admin via Telegram:', error);
+    }
+
+    return null;
+  });
+
+/**
+ * 🤖 Telegram Bot Webhook:
+ * Foydalanuvchilar to'g'ridan-to'g'ri Telegram orqali @Testme_Support_bot ga
+ * murojaat qilganda ularga avtomatik javob berish va adminga uzatish.
+ */
+exports.telegramBotWebhook = functions.https.onRequest(async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(200).send('Telegram webhook endpoint is active.');
+  }
+
+  const update = req.body;
+  const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+  const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID || '587788509';
+
+  if (!BOT_TOKEN) {
+    console.warn('TELEGRAM_BOT_TOKEN env mavjud emas.');
+    return res.status(500).send('Bot token not configured.');
+  }
+
+  if (!update || !update.message) {
+    return res.sendStatus(200);
+  }
+
+  const msg = update.message;
+  const chatId = msg.chat.id;
+  const userText = msg.text || '';
+  const fromUser = msg.from || {};
+  const userName = [fromUser.first_name, fromUser.last_name].filter(Boolean).join(' ') || fromUser.username || 'Foydalanuvchi';
+
+  const sendTg = async (toChatId, text, replyMarkup) => {
+    try {
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: toChatId,
+          text,
+          parse_mode: 'HTML',
+          reply_markup: replyMarkup
+        })
+      });
+    } catch (e) {
+      console.error('Telegram reply error:', e);
+    }
+  };
+
+  // Komandalar
+  if (userText.startsWith('/start')) {
+    const welcomeText = 
+      `👋 <b>Assalomu alaykum, ${escapeTgHtml(userName)}!</b>\n\n` +
+      `🎯 <b>Test.me</b> platformasining rasmiy qo'llab-quvvatlash botiga xush kelibsiz.\n\n` +
+      `Siz bu yerda o'z savollaringiz, takliflaringiz yoki platformadagi texnik muammolar bo'yicha murojaat qilishingiz mumkin.\n\n` +
+      `✍️ <i>Murojaatingizni shunchaki ushbu chatga xabar qilib yozib qoldiring. Mutaxassislarimiz tez orada siz bilan bog'lanishadi!</i>`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: '🌐 Test.me saytiga o\'tish', url: 'https://test-me.uz' }],
+        [{ text: '👨‍💻 Dasturchi bilan bog\'lanish', url: 'https://t.me/Baxrom_Dev' }]
+      ]
+    };
+
+    await sendTg(chatId, welcomeText, keyboard);
+    return res.sendStatus(200);
+  }
+
+  if (userText.startsWith('/website')) {
+    await sendTg(chatId, '🌐 Test.me platformasiga havola: https://test-me.uz');
+    return res.sendStatus(200);
+  }
+
+  if (userText.startsWith('/support')) {
+    await sendTg(
+      chatId,
+      `📞 <b>Qo'llab-quvvatlash xizmati:</b>\n\n` +
+      `👤 Dasturchi: @Baxrom_Dev\n` +
+      `📱 Tel: +998 99 074 62 57\n` +
+      `📧 Email: avliyoqulovbaxrom99@gmail.com`
+    );
+    return res.sendStatus(200);
+  }
+
+  // Agar oddiy xabar yuborsa
+  // 1. Foydalanuvchiga tasdiq
+  await sendTg(
+    chatId,
+    `✅ <b>Xabaringiz qabul qilindi!</b>\n\nTez orada administratorlarimiz sizga javob berishadi. Rahmat!`
+  );
+
+  // 2. Adminga xabar va Firestorega saqlash
+  const adminNotification = 
+    `📩 <b>BOT ORQALI YANGI XABAR!</b>\n\n` +
+    `👤 <b>Foydalanuvchi:</b> ${escapeTgHtml(userName)} (<code>${chatId}</code>)\n` +
+    `🔗 <b>Username:</b> ${fromUser.username ? '@' + escapeTgHtml(fromUser.username) : 'Mavjud emas'}\n` +
+    `💬 <b>Xabar:</b>\n<i>${escapeTgHtml(userText)}</i>`;
+
+  if (String(chatId) !== String(ADMIN_CHAT_ID)) {
+    await sendTg(ADMIN_CHAT_ID, adminNotification);
+  }
+
+  // Firestorega yozish
+  try {
+    await db.collection('supportMessages').add({
+      name: userName,
+      phone: fromUser.username ? `@${fromUser.username}` : `TG ID: ${chatId}`,
+      requestType: 'telegram_bot',
+      message: userText,
+      source: 'telegram_bot',
+      telegramChatId: chatId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      status: 'new'
+    });
+  } catch (err) {
+    console.error('Error saving TG message to Firestore:', err);
+  }
+
+  return res.sendStatus(200);
+});

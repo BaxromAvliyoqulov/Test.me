@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="premium-layout shop-wrapper">
     <div class="glow-bg glow-bg-1"></div>
     <div class="glow-bg glow-bg-2"></div>
@@ -13,25 +13,33 @@
         <!-- Balance Header -->
         <div class="balance-bento">
           <div class="balance-left">
-            <span class="balance-label">{{ isRus ? 'Р’РђРЁ Р‘РђР›РђРќРЎ' : 'SIZNING BALANSINGIZ' }}</span>
+            <span class="balance-label">{{ isRus ? 'ВАШ БАЛАНС' : 'SIZNING BALANSINGIZ' }}</span>
             <div class="balance-val">
               <img src="@/assets/img/tpCoin.png" alt="TP Coin" class="animate-spin-slow" />
               <h2>{{ points }}</h2>
               <span>TP Coins</span>
             </div>
           </div>
-          <button class="earn-more-btn" @click="$router.push('/points')">
-            <i class="fas fa-plus"></i> {{ isRus ? 'Р—Р°СЂР°Р±РѕС‚Р°С‚СЊ' : 'Ishlash' }}
-          </button>
+          <div class="balance-actions">
+            <button class="history-btn" @click="showHistoryModal = true">
+              <i class="fas fa-history"></i> {{ isRus ? 'История' : 'Tarix' }}
+            </button>
+            <button class="earn-more-btn" @click="$router.push('/points')">
+              <i class="fas fa-plus"></i> {{ isRus ? 'Заработать' : 'Ishlash' }}
+            </button>
+          </div>
         </div>
 
         <!-- Shop Tabs -->
         <div class="shop-tabs">
           <button :class="['shop-tab', { active: activeTab === 'mentors' }]" @click="activeTab = 'mentors'">
-            <i class="fas fa-robot"></i> {{ isRus ? 'AI РќР°СЃС‚Р°РІРЅРёРєРё' : 'AI Ustozlar' }}
+            <i class="fas fa-robot"></i> {{ isRus ? 'AI Наставники' : 'AI Ustozlar' }}
+          </button>
+          <button :class="['shop-tab', { active: activeTab === 'themes' }]" @click="activeTab = 'themes'">
+            <i class="fas fa-palette"></i> {{ isRus ? 'Темы UI' : 'Mavzular' }}
           </button>
           <button :class="['shop-tab', { active: activeTab === 'cases' }]" @click="activeTab = 'cases'">
-            <i class="fas fa-box-open"></i> {{ isRus ? 'РљРµР№СЃС‹' : "G'aznalar" }}
+            <i class="fas fa-box-open"></i> {{ isRus ? 'Кейсы' : "G'aznalar" }}
             <span class="soon-badge">Soon</span>
           </button>
         </div>
@@ -64,7 +72,7 @@
               <div class="msc-footer">
                 <!-- Active badge -->
                 <div v-if="activeMentorId === mentor.id" class="msc-active-badge">
-                  <i class="fas fa-check-circle"></i> {{ isRus ? 'РђРєС‚РёРІРµРЅ' : 'Faol' }}
+                  <i class="fas fa-check-circle"></i> {{ isRus ? 'Активен' : 'Faol' }}
                 </div>
                 <!-- Activate if owned -->
                 <button
@@ -73,7 +81,7 @@
                   @click="activateMentor(mentor.id)"
                   :disabled="activating"
                 >
-                  <i class="fas fa-bolt"></i> {{ isRus ? 'РђРєС‚РёРІРёСЂРѕРІР°С‚СЊ' : 'Faollashtirish' }}
+                  <i class="fas fa-bolt"></i> {{ isRus ? 'Активировать' : 'Faollashtirish' }}
                 </button>
                 <!-- Buy button -->
                 <button
@@ -84,11 +92,54 @@
                 >
                   <span v-if="buying === mentor.id"><i class="fas fa-circle-notch fa-spin"></i></span>
                   <span v-else-if="mentor.price === 0">
-                    <i class="fas fa-gift"></i> {{ isRus ? 'Р‘РµСЃРїР»Р°С‚РЅРѕ' : 'Bepul' }}
+                    <i class="fas fa-gift"></i> {{ isRus ? 'Бесплатно' : 'Bepul' }}
                   </span>
                   <span v-else>
                     <img src="@/assets/img/tpCoin.png" style="width:16px;vertical-align:middle" /> {{ mentor.price }} TP
                   </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- THEMES TAB -->
+        <div v-if="activeTab === 'themes'" class="themes-shop">
+          <div class="mentors-grid">
+            <div
+              v-for="theme in availableThemes"
+              :key="theme.id"
+              :class="['mentor-shop-card', {
+                owned: isThemeOwned(theme.id),
+                active: activeThemeId === theme.id
+              }]"
+              :style="{ '--mc': theme.color }"
+            >
+              <div class="msc-icon">
+                <i :class="theme.icon"></i>
+              </div>
+              <div class="msc-info">
+                <h4>{{ theme.name[isRus ? 'RUS' : 'UZB'] }}</h4>
+                <p>{{ theme.desc[isRus ? 'RUS' : 'UZB'] }}</p>
+              </div>
+              <div class="msc-footer">
+                <div v-if="activeThemeId === theme.id" class="msc-active-badge">
+                  <i class="fas fa-check-circle"></i> {{ isRus ? 'Активен' : 'Faol' }}
+                </div>
+                <button
+                  v-else-if="isThemeOwned(theme.id)"
+                  class="msc-btn msc-btn-activate"
+                  @click="activateTheme(theme.id)"
+                >
+                  <i class="fas fa-magic"></i> {{ isRus ? 'Применить' : 'Qo\'llash' }}
+                </button>
+                <button
+                  v-else
+                  class="msc-btn msc-btn-buy"
+                  @click="buyTheme(theme)"
+                  :disabled="points < theme.price"
+                >
+                  <img src="@/assets/img/tpCoin.png" style="width:16px;vertical-align:middle" /> {{ theme.price }} TP
                 </button>
               </div>
             </div>
@@ -139,6 +190,33 @@
         </div>
       </div>
     </div>
+    <!-- Transaction History Modal -->
+    <div v-if="showHistoryModal" class="lootbox-overlay" @click.self="showHistoryModal = false">
+      <div class="history-modal-content animate-pop-in">
+        <div class="modal-header">
+          <h3><i class="fas fa-history text-blue"></i> {{ isRus ? 'История Tranzaktsiy' : 'Tranzaksiyalar Tarixi' }}</h3>
+          <button class="close-modal-btn" @click="showHistoryModal = false">&times;</button>
+        </div>
+        <div class="history-list" v-if="transactions.length > 0">
+          <div v-for="t in transactions" :key="t.id" :class="['history-item', t.type]">
+            <div class="hi-icon">
+              <i :class="t.type === 'earn' ? 'fas fa-arrow-down text-emerald' : 'fas fa-arrow-up text-rose'"></i>
+            </div>
+            <div class="hi-details">
+              <div class="hi-title">{{ t.description }}</div>
+              <div class="hi-time">{{ t.date }}</div>
+            </div>
+            <div :class="['hi-amount', t.type]">
+              {{ t.type === 'earn' ? '+' : '-' }}{{ t.amount }} TP
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty-history">
+          <i class="fas fa-receipt text-slate"></i>
+          <p>{{ isRus ? 'История пока пуста' : 'Tranzaksiyalar tarixi hali bo\'sh' }}</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -167,6 +245,23 @@ const buying = ref(null);
 const activating = ref(false);
 const toastMsg = ref('');
 const toastType = ref('success');
+const showHistoryModal = ref(false);
+
+// Themes State
+const activeThemeId = ref('default');
+const unlockedThemes = ref(['default']);
+const availableThemes = [
+  { id: 'default', name: { UZB: 'Minimal SaaS', RUS: 'Минимал SaaS' }, desc: { UZB: 'Standart zamonaviy oq-ko\'k dizayn', RUS: 'Стандартный современный дизайн' }, price: 0, color: '#3b82f6', icon: 'fas fa-sun' },
+  { id: 'cyberpunk', name: { UZB: 'Cyberpunk Neon', RUS: 'Киберпанк Неон' }, desc: { UZB: 'Neonnli va zamonaviy kelajak mavzusi', RUS: 'Футуристическая неоновая тема' }, price: 150, color: '#ec4899', icon: 'fas fa-bolt' },
+  { id: 'emerald', name: { UZB: 'Emerald Glass', RUS: 'Изумрудный Глянец' }, desc: { UZB: 'Yashil va tinchlantiruvchi tabiat mavzusi', RUS: 'Экологичная зеленая тема' }, price: 200, color: '#10b981', icon: 'fas fa-leaf' },
+  { id: 'midnight', name: { UZB: 'Midnight Violet', RUS: 'Полночный Фиолет' }, desc: { UZB: 'Tungi to\'q binafsha rangli VIP uslub', RUS: 'Темный фиолетовый премиум стиль' }, price: 300, color: '#8b5cf6', icon: 'fas fa-moon' },
+];
+
+// Transactions history list
+const transactions = ref([
+  { id: 't1', type: 'earn', description: 'Test topshirildi (IQ Math)', amount: 50, date: 'Bugun, 12:40' },
+  { id: 't2', type: 'spend', description: 'Comedian AI Mentor xarid qilindi', amount: 100, date: 'Kecha, 18:20' }
+]);
 
 // Animation States
 const isOpening = ref(false);
@@ -187,6 +282,46 @@ const showToast = (msg, type = 'success') => {
 };
 
 const isOwned = (id) => unlockedMentors.value.includes(id);
+const isThemeOwned = (id) => unlockedThemes.value.includes(id);
+
+const buyTheme = async (theme) => {
+  if (!currentUser) return;
+  if (points.value < theme.price) {
+    showToast(isRus.value ? 'TP Coins yetarli emas!' : 'TP Coins yetarli emas!', 'error');
+    return;
+  }
+  try {
+    const newList = [...unlockedThemes.value, theme.id];
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      points: increment(-theme.price),
+      'preferences.unlockedThemes': newList
+    });
+    unlockedThemes.value = newList;
+    transactions.value.unshift({
+      id: Date.now(),
+      type: 'spend',
+      description: `${theme.name.UZB} mavzusi sotib olindi`,
+      amount: theme.price,
+      date: 'Hozir'
+    });
+    showToast(isRus.value ? 'Тема разблокирована! 🎉' : 'Mavzu razblokiruy qilindi! 🎉', 'success');
+  } catch (e) {
+    showToast('Xatolik yuz berdi!', 'error');
+  }
+};
+
+const activateTheme = async (id) => {
+  if (!currentUser) return;
+  activeThemeId.value = id;
+  try {
+    await updateDoc(doc(db, 'users', currentUser.uid), {
+      'preferences.themeId': id
+    });
+    showToast(isRus.value ? 'Тема применена!' : 'Mavzu qo\'llanildi! ✨', 'success');
+  } catch (e) {
+    showToast('Xatolik!', 'error');
+  }
+};
 
 onMounted(async () => {
   auth.onAuthStateChanged(async (user) => {
@@ -734,6 +869,34 @@ const closeOverlay = () => {
 .msc-btn-buy:hover:not(:disabled) { transform: translateY(-2px); }
 .msc-btn-activate { background: #f1f5f9; color: #334155; border: 1.5px solid #e2e8f0; }
 .msc-btn-activate:hover:not(:disabled) { background: #0f172a; color: #fff; border-color: transparent; }
+
+/* ===== BALANCE ACTIONS & HISTORY MODAL ===== */
+.balance-actions { display: flex; gap: 10px; align-items: center; }
+.history-btn { background: #f8fafc; color: #475569; border: 1.5px solid #e2e8f0; padding: 12px 20px; border-radius: 16px; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
+.history-btn:hover { background: #e2e8f0; color: #0f172a; }
+
+.history-modal-content { background: white; border-radius: 28px; padding: 2rem; width: 480px; max-width: 92vw; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4); border: 1px solid #e2e8f0; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.modal-header h3 { font-size: 1.3rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 10px; }
+.close-modal-btn { background: transparent; border: none; font-size: 1.8rem; color: #94a3b8; cursor: pointer; line-height: 1; transition: color 0.2s; }
+.close-modal-btn:hover { color: #0f172a; }
+
+.history-list { display: flex; flex-direction: column; gap: 12px; max-height: 340px; overflow-y: auto; padding-right: 4px; }
+.history-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 16px; background: #f8fafc; border: 1px solid #f1f5f9; }
+.hi-icon { width: 40px; height: 40px; border-radius: 12px; background: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+.text-emerald { color: #10b981; }
+.text-rose { color: #f43f5e; }
+.text-slate { color: #94a3b8; }
+.hi-details { flex: 1; }
+.hi-title { font-size: 0.92rem; font-weight: 700; color: #1e293b; }
+.hi-time { font-size: 0.78rem; color: #94a3b8; margin-top: 2px; }
+.hi-amount { font-weight: 800; font-size: 0.98rem; }
+.hi-amount.earn { color: #10b981; }
+.hi-amount.spend { color: #f43f5e; }
+
+.empty-history { text-align: center; padding: 3rem 1rem; color: #94a3b8; }
+.empty-history i { font-size: 3rem; margin-bottom: 1rem; }
+.empty-history p { margin: 0; font-weight: 600; }
 
 /* ===== TOAST ===== */
 .shop-toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); padding: 14px 28px; border-radius: 16px; font-weight: 700; font-size: 0.95rem; z-index: 9999; box-shadow: 0 8px 30px rgba(0,0,0,0.15); white-space: nowrap; }

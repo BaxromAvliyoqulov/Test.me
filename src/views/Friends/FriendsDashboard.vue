@@ -8,6 +8,11 @@
       <div class="header-section">
         <h2><i class="fas fa-users"></i> {{ isRus ? 'Друзья и Сообщество' : "Do'stlar va Hamjamiyat" }}</h2>
         <p>{{ isRus ? 'Общайтесь с другими учениками, соревнуйтесь и делитесь результатами!' : "Boshqa foydalanuvchilar bilan suhbatlashing va natijalar bilan bo'lishing!" }}</p>
+        <div style="margin-top: 1rem;">
+          <button class="duel-btn" @click="showDuelModal = true">
+            ⚔️ {{ isRus ? 'Вызвать на 1v1 Дуэль' : '1v1 Test Duel Musobaqasi' }}
+          </button>
+        </div>
       </div>
 
       <div class="main-layout">
@@ -53,6 +58,38 @@
           />
         </div>
       </div>
+
+      <!-- 1v1 Duel Challenge Modal -->
+      <div v-if="showDuelModal" class="lootbox-overlay" @click.self="showDuelModal = false">
+        <div class="history-modal-content animate-pop-in">
+          <div class="modal-header">
+            <h3>⚔️ {{ isRus ? '1v1 Тестовая Дуэль' : '1v1 Test Duel Musobaqasi' }}</h3>
+            <button class="close-modal-btn" @click="showDuelModal = false">&times;</button>
+          </div>
+          <div class="duel-modal-body">
+            <p>{{ isRus ? 'Выберите друга и предмет для дуэли:' : 'Do\'stingizni va imtihon fanini tanlang:' }}</p>
+            <div class="form-group">
+              <label>{{ isRus ? 'Друг' : 'Do\'st' }}</label>
+              <select v-model="selectedDuelFriend" class="select-input">
+                <option value="">{{ isRus ? '-- Выберите друга --' : '-- Do\'stni tanlang --' }}</option>
+                <option v-for="f in friends" :key="f.uid" :value="f">{{ f.displayName }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>{{ isRus ? 'Предмет' : 'Fan' }}</label>
+              <select v-model="selectedDuelSubject" class="select-input">
+                <option value="matematik">Matematika</option>
+                <option value="english">Ingliz Tili</option>
+                <option value="tarix">Tarix</option>
+                <option value="informatika">Informatika & AI</option>
+              </select>
+            </div>
+            <button class="start-duel-btn" :disabled="!selectedDuelFriend" @click="startDuel">
+              🔥 {{ isRus ? 'Отправить вызов' : 'Chaqiruv Yuborish' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -78,6 +115,19 @@ const friends = ref([]);
 const pendingRequests = ref([]);
 const activeChat = ref(null);
 const currentUser = ref(null);
+
+// Duel Modal State
+const showDuelModal = ref(false);
+const selectedDuelFriend = ref(null);
+const selectedDuelSubject = ref('matematik');
+
+const startDuel = () => {
+  if (!selectedDuelFriend.value) return;
+  alert(isRus.value ? `Вызов отправлен ${selectedDuelFriend.value.displayName}!` : `${selectedDuelFriend.value.displayName}ga test duel chaqiruvi yuborildi!`);
+  showDuelModal.value = false;
+  router.push(`/test?subjectId=${selectedDuelSubject.value}&levelId=elementary`);
+};
+
 let unsubReq = null;
 let unsubFriends = null;
 
@@ -243,6 +293,70 @@ const openChat = (friend) => {
   border: 1px solid rgba(226, 232, 240, 0.8) !important;
   overflow: hidden;
 }
+
+.duel-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  padding: 12px 26px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+  transition: all 0.25s;
+}
+
+.duel-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 25px rgba(245, 158, 11, 0.4);
+}
+
+.lootbox-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.history-modal-content {
+  background: white;
+  border-radius: 28px;
+  padding: 2rem;
+  width: 440px;
+  max-width: 90vw;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.3);
+}
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.modal-header h3 { margin: 0; font-size: 1.3rem; font-weight: 800; color: #0f172a; }
+.close-modal-btn { background: none; border: none; font-size: 1.8rem; color: #94a3b8; cursor: pointer; }
+
+.duel-modal-body { display: flex; flex-direction: column; gap: 1rem; }
+.duel-modal-body p { margin: 0; color: #64748b; font-size: 0.95rem; font-weight: 600; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.form-group label { font-size: 0.85rem; font-weight: 700; color: #334155; }
+.select-input { padding: 12px 16px; border-radius: 14px; border: 1.5px solid #e2e8f0; font-size: 0.95rem; font-family: inherit; font-weight: 600; outline: none; background: #f8fafc; }
+.select-input:focus { border-color: #3b82f6; }
+
+.start-duel-btn {
+  margin-top: 0.5rem;
+  background: #0f172a;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.start-duel-btn:hover:not(:disabled) { background: #3b82f6; transform: translateY(-2px); }
+.start-duel-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 @media (max-width: 900px) {
   .main-layout { flex-direction: column; height: auto; }

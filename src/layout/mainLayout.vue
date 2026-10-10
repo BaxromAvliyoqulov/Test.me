@@ -25,6 +25,9 @@
       <main ref="pageContentRef" :class="['page-content', { 'admin-page-content': isAdmin }]">
         <slot />
       </main>
+
+      <!-- Mobile Bottom Floating Navigation -->
+      <MobileBottomNav v-if="showNavbar" />
     </div>
   </div>
 </template>
@@ -34,6 +37,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import Sidebar from "../components/Sidebar.vue";
 import Header from "../components/Header.vue";
+import MobileBottomNav from "../components/layout/MobileBottomNav.vue";
 
 const route = useRoute();
 const pageContentRef = ref(null);
@@ -174,7 +178,7 @@ onBeforeUnmount(() => {
   }
   
   .page-content {
-    padding: 10px 16px 20px 16px;
+    padding: 10px 16px 90px 16px;
   }
 }
 </style>

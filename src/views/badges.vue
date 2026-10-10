@@ -87,6 +87,7 @@
           :key="badge.id"
           :class="['badge-card', { locked: !badge.unlocked }]"
           :style="badge.unlocked ? { '--badge-color': badge.color } : { '--badge-color': '#64748b' }"
+          @click="onBadgeClick(badge, $event)"
         >
           <!-- Badge Icon Wrapper with dynamic colors -->
           <div 
@@ -195,6 +196,31 @@ const filteredBadges = computed(() => {
 const resetFilters = () => {
   searchQuery.value = '';
   activeFilter.value = 'all';
+};
+
+const onBadgeClick = (badge, event) => {
+  if (badge.unlocked) {
+    createConfettiBurst(event.clientX, event.clientY);
+  }
+};
+
+const createConfettiBurst = (x, y) => {
+  const colors = ['#3b82f6', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6'];
+  for (let i = 0; i < 24; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-particle-item';
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    const angle = Math.random() * Math.PI * 2;
+    const velocity = 40 + Math.random() * 70;
+    const tx = Math.cos(angle) * velocity;
+    const ty = Math.sin(angle) * velocity - 50;
+    el.style.setProperty('--tx', `${tx}px`);
+    el.style.setProperty('--ty', `${ty}px`);
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 900);
+  }
 };
 
 const fetchStats = () => {
@@ -717,5 +743,22 @@ onMounted(() => {
   .badges-grid {
     grid-template-columns: 1fr;
   }
+}
+</style>
+
+<style>
+.confetti-particle-item {
+  position: fixed;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  animation: confetti-pop-anim 0.9s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes confetti-pop-anim {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.2); opacity: 0; }
 }
 </style>

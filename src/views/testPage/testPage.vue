@@ -74,13 +74,23 @@
           <div class="rm-body">
             <!-- AI Review Section -->
             <div class="ai-review-section">
-              <button 
-                v-if="!state.postTestReviewText && !state.isPostTestReviewLoading" 
-                class="btn-primary" 
-                @click="generatePostTestReview"
-              >
-                <i class="fas fa-magic"></i> {{ isRus ? 'Запросить AI-анализ' : 'AI Tahlilini so\'rash' }}
-              </button>
+              <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;">
+                <button 
+                  v-if="!state.postTestReviewText && !state.isPostTestReviewLoading" 
+                  class="btn-primary" 
+                  @click="generatePostTestReview"
+                >
+                  <i class="fas fa-magic"></i> {{ isRus ? 'Запросить AI-анализ' : 'AI Tahlilini so\'rash' }}
+                </button>
+                <button 
+                  v-if="state.postTestReviewText" 
+                  class="btn-primary" 
+                  style="background:#8b5cf6;"
+                  @click="speakReviewText"
+                >
+                  <i class="fas fa-volume-up"></i> {{ isRus ? 'Озвучить (Voice)' : 'Ovozli Eshitish' }}
+                </button>
+              </div>
               
               <transition name="fade">
                 <div v-if="state.postTestReviewText || state.isPostTestReviewLoading" class="ai-hint-wrapper">
@@ -418,6 +428,19 @@ const generatePostTestReview = async () => {
     toast.error(isRus.value ? 'Ошибка AI анализа' : 'AI tahlilida xatolik yuz berdi');
   } finally {
     state.isPostTestReviewLoading = false;
+  }
+};
+
+const speakReviewText = () => {
+  if (!state.postTestReviewText) return;
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(state.postTestReviewText);
+    utterance.lang = isRus.value ? 'ru-RU' : 'uz-UZ';
+    window.speechSynthesis.speak(utterance);
+    toast.info(isRus.value ? 'Озвучивание...' : 'Ovozli o\'qish boshlandi...');
+  } else {
+    toast.error(isRus.value ? 'Озвучивание не поддерживается' : 'Ovozli o\'qish qo\'llab-quvvatlanmaydi');
   }
 };
 

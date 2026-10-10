@@ -4,6 +4,10 @@
     <div class="bento-card welcome-card">
       <div class="welcome-content">
         <div class="welcome-text">
+          <div class="streak-badge-pill">
+            <span class="fire-anim">🔥</span>
+            <span>{{ currentLocale === 'RUS' ? 'Серия: 5 дней подряд' : 'Ketma-ketlik: 5 kun faol' }}</span>
+          </div>
           <h1 class="welcome-title">{{ currentLocale === 'RUS' ? 'С возвращением!' : 'Xush kelibsiz!' }}</h1>
           <p class="welcome-subtitle">{{ currentLocale === 'RUS' ? 'Вот ваш текущий прогресс' : 'Sizning joriy natijalaringiz' }}</p>
         </div>
@@ -151,6 +155,31 @@ const chartOptions = {
 
 .welcome-text {
   flex: 1;
+}
+
+.streak-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  color: #c2410c;
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  border: 1px solid #fed7aa;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.12);
+}
+
+.fire-anim {
+  font-size: 1rem;
+  animation: flame-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes flame-pulse {
+  0% { transform: scale(1); filter: drop-shadow(0 0 2px #f97316); }
+  100% { transform: scale(1.25) rotate(5deg); filter: drop-shadow(0 0 8px #ea580c); }
 }
 
 .welcome-title {

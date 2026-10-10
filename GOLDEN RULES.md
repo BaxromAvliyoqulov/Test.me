@@ -1,0 +1,74 @@
+# 📌 PROJECT DASHBOARD & STATE — Test.me (World-Class AI Examination & Gamified SaaS)
+
+> **Rasmiy Boshqaruv Fayli (Primary Source of Truth):**
+> Ushbu hujjat loyihaning arxitekturasi, joriy holati, kechki avtonom rivojlantirish rejasi (4+ soatlik master reja) va barcha kamchiliklarni bartaraf etish protokolini belgilaydi.
+> Global qoidalar va subagentlar: [`C:/Users/user/.gemini/config/AGENTS.md`](file:///C:/Users/user/.gemini/config/AGENTS.md) va `MEMORIES.md`.
+
+---
+
+## 👑 The Sovereign Triad (Boshqaruv Kengashi)
+- **🌟 NOVA:** Chief Strategy & Architecture Twin — Supabase/PostgreSQL ekotizimi, B2B SaaS modeli, 100x roadmap va masshtab strategiyasi.
+- **🔮 AURA:** Cognitive AI & UX Psychology Overlord — O'zbekiston yoshlari va abituriyentlari psixologiyasi, zero-friction test yechish, "Aha! moment" gamifikatsiyasi va 100% toza mantiq.
+- **🤖 EVA:** Sovereign Autonomous CTO & Quality Commander — 7-nuqtali avtonom audit, zero-red-lines, PWA offline-first, Vitest/E2E kafolati va xavfsiz git checkpointlar.
+
+---
+
+## 🎯 Overall Objective & Current Phase
+- **Loyiha:** `Test.me` — AI bilan jihozlangan, gamifikatsiyalashgan (TP Coins, Ranks, Do'stlar 1v1 dueli, Sertifikatlar) milliy test va bilim baholash platformasi.
+- **Hozirgi Bosqich:** Phase 3 — Enterprise & Mobile-First Hardening (Dual-DB to Unified Supabase, PWA Desktop/Mobile App, Zero-Glitch UI/UX).
+- **Status:** Active Overnight Overhaul (Avtonom 4+ soatlik chuqur modernizatsiya).
+
+---
+
+## 🧠 Architecture Decision Log (ADR)
+1. **Stack:** Vue 3 (Composition + Options API), Vite, Vuex, Vue Router, Supabase (PostgreSQL + Auth + Storage), Firebase (legacy transitional), Tailwind / Vanilla Glassmorphism CSS, Vitest.
+2. **Database Strategiyasi:** Firebase'dagi parchalangan ma'lumotlarni yagona relatsion Supabase (`supabase_schema.sql`) arxitekturasiga bosqichma-bosqich xavfsiz o'tkazish, fallback mexanizmini saqlash.
+3. **PWA & Offline-First:** Standart web saytdan to'laqonli o'rnatiladigan Mobile App (Android APK-like PWA / iOS Home Screen WebApp) va Desktop ilovaga aylantirish; Service Worker avto-yangilanishi (`v2.1.0+`).
+4. **Xavfsizlik & Defensive Logic:** Admin funksiyalari uchun PIN-kod guard, SQL/NoSQL inyeksiyasiga qarshi Zod/parametrli so'rovlar, bo'sh ma'lumotlarda qotib qolishni (null-pointer) nolga tushirish.
+
+---
+
+## 🗺️ 4-Soatlik Tungi Avtonom Master Reja (Overnight Deep Sprint)
+
+### 🚀 1-Faza: Ma'lumotlar Bazasi va Backend Xavfsizligi (Supabase Unified Pipeline)
+- [x] Supabase relatsion sxemasi (`supabase_schema.sql`) va boshlang'ich seeder (`supabase_seed.sql`) ishlab chiqish.
+- [ ] Profil, Ballar (TP Coins) va Tranzaksiyalar uchun atomar tranzaksiya mantiqini mustahkamlash (balans manfiy bo'lmasligi, race-condition himoyasi).
+- [ ] Foydalanuvchi do'stlari, 1v1 duellari va reyting tizimini Supabase jadvaliga to'liq ulash.
+- [ ] Admin panel uchun maxfiy kalit va PIN kod (`admin_pin`) tekshiruvini qat'iylashtirish.
+
+### 🎨 2-Faza: UI/UX va Mobile-First Ekranlarni Mukammallashtirish (Zero-Glitch UX)
+- [x] Desktop Navbar'dagi ortiqcha install tugmasini olib tashlash, toza minimalizmga keltirish.
+- [x] Versiya vidjeti va qo'lda tekshirish tugmasini Sidebar pastki qismiga joylashtirish.
+- [ ] Mobil ekranda (375px–414px) gorizontal scroll va sinishlarni to'liq bartaraf etish (`MobileBottomNav`, test savollari kartasi, shop sahifasi).
+- [ ] Bo'sh holatlar (Empty States), yuklanish skeletonlari va xatolik yuz berganda chiroyli Retry modal qo'shish.
+- [ ] Dark / Light mode ranglar kontrastini va Glassmorphism fonlarini Linear/Apple standartiga moslash.
+
+### 🎮 3-Faza: Test Yechish Jarayoni va AI Mentors Tizimi (Core Experience)
+- [ ] Test savollarini yuklashda kesh va offline ishlash imkoniyatini kuchaytirish.
+- [ ] AI maslahatchisi (Hint) so'rovlarida token tejamkorligi va xatolikdan himoyalanish (`try/catch/fallback`).
+- [ ] Test yakunlanganda sertifikat generatsiyasi va natijalarni avtomatik saqlash barqarorligi.
+- [ ] 1v1 Duel challenge taklifnomasida real-vaqt rejimini mustahkamlash.
+
+### 🛡️ 4-Faza: Avtonom Testlash, Build va Git Checkpoint (Zero-Defect Release)
+- [x] Vitest testlarini ishga tushirish (11/11 muvaffaqiyatli).
+- [x] Vite production build tekshiruvi.
+- [ ] Barcha o'zgarishlarni Git orqali `origin/main` ga xavfsiz push qilish.
+- [ ] Tonggi soat 08:00 hisobotini to'liq tayyorlash.
+
+---
+
+## 🐛 Known Bugs & UX Defects (Aniqlangan Kamchiliklar va Holati)
+1. **[Tuzatildi]** Desktop Navbarida ilova o'rnatish tugmasi juda noqulay joylashgan edi ➔ Sidebar pastiga va avtomatik modalga ko'chirildi.
+2. **[Tuzatildi]** Service Worker yangilanganda bildirishnoma chiqmas edi ➔ `AppUpdatePrompt.vue` orqali yangilanishni qabul qilish tugmasi qo'shildi.
+3. **[Faol]** Ayrim admin va do'kon sahifalarida Firebase va Supabase o'rtasidagi ma'lumotlar sinxronizatsiyasi to'liq emas ➔ `supabaseService.js` orqali markazlashtirilmoqda.
+4. **[Faol]** Mobil telefonda test sahifasining pastki qismidagi navigatsiya tugmalari ba'zida klaviatura yoki BottomNav ostida qolib ketishi xavfi bor ➔ Safe-area padding kuchaytirilmoqda.
+
+---
+
+## 🔄 Active Task (In Progress)
+- [ ] Tungi avtonom refaktoring, UI/UX polish va Supabase xavfsizlik qatlamini mustahkamlash.
+
+## ✅ Completed Checklist (History)
+- [x] 2026-10-10: PWA avto-yangilanish tizimi, versiya badge (`v2.1.0`), AppUpdatePrompt yaratildi.
+- [x] 2026-10-10: Desktop navbar tozalandi, versiya vidjeti Sidebar footeriga o'rnatildi.
+- [x] 2026-10-10: Vitest va Vite build 100% yashil holatga keltirildi.

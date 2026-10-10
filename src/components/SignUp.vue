@@ -129,6 +129,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { authService } from '@/services/supabaseService';
 import { auth, db } from '@/config/firebase';
 import {
   createUserWithEmailAndPassword,
@@ -163,42 +164,18 @@ const handleSubmit = async () => {
   }
 
   try {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
+    const { user } = await authService.signUp(
       email.value,
-      password.value
+      password.value,
+      username.value
     );
-    const user = userCredential.user;
-
-    await updateProfile(user, {
-      displayName: username.value,
-    });
-
-    await setDoc(doc(db, 'users', user.uid), {
-      username: username.value,
-      displayName: username.value,
-      email: user.email,
-      photoURL: '',
-      points: 0,
-      referralCode: user.uid.slice(0, 8).toUpperCase(),
-      shortId: user.uid.slice(0, 8).toUpperCase(),
-      preferences: {
-        defaultSubject: [],
-        defaultLevel: '',
-        dailyGoal: 10,
-        defaultLocale: 'UZB',
-        unlockedMentors: ['friendly']
-      },
-      createdAt: new Date(),
-    });
 
     successMessage.value = 'Ro\'yxatdan muvaffaqiyatli o\'tdingiz!';
     toast.success('Ro\'yxatdan muvaffaqiyatli o\'tdingiz!');
-    console.log('Firebase Auth User ID:', user.uid);
     window.location.href = '/';
   } catch (error) {
-    errorMessage.value = error.message;
-    toast.error(error.message);
+    errorMessage.value = error.message || 'Ro\'yxatdan o\'tishda xatolik yuz berdi.';
+    toast.error(errorMessage.value);
   }
 };
 

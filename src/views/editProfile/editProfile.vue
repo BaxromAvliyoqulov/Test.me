@@ -1966,4 +1966,26 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 
+@media (max-width: 768px) {
+  .edit-profile-wrapper {
+    padding: 0.75rem 0.5rem !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+  .layout-v4 {
+    width: 100% !important;
+    padding-top: 0.5rem !important;
+    gap: 1rem !important;
+  }
+  .pro-top-navbar {
+    padding: 0.4rem !important;
+    border-radius: 16px !important;
+    gap: 0.25rem !important;
+  }
+  .pro-top-navbar .pro-nav-link {
+    padding: 0.6rem 0.9rem !important;
+    font-size: 0.85rem !important;
+  }
+}
 </style>

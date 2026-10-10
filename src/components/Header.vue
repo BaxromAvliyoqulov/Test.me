@@ -143,6 +143,10 @@ const loadingNotifs = ref(true);
 let notifsUnsub = null;
 let currentUserId = null;
 
+const triggerPwaInstall = () => {
+  window.dispatchEvent(new CustomEvent('open-pwa-install'));
+};
+
 // Admin state
 const isAdmin = ref(false);
 const adminRole = ref(null);
@@ -316,49 +320,136 @@ onBeforeUnmount(() => {
   transition: all 0.3s ease;
 }
 
-@media (max-width: 768px) {
-  .app-header {
-    margin: 12px 16px;
-    padding: 0 16px;
-    height: 64px;
-    border-radius: 16px;
-  }
-}
-
 .header-left {
   display: flex;
   align-items: center;
   gap: 20px;
+  min-width: 0;
 }
 
 .mobile-toggle-btn {
   display: none;
   background: transparent;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   color: #0f172a;
   cursor: pointer;
-  padding: 5px;
+  padding: 6px;
+  border-radius: 10px;
+  transition: background 0.2s;
 }
 
-@media (max-width: 768px) {
-  .mobile-toggle-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.mobile-toggle-btn:active {
+  background: #f1f5f9;
 }
 
 .page-title {
   font-size: 1.25rem;
   font-weight: 800;
   color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-right {
   display: flex;
   align-items: center;
   gap: 20px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    margin: 8px 10px 14px 10px;
+    padding: 0 12px;
+    height: 56px;
+    border-radius: 16px;
+  }
+
+  .header-left {
+    gap: 8px;
+  }
+
+  .mobile-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: #f1f5f9;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .page-title {
+    font-size: 1rem;
+    max-width: 110px;
+  }
+
+  .header-right {
+    gap: 8px;
+  }
+
+  .coins-capsule {
+    padding: 4px 10px;
+    gap: 5px;
+  }
+
+  .coin-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .coin-amount {
+    font-size: 0.9rem;
+  }
+
+  .coin-label {
+    display: none;
+  }
+
+  .header-action-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .header-profile .header-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .header-install-btn .install-label {
+    display: none;
+  }
+
+  .header-install-btn {
+    padding: 0 !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    justify-content: center !important;
+  }
+}
+
+.header-install-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.header-install-btn:hover {
+  background: #dbeafe;
+  transform: translateY(-1px);
 }
 
 /* TP Coins Capsule */

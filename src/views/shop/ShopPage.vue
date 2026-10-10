@@ -903,5 +903,69 @@ const closeOverlay = () => {
 .shop-toast.success { background: #0f172a; color: #fff; }
 .shop-toast.error { background: #ef4444; color: #fff; }
 .slide-up-enter-active, .slide-up-leave-active { transition: all 0.35s ease; }
-.slide-up-enter-from, .slide-up-leave-to { opacity: 0; transform: translate(-50%, 20px); }</style>
+.slide-up-enter-from, .slide-up-leave-to { opacity: 0; transform: translate(-50%, 20px); }
+
+@media (max-width: 768px) {
+  .shop-wrapper {
+    padding: 1rem 0.5rem !important;
+  }
+  .header-section h1 {
+    font-size: 1.6rem !important;
+  }
+  .header-section p {
+    font-size: 0.88rem !important;
+  }
+  .shop-content {
+    gap: 1.5rem !important;
+  }
+  .balance-bento {
+    padding: 1rem !important;
+    border-radius: 18px !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: stretch !important;
+  }
+  .balance-val h2 {
+    font-size: 1.7rem !important;
+  }
+  .balance-actions {
+    width: 100% !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+  .balance-actions button {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 10px 8px !important;
+    font-size: 0.85rem !important;
+    border-radius: 12px !important;
+  }
+  .shop-tabs {
+    gap: 8px !important;
+    margin-bottom: 1.25rem !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 4px !important;
+  }
+  .shop-tab {
+    padding: 8px 14px !important;
+    font-size: 0.82rem !important;
+    white-space: nowrap !important;
+    border-radius: 12px !important;
+  }
+  .mentors-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .mentor-shop-card {
+    padding: 1.25rem !important;
+    border-radius: 20px !important;
+    gap: 1rem !important;
+  }
+  .history-modal-content {
+    padding: 1.25rem !important;
+    border-radius: 22px !important;
+  }
+}
+</style>
 

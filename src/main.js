@@ -4,6 +4,10 @@ import 'vue-toastification/dist/index.css';
 import App from './App.vue';
 import router from './router';
 import store from './store';
+import { initPwaUpdate } from './services/updateService';
+
+// Initialize Auto-Update Engine
+initPwaUpdate();
 
 const app = createApp(App);
 

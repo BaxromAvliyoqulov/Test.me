@@ -171,6 +171,8 @@ onBeforeUnmount(() => {
   .main-layout-container {
     margin-left: 0 !important;
     width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
   }
 
   .mobile-overlay {
@@ -178,7 +180,9 @@ onBeforeUnmount(() => {
   }
   
   .page-content {
-    padding: 10px 16px 90px 16px;
+    padding: 6px 10px calc(80px + env(safe-area-inset-bottom, 0px)) 10px;
+    max-width: 100vw;
+    box-sizing: border-box;
   }
 }
 </style>

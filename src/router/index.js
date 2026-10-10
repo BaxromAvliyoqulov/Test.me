@@ -48,7 +48,7 @@ const router = createRouter({
       path: '/admin-seeder',
       name: 'adminSeeder',
       component: AdminSeeder,
-      meta: { title: 'Admin Seeder | Test.me' }
+      meta: { title: 'Admin Seeder | Test.me', requiresAdmin: true }
     },
     {
       path: '/',
@@ -66,7 +66,7 @@ const router = createRouter({
       path: '/admin',
       name: 'admin',
       component: admin,
-      meta: { title: 'Admin Panel | Test.me' }
+      meta: { title: 'Admin Panel | Test.me', requiresAdmin: true }
     },
     {
       path: '/login',

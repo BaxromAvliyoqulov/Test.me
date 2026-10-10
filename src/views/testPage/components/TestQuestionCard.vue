@@ -297,17 +297,55 @@ defineEmits(['selectOption', 'use5050', 'useAiHint', 'goToPrev', 'submitAnswer']
 
 @media (max-width: 600px) {
   .premium-question-card {
-    padding: 24px;
-    border-radius: 24px;
+    padding: 16px 14px !important;
+    border-radius: 20px !important;
+  }
+  .q-badge {
+    font-size: 0.72rem !important;
+    padding: 3px 8px !important;
   }
   .q-text {
-    font-size: 1.4rem;
+    font-size: 1.15rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 16px !important;
+  }
+  .options-container {
+    gap: 8px !important;
   }
   .opt-btn {
-    padding: 8px 12px;
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+    font-size: 0.9rem !important;
+    min-height: 48px !important;
+    gap: 10px !important;
   }
   .opt-letter-box {
-    width: 36px; height: 36px; font-size: 1rem;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 0.95rem !important;
+    border-radius: 8px !important;
+  }
+  .tools-container {
+    gap: 8px !important;
+    margin-top: 14px !important;
+  }
+  .tool-btn {
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+    border-radius: 10px !important;
+  }
+  .card-footer {
+    margin-top: 16px !important;
+  }
+  .nav-btn.prev {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 1rem !important;
+  }
+  .nav-btn.next {
+    height: 44px !important;
+    padding: 0 20px !important;
+    font-size: 0.92rem !important;
   }
 }
 </style>

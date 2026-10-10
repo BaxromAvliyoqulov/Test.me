@@ -361,4 +361,25 @@ const buyPoints = () => {
     height: auto;
   }
 }
+
+@media (max-width: 768px) {
+  .points-wrapper {
+    padding: 1rem 0.5rem !important;
+  }
+  .header-section {
+    margin-bottom: 1.25rem !important;
+  }
+  .header-section h1 {
+    font-size: 1.5rem !important;
+  }
+  .header-section p {
+    font-size: 0.88rem !important;
+  }
+  .points-top-row {
+    margin-bottom: 1.25rem !important;
+  }
+  .points-grid {
+    gap: 1.25rem !important;
+  }
+}
 </style>

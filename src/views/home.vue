@@ -120,8 +120,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick, onErrorCaptured } from 'vue';
+import { ref, computed, watch, onMounted, nextTick, onErrorCaptured, defineAsyncComponent } from 'vue';
 import { db, auth } from '@/config/firebase';
+import { subjectService } from '@/services/supabaseService';
 import { collection, doc, getDocs, addDoc, getDoc, query, where } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -131,7 +132,7 @@ import { getRankName, getRankClass, getRankIcon, getNextRankInfo } from '@/utils
 import { sortLevels } from '@/utils/sorters';
 import { getMentorConfig } from '@/config/mentors';
 import { getBadges } from '@/utils/badges';
-import TestPage from './testPage/testPage.vue';
+const TestPage = defineAsyncComponent(() => import('./testPage/testPage.vue'));
 import WelcomeBanner from '@/components/home/WelcomeBanner.vue';
 import SubjectSelection from '@/components/home/SubjectSelection.vue';
 import SpecialTests from '@/components/home/SpecialTests.vue';
@@ -266,6 +267,22 @@ const fetchSubjects = async () => {
   loadingSubjects.value = true;
   status.value = null;
   try {
+    // 1. Try Supabase first
+    const sbSubjects = await subjectService.getSubjects();
+    if (sbSubjects && sbSubjects.length > 0) {
+      subjects.value = sbSubjects.map(s => ({
+        id: s.id,
+        name: s.name_uz,
+        nameUz: s.name_uz,
+        nameRu: s.name_ru,
+        icon: s.icon,
+        color: s.color,
+        description: s.description,
+      }));
+      return;
+    }
+
+    // 2. Fallback to Firestore
     const querySnapshot = await getDocs(collection(db, 'subjects'));
     subjects.value = querySnapshot.docs.map((doc) => ({
       id: doc.id,
@@ -329,6 +346,14 @@ const fetchLevels = async () => {
   status.value = null;
 
   try {
+    // 1. Try Supabase first
+    const sbLevels = await subjectService.getLevels(selectedSubject.value.id);
+    if (sbLevels && sbLevels.length > 0) {
+      levels.value = sbLevels.map(l => l.id || l.name);
+      return;
+    }
+
+    // 2. Fallback to Firestore
     const subjectRef = doc(db, 'subjects', selectedSubject.value.id);
     const levelsCollection = await getDocs(
       collection(subjectRef, 'levels')
@@ -1719,28 +1744,164 @@ onMounted(() => {
 .loading-state.small { padding: 1rem; }
 
 @media (max-width: 768px) {
-  .selection-panel {
-    padding: 1.25rem !important;
+  .dashboard-wrapper {
+    padding: 0 !important;
   }
+  
+  .app-root-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .test-container {
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
   .dashboard-grid {
-    gap: 1.5rem !important;
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+    width: 100% !important;
   }
+
+  .selection-panel {
+    padding: 1.1rem 0.9rem !important;
+    border-radius: 20px !important;
+    gap: 1.25rem !important;
+  }
+
+  .sidebar-panel {
+    width: 100% !important;
+    gap: 1rem !important;
+  }
+
   .test-type-tabs {
-    flex-direction: column;
+    flex-direction: row !important;
+    gap: 6px !important;
+    padding: 4px !important;
+    border-radius: 14px !important;
   }
+
   .tab-btn {
-    width: 100%;
-    padding: 12px !important;
+    flex: 1 !important;
+    width: auto !important;
+    padding: 10px 8px !important;
+    font-size: 0.85rem !important;
+    border-radius: 10px !important;
+    justify-content: center !important;
   }
+
   .subject-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
   }
-  .welcome-banner {
-    padding: 1.5rem !important;
-    border-radius: 1.25rem !important;
+
+  .subject-card {
+    height: 120px !important;
+    padding: 0.85rem !important;
+    border-radius: 18px !important;
   }
-  .welcome-title {
-    font-size: 1.5rem !important;
+
+  .card-bg-icon {
+    font-size: 65px !important;
+    top: -5px !important;
+    right: -5px !important;
+  }
+
+  .icon-wrapper {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 1rem !important;
+    border-radius: 10px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .card-content {
+    gap: 4px !important;
+  }
+
+  .card-content h4 {
+    font-size: 0.95rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .status-badge {
+    font-size: 0.65rem !important;
+  }
+
+  /* Bottom sheet modal styling for mobile */
+  .premium-modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .modal-wizard-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 24px 24px 0 0 !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+  }
+
+  .modal-header {
+    padding: 1.25rem 1.25rem 1rem !important;
+  }
+
+  .m-icon-wrapper {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 1.1rem !important;
+    border-radius: 12px !important;
+  }
+
+  .m-title-info h3 {
+    font-size: 1.15rem !important;
+  }
+
+  .modal-body {
+    padding: 1.25rem !important;
+    gap: 1.25rem !important;
+  }
+
+  .pills-grid {
+    gap: 8px !important;
+  }
+
+  .pill-btn {
+    padding: 10px 14px !important;
+    font-size: 0.88rem !important;
+    border-radius: 12px !important;
+  }
+
+  .modal-footer {
+    padding: 1rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .special-test-card {
+    padding: 0.85rem !important;
+    gap: 8px !important;
+    border-radius: 16px !important;
+  }
+
+  .st-icon {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 1.1rem !important;
+  }
+
+  .st-details {
+    margin: 0 !important;
+  }
+
+  .st-details h4 {
+    font-size: 0.95rem !important;
+  }
+
+  .btn-st-start {
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+    border-radius: 10px !important;
   }
 }
 </style>

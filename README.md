@@ -1,69 +1,81 @@
-# Project Title
+# 🎓 Test.me — Zamonaviy Gamifikatsiyalangan AI Test Platformasi
 
-A Vue.js Project Template
+Test.me — O'zbekistondagi maktab o'quvchilari, abituriyentlar va bilimga chanqoq yoshlar uchun sun'iy intellekt (Gemini 2.5 Flash), gamifikatsiya (TP Coins, Lootboxlar, Nishonlar, 1v1 Duellar) va rasmiy sertifikatlash imkoniyatlariga ega bo'lgan zamonaviy EdTech platforma.
 
-## Description
+---
 
-This project serves as a starting point for building Vue.js applications. It provides a basic structure and setup to help developers quickly get started with their projects.
+## ⚡ Asosiy Imkoniyatlar
 
-## Features
+- 🤖 **AI Mentors (9 xil xarakter):** Qattiqqo'l professor, do'stona murabbiy, kulgili komik va sokratik faylasuf uslubidagi avtomatik test savollari generatsiyasi.
+- 💰 **TP Coins & Shop:** Test yechib tanga ishlash, neon temalar va profil ramkalarini xarid qilish, interaktiv qutilar (lootboxes) ochish.
+- ⚔️ **1v1 Duel & Friends:** Do'stlar orttirish, o'zaro chat va 1-ga-1 test bellashuvlari.
+- 📜 **Rasmiy Sertifikatlar:** 80%+ natija bilan fan va darajani tugatganda avtomatik beriluvchi va chop etiluvchi chiroyli sertifikatlar.
+- 🔥 **Daily Streak:** Foydalanuvchini har kuni kirib bilimini oshirishga undovchi doimiy faollik hisoblagichi.
+- 📱 **PWA & Offline:** Mobil qurilmalarga ilova sifatida o'rnatish va tarmoqsiz ishlash imkoniyati.
 
-- Pre-configured Vue.js environment
-- Modular and scalable project structure
-- Easy-to-follow setup instructions
+---
 
-## Installation
+## 🛠️ Texnologik Stack
 
-To set up the project locally, follow these steps:
+- **Frontend:** Vue.js 3 (Composition API, `<script setup>`), Vite 6, Vuex 4, Vue Router 4.
+- **Dizayn:** Glassmorphism, Tailwind CSS, Vanilla CSS, FontAwesome 6, Chart.js.
+- **Ma'lumotlar Bazasi:** Supabase (PostgreSQL + Row Level Security + Auth).
+- **AI Dvigateli:** Google Gemini 2.5 Flash API.
+- **Testlash & CI/CD:** Vitest, GitHub Actions.
+- **Telegram Bot:** Node.js long-polling & webhook support (`bot/runner.js`).
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd <project-directory>
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
+---
 
-## Usage
+## 🚀 Ishga Tushirish (Quick Start)
 
-To start the development server, run:
-
+### 1. Repozitoriyni klonlash:
 ```bash
-npm run serve
+git clone https://github.com/BaxromAvliyoqulov/Test.me.git
+cd Test.me
 ```
 
-Open your browser and navigate to `http://localhost:8080` to view the application.
-
-To build the project for production, use:
-
+### 2. Bog'liqliklarni o'rnatish:
 ```bash
-npm run build
+npm install
 ```
 
-## Contributing
+### 3. Muhit o'zgaruvchilarini sozlash (`.env`):
+Loyiha ildizida `.env` faylini yarating:
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_GEMINI_API_KEY=your-gemini-api-key
+```
 
-Contributions are welcome! Please follow these steps:
+### 4. Dasturni ishga tushirish:
+```bash
+npm run dev
+```
+Brauzeringizda `http://localhost:5173` manziliga kiring.
 
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix:
-   ```bash
-   git checkout -b feature-name
-   ```
-3. Commit your changes:
-   ```bash
-   git commit -m "Description of changes"
-   ```
-4. Push to your forked repository:
-   ```bash
-   git push origin feature-name
-   ```
-5. Submit a pull request.
+---
 
-## License
+## 🧪 Sinovlar va Ishlab Chiqarish (Scripts)
 
-This project is licensed under the [MIT License](LICENSE).
+- **Unit testlarni yurgizish:**
+  ```bash
+  npm run test
+  ```
+- **Production build yaratish:**
+  ```bash
+  npm run build
+  ```
+- **Build natijasini sinash:**
+  ```bash
+  npm run preview
+  ```
+- **Telegram yordamchi botni ishga tushirish:**
+  ```bash
+  npm run bot
+  ```
+
+---
+
+## 📄 Litsenziya
+
+Ushbu loyiha [MIT License](LICENSE) asosida litsenziyalangan. Muallif: **Baxrom Avliyoqulov**.

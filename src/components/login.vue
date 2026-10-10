@@ -157,6 +157,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
+import { authService } from '@/services/supabaseService';
 import { auth } from '../config/firebase';
 import {
   GoogleAuthProvider,
@@ -236,25 +237,18 @@ const handleLogin = async () => {
   if (!validateForm()) return;
 
   isLoading.value = true;
+  globalError.value = '';
   
   try {
-    // Handle Remember Me persistence
-    const persistenceType = form.rememberMe ? browserLocalPersistence : browserSessionPersistence;
-    await setPersistence(auth, persistenceType);
-
-    // Proceed with login
-    const userCredential = await signInWithEmailAndPassword(auth, form.email, form.password);
-    
+    await authService.signIn(form.email, form.password);
     toast.success("Tizimga muvaffaqiyatli kirdingiz!");
     router.push('/');
   } catch (error) {
     console.error("Login Error:", error);
-    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+    if (error.message?.includes('Invalid login credentials') || error.code === 'invalid_credentials') {
       globalError.value = "Elektron pochta yoki parol noto'g'ri.";
-    } else if (error.code === 'auth/too-many-requests') {
-       globalError.value = "Juda ko'p urinishlar. Iltimos, birozdan so'ng qayta urinib ko'ring.";
     } else {
-      globalError.value = "Tizimga kirishda xatolik yuz berdi.";
+      globalError.value = error.message || "Tizimga kirishda xatolik yuz berdi.";
     }
   } finally {
     isLoading.value = false;

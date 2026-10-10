@@ -1,15 +1,15 @@
 <template>
-  <aside :class="['app-sidebar', { collapsed: isCollapsed, 'mobile-open': isMobileOpen }]">
+  <aside :class="['app-sidebar', { collapsed: effectiveCollapsed, 'mobile-open': isMobileOpen }]">
     <!-- Brand / Logo Area -->
-    <div class="sidebar-brand" @click="$emit('toggle-sidebar')" title="Menyuni ochish/yopish">
+    <div class="sidebar-brand" @click="isMobileOpen ? $emit('close-mobile') : $emit('toggle-sidebar')" title="Menyuni ochish/yopish">
       <div class="brand-icon">
         <i class="fas fa-graduation-cap"></i>
       </div>
       <transition name="fade-slide">
-        <span v-if="!isCollapsed" class="brand-text">Test.me</span>
+        <span v-if="!effectiveCollapsed" class="brand-text">Test.me</span>
       </transition>
       
-      <button class="mobile-close-btn" @click.stop="$emit('close-mobile')">
+      <button class="mobile-close-btn" @click.stop="$emit('close-mobile')" aria-label="Menyuni yopish">
         <i class="fas fa-times"></i>
       </button>
     </div>
@@ -21,7 +21,7 @@
         <div class="avatar-ring"></div>
       </div>
       <transition name="fade-slide">
-        <div class="user-details" v-if="!isCollapsed">
+        <div class="user-details" v-if="!effectiveCollapsed">
           <div class="user-name">{{ username }}</div>
           <div class="user-rank-badge" :class="getRankClass(userPoints)">
             <i :class="getRankIcon(userPoints)"></i>
@@ -35,7 +35,7 @@
     </div>
 
     <!-- Language Section -->
-    <div class="sidebar-lang" v-if="!isCollapsed">
+    <div class="sidebar-lang" v-if="!effectiveCollapsed">
       <div class="lang-dropdown" @click="toggleLang">
         <div class="lang-left">
           <i class="fas fa-globe"></i>
@@ -50,112 +50,128 @@
     <nav class="sidebar-nav">
       
       <!-- ASOSIY SECTION -->
-      <div class="nav-section-title" v-if="!isCollapsed">{{ currentLocale === 'RUS' ? 'ГЛАВНАЯ' : 'ASOSIY' }}</div>
+      <div class="nav-section-title" v-if="!effectiveCollapsed">{{ currentLocale === 'RUS' ? 'ГЛАВНАЯ' : 'ASOSIY' }}</div>
       <div class="nav-links-list">
-        <router-link to="/" class="sidebar-link home-link" v-tooltip="t('home')">
+        <router-link to="/" class="sidebar-link home-link" v-tooltip="t('home')" @click="navigateTo('/')">
           <div class="link-icon"><i class="fas fa-home"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('home') }}</span>
+            <span v-if="!effectiveCollapsed" class="link-text">{{ t('home') }}</span>
           </transition>
         </router-link>
 
-        <router-link to="/dashboard" class="sidebar-link dash-link" v-tooltip="t('dashboard')">
+        <router-link to="/dashboard" class="sidebar-link dash-link" v-tooltip="t('dashboard')" @click="navigateTo('/dashboard')">
           <div class="link-icon"><i class="fas fa-chart-line"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('dashboard') }}</span>
+            <span v-if="!effectiveCollapsed" class="link-text">{{ t('dashboard') }}</span>
           </transition>
         </router-link>
-
-        
       </div>
 
       <!-- YUTUQLAR & PROGRES SECTION -->
-      <div class="nav-section-title mt-sec" v-if="!isCollapsed">{{ currentLocale === 'RUS' ? 'ДОСТИЖЕНИЯ И ПРОГРЕСС' : 'YUTUQLAR & PROGRES' }}</div>
+      <div class="nav-section-title mt-sec" v-if="!effectiveCollapsed">{{ currentLocale === 'RUS' ? 'ДОСТИЖЕНИЯ И ПРОГРЕСС' : 'YUTUQLAR & PROGRES' }}</div>
       <div class="nav-links-list">
-        <router-link to="/certificates" class="sidebar-link certs-link" v-tooltip="t('certificates')">
+        <router-link to="/certificates" class="sidebar-link certs-link" v-tooltip="t('certificates')" @click="navigateTo('/certificates')">
           <div class="link-icon"><i class="fas fa-award"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('certificates') }}</span>
+            <span v-if="!effectiveCollapsed" class="link-text">{{ t('certificates') }}</span>
           </transition>
         </router-link>
 
-        <router-link to="/points" class="sidebar-link points-link" v-tooltip="t('points')">
+        <router-link to="/points" class="sidebar-link points-link" v-tooltip="t('points')" @click="navigateTo('/points')">
           <div class="link-icon"><i class="fas fa-coins"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('points') }}</span>
+            <span v-if="!effectiveCollapsed" class="link-text">{{ t('points') }}</span>
           </transition>
         </router-link>
 
-        <router-link to="/badges" class="sidebar-link badges-link" v-tooltip="t('badges')">
+        <router-link to="/badges" class="sidebar-link badges-link" v-tooltip="t('badges')" @click="navigateTo('/badges')">
           <div class="link-icon"><i class="fas fa-trophy"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('badges') }}</span>
+            <span v-if="!effectiveCollapsed" class="link-text">{{ t('badges') }}</span>
           </transition>
         </router-link>
 
-        <router-link to="/friends" class="sidebar-link friends-link" v-tooltip="'Friends'">
+        <router-link to="/friends" class="sidebar-link friends-link" v-tooltip="'Friends'" @click="navigateTo('/friends')">
           <div class="link-icon"><i class="fas fa-user-group"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ currentLocale === 'RUS' ? 'Друзья' : "Do'stlar" }}</span>
+            <span v-if="!effectiveCollapsed" class="link-text">{{ currentLocale === 'RUS' ? 'Друзья' : "Do'stlar" }}</span>
           </transition>
         </router-link>
       </div>
 
       <!-- DO'KON SECTION -->
-      <div class="nav-section-title mt-sec" v-if="!isCollapsed">{{ currentLocale === 'RUS' ? 'МАГАЗИН' : "DO'KON" }}</div>
+      <div class="nav-section-title mt-sec" v-if="!effectiveCollapsed">{{ currentLocale === 'RUS' ? 'МАГАЗИН' : "DO'KON" }}</div>
       <div class="nav-links-list">
-        <router-link to="/shop" class="sidebar-link shop-link" v-tooltip="'Shop'">
+        <router-link to="/shop" class="sidebar-link shop-link" v-tooltip="'Shop'" @click="navigateTo('/shop')">
           <div class="link-icon"><i class="fas fa-cart-shopping"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Shop</span>
+            <span v-if="!effectiveCollapsed" class="link-text">Shop</span>
           </transition>
         </router-link>
       </div>
 
       <!-- ADMIN SECTION -->
       <template v-if="adminRole || isAdmin">
-        <div class="nav-section-title mt-sec" v-if="!isCollapsed">ADMIN</div>
+        <div class="nav-section-title mt-sec" v-if="!effectiveCollapsed">ADMIN</div>
         <div class="nav-links-list">
-          <router-link to="/admin" class="sidebar-link admin-link" v-tooltip="'Admin Panel'">
+          <router-link to="/admin" class="sidebar-link admin-link" v-tooltip="'Admin Panel'" @click="navigateTo('/admin')">
             <div class="link-icon"><i class="fas fa-user-shield"></i></div>
             <transition name="fade-slide">
-              <span v-if="!isCollapsed" class="link-text">Admin Panel</span>
+              <span v-if="!effectiveCollapsed" class="link-text">Admin Panel</span>
             </transition>
           </router-link>
         </div>
       </template>
 
       <!-- INFO SECTION -->
-      <div class="nav-section-title mt-sec" v-if="!isCollapsed">INFO</div>
+      <div class="nav-section-title mt-sec" v-if="!effectiveCollapsed">INFO</div>
       <div class="nav-links-list footer-links">
-        <router-link to="/stats" class="sidebar-link stats-link" v-tooltip="'Umumiy Statistika'">
+        <router-link to="/stats" class="sidebar-link stats-link" v-tooltip="'Umumiy Statistika'" @click="navigateTo('/stats')">
           <div class="link-icon"><i class="fas fa-chart-pie"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">Umumiy Statistika</span>
+            <span v-if="!effectiveCollapsed" class="link-text">Umumiy Statistika</span>
           </transition>
         </router-link>
-
         
-        <router-link to="/about" class="sidebar-link about-link" v-tooltip="t('about')">
+        <router-link to="/about" class="sidebar-link about-link" v-tooltip="t('about')" @click="navigateTo('/about')">
           <div class="link-icon"><i class="fas fa-circle-info"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('about') }}</span>
+            <span v-if="!effectiveCollapsed" class="link-text">{{ t('about') }}</span>
           </transition>
         </router-link>
 
-        <router-link to="/contactUs" class="sidebar-link contact-link" v-tooltip="t('contact')">
+        <router-link to="/contactUs" class="sidebar-link contact-link" v-tooltip="t('contact')" @click="navigateTo('/contactUs')">
           <div class="link-icon"><i class="fas fa-headset"></i></div>
           <transition name="fade-slide">
-            <span v-if="!isCollapsed" class="link-text">{{ t('contact') }}</span>
+            <span v-if="!effectiveCollapsed" class="link-text">{{ t('contact') }}</span>
           </transition>
         </router-link>
+
+        <!-- PWA Install Application CTA -->
+        <a href="#" class="sidebar-link install-app-link" v-tooltip="currentLocale === 'RUS' ? 'Установить приложение' : 'Ilovani o\'rnatish'" @click.prevent="triggerPwaInstall">
+          <div class="link-icon"><i class="fas fa-mobile-screen-button"></i></div>
+          <transition name="fade-slide">
+            <span v-if="!effectiveCollapsed" class="link-text">{{ currentLocale === 'RUS' ? 'Установить App' : 'Ilovani o\'rnatish' }}</span>
+          </transition>
+        </a>
       </div>
 
     </nav>
 
-    <!-- LOGOUT SECTION (Fixed at bottom) -->
+    <!-- LOGOUT & VERSION SECTION (Fixed at bottom) -->
     <div class="sidebar-footer">
-      <div class="logout-container" v-if="!isCollapsed">
+      <!-- App Version & Update Status Widget -->
+      <div class="sidebar-version-badge" v-if="!effectiveCollapsed">
+        <div class="version-meta">
+          <span class="v-text">Test.me {{ APP_VERSION }}</span>
+          <span class="v-date">{{ RELEASE_DATE }}</span>
+        </div>
+        <button class="btn-check-update" :disabled="isCheckingUpdate" @click="handleManualCheck" :title="currentLocale === 'RUS' ? 'Проверить обновления' : 'Yangilanishlarni tekshirish'">
+          <i class="fas fa-rotate" :class="{ 'fa-spin': isCheckingUpdate }"></i>
+        </button>
+      </div>
+
+      <div class="logout-container" v-if="!effectiveCollapsed">
         <a href="#" @click.prevent="logout" class="sidebar-link logout-link">
           <div class="link-icon"><i class="fas fa-arrow-right-from-bracket"></i></div>
           <span class="link-text">{{ t('logout') }}</span>
@@ -171,7 +187,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
@@ -180,6 +196,8 @@ import defaultUserImage from '../assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
 import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
 import { useToast } from 'vue-toastification';
+import { APP_VERSION, RELEASE_DATE } from '@/config/version';
+import { isCheckingUpdate, checkForUpdates } from '@/services/updateService';
 
 const props = defineProps({
   isCollapsed: { type: Boolean, default: false },
@@ -188,9 +206,21 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle-sidebar', 'close-mobile']);
 
+const effectiveCollapsed = computed(() => {
+  if (props.isMobileOpen) return false;
+  return props.isCollapsed;
+});
+
 const { locale: currentLocale, t, setLocale } = useI18n();
 const toast = useToast();
 const router = useRouter();
+
+const handleManualCheck = async () => {
+  const hasUpdate = await checkForUpdates();
+  if (!hasUpdate) {
+    toast.success(currentLocale.value === 'RUS' ? 'У вас установлена последняя версия!' : 'Sizda eng so\'nggi versiya o\'rnatilgan! ✅');
+  }
+};
 
 const username = ref(null);
 const profileImage = ref(defaultUserImage);
@@ -201,7 +231,17 @@ const isAdmin = ref(false);
 let pointsUnsub = null;
 
 const navigateTo = (path) => {
+  if (props.isMobileOpen) {
+    emit('close-mobile');
+  }
   router.push(path);
+};
+
+const triggerPwaInstall = () => {
+  if (props.isMobileOpen) {
+    emit('close-mobile');
+  }
+  window.dispatchEvent(new CustomEvent('open-pwa-install'));
 };
 
 const handleProfileUpdated = (event) => {
@@ -644,6 +684,69 @@ const vTooltip = {
   color: #f59e0b;
 }
 
+.install-app-link {
+  background: rgba(59, 130, 246, 0.12) !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  color: #93c5fd !important;
+  margin-top: 4px;
+}
+.install-app-link .link-icon {
+  color: #60a5fa !important;
+}
+.install-app-link:hover {
+  background: rgba(59, 130, 246, 0.25) !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* Version Widget */
+.sidebar-version-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.version-meta {
+  display: flex;
+  flex-direction: column;
+}
+.v-text {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #94a3b8;
+}
+.v-date {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #64748b;
+}
+.btn-check-update {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+}
+.btn-check-update:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.3);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+.btn-check-update:disabled {
+  opacity: 0.6;
+}
+
 /* Logout */
 .sidebar-footer {
   margin-top: auto;
@@ -722,33 +825,51 @@ const vTooltip = {
 /* Mobile styles */
 .mobile-close-btn {
   display: none;
-  background: transparent;
-  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: white;
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   margin-left: auto;
   cursor: pointer;
-  padding: 5px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.mobile-close-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 @media (max-width: 768px) {
   .app-sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease, width 0.3s ease;
+    transform: translateX(-100%) !important;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease !important;
     position: fixed !important;
     top: 0;
     left: 0;
     height: 100vh;
-    z-index: 1000;
+    height: 100dvh;
+    width: min(290px, 84vw) !important;
+    max-width: 85vw !important;
+    z-index: 1000 !important;
+    box-shadow: none !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   }
   
   .app-sidebar.mobile-open {
-    transform: translateX(0);
-    width: 280px !important;
+    transform: translateX(0) !important;
+    box-shadow: 20px 0 60px rgba(0, 0, 0, 0.6) !important;
   }
 
   .mobile-close-btn {
-    display: block;
+    display: flex !important;
   }
 }
 </style>

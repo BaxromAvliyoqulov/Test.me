@@ -47,14 +47,14 @@ const isRus = computed(() => locale.value === 'RUS');
     bottom: 0;
     left: 0;
     right: 0;
-    height: 68px;
-    background: rgba(255, 255, 255, 0.88);
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-top: 1px solid rgba(226, 232, 240, 0.8);
     box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.06);
     z-index: 999;
-    padding: 0 10px;
+    padding: 0 8px env(safe-area-inset-bottom, 0px) 8px;
   }
 
   .nav-item {
@@ -66,9 +66,15 @@ const isRus = computed(() => locale.value === 'RUS');
     font-size: 0.72rem;
     font-weight: 700;
     gap: 4px;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
     flex: 1;
     text-decoration: none;
+    min-height: 48px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .nav-item:active {
+    transform: scale(0.92);
   }
 
   .nav-item i {
@@ -86,7 +92,7 @@ const isRus = computed(() => locale.value === 'RUS');
 
   .nav-center {
     position: relative;
-    top: -12px;
+    top: -10px;
   }
 
   .center-icon {
@@ -100,6 +106,11 @@ const isRus = computed(() => locale.value === 'RUS');
     justify-content: center;
     box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
     border: 3px solid white;
+    transition: transform 0.15s ease;
+  }
+
+  .center-icon:active {
+    transform: scale(0.9);
   }
 
   .center-icon i {

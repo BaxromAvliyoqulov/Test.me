@@ -100,6 +100,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { authService, resultService, certificateService } from '@/services/supabaseService';
 import { db, auth } from '@/config/firebase';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';

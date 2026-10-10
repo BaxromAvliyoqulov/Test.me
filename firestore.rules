@@ -57,26 +57,26 @@ service cloud.firestore {
       }
     }
 
-    // Subjects and nested collections read-only for authenticated users
+    // Subjects and nested collections: read-only for users, write only for admins
     match /subjects/{subjectId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow write: if isAdmin();
       
       match /levels/{levelId} {
         allow read: if isAuthenticated();
-        allow write: if isAuthenticated();
+        allow write: if isAdmin();
         
         match /tests/{testId} {
           allow read: if isAuthenticated();
-          allow write: if isAuthenticated();
+          allow write: if isAdmin();
         }
       }
     }
 
-    // Special Tests rules
+    // Special Tests rules: only admins can write
     match /special_tests/{testId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow write: if isAdmin();
     }
 
     // Test Sessions rules
@@ -98,21 +98,21 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
     }
 
-    // Certificates rules - users can read their own, written by testPage client-side
+    // Certificates rules
     match /certificates/{certId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
 
-    // --- TP Coin Economy & Shop Rules ---
+    // --- TP Coin Economy & Shop Rules: only admins can modify shop catalog ---
     match /shop_items/{itemId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated(); // Admin will write, simplified for now
+      allow write: if isAdmin();
     }
     match /shop_boxes/{boxId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow write: if isAdmin();
     }
     
     // --- Friends & Chat Rules ---

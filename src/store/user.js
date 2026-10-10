@@ -1,6 +1,5 @@
-import { getAuth } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
-import { db } from '@/config/firebase';
+// src/store/user.js
+import { authService, profileService, goalService } from '@/services/supabaseService';
 
 export default {
   namespaced: true,
@@ -9,7 +8,7 @@ export default {
     preferences: null,
     goals: [],
     loading: false,
-    error: null
+    error: null,
   },
   mutations: {
     SET_PROFILE(state, profile) {
@@ -26,67 +25,62 @@ export default {
     },
     SET_ERROR(state, error) {
       state.error = error;
-    }
+    },
   },
   actions: {
     async fetchUserData({ commit }) {
       commit('SET_LOADING', true);
       try {
-        const auth = getAuth();
-        const user = auth.currentUser;
+        const user = await authService.getUser();
         if (!user) throw new Error("No authenticated user");
 
-        // Fetch main profile document
-        const docRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(docRef);
+        // Fetch profile from Supabase
+        let profile = await profileService.getProfile(user.id);
         
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          commit('SET_PROFILE', {
-            username: data.displayName || data.username || user.displayName || '',
-            photoURL: data.photoURL || user.photoURL || '',
-            points: data.points || 0,
-            isPremium: data.isPremium || false
-          });
-          commit('SET_PREFERENCES', data.preferences || {});
-        } else {
-          commit('SET_PROFILE', {
-            username: user.displayName || '',
-            photoURL: user.photoURL || '',
-            points: 0,
-            isPremium: false
-          });
-          commit('SET_PREFERENCES', {});
+        if (!profile) {
+          // If profile not yet created by trigger, create fallback
+          profile = {
+            id: user.id,
+            username: user.user_metadata?.username || user.email?.split('@')[0] || 'Foydalanuvchi',
+            photoURL: user.user_metadata?.avatar_url || '',
+            points: 100,
+            isPremium: false,
+            isAdmin: false,
+          };
         }
 
-        // Fetch goals subcollection
-        const goalsRef = collection(db, 'users', user.uid, 'goals');
-        const goalsSnap = await getDocs(goalsRef);
-        const goalsData = goalsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        commit('SET_GOALS', goalsData);
+        commit('SET_PROFILE', {
+          id: user.id,
+          username: profile.username || user.email?.split('@')[0],
+          photoURL: profile.photo_url || '',
+          points: Number(profile.points || 0),
+          isPremium: Boolean(profile.is_premium),
+          isAdmin: Boolean(profile.is_admin),
+          adminRole: profile.admin_role || 'user',
+          streakCount: profile.streak_count || 0,
+        });
+        commit('SET_PREFERENCES', {});
+
+        // Fetch goals from Supabase
+        const goals = await goalService.getUserGoals(user.id);
+        commit('SET_GOALS', goals || []);
 
       } catch (err) {
-        console.error("Error fetching user data:", err);
+        console.warn("fetchUserData:", err.message);
         commit('SET_ERROR', err.message);
       } finally {
         commit('SET_LOADING', false);
       }
     },
-    async saveGoals({ commit, state }, goals) {
+
+    async saveGoals({ commit }, goals) {
       commit('SET_LOADING', true);
       try {
-        const auth = getAuth();
-        const user = auth.currentUser;
+        const user = await authService.getUser();
         if (!user) throw new Error("No authenticated user");
 
-        const batch = writeBatch(db);
-        goals.forEach(g => {
-          const ref = doc(db, 'users', user.uid, 'goals', g.id);
-          batch.set(ref, g, { merge: true });
-        });
-        
-        await batch.commit();
-        commit('SET_GOALS', goals);
+        const saved = await goalService.saveGoals(user.id, goals);
+        commit('SET_GOALS', saved);
       } catch (err) {
         console.error("Error saving goals:", err);
         commit('SET_ERROR', err.message);
@@ -94,10 +88,10 @@ export default {
       } finally {
         commit('SET_LOADING', false);
       }
-    }
+    },
   },
   getters: {
     hasGoals: state => state.goals.length > 0,
-    activeGoals: state => state.goals.filter(g => g.status === 'active')
-  }
+    activeGoals: state => state.goals.filter(g => !g.is_completed),
+  },
 };

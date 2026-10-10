@@ -922,9 +922,47 @@ defineExpose({ initializeTest: fetchQuestions });
 .rm-dot { width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; }
 
 @media (max-width: 600px) {
-  .premium-layout { padding: 16px; }
-  .dynamic-island-header { padding: 12px 16px; }
-  .subject-name { font-size: 1rem; }
+  .premium-layout {
+    padding: 10px 8px calc(24px + env(safe-area-inset-bottom, 0px)) 8px !important;
+  }
+  .dynamic-island-header {
+    padding: 8px 12px !important;
+    margin-bottom: 14px !important;
+    border-radius: 16px !important;
+  }
+  .header-left {
+    gap: 6px !important;
+    min-width: 0 !important;
+  }
+  .subject-name {
+    font-size: 0.95rem !important;
+    max-width: 120px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .level-tag {
+    font-size: 0.7rem !important;
+    padding: 2px 8px !important;
+  }
+  .timer-pill {
+    padding: 6px 10px !important;
+    font-size: 0.82rem !important;
+    gap: 5px !important;
+  }
+  .exit-pro-btn {
+    width: 32px !important;
+    height: 32px !important;
+    margin-right: 4px !important;
+  }
+  .review-overlay {
+    padding: 10px !important;
+    align-items: flex-end !important;
+  }
+  .review-modal {
+    max-height: 90vh !important;
+    border-radius: 20px 20px 0 0 !important;
+  }
 }
 </style>
 

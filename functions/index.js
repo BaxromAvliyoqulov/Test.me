@@ -197,7 +197,7 @@ exports.generateAiTest = functions.https.onCall(async (data, context) => {
   }
 
   const creatorId = context.auth.uid;
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   const personas = {
     standard: "You are an objective, academic examiner. Write clear, unambiguous, and formally structured multiple-choice questions. Ensure precise language.",

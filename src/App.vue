@@ -12,12 +12,20 @@
   <MainLayout v-else>
     <router-view />
   </MainLayout>
+
+  <!-- Universal Smart PWA Install Prompt for PC, Android and iPhone -->
+  <PwaInstallPrompt />
+
+  <!-- Automatic PWA New Version Update Prompt -->
+  <AppUpdatePrompt />
 </template>
 
 <script setup>
 import { ref, computed, onErrorCaptured, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainLayout from '@/layout/mainLayout.vue';
+import PwaInstallPrompt from '@/components/common/PwaInstallPrompt.vue';
+import AppUpdatePrompt from '@/components/common/AppUpdatePrompt.vue';
 import { useToast } from 'vue-toastification';
 import { messaging } from '@/config/firebase';
 import { getToken, onMessage } from 'firebase/messaging';

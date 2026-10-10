@@ -52,6 +52,8 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { authService, profileService } from '@/services/supabaseService';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { db } from '@/config/firebase';
 import { collection, doc, writeBatch, getDocs, getCountFromServer } from 'firebase/firestore';
@@ -61,6 +63,8 @@ import SeederControls from '@/components/admin/SeederControls.vue';
 import ActivityConsole from '@/components/admin/ActivityConsole.vue';
 import DbStatus from '@/components/admin/DbStatus.vue';
 import ProgressGrid from '@/components/admin/ProgressGrid.vue';
+
+const router = useRouter();
 
 const geminiApiKey = ref(localStorage.getItem('geminiApiKey') || '');
 const subjectId = ref(localStorage.getItem('adminSeederSubjectId') || '');
@@ -109,6 +113,24 @@ const fetchSubjects = async () => {
 };
 
 onMounted(async () => {
+  // Admin huquqini tekshirish
+  try {
+    const user = await authService.getUser();
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    const profile = await profileService.getProfile(user.id);
+    const isAdmin = profile?.is_admin || profile?.admin_role === 'super_admin' || user.email === 'avliyoqulovbaxrom99@gmail.com';
+    if (!isAdmin) {
+      router.push('/');
+      return;
+    }
+  } catch (err) {
+    router.push('/');
+    return;
+  }
+
   await fetchSubjects();
   if (subjectId.value && subjects.value.some(s => s.id === subjectId.value)) {
     // Manually trigger the fetch for the initial loaded subject ID

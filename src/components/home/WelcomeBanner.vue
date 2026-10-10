@@ -149,11 +149,39 @@ const props = defineProps({
 }
 
 @media (max-width: 768px) {
-  .welcome-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1.5rem;
+  .welcome-banner {
+    padding: 1.25rem 1.1rem !important;
+    border-radius: 20px !important;
+    margin-bottom: 1.25rem !important;
   }
-  .welcome-text h1 { font-size: 1.8rem; }
+  .welcome-content {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+  .welcome-text h1 {
+    font-size: 1.35rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 0.25rem !important;
+  }
+  .welcome-text p {
+    font-size: 0.85rem !important;
+  }
+  .welcome-stat-chip {
+    padding: 0.5rem 1rem !important;
+    border-radius: 14px !important;
+    gap: 10px !important;
+    align-self: flex-start !important;
+  }
+  .coin-icon {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  .stat-val {
+    font-size: 1.15rem !important;
+  }
+  .stat-lbl {
+    font-size: 0.65rem !important;
+  }
 }
 </style>

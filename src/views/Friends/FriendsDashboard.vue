@@ -648,7 +648,7 @@ const openChat = (friend) => {
   min-height: calc(100vh - 80px);
   padding: 1.5rem;
   background: #f8fafc;
-  overflow-x: hidden;
+  overflow: clip;
 }
 
 .glow-bg {
@@ -797,11 +797,12 @@ const openChat = (friend) => {
 
 .sidebar-wrapper {
   position: sticky;
-  top: 84px;
-  height: calc(100vh - 105px);
-  max-height: calc(100vh - 105px);
+  top: 16px;
+  height: calc(100vh - 110px);
+  max-height: calc(100vh - 110px);
   display: flex;
   flex-direction: column;
+  z-index: 10;
 }
 
 .content-area-wrapper {

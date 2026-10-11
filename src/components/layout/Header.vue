@@ -91,6 +91,13 @@
               <i class="fas fa-chevron-right notif-chevron"></i>
             </div>
           </div>
+
+          <div class="notif-modal-footer">
+            <button class="notif-modal-view-all-btn" @click="goToNotificationsPage">
+              <span>Barcha bildirishnomalarni ko'rish</span>
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
         </div>
       </div>
     </Transition>
@@ -119,7 +126,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot, collection, query, orderBy, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/config/firebase';
@@ -128,6 +135,7 @@ import defaultUserImage from '@/assets/img/user.png';
 const emit = defineEmits(['toggle-sidebar']);
 
 const route = useRoute();
+const router = useRouter();
 
 const username = ref(null);
 const profileImage = ref(defaultUserImage);
@@ -212,6 +220,11 @@ const closeNotifModal = () => {
   document.body.style.overflow = '';
 };
 
+const goToNotificationsPage = () => {
+  closeNotifModal();
+  router.push('/notifications');
+};
+
 const openNotifDetail = (notif) => {
   selectedNotif.value = notif;
 };
@@ -232,6 +245,7 @@ const currentRouteName = computed(() => {
     '/about': 'Biz haqimizda',
     '/contactUs': 'Aloqa & Yordam',
     '/editProfile': 'Profilni tahrirlash',
+    '/notifications': 'Bildirishnomalar',
   };
   return route.path ? (pathMap[route.path] || '') : '';
 });
@@ -1132,5 +1146,35 @@ onBeforeUnmount(() => {
     border-radius: 24px 24px 0 0;
     max-height: 85vh;
   }
+}
+
+.notif-modal-footer {
+  padding: 12px 18px 16px;
+  background: white;
+  border-top: 1px solid #f1f5f9;
+}
+
+.notif-modal-view-all-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: white;
+  font-weight: 700;
+  font-size: 0.88rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+}
+
+.notif-modal-view-all-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+  background: linear-gradient(135deg, #4338ca, #4f46e5);
 }
 </style>

@@ -65,6 +65,13 @@
             <span v-if="!effectiveCollapsed" class="link-text">{{ t('dashboard') }}</span>
           </transition>
         </router-link>
+
+        <router-link to="/notifications" class="sidebar-link notif-link" v-tooltip="currentLocale === 'RUS' ? 'Уведомления' : 'Bildirishnomalar'" @click="navigateTo('/notifications')">
+          <div class="link-icon"><i class="fas fa-bell"></i></div>
+          <transition name="fade-slide">
+            <span v-if="!effectiveCollapsed" class="link-text">{{ currentLocale === 'RUS' ? 'Уведомления' : 'Bildirishnomalar' }}</span>
+          </transition>
+        </router-link>
       </div>
 
       <!-- YUTUQLAR & PROGRES SECTION -->

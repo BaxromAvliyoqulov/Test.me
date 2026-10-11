@@ -792,15 +792,20 @@ const openChat = (friend) => {
   display: grid;
   grid-template-columns: 360px 1fr;
   gap: 1.5rem;
-  min-height: 650px;
+  align-items: start;
 }
 
 .sidebar-wrapper {
-  height: 100%;
+  position: sticky;
+  top: 84px;
+  height: calc(100vh - 105px);
+  max-height: calc(100vh - 105px);
+  display: flex;
+  flex-direction: column;
 }
 
 .content-area-wrapper {
-  height: 100%;
+  min-height: 650px;
   display: flex;
   flex-direction: column;
 }
@@ -904,7 +909,10 @@ const openChat = (friend) => {
   }
 
   .sidebar-wrapper {
+    position: static;
+    top: auto;
     height: auto;
+    max-height: none;
   }
 }
 

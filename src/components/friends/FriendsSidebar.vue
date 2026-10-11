@@ -297,6 +297,9 @@ const formatReqTime = (ts) => {
   flex-direction: column;
   gap: 1.25rem;
   height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .search-users {
@@ -419,8 +422,22 @@ const formatReqTime = (ts) => {
   flex-direction: column;
   gap: 0.6rem;
   overflow-y: auto;
-  max-height: calc(100vh - 280px);
+  flex: 1;
+  min-height: 0;
   padding-right: 0.25rem;
+}
+
+.user-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.user-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.user-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .user-item-card {

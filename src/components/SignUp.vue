@@ -130,14 +130,6 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { authService } from '@/services/supabaseService';
-import { auth, db } from '@/config/firebase';
-import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useToast } from 'vue-toastification';
 
 const username = ref('');
@@ -164,7 +156,7 @@ const handleSubmit = async () => {
   }
 
   try {
-    const { user } = await authService.signUp(
+    await authService.signUp(
       email.value,
       password.value,
       username.value
@@ -172,7 +164,7 @@ const handleSubmit = async () => {
 
     successMessage.value = 'Ro\'yxatdan muvaffaqiyatli o\'tdingiz!';
     toast.success('Ro\'yxatdan muvaffaqiyatli o\'tdingiz!');
-    window.location.href = '/';
+    router.push('/dashboard');
   } catch (error) {
     errorMessage.value = error.message || 'Ro\'yxatdan o\'tishda xatolik yuz berdi.';
     toast.error(errorMessage.value);
@@ -184,38 +176,9 @@ const handleGoogleSignUp = async () => {
   successMessage.value = '';
 
   try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-
-    const userRef = doc(db, 'users', user.uid);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      await setDoc(userRef, {
-        username: user.displayName || 'Anonymous',
-        displayName: user.displayName || 'Anonymous',
-        email: user.email,
-        photoURL: user.photoURL || '',
-        points: 0,
-        referralCode: user.uid.slice(0, 8).toUpperCase(),
-        shortId: user.uid.slice(0, 8).toUpperCase(),
-        preferences: {
-          defaultSubject: [],
-          defaultLevel: '',
-          dailyGoal: 10,
-          defaultLocale: 'UZB',
-          unlockedMentors: ['friendly']
-        },
-        createdAt: new Date(),
-      });
-    }
-
-    successMessage.value = 'Google orqali ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi!';
-    toast.success('Google orqali ro\'yxatdan o\'tish muvaffaqiyatli yakunlandi!');
-    window.location.href = '/';
+    await authService.signInWithGoogle();
   } catch (error) {
-    errorMessage.value = 'Xatolik yuz berdi: ' + error.message;
+    errorMessage.value = error.message || 'Google orqali ro\'yxatdan o\'tishda xatolik yuz berdi.';
     toast.error(errorMessage.value);
     console.error(error);
   }

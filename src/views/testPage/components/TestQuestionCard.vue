@@ -4,7 +4,7 @@
       <span class="q-badge">{{ isRus ? 'Вопрос' : 'Savol' }} {{ questionNumber }} / {{ totalQuestions }}</span>
     </div>
     
-    <h2 class="q-text">{{ question?.question }}</h2>
+    <h2 class="q-text" v-html="renderMath(question?.question)"></h2>
 
     <transition name="fade">
       <div v-if="hintText || isAiLoading" class="ai-hint-wrapper">
@@ -29,7 +29,7 @@
         <div class="opt-letter-box" :class="'bg-' + index">
           {{ ['A', 'B', 'C', 'D'][index] }}
         </div>
-        <div class="opt-text">{{ option }}</div>
+        <div class="opt-text" v-html="renderMath(option)"></div>
       </button>
     </div>
 
@@ -85,6 +85,7 @@ defineProps({
 });
 
 import AIBubble from '@/components/AIBubble.vue';
+import { renderMath } from '@/utils/katexRenderer';
 
 defineEmits(['selectOption', 'use5050', 'useAiHint', 'goToPrev', 'submitAnswer']);
 </script>

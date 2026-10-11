@@ -53,7 +53,7 @@ export async function checkForUpdates() {
   isCheckingUpdate.value = true;
   lastCheckedTime.value = new Date().toLocaleTimeString();
 
-  if ('serviceWorker' in navigator) {
+  if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
     try {
       const reg = await navigator.serviceWorker.getRegistration();
       if (reg) {
@@ -67,7 +67,22 @@ export async function checkForUpdates() {
   return new Promise((resolve) => {
     setTimeout(() => {
       isCheckingUpdate.value = false;
-      resolve(needRefresh.value);
+      resolve({ hasUpdate: needRefresh.value });
     }, 1200);
   });
 }
+
+import { APP_VERSION } from '@/config/version';
+
+export const updateService = {
+  version: APP_VERSION,
+  needRefresh,
+  isOfflineReady,
+  isCheckingUpdate,
+  lastCheckedTime,
+  initPwaUpdate,
+  acceptUpdate,
+  checkForUpdates,
+};
+
+export default updateService;

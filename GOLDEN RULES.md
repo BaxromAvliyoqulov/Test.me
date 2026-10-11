@@ -66,9 +66,14 @@
 ---
 
 ## 🔄 Active Task (In Progress)
-- [ ] Tungi avtonom refaktoring, UI/UX polish va Supabase xavfsizlik qatlamini mustahkamlash.
+- [ ] O'qituvchilar kabineti (Teacher LMS) va Click/Payme to'lovlarini joriy qilish.
 
 ## ✅ Completed Checklist (History)
 - [x] 2026-10-10: PWA avto-yangilanish tizimi, versiya badge (`v2.1.0`), AppUpdatePrompt yaratildi.
 - [x] 2026-10-10: Desktop navbar tozalandi, versiya vidjeti Sidebar footeriga o'rnatildi.
 - [x] 2026-10-10: Vitest va Vite build 100% yashil holatga keltirildi.
+- [x] 2026-10-11: Dual-Auth Mismatch bartaraf etildi: Google OAuth va Email kirish to'liq Supabase `authService` ga o'tkazildi (`login.vue`, `SignUp.vue`, `admin/index.vue`).
+- [x] 2026-10-11: `authGuard.js` xavfsizlantirildi: Fail-Open zaifligi yopildi, hardcoded admin emaillar o'rniga DB roli (RBAC) ulandi.
+- [x] 2026-10-11: Media aktivlar optimallashtirildi: `TPcoinAi.png` (5.68 MB -> 106 KB + WebP) va barcha qutilar WebP ga o'tkazilib, hajm 12 MB dan <1.8 MB ga tushirildi.
+- [x] 2026-10-11: KaTeX integratsiya qilindi: Matematika, fizika va kimyo formulalari (`$...$` va `$$...$$`) `TestQuestionCard.vue` da professional LaTeX formatida renderlandi.
+- [x] 2026-10-11: Vitest test qamrovi 11 tadan 31 taga yetkazildi (6 ta test fayli, 100% yashil).

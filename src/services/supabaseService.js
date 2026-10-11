@@ -34,6 +34,27 @@ export const authService = {
     return data;
   },
 
+  async signInWithGoogle() {
+    const origin = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : '';
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: origin ? `${origin}/dashboard` : undefined,
+      },
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async resetPasswordForEmail(email) {
+    const origin = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : '';
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: origin ? `${origin}/editProfile` : undefined,
+    });
+    if (error) throw error;
+    return data;
+  },
+
   async signOut() {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;

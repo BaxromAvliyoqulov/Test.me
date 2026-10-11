@@ -158,16 +158,6 @@
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { authService } from '@/services/supabaseService';
-import { auth } from '../config/firebase';
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-  setPersistence,
-  browserLocalPersistence,
-  browserSessionPersistence
-} from 'firebase/auth';
 import { useToast } from 'vue-toastification';
 
 const router = useRouter();
@@ -259,13 +249,10 @@ const handleGoogleLog = async () => {
   isGoogleLoading.value = true;
   globalError.value = '';
   try {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
-    toast.success("Google orqali kirish muvaffaqiyatli!");
-    router.push('/');
+    await authService.signInWithGoogle();
   } catch (error) {
     console.error('Google Auth Error:', error);
-    globalError.value = "Google orqali kirish bekor qilindi yoki xatolik yuz berdi.";
+    globalError.value = error.message || "Google orqali kirishda xatolik yuz berdi.";
   } finally {
     isGoogleLoading.value = false;
   }
@@ -298,16 +285,12 @@ const handleForgotPassword = async () => {
   resetError.value = '';
 
   try {
-    await sendPasswordResetEmail(auth, resetEmail.value);
+    await authService.resetPasswordForEmail(resetEmail.value);
     toast.success("Parolni tiklash havolasi pochtangizga yuborildi!");
     closeForgotPasswordModal();
   } catch (error) {
     console.error("Reset Password Error:", error);
-    if (error.code === 'auth/user-not-found') {
-      resetError.value = "Bunday foydalanuvchi topilmadi.";
-    } else {
-      resetError.value = "Havola yuborishda xatolik yuz berdi.";
-    }
+    resetError.value = error.message || "Havola yuborishda xatolik yuz berdi.";
   } finally {
     isResetting.value = false;
   }

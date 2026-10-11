@@ -54,8 +54,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import { auth, db } from '@/config/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { authService, profileService } from '@/services/supabaseService';
 
 import AdminSidebar from './components/AdminSidebar.vue';
 import AdminOverview from './components/AdminOverview.vue';
@@ -135,45 +134,48 @@ const navigate = (view) => {
   currentView.value = view;
 };
 
-const logout = () => {
+const logout = async () => {
+  try {
+    await authService.signOut();
+  } catch (e) {
+    console.warn('Sign out warning:', e);
+  }
   authenticated.value = false;
   adminRole.value = null;
   router.push('/');
 };
 
-onMounted(() => {
-  auth.onAuthStateChanged(async user => {
-    if (user) {
-      if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
-        authenticated.value = true;
-        adminRole.value = 'super_admin';
-        loadingAuth.value = false;
-      } else {
-        // Fetch role from Firestore
-        try {
-          const docSnap = await getDoc(doc(db, 'users', user.uid));
-          if (docSnap.exists() && (docSnap.data().adminRole || docSnap.data().isAdmin)) {
-            adminRole.value = docSnap.data().adminRole || 'content_admin';
-            authenticated.value = true;
-          } else {
-            authenticated.value = false;
-            router.push('/');
-          }
-        } catch(e) {
-          console.error("Admin rolni olishda xatolik:", e);
-          authenticated.value = false;
-          router.push('/');
-        } finally {
-          loadingAuth.value = false;
-        }
-      }
+const checkAdminAuth = async () => {
+  loadingAuth.value = true;
+  try {
+    const user = await authService.getUser();
+    if (!user) {
+      authenticated.value = false;
+      router.push('/login');
+      return;
+    }
+
+    const profile = await profileService.getProfile(user.id);
+    const hasAdminAccess = Boolean(profile?.is_admin) || ['super_admin', 'admin', 'content_admin', 'teacher_admin'].includes(profile?.admin_role);
+
+    if (hasAdminAccess) {
+      authenticated.value = true;
+      adminRole.value = profile?.admin_role || (profile?.is_admin ? 'super_admin' : 'admin');
     } else {
       authenticated.value = false;
-      loadingAuth.value = false;
-      router.push('/login');
+      router.push('/');
     }
-  });
+  } catch (e) {
+    console.error('Admin huquqlarini tekshirishda xatolik:', e);
+    authenticated.value = false;
+    router.push('/');
+  } finally {
+    loadingAuth.value = false;
+  }
+};
 
+onMounted(() => {
+  checkAdminAuth();
   updateTime();
   timeInterval = setInterval(updateTime, 1000);
 });

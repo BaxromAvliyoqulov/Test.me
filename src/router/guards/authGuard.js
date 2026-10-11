@@ -29,9 +29,9 @@ export const authGuard = async (to, from, next) => {
         return;
       }
 
-      // Check admin status in Supabase profiles
+      // Check admin status in Supabase profiles (DB RBAC, no hardcoded emails)
       const profile = await profileService.getProfile(user.id);
-      const isAdmin = profile?.is_admin || profile?.admin_role === 'super_admin' || user.email === 'avliyoqulovbaxrom99@gmail.com';
+      const isAdmin = Boolean(profile?.is_admin) || ['super_admin', 'admin', 'content_admin'].includes(profile?.admin_role);
       
       if (!isAdmin) {
         console.warn('⚠️ Admin ruxsati yo\'q. Kirish taqiqlandi.');
@@ -43,6 +43,12 @@ export const authGuard = async (to, from, next) => {
     next();
   } catch (error) {
     console.error('AuthGuard xatolik:', error);
-    next();
+    // Fail-Secure: Agar himoyalangan sahifa bo'lsa, xatolik yuz berganda ruxsatsiz o'tkazilmaydi
+    const publicPages = ['/login', '/signup', '/about', '/contactUs', '/'];
+    if (!publicPages.includes(to.path)) {
+      next('/login');
+    } else {
+      next();
+    }
   }
 };

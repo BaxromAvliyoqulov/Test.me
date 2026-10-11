@@ -43,11 +43,3 @@ VALUES
   ('DTM Master Unvoni', 'Profilingizda porlab turuvchi maxsus faxriy nishon', 1000, 'badge', 'fa-medal', 'legendary', true),
   ('Matrix Yashil Mavzusi', 'Hackerlar uslubidagi toza yashil-qora terminal dizayni', 350, 'theme', 'fa-terminal', 'rare', true)
 ON CONFLICT DO NOTHING;
-
--- 4. DO'KON QUTILARI (SHOP BOXES)
-INSERT INTO public.shop_boxes (box_key, title, price, image_url, items_pool)
-VALUES
-  ('box_starter', 'Boshlang''ich Quti', 100, '/assets/img/boxes/box_starter.png', '[{"type":"points","amount":150,"chance":0.6},{"type":"theme","id":"matrix","chance":0.4}]'::jsonb),
-  ('box_iron', 'Temir Quti', 250, '/assets/img/boxes/box_iron.png', '[{"type":"points","amount":400,"chance":0.5},{"type":"item","id":"shield","chance":0.5}]'::jsonb),
-  ('box_golden', 'Oltin Afsonaviy Quti', 750, '/assets/img/boxes/box_golden.png', '[{"type":"points","amount":1500,"chance":0.3},{"type":"item","id":"crown","chance":0.7}]'::jsonb)
-ON CONFLICT (box_key) DO NOTHING;

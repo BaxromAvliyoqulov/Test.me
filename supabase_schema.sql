@@ -109,18 +109,7 @@ CREATE TABLE IF NOT EXISTS public.shop_items (
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW())
 );
 
--- 9. SHOP BOXES (Lootboxlar)
-CREATE TABLE IF NOT EXISTS public.shop_boxes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  box_key TEXT UNIQUE NOT NULL,
-  title TEXT NOT NULL,
-  price INT NOT NULL CHECK (price >= 0),
-  image_url TEXT,
-  items_pool JSONB NOT NULL DEFAULT '[]'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW())
-);
-
--- 10. USER INVENTORY (Foydalanuvchi quti va buyumlari)
+-- 9. USER INVENTORY (Foydalanuvchi buyumlari)
 CREATE TABLE IF NOT EXISTS public.user_inventory (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -182,7 +171,6 @@ ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shop_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.shop_boxes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_inventory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_goals ENABLE ROW LEVEL SECURITY;
@@ -225,9 +213,6 @@ CREATE POLICY "Users insert their certificates" ON public.certificates FOR INSER
 -- 5. Shop & Transactions
 DROP POLICY IF EXISTS "Anyone can view shop items" ON public.shop_items;
 CREATE POLICY "Anyone can view shop items" ON public.shop_items FOR SELECT USING (is_active = true);
-
-DROP POLICY IF EXISTS "Anyone can view shop boxes" ON public.shop_boxes;
-CREATE POLICY "Anyone can view shop boxes" ON public.shop_boxes FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Users can view their inventory" ON public.user_inventory;
 CREATE POLICY "Users can view their inventory" ON public.user_inventory FOR SELECT USING (auth.uid() = user_id);

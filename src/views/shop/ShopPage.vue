@@ -38,10 +38,6 @@
           <button :class="['shop-tab', { active: activeTab === 'themes' }]" @click="activeTab = 'themes'">
             <i class="fas fa-palette"></i> {{ isRus ? 'Темы UI' : 'Mavzular' }}
           </button>
-          <button :class="['shop-tab', { active: activeTab === 'cases' }]" @click="activeTab = 'cases'">
-            <i class="fas fa-box-open"></i> {{ isRus ? 'Кейсы' : "G'aznalar" }}
-            <span class="soon-badge">Soon</span>
-          </button>
         </div>
 
         <!-- AI MENTORS TAB -->
@@ -146,22 +142,6 @@
           </div>
         </div>
 
-        <!-- CASES TAB -->
-        <div v-if="activeTab === 'cases'" class="coming-soon-wrapper">
-          <div class="coming-soon-card">
-            <div class="icon-glow-ring">
-              <i class="fas fa-rocket text-blue floating-icon"></i>
-            </div>
-            <h2>{{ isRus ? 'РњР°РіР°Р·РёРЅ СЃРєРѕСЂРѕ РѕС‚РєСЂРѕРµС‚СЃСЏ!' : "Do'kon tez kunda ishga tushadi!" }}</h2>
-            <p>{{ isRus ? 'РњС‹ РіРѕС‚РѕРІРёРј РґР»СЏ РІР°СЃ РЅРµРІРµСЂРѕСЏС‚РЅС‹Рµ РЅР°РіСЂР°РґС‹, СѓРЅРёРєР°Р»СЊРЅС‹Рµ Р°РІР°С‚Р°СЂС‹ Рё СЃРµРєСЂРµС‚РЅС‹Рµ СЏС‰РёРєРё.' : "Biz siz uchun ajoyib yutuqlar va sirli g'aznalar tayyorlayapmiz." }}</p>
-            <div class="features-preview">
-              <div class="feature-item"><i class="fas fa-box-open text-blue"></i><span>{{ isRus ? 'РЎРµРєСЂРµС‚РЅС‹Рµ РЇС‰РёРєРё' : "Sirli G'aznalar" }}</span></div>
-              <div class="feature-item"><i class="fas fa-gem text-purple"></i><span>{{ isRus ? 'Р РµРґРєРёРµ РђРІР°С‚Р°СЂС‹' : 'Nodir Avatarlar' }}</span></div>
-              <div class="feature-item"><i class="fas fa-certificate text-orange"></i><span>{{ isRus ? 'VIP РЎС‚Р°С‚СѓСЃС‹' : 'VIP Maqomlar' }}</span></div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
 
@@ -171,25 +151,6 @@
         {{ toastMsg }}
       </div>
     </transition>
-
-    <!-- Lootbox Opening Animation Overlay -->
-    <div v-if="showOverlay" class="lootbox-overlay">
-      <div class="lootbox-animation-container">
-        <h2 class="opening-text">{{ isRus ? 'РћС‚РєСЂС‹С‚РёРµ...' : 'Ochilmoqda...' }}</h2>
-        <div class="box-shaker" :class="{ 'shake': isShaking, 'explode': isExploding }">
-          <i :class="activeCase.icon" :style="{ color: activeCase.color }"></i>
-        </div>
-        <div v-if="rewardRevealed" class="reward-reveal animate-pop-in">
-          <h3>{{ isRus ? 'РџРћР—Р”Р РђР’Р›РЇР•Рњ!' : 'TABRIKLAYMIZ!' }}</h3>
-          <p>{{ isRus ? 'Р’С‹ РїРѕР»СѓС‡РёР»Рё РЅРѕРІС‹Р№ Р·РЅР°С‡РѕРє!' : 'Siz yangi nishonni qolga kiritdingiz!' }}</p>
-          <div class="reward-item">
-            <i :class="rewardIcon"></i>
-            <span>{{ rewardName }}</span>
-          </div>
-          <button class="claim-btn" @click="closeOverlay">{{ isRus ? 'Р—Р°Р±СЂР°С‚СЊ' : 'Olish' }}</button>
-        </div>
-      </div>
-    </div>
     <!-- Transaction History Modal -->
     <div v-if="showHistoryModal" class="lootbox-overlay" @click.self="showHistoryModal = false">
       <div class="history-modal-content animate-pop-in">
@@ -262,16 +223,6 @@ const transactions = ref([
   { id: 't1', type: 'earn', description: 'Test topshirildi (IQ Math)', amount: 50, date: 'Bugun, 12:40' },
   { id: 't2', type: 'spend', description: 'Comedian AI Mentor xarid qilindi', amount: 100, date: 'Kecha, 18:20' }
 ]);
-
-// Animation States
-const isOpening = ref(false);
-const showOverlay = ref(false);
-const isShaking = ref(false);
-const isExploding = ref(false);
-const rewardRevealed = ref(false);
-const activeCase = ref(null);
-const rewardIcon = ref('');
-const rewardName = ref('');
 
 let currentUser = null;
 
@@ -386,15 +337,6 @@ const activateMentor = async (id) => {
   } finally {
     activating.value = false;
   }
-};
-
-const closeOverlay = () => {
-  showOverlay.value = false;
-  isOpening.value = false;
-  isShaking.value = false;
-  isExploding.value = false;
-  rewardRevealed.value = false;
-  activeCase.value = null;
 };
 </script>
 
@@ -730,57 +672,6 @@ const closeOverlay = () => {
   justify-content: center;
 }
 
-.lootbox-animation-container {
-  text-align: center;
-  position: relative;
-}
-
-.opening-text {
-  color: white;
-  font-size: 2rem;
-  font-weight: 800;
-  margin-bottom: 2rem;
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.box-shaker {
-  font-size: 10rem;
-  transition: transform 0.5s;
-}
-
-.shake {
-  animation: shake 0.5s infinite cubic-bezier(.36,.07,.19,.97) both;
-}
-
-.explode {
-  transform: scale(0);
-  opacity: 0;
-}
-
-@keyframes shake {
-  10%, 90% { transform: translate3d(-5px, 0, 0) rotate(-5deg); }
-  20%, 80% { transform: translate3d(5px, 0, 0) rotate(5deg); }
-  30%, 50%, 70% { transform: translate3d(-10px, -10px, 0) rotate(-10deg); }
-  40%, 60% { transform: translate3d(10px, 10px, 0) rotate(10deg); }
-}
-
-.reward-reveal {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 3rem;
-  border-radius: 30px;
-  width: 400px;
-  max-width: 90vw;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-}
-
 .animate-pop-in {
   animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
@@ -788,62 +679,6 @@ const closeOverlay = () => {
 @keyframes popIn {
   0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
   100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-}
-
-.reward-reveal h3 {
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: #10b981;
-  margin: 0 0 10px 0;
-}
-
-.reward-reveal p {
-  color: #64748b;
-  margin: 0 0 2rem 0;
-}
-
-.reward-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 2rem;
-}
-
-.reward-item i {
-  font-size: 4rem;
-  color: #f59e0b;
-  background: #fffbeb;
-  width: 100px; height: 100px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 20px rgba(245, 158, 11, 0.2);
-}
-
-.reward-item span {
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.claim-btn {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 14px 0;
-  width: 100%;
-  border-radius: 16px;
-  font-size: 1.1rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.claim-btn:hover {
-  background: #2563eb;
-  transform: translateY(-2px);
 }
 
 /* ===== SHOP TABS ===== */

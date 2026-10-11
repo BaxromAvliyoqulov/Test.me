@@ -298,18 +298,6 @@ export const shopService = {
     return data || [];
   },
 
-  async getShopBoxes() {
-    const { data, error } = await supabase
-      .from('shop_boxes')
-      .select('*');
-
-    if (error) {
-      console.error('getShopBoxes xatosi:', error.message);
-      return [];
-    }
-    return data || [];
-  },
-
   async getUserInventory(userId) {
     if (!userId) return [];
     const { data, error } = await supabase

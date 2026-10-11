@@ -7,6 +7,7 @@
         <button class="exit-pro-btn" @click="$emit('exit-test')"><i class="fas fa-arrow-left"></i></button>
         <span class="subject-name">{{ displaySubject }}</span>
         <span class="level-tag">{{ displayLevel }}</span>
+        <span v-if="isDuelMode" class="duel-pill animate-pulse">⚔️ 1v1 DUEL</span>
       </div>
       <div class="header-right">
         <div class="timer-pill" :class="{ 'danger': state.timer < 60 }">
@@ -171,6 +172,10 @@ const activeLevelId = computed(() => {
 const activeQuestionCount = computed(() => {
   const queryCount = route && route.query && route.query.questionCount ? parseInt(route.query.questionCount) : null;
   return props.questionCount || queryCount || 10;
+});
+
+const isDuelMode = computed(() => {
+  return !!(route && route.query && route.query.duelId);
 });
 
 // Display names for subject and level
@@ -743,6 +748,18 @@ defineExpose({ initializeTest: fetchQuestions });
 
 
 <style scoped>
+
+.duel-pill {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+  margin-left: 0.5rem;
+}
 
 .exit-pro-btn {
   background: #f1f5f9;

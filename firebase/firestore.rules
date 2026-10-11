@@ -55,6 +55,12 @@ service cloud.firestore {
       match /notifications/{notificationId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Friends sub-collection
+      match /friends/{friendId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() && (request.auth.uid == userId || request.auth.uid == friendId);
+      }
     }
 
     // Subjects and nested collections: read-only for users, write only for admins
@@ -124,9 +130,11 @@ service cloud.firestore {
     }
     
     match /friend_requests/{requestId} {
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.from || request.auth.uid == resource.data.to);
-      allow create: if isAuthenticated() && request.resource.data.from == request.auth.uid;
-      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.from || request.auth.uid == resource.data.to);
+      allow read, write: if isAuthenticated();
+    }
+
+    match /duels/{duelId} {
+      allow read, write: if isAuthenticated();
     }
     
     // Notifications rules

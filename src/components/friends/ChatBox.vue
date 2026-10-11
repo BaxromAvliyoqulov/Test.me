@@ -59,7 +59,8 @@ const loading = ref(true);
 let unsub = null;
 
 const chatId = computed(() => {
-  return [props.currentUser.uid, props.friend.uid].sort().join('_');
+  const fId = props.friend.uid || props.friend.id;
+  return [props.currentUser.uid, fId].sort().join('_');
 });
 
 const scrollToBottom = () => {

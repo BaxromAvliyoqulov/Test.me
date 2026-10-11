@@ -22,7 +22,7 @@
 
 ## 🧠 Architecture Decision Log (ADR)
 1. **Stack:** Vue 3 (Composition + Options API), Vite, Vuex, Vue Router, Supabase (PostgreSQL + Auth + Storage), Firebase (legacy transitional), Tailwind / Vanilla Glassmorphism CSS, Vitest.
-2. **Database Strategiyasi:** Firebase'dagi parchalangan ma'lumotlarni yagona relatsion Supabase (`supabase_schema.sql`) arxitekturasiga bosqichma-bosqich xavfsiz o'tkazish, fallback mexanizmini saqlash.
+2. **Database Strategiyasi:** Firebase'dagi parchalangan ma'lumotlarni yagona relatsion Supabase (`supabase/schema.sql`) arxitekturasiga bosqichma-bosqich xavfsiz o'tkazish, fallback mexanizmini saqlash.
 3. **PWA & Offline-First:** Standart web saytdan to'laqonli o'rnatiladigan Mobile App (Android APK-like PWA / iOS Home Screen WebApp) va Desktop ilovaga aylantirish; Service Worker avto-yangilanishi (`v2.1.0+`).
 4. **Xavfsizlik & Defensive Logic:** Admin funksiyalari uchun PIN-kod guard, SQL/NoSQL inyeksiyasiga qarshi Zod/parametrli so'rovlar, bo'sh ma'lumotlarda qotib qolishni (null-pointer) nolga tushirish.
 
@@ -31,7 +31,7 @@
 ## 🗺️ 4-Soatlik Tungi Avtonom Master Reja (Overnight Deep Sprint)
 
 ### 🚀 1-Faza: Ma'lumotlar Bazasi va Backend Xavfsizligi (Supabase Unified Pipeline)
-- [x] Supabase relatsion sxemasi (`supabase_schema.sql`) va boshlang'ich seeder (`supabase_seed.sql`) ishlab chiqish.
+- [x] Supabase relatsion sxemasi (`supabase/schema.sql`) va boshlang'ich seeder (`supabase/seed.sql`) ishlab chiqish.
 - [ ] Profil, Ballar (TP Coins) va Tranzaksiyalar uchun atomar tranzaksiya mantiqini mustahkamlash (balans manfiy bo'lmasligi, race-condition himoyasi).
 - [ ] Foydalanuvchi do'stlari, 1v1 duellari va reyting tizimini Supabase jadvaliga to'liq ulash.
 - [ ] Admin panel uchun maxfiy kalit va PIN kod (`admin_pin`) tekshiruvini qat'iylashtirish.

@@ -32,13 +32,15 @@
 
 ### 🚀 1-Faza: Ma'lumotlar Bazasi va Backend Xavfsizligi (Supabase Unified Pipeline)
 - [x] Supabase relatsion sxemasi (`supabase/schema.sql`) va boshlang'ich seeder (`supabase/seed.sql`) ishlab chiqish.
+- [x] Foydalanuvchi do'stlari, 1v1 PvP duellari va do'stlar reytingi tizimini ishlab chiqish (`FriendsDashboard`, `DuelModal`, `FriendLeaderboard`, `GiftCoinsModal`).
+- [x] Loyiha papkalarini tartibga solish, dead code va ortiqcha fayllarni tozalash (`supabase/`, `firebase/`, `views/auth/`).
 - [ ] Profil, Ballar (TP Coins) va Tranzaksiyalar uchun atomar tranzaksiya mantiqini mustahkamlash (balans manfiy bo'lmasligi, race-condition himoyasi).
-- [ ] Foydalanuvchi do'stlari, 1v1 duellari va reyting tizimini Supabase jadvaliga to'liq ulash.
 - [ ] Admin panel uchun maxfiy kalit va PIN kod (`admin_pin`) tekshiruvini qat'iylashtirish.
 
 ### 🎨 2-Faza: UI/UX va Mobile-First Ekranlarni Mukammallashtirish (Zero-Glitch UX)
 - [x] Desktop Navbar'dagi ortiqcha install tugmasini olib tashlash, toza minimalizmga keltirish.
 - [x] Versiya vidjeti va qo'lda tekshirish tugmasini Sidebar pastki qismiga joylashtirish.
+- [x] Do'stlar va Hamjamiyat 100x SaaS interfeysi (Discovery grid, Glassmorphic profillar, real-time chat).
 - [ ] Mobil ekranda (375px–414px) gorizontal scroll va sinishlarni to'liq bartaraf etish (`MobileBottomNav`, test savollari kartasi, shop sahifasi).
 - [ ] Bo'sh holatlar (Empty States), yuklanish skeletonlari va xatolik yuz berganda chiroyli Retry modal qo'shish.
 - [ ] Dark / Light mode ranglar kontrastini va Glassmorphism fonlarini Linear/Apple standartiga moslash.

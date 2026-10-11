@@ -2,8 +2,17 @@
   <div class="chat-box">
     <div class="chat-header">
       <div class="header-info">
-        <div class="avatar">{{ friend.displayName ? friend.displayName.charAt(0) : 'U' }}</div>
-        <h3>{{ friend.displayName }}</h3>
+        <div class="avatar">
+          <img 
+            v-if="getUserAvatar(friend) && !avatarFailed" 
+            :src="getUserAvatar(friend)" 
+            :alt="getUserDisplayName(friend)" 
+            class="avatar-img"
+            @error="avatarFailed = true"
+          />
+          <span v-else>{{ getUserInitials(friend) }}</span>
+        </div>
+        <h3>{{ getUserDisplayName(friend) }}</h3>
       </div>
       <button @click="$emit('close')" class="close-btn"><i class="fas fa-times"></i></button>
     </div>
@@ -11,7 +20,7 @@
     <div class="messages-container" ref="messagesContainer">
       <div v-if="loading" class="loading">Loading messages...</div>
       <div v-else-if="messages.length === 0" class="empty">
-        Say hi to {{ friend.displayName }}!
+        Say hi to {{ getUserDisplayName(friend) }}!
       </div>
       <div 
         v-for="msg in messages" 
@@ -42,6 +51,9 @@
 import { ref, computed, watch, onUnmounted, nextTick } from 'vue';
 import { db } from '@/config/firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getUserDisplayName, getUserAvatar, getUserInitials } from '@/utils/userHelpers';
+
+const avatarFailed = ref(false);
 
 const props = defineProps({
   friend: { type: Object, required: true },
@@ -125,7 +137,8 @@ const formatTime = (ts) => {
 
 .chat-header { background: #f8fafc; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
 .header-info { display: flex; align-items: center; gap: 12px; }
-.avatar { width: 36px; height: 36px; border-radius: 50%; background: #a855f7; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: #a855f7; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; }
 .header-info h3 { margin: 0; font-size: 1.1rem; color: #1e293b; }
 .close-btn { background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; }
 .close-btn:hover { color: #ef4444; }

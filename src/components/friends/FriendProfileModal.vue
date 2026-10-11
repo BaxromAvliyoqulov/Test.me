@@ -5,12 +5,18 @@
       
       <div class="card-hero">
         <div class="avatar-wrapper">
-          <img v-if="friend.profileImage" :src="friend.profileImage" :alt="friend.displayName" class="avatar-img" />
-          <div v-else class="avatar-fallback">{{ (friend.displayName || friend.email || 'U').charAt(0).toUpperCase() }}</div>
+          <img 
+            v-if="getUserAvatar(friend) && !avatarFailed" 
+            :src="getUserAvatar(friend)" 
+            :alt="getUserDisplayName(friend)" 
+            class="avatar-img" 
+            @error="avatarFailed = true"
+          />
+          <div v-else class="avatar-fallback">{{ getUserInitials(friend) }}</div>
           <span class="online-indicator"></span>
         </div>
         
-        <h3 class="user-name">{{ friend.displayName || friend.email }}</h3>
+        <h3 class="user-name">{{ getUserDisplayName(friend) }}</h3>
         <div class="user-meta">
           <span class="user-id"><i class="fas fa-id-badge"></i> {{ friend.shortId || friend.referralCode || ('#' + (friend.uid || friend.id).slice(0, 6).toUpperCase()) }}</span>
           <span v-if="friend.email" class="user-email"><i class="fas fa-envelope"></i> {{ friend.email }}</span>
@@ -64,8 +70,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
+import { getUserDisplayName, getUserAvatar, getUserInitials } from '@/utils/userHelpers';
+
+const avatarFailed = ref(false);
 
 const props = defineProps({
   friend: { type: Object, default: null },

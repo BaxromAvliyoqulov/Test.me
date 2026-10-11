@@ -80,11 +80,18 @@
 
         <div class="row-user-info">
           <div class="user-avatar-sm" :class="{ 'me-border': user.uid === currentUid }">
-            {{ (user.displayName || user.email || 'U').charAt(0).toUpperCase() }}
+            <img 
+              v-if="getUserAvatar(user) && !failedAvatars.has(user.uid || user.id)"
+              :src="getUserAvatar(user)"
+              :alt="getUserDisplayName(user)"
+              class="user-avatar-sm-img"
+              @error="handleAvatarError(user.uid || user.id)"
+            />
+            <span v-else>{{ getUserInitials(user) }}</span>
           </div>
           <div class="user-details">
             <span class="name">
-              {{ user.displayName || user.email }}
+              {{ getUserDisplayName(user) }}
               <span v-if="user.uid === currentUid || user.id === currentUid" class="you-badge">(Siz)</span>
             </span>
             <span class="rank-tag" :class="getRankClass(user.points || 0)">
@@ -114,8 +121,14 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
+import { getUserDisplayName, getUserAvatar, getUserInitials } from '@/utils/userHelpers';
+
+const failedAvatars = ref(new Set());
+const handleAvatarError = (id) => {
+  if (id) failedAvatars.value.add(id);
+};
 
 const props = defineProps({
   friends: { type: Array, default: () => [] },
@@ -354,10 +367,12 @@ const rankedList = computed(() => {
   flex: 1;
 }
 
-.user-avatar-sm {
+.user-avatar-sm,
+.user-avatar-sm-img {
   width: 40px;
   height: 40px;
   border-radius: 50%;
+  object-fit: cover;
   background: #f1f5f9;
   border: 2px solid #e2e8f0;
   display: flex;

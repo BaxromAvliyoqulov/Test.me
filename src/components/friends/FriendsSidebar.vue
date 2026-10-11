@@ -77,11 +77,18 @@
       >
         <div class="user-main" @click="$emit('view-profile', friend)">
           <div class="avatar-sm">
-            {{ (friend.displayName || friend.email || 'U').charAt(0).toUpperCase() }}
+            <img 
+              v-if="getUserAvatar(friend) && !failedAvatars.has(friend.uid || friend.id)"
+              :src="getUserAvatar(friend)"
+              :alt="getUserDisplayName(friend)"
+              class="avatar-sm-img"
+              @error="handleAvatarError(friend.uid || friend.id)"
+            />
+            <span v-else>{{ getUserInitials(friend) }}</span>
             <span class="status-dot"></span>
           </div>
           <div class="meta-box">
-            <span class="name">{{ friend.displayName || friend.email }}</span>
+            <span class="name">{{ getUserDisplayName(friend) }}</span>
             <div class="sub-info">
               <span class="rank-capsule-sm" :class="getRankClass(friend.points || 0)">
                 <i :class="getRankIcon(friend.points || 0)"></i> {{ getRankName(friend.points || 0) }}
@@ -243,6 +250,12 @@
 <script setup>
 import { ref } from 'vue';
 import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
+import { getUserDisplayName, getUserAvatar, getUserInitials } from '@/utils/userHelpers';
+
+const failedAvatars = ref(new Set());
+const handleAvatarError = (id) => {
+  if (id) failedAvatars.value.add(id);
+};
 
 const props = defineProps({
   searchQuery: { type: String, default: '' },
@@ -469,10 +482,12 @@ const formatReqTime = (ts) => {
   cursor: pointer;
 }
 
-.avatar-sm {
+.avatar-sm,
+.avatar-sm-img {
   width: 38px;
   height: 38px;
   border-radius: 50%;
+  object-fit: cover;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   color: white;
   display: flex;

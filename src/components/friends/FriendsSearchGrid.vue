@@ -30,16 +30,23 @@
         <div class="card-glass-bg"></div>
 
         <div class="card-avatar-wrap" @click="$emit('view-profile', user)">
-          <div class="avatar-large">
-            {{ (user.displayName || user.email || 'U').charAt(0).toUpperCase() }}
+          <img 
+            v-if="getUserAvatar(user) && !failedAvatars.has(user.id || user.uid)" 
+            :src="getUserAvatar(user)" 
+            :alt="getUserDisplayName(user)" 
+            class="avatar-large-img"
+            @error="handleAvatarError(user.id || user.uid)"
+          />
+          <div v-else class="avatar-large">
+            {{ getUserInitials(user) }}
           </div>
           <span class="avatar-rank-icon" :class="getRankClass(user.points || 0)">
             <i :class="getRankIcon(user.points || 0)"></i>
           </span>
         </div>
 
-        <h4 class="card-user-name" @click="$emit('view-profile', user)">
-          {{ user.displayName || user.email }}
+        <h4 class="card-user-name" @click="$emit('view-profile', user)" :title="getUserDisplayName(user)">
+          {{ getUserDisplayName(user) }}
         </h4>
 
         <div class="badges-row">
@@ -94,8 +101,14 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
+import { getUserDisplayName, getUserAvatar, getUserInitials } from '@/utils/userHelpers';
+
+const failedAvatars = ref(new Set());
+const handleAvatarError = (id) => {
+  if (id) failedAvatars.value.add(id);
+};
 
 const props = defineProps({
   searchResults: { type: Array, default: () => [] },
@@ -225,10 +238,12 @@ const isPending = (uid) => {
   margin-bottom: 0.75rem;
 }
 
-.avatar-large {
+.avatar-large,
+.avatar-large-img {
   width: 64px;
   height: 64px;
   border-radius: 50%;
+  object-fit: cover;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   color: white;
   font-size: 1.6rem;

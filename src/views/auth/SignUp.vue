@@ -107,7 +107,7 @@
 
           <div class="google-signup">
             <button @click.prevent="handleGoogleSignUp" type="button" class="google-btn">
-              <img src="../assets/img/googleIcon.svg" alt="Google Icon" />
+              <img src="@/assets/img/googleIcon.svg" alt="Google Icon" />
               Google orqali ro'yxatdan o'tish
             </button>
           </div>

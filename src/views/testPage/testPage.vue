@@ -131,7 +131,7 @@
 import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
 import TestQuestionCard from './components/TestQuestionCard.vue';
 import TestResults from './components/TestResults.vue';
-import AIBubble from '@/components/AIBubble.vue';
+import AIBubble from '@/components/common/AIBubble.vue';
 import { generateMentorMessage } from '@/services/aiService';
 import { db } from '@/config/firebase';
 import { collection, getDocs, addDoc, Timestamp, query, where, doc, getDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';

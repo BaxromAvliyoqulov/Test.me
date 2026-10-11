@@ -2,8 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { authGuard } from './guards/authGuard';
 
 import home from '@/views/home.vue';
-const Login = () => import('@/components/login.vue');
-const SignUP = () => import('@/components/SignUp.vue');
+const Login = () => import('@/views/auth/Login.vue');
+const SignUP = () => import('@/views/auth/SignUp.vue');
 const testPage = () => import('@/views/testPage/testPage.vue');
 const admin = () => import('@/views/admin/index.vue');
 const about = () => import('@/views/about.vue');

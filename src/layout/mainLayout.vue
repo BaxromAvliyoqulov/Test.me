@@ -35,9 +35,9 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import Sidebar from "../components/Sidebar.vue";
-import Header from "../components/Header.vue";
-import MobileBottomNav from "../components/layout/MobileBottomNav.vue";
+import Sidebar from "@/components/layout/Sidebar.vue";
+import Header from "@/components/layout/Header.vue";
+import MobileBottomNav from "@/components/layout/MobileBottomNav.vue";
 
 const route = useRoute();
 const pageContentRef = ref(null);

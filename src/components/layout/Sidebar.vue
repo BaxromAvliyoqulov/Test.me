@@ -192,7 +192,7 @@ import { useRouter } from 'vue-router';
 import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import defaultUserImage from '../assets/img/user.png';
+import defaultUserImage from '@/assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
 import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
 import { useToast } from 'vue-toastification';

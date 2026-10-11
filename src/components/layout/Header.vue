@@ -10,7 +10,7 @@
     <div class="header-right" v-if="username">
       <!-- TP Coin Display Capsule -->
       <div class="coins-capsule" @click="$router.push('/points')">
-        <img src="../assets/img/tpCoin.png" alt="TP Coin" class="coin-icon animate-pulse" />
+        <img src="@/assets/img/tpCoin.png" alt="TP Coin" class="coin-icon animate-pulse" />
         <span class="coin-amount">{{ userPoints }}</span>
         <span class="coin-label">TP</span>
       </div>
@@ -123,7 +123,7 @@ import { useRoute } from 'vue-router';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot, collection, query, orderBy, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import defaultUserImage from '../assets/img/user.png';
+import defaultUserImage from '@/assets/img/user.png';
 
 const emit = defineEmits(['toggle-sidebar']);
 

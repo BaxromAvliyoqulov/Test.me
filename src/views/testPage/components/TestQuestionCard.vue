@@ -84,7 +84,7 @@ defineProps({
   mentorType: String
 });
 
-import AIBubble from '@/components/AIBubble.vue';
+import AIBubble from '@/components/common/AIBubble.vue';
 import { renderMath } from '@/utils/katexRenderer';
 
 defineEmits(['selectOption', 'use5050', 'useAiHint', 'goToPrev', 'submitAnswer']);

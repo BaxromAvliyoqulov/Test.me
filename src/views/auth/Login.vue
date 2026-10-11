@@ -105,7 +105,7 @@
             <button @click.prevent="handleGoogleLog" type="button" class="google-btn" :disabled="isGoogleLoading">
               <span v-if="isGoogleLoading"><i class="fas fa-spinner fa-spin"></i> Kutmoqda...</span>
               <template v-else>
-                <img src="../assets/img/googleIcon.svg" alt="Google Icon" />
+                <img src="@/assets/img/googleIcon.svg" alt="Google Icon" />
                 Google orqali kirish
               </template>
             </button>

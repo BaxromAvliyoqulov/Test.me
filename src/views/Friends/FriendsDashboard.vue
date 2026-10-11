@@ -99,7 +99,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { db } from '@/config/firebase';
 import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs, addDoc, onSnapshot, doc, deleteDoc, serverTimestamp, setDoc } from 'firebase/firestore';
-import ChatBox from '@/components/ChatBox.vue';
+import ChatBox from '@/components/friends/ChatBox.vue';
 import FriendsSidebar from '@/components/friends/FriendsSidebar.vue';
 import FriendsSearchGrid from '@/components/friends/FriendsSearchGrid.vue';
 import { useI18n } from '@/utils/i18n';

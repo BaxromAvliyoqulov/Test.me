@@ -85,11 +85,22 @@
               @error="handleAvatarError(friend.uid || friend.id)"
             />
             <span v-else>{{ getUserInitials(friend) }}</span>
-            <span class="status-dot"></span>
+            <span 
+              class="status-dot" 
+              :class="isUserOnline(friend) ? 'online' : 'offline'" 
+              :title="getUserLastSeenText(friend, isRus ? 'RUS' : 'UZB')"
+            ></span>
           </div>
           <div class="meta-box">
-            <span class="name">{{ getUserDisplayName(friend) }}</span>
-            <div class="sub-info">
+            <div class="name-row">
+              <span class="name">{{ getUserDisplayName(friend) }}</span>
+              <span v-if="hasUnreadChat(friend)" class="unread-chat-dot" title="Yangi xabar"></span>
+            </div>
+            <div class="last-msg-preview" v-if="getFriendLastMessage(friend)">
+              <i class="fas fa-comment-dots"></i>
+              <span class="msg-txt">{{ getFriendLastMessage(friend) }}</span>
+            </div>
+            <div class="sub-info" v-else>
               <span class="rank-capsule-sm" :class="getRankClass(friend.points || 0)">
                 <i :class="getRankIcon(friend.points || 0)"></i> {{ getRankName(friend.points || 0) }}
               </span>
@@ -249,8 +260,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
-import { getUserDisplayName, getUserAvatar, getUserInitials } from '@/utils/userHelpers';
+import { getUserDisplayName, getUserAvatar, getUserInitials, isUserOnline, getUserLastSeenText } from '@/utils/userHelpers';
 
 const failedAvatars = ref(new Set());
 const handleAvatarError = (id) => {
@@ -266,8 +276,22 @@ const props = defineProps({
   incomingDuels: { type: Array, default: () => [] },
   outgoingDuels: { type: Array, default: () => [] },
   activeChatFriendUid: { type: String, default: null },
+  chatSummaries: { type: Object, default: () => ({}) },
+  currentUser: { type: Object, default: null },
   isRus: { type: Boolean, default: false }
 });
+
+const getFriendLastMessage = (friend) => {
+  const fId = friend.uid || friend.id;
+  return props.chatSummaries[fId]?.lastMessage || '';
+};
+
+const hasUnreadChat = (friend) => {
+  const fId = friend.uid || friend.id;
+  const summary = props.chatSummaries[fId];
+  if (!summary || !summary.lastMessage) return false;
+  return summary.lastSenderId && summary.lastSenderId !== props.currentUser?.uid && props.activeChatFriendUid !== fId;
+};
 
 defineEmits([
   'update:searchQuery', 
@@ -509,9 +533,60 @@ const formatReqTime = (ts) => {
   right: 0;
   width: 10px;
   height: 10px;
-  background: #10b981;
   border: 2px solid white;
   border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-dot.online {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+}
+
+.status-dot.offline {
+  background: #94a3b8;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unread-chat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 6px #3b82f6;
+  animation: pulseUnread 2s infinite ease-in-out;
+}
+
+@keyframes pulseUnread {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+}
+
+.last-msg-preview {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.76rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.last-msg-preview i {
+  font-size: 0.7rem;
+  color: #3b82f6;
+}
+
+.last-msg-preview .msg-txt {
+  max-width: 135px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
 }
 
 .meta-box {

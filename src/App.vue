@@ -29,10 +29,13 @@ import AppUpdatePrompt from '@/components/common/AppUpdatePrompt.vue';
 import { useToast } from 'vue-toastification';
 import { messaging } from '@/config/firebase';
 import { getToken, onMessage } from 'firebase/messaging';
+import { useUserPresence } from '@/composables/useUserPresence';
 
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
+const { initPresence } = useUserPresence();
+initPresence();
 
 const isGlobalLoading = ref(false);
 

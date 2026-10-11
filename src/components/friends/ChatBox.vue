@@ -50,7 +50,7 @@
 <script setup>
 import { ref, computed, watch, onUnmounted, nextTick } from 'vue';
 import { db } from '@/config/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getUserDisplayName, getUserAvatar, getUserInitials } from '@/utils/userHelpers';
 
 const avatarFailed = ref(false);
@@ -114,11 +114,20 @@ const sendMessage = async () => {
   newMessage.value = '';
   
   try {
+    const fId = props.friend.uid || props.friend.id;
     await addDoc(collection(db, 'chats', chatId.value, 'messages'), {
       text,
       senderId: props.currentUser.uid,
       timestamp: serverTimestamp()
     });
+
+    await setDoc(doc(db, 'chats', chatId.value), {
+      lastMessage: text,
+      lastSenderId: props.currentUser.uid,
+      lastTimestamp: serverTimestamp(),
+      participants: [props.currentUser.uid, fId]
+    }, { merge: true });
+
     chatInput.value.focus();
   } catch (err) {
     console.error("Error sending message", err);

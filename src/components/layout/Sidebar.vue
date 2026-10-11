@@ -71,6 +71,7 @@
           <transition name="fade-slide">
             <span v-if="!effectiveCollapsed" class="link-text">{{ currentLocale === 'RUS' ? 'Уведомления' : 'Bildirishnomalar' }}</span>
           </transition>
+          <span v-if="totalUnreadCount > 0" class="sidebar-badge danger">{{ totalUnreadCount }}</span>
         </router-link>
       </div>
 
@@ -103,6 +104,7 @@
           <transition name="fade-slide">
             <span v-if="!effectiveCollapsed" class="link-text">{{ currentLocale === 'RUS' ? 'Друзья' : "Do'stlar" }}</span>
           </transition>
+          <span v-if="pendingRequestsCount > 0" class="sidebar-badge primary">{{ pendingRequestsCount }}</span>
         </router-link>
       </div>
 
@@ -205,6 +207,7 @@ import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
 import { useToast } from 'vue-toastification';
 import { APP_VERSION, RELEASE_DATE } from '@/config/version';
 import { isCheckingUpdate, checkForUpdates } from '@/services/updateService';
+import { useNotifications } from '@/composables/useNotifications';
 
 const props = defineProps({
   isCollapsed: { type: Boolean, default: false },
@@ -221,6 +224,7 @@ const effectiveCollapsed = computed(() => {
 const { locale: currentLocale, t, setLocale } = useI18n();
 const toast = useToast();
 const router = useRouter();
+const { totalUnreadCount, pendingRequestsCount } = useNotifications();
 
 const handleManualCheck = async () => {
   const hasUpdate = await checkForUpdates();
@@ -657,6 +661,40 @@ const vTooltip = {
 
 .link-text {
   white-space: nowrap;
+}
+
+.sidebar-badge {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 99px;
+  line-height: 1.2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: badgePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sidebar-badge.danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+}
+
+.sidebar-badge.primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+}
+
+.collapsed .sidebar-badge {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  padding: 2px 5px;
+  font-size: 0.65rem;
+}
+
+@keyframes badgePop {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 /* Hover & Active States */

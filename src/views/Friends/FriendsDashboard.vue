@@ -27,6 +27,8 @@
             :incomingDuels="incomingDuels"
             :outgoingDuels="outgoingDuels"
             :activeChatFriendUid="activeChat?.uid || activeChat?.id"
+            :chatSummaries="chatSummaries"
+            :currentUser="currentUser"
             :isRus="isRus"
             @search="searchUsers"
             @clear-search="clearSearch"
@@ -161,6 +163,7 @@ const outgoingRequests = ref([]);
 const incomingDuels = ref([]);
 const outgoingDuels = ref([]);
 const activeChat = ref(null);
+const chatSummaries = ref({});
 
 // Modal States
 const showProfileModal = ref(false);
@@ -178,6 +181,7 @@ let unsubOutgoingReq = null;
 let unsubIncomingDuels = null;
 let unsubOutgoingDuels = null;
 let unsubUserDoc = null;
+let unsubChats = null;
 
 const displayedSearchResults = computed(() => {
   if (searchQuery.value.trim().length > 0) return searchResults.value;
@@ -214,6 +218,7 @@ onMounted(() => {
       listenForFriends();
       listenForRequests();
       listenForDuels();
+      listenForChats();
       loadSuggestedUsers();
     } else {
       router.push('/login');
@@ -229,6 +234,7 @@ onUnmounted(() => {
   if (unsubIncomingDuels) unsubIncomingDuels();
   if (unsubOutgoingDuels) unsubOutgoingDuels();
   if (unsubUserDoc) unsubUserDoc();
+  if (unsubChats) unsubChats();
 });
 
 const listenForFriends = () => {
@@ -241,6 +247,7 @@ const listenForFriends = () => {
       let friendPoints = data.points || 0;
       let friendRank = data.rank || 'Newbie';
       let friendStreak = data.streak || 1;
+      let extraData = {};
       
       try {
         const uDoc = await getDoc(doc(db, 'users', d.id));
@@ -249,6 +256,7 @@ const listenForFriends = () => {
           friendPoints = uData.points || friendPoints;
           friendRank = uData.rank || friendRank;
           friendStreak = uData.streak || friendStreak;
+          extraData = uData;
         }
       } catch (e) { /* fallback */ }
 
@@ -256,12 +264,36 @@ const listenForFriends = () => {
         uid: d.id,
         id: d.id,
         ...data,
+        ...extraData,
         points: friendPoints,
         rank: friendRank,
         streak: friendStreak
       });
     }
     friends.value = friendList;
+  });
+};
+
+const listenForChats = () => {
+  if (!currentUser.value?.uid) return;
+  const qChats = query(
+    collection(db, 'chats'),
+    where('participants', 'array-contains', currentUser.value.uid)
+  );
+  unsubChats = onSnapshot(qChats, (snap) => {
+    const map = {};
+    snap.docs.forEach((docSnap) => {
+      const chatData = docSnap.data();
+      const otherUid = (chatData.participants || []).find((id) => id !== currentUser.value.uid);
+      if (otherUid) {
+        map[otherUid] = {
+          lastMessage: chatData.lastMessage || '',
+          lastTimestamp: chatData.lastTimestamp || null,
+          lastSenderId: chatData.lastSenderId || null
+        };
+      }
+    });
+    chatSummaries.value = map;
   });
 };
 

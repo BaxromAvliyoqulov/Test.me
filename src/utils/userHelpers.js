@@ -46,3 +46,41 @@ export const getUserInitials = (user) => {
   const clean = name.replace(/[^a-zA-Z0-9А-Яа-яЁёЎўҚқҒғҲҳ]/g, '');
   return (clean.charAt(0) || 'U').toUpperCase();
 };
+
+export const isUserOnline = (user) => {
+  if (!user) return false;
+  const rawDate = user.lastActive || user.lastSeen || user.updatedAt;
+  if (!rawDate) return false;
+  const dateVal = rawDate.toDate ? rawDate.toDate() : new Date(rawDate);
+  if (!dateVal || isNaN(dateVal.getTime())) return false;
+  return (Date.now() - dateVal.getTime()) < 5 * 60 * 1000;
+};
+
+export const getUserLastSeenText = (user, locale = 'UZB') => {
+  if (!user) return '';
+  if (isUserOnline(user)) {
+    return locale === 'RUS' ? 'В сети' : 'Tarmoqda';
+  }
+  const rawDate = user.lastActive || user.lastSeen || user.updatedAt;
+  if (!rawDate) {
+    return locale === 'RUS' ? 'Не в сети' : 'Oflayn';
+  }
+  const dateVal = rawDate.toDate ? rawDate.toDate() : new Date(rawDate);
+  if (!dateVal || isNaN(dateVal.getTime())) {
+    return locale === 'RUS' ? 'Не в сети' : 'Oflayn';
+  }
+  const diffMinutes = Math.floor((Date.now() - dateVal.getTime()) / (60 * 1000));
+  if (diffMinutes < 1) {
+    return locale === 'RUS' ? 'Только что' : 'Hozirgina';
+  }
+  if (diffMinutes < 60) {
+    return locale === 'RUS' ? `${diffMinutes} мин назад` : `${diffMinutes} daq oldin`;
+  }
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) {
+    return locale === 'RUS' ? `${diffHours} ч назад` : `${diffHours} soat oldin`;
+  }
+  const diffDays = Math.floor(diffHours / 24);
+  return locale === 'RUS' ? `${diffDays} дн назад` : `${diffDays} kun oldin`;
+};
+

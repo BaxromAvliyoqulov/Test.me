@@ -47,6 +47,7 @@ import { doc, onSnapshot, collection, query, orderBy, updateDoc, arrayUnion } fr
 import { db } from '@/config/firebase';
 import defaultUserImage from '@/assets/img/user.png';
 import HeaderNotificationModal from '@/components/layout/HeaderNotificationModal.vue';
+import { useNotifications } from '@/composables/useNotifications';
 
 const emit = defineEmits(['toggle-sidebar']);
 
@@ -57,13 +58,16 @@ const profileImage = ref(defaultUserImage);
 const userPoints = ref(0);
 let pointsUnsub = null;
 
-// Notifications State
-const readNotifications = ref([]);
-const notifications = ref([]);
+// Notifications Centralized State
+const { 
+  broadcastNotifications: notifications, 
+  readNotificationIds: readNotifications, 
+  totalUnreadCount,
+  loading: loadingNotifs,
+  currentUserId
+} = useNotifications();
+
 const showNotifModal = ref(false);
-const loadingNotifs = ref(true);
-let notifsUnsub = null;
-let currentUserId = null;
 
 // Admin state
 const isAdmin = ref(false);
@@ -78,9 +82,7 @@ const filteredNotifications = computed(() => {
   });
 });
 
-const unreadCount = computed(() => {
-  return filteredNotifications.value.filter(n => !readNotifications.value.includes(n.id)).length;
-});
+const unreadCount = totalUnreadCount;
 
 const openNotifModal = async () => {
   showNotifModal.value = true;

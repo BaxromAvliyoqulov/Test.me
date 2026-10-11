@@ -13,10 +13,15 @@
             @error="avatarFailed = true"
           />
           <div v-else class="avatar-fallback">{{ getUserInitials(friend) }}</div>
-          <span class="online-indicator"></span>
+          <span class="online-indicator" :class="isOnline ? 'online' : 'offline'"></span>
         </div>
         
         <h3 class="user-name">{{ getUserDisplayName(friend) }}</h3>
+        <div class="presence-badge" :class="isOnline ? 'online' : 'offline'">
+          <span class="presence-dot"></span>
+          <span>{{ lastSeenText }}</span>
+        </div>
+
         <div class="user-meta">
           <span class="user-id"><i class="fas fa-id-badge"></i> {{ friend.shortId || friend.referralCode || ('#' + (friend.uid || friend.id).slice(0, 6).toUpperCase()) }}</span>
           <span v-if="friend.email" class="user-email"><i class="fas fa-envelope"></i> {{ friend.email }}</span>
@@ -72,7 +77,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
-import { getUserDisplayName, getUserAvatar, getUserInitials } from '@/utils/userHelpers';
+import { getUserDisplayName, getUserAvatar, getUserInitials, isUserOnline, getUserLastSeenText } from '@/utils/userHelpers';
 
 const avatarFailed = ref(false);
 
@@ -83,6 +88,9 @@ const props = defineProps({
 });
 
 defineEmits(['close', 'start-chat', 'challenge-duel', 'send-gift', 'unfriend']);
+
+const isOnline = computed(() => isUserOnline(props.friend));
+const lastSeenText = computed(() => getUserLastSeenText(props.friend, props.isRus ? 'RUS' : 'UZB'));
 
 const rankName = computed(() => {
   return getRankName(props.friend?.points || 0, props.isRus ? 'RUS' : 'UZB');
@@ -185,16 +193,57 @@ const rankIcon = computed(() => {
   right: 4px;
   width: 18px;
   height: 18px;
-  background: #10b981;
   border: 3px solid white;
   border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.online-indicator.online {
+  background: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+}
+
+.online-indicator.offline {
+  background: #94a3b8;
 }
 
 .user-name {
   font-size: 1.4rem;
   font-weight: 800;
   color: #0f172a;
-  margin: 0 0 0.35rem 0;
+  margin: 0 0 0.15rem 0;
+}
+
+.presence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+  margin-bottom: 0.5rem;
+}
+
+.presence-badge.online {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.presence-badge.offline {
+  background: rgba(148, 163, 184, 0.14);
+  color: #64748b;
+}
+
+.presence-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.presence-badge.online .presence-dot {
+  box-shadow: 0 0 6px #10b981;
 }
 
 .user-meta {

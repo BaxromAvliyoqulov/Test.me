@@ -2,7 +2,7 @@
   <div class="header-hero">
     <div class="header-left">
       <div class="title-pill">
-        <i class="fas fa-bell animate-bounce-slow"></i> Bildirishnomalar Markazi
+        <i class="fas fa-bell animate-bounce-slow"></i> {{ isRus ? 'Центр Уведомлений' : 'Bildirishnomalar Markazi' }}
       </div>
       <h2>{{ isRus ? 'Центр Уведомлений' : 'Barcha Bildirishnomalar' }}</h2>
       <p>{{ isRus ? 'Следите за вызовами на дуэли, запросами в друзья и системными наградами в реальном времени!' : '1v1 duel chaqiruvlari, do\'stlik so\'rovlari, TP Coin mukofotlari va platforma yangiliklarini bir joyda kuzating!' }}</p>

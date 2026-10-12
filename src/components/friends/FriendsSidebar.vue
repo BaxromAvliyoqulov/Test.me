@@ -27,7 +27,7 @@
         @click="$emit('update:tab', 'friends')"
       >
         <i class="fas fa-user-group"></i>
-        <span>Do'stlar</span>
+        <span>{{ isRus ? 'Друзья' : "Do'stlar" }}</span>
         <span class="badge" v-if="friends.length">{{ friends.length }}</span>
       </button>
 
@@ -37,7 +37,7 @@
         @click="$emit('update:tab', 'requests')"
       >
         <i class="fas fa-envelope-open-text"></i>
-        <span>So'rovlar</span>
+        <span>{{ isRus ? 'Запросы' : "So'rovlar" }}</span>
         <span class="badge danger" v-if="pendingRequests.length">{{ pendingRequests.length }}</span>
       </button>
 
@@ -47,7 +47,7 @@
         @click="$emit('update:tab', 'duels')"
       >
         <i class="fas fa-bolt text-danger"></i>
-        <span>Duellar</span>
+        <span>{{ isRus ? 'Дуэли' : "Duellar" }}</span>
         <span class="badge warning" v-if="incomingDuels.length">{{ incomingDuels.length }}</span>
       </button>
 
@@ -57,7 +57,7 @@
         @click="$emit('update:tab', 'leaderboard')"
       >
         <i class="fas fa-trophy text-warning"></i>
-        <span>Reyting</span>
+        <span>{{ isRus ? 'Рейтинг' : "Reyting" }}</span>
       </button>
     </div>
 
@@ -65,8 +65,8 @@
     <div v-if="tab === 'friends'" class="user-list">
       <div v-if="friends.length === 0" class="empty-state">
         <div class="empty-icon-wrap"><i class="fas fa-user-plus"></i></div>
-        <h4>Do'stlar yo'q</h4>
-        <p>Qidiruv orqali yangi do'stlarni toping yoki ID kod bilan ulashing!</p>
+        <h4>{{ isRus ? 'Нет друзей' : "Do'stlar yo'q" }}</h4>
+        <p>{{ isRus ? 'Найдите новых друзей через поиск или подключитесь по ID коду!' : "Qidiruv orqali yangi do'stlarni toping yoki ID kod bilan ulashing!" }}</p>
       </div>
 
       <div 
@@ -94,7 +94,7 @@
           <div class="meta-box">
             <div class="name-row">
               <span class="name">{{ getUserDisplayName(friend) }}</span>
-              <span v-if="hasUnreadChat(friend)" class="unread-chat-dot" title="Yangi xabar"></span>
+              <span v-if="hasUnreadChat(friend)" class="unread-chat-dot" :title="isRus ? 'Новое сообщение' : 'Yangi xabar'"></span>
             </div>
             <div class="last-msg-preview" v-if="getFriendLastMessage(friend)">
               <i class="fas fa-comment-dots"></i>
@@ -113,21 +113,21 @@
           <button 
             @click.stop="$emit('open-chat', friend)" 
             class="action-btn-sm chat"
-            title="Suhbat"
+            :title="isRus ? 'Чат' : 'Suhbat'"
           >
             <i class="fas fa-comment"></i>
           </button>
           <button 
             @click.stop="$emit('start-duel', friend)" 
             class="action-btn-sm duel"
-            title="1v1 Duel"
+            :title="isRus ? '1v1 Дуэль' : '1v1 Duel'"
           >
             <i class="fas fa-bolt"></i>
           </button>
           <button 
             @click.stop="$emit('send-gift', friend)" 
             class="action-btn-sm gift"
-            title="Sovg'a"
+            :title="isRus ? 'Подарок' : 'Sovg\'a'"
           >
             <i class="fas fa-gift"></i>
           </button>
@@ -142,13 +142,13 @@
           :class="{ active: requestSubTab === 'incoming' }" 
           @click="requestSubTab = 'incoming'"
         >
-          Kelgan ({{ pendingRequests.length }})
+          {{ isRus ? 'Входящие' : 'Kelgan' }} ({{ pendingRequests.length }})
         </button>
         <button 
           :class="{ active: requestSubTab === 'outgoing' }" 
           @click="requestSubTab = 'outgoing'"
         >
-          Yuborilgan ({{ outgoingRequests.length }})
+          {{ isRus ? 'Исходящие' : 'Yuborilgan' }} ({{ outgoingRequests.length }})
         </button>
       </div>
 
@@ -156,7 +156,7 @@
       <template v-if="requestSubTab === 'incoming'">
         <div v-if="pendingRequests.length === 0" class="empty-state">
           <div class="empty-icon-wrap"><i class="fas fa-inbox"></i></div>
-          <p>Yangi do'stlik so'rovlari yo'q.</p>
+          <p>{{ isRus ? 'Нет новых запросов в друзья.' : "Yangi do'stlik so'rovlari yo'q." }}</p>
         </div>
 
         <div v-for="req in pendingRequests" :key="req.id" class="user-item-card">
@@ -170,10 +170,10 @@
             </div>
           </div>
           <div class="actions-group">
-            <button @click="$emit('accept-request', req)" class="action-btn-sm accept" title="Qabul qilish">
+            <button @click="$emit('accept-request', req)" class="action-btn-sm accept" :title="isRus ? 'Принять' : 'Qabul qilish'">
               <i class="fas fa-check"></i>
             </button>
-            <button @click="$emit('reject-request', req.id)" class="action-btn-sm reject" title="Rad etish">
+            <button @click="$emit('reject-request', req.id)" class="action-btn-sm reject" :title="isRus ? 'Отклонить' : 'Rad etish'">
               <i class="fas fa-times"></i>
             </button>
           </div>
@@ -184,7 +184,7 @@
       <template v-if="requestSubTab === 'outgoing'">
         <div v-if="outgoingRequests.length === 0" class="empty-state">
           <div class="empty-icon-wrap"><i class="fas fa-paper-plane"></i></div>
-          <p>Yuborilgan so'rovlar yo'q.</p>
+          <p>{{ isRus ? 'Нет отправленных запросов.' : 'Yuborilgan so\'rovlar yo\'q.' }}</p>
         </div>
 
         <div v-for="req in outgoingRequests" :key="req.id" class="user-item-card">
@@ -194,11 +194,11 @@
             </div>
             <div class="meta-box">
               <span class="name">{{ req.toName }}</span>
-              <span class="time-sub">Kutilmoqda...</span>
+              <span class="time-sub">{{ isRus ? 'Ожидание...' : 'Kutilmoqda...' }}</span>
             </div>
           </div>
           <div class="actions-group">
-            <button @click="$emit('cancel-outgoing-request', req.id)" class="action-btn-sm cancel" title="Bekor qilish">
+            <button @click="$emit('cancel-outgoing-request', req.id)" class="action-btn-sm cancel" :title="isRus ? 'Отменить' : 'Bekor qilish'">
               <i class="fas fa-trash-can"></i>
             </button>
           </div>
@@ -210,21 +210,21 @@
     <div v-if="tab === 'duels'" class="user-list">
       <div v-if="incomingDuels.length === 0 && outgoingDuels.length === 0" class="empty-state">
         <div class="empty-icon-wrap"><i class="fas fa-shield-halved"></i></div>
-        <h4>Faol duellar yo'q</h4>
-        <p>Istalgan do'stingizni 1v1 test jangiga chorlashingiz mumkin!</p>
+        <h4>{{ isRus ? 'Нет активных дуэлей' : 'Faol duellar yo\'q' }}</h4>
+        <p>{{ isRus ? 'Вы можете вызвать любого друга на 1v1 тестовую дуэль!' : 'Istalgan do\'stingizni 1v1 test jangiga chorlashingiz mumkin!' }}</p>
       </div>
 
       <!-- Incoming Duel Challenges -->
       <div v-if="incomingDuels.length > 0" class="duel-section-title">
-        <span>⚔️ Sizga kelgan chaqiruvlar:</span>
+        <span>⚔️ {{ isRus ? 'Входящие вызовы:' : 'Sizga kelgan chaqiruvlar:' }}</span>
       </div>
       <div v-for="duel in incomingDuels" :key="duel.id" class="duel-item-card incoming">
         <div class="duel-card-header">
           <div class="avatar-sm gold">⚔️</div>
           <div class="duel-meta">
-            <strong>{{ duel.challengerName }}</strong> sizni chorladi!
+            <strong>{{ duel.challengerName }}</strong> {{ isRus ? 'вызвал вас на дуэль!' : 'sizni chorladi!' }}
             <div class="duel-details">
-              <span>{{ duel.subjectName }}</span> • <span>{{ duel.wager ? duel.wager + ' TP garov' : 'Do\'stona' }}</span>
+              <span>{{ duel.subjectName }}</span> • <span>{{ duel.wager ? duel.wager + ' TP ' + (isRus ? 'ставка' : 'garov') : (isRus ? 'Дружеский' : 'Do\'stona') }}</span>
             </div>
           </div>
         </div>

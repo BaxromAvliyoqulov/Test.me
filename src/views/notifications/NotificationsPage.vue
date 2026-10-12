@@ -31,16 +31,22 @@
         <!-- Loading State -->
         <div v-if="loading" class="loading-state">
           <div class="spinner-bubble"></div>
-          <p>Bildirishnomalar yangilanmoqda...</p>
+          <p>{{ isRus ? 'Загрузка уведомлений...' : 'Bildirishnomalar yangilanmoqda...' }}</p>
         </div>
 
         <!-- Empty State -->
         <div v-else-if="filteredFeed.length === 0" class="empty-feed">
           <div class="empty-orb"><i class="fas fa-bell-slash"></i></div>
-          <h3>Bildirishnomalar mavjud emas</h3>
-          <p v-if="searchQuery">"{{ searchQuery }}" bo'yicha hech qanday xabar topilmadi.</p>
-          <p v-else-if="currentTab === 'unread'">Barcha bildirishnomalarni o'qib bo'lgansiz!</p>
-          <p v-else>Hozircha sizda yangi bildirishnomalar yo'q. Do'stlaringizni duelga chorlang yoki test topshiring!</p>
+          <h3>{{ isRus ? 'Уведомлений нет' : 'Bildirishnomalar mavjud emas' }}</h3>
+          <p v-if="searchQuery">
+            {{ isRus ? `По запросу "${searchQuery}" ничего не найдено.` : `"${searchQuery}" bo'yicha hech qanday xabar topilmadi.` }}
+          </p>
+          <p v-else-if="currentTab === 'unread'">
+            {{ isRus ? 'Вы прочитали все уведомления!' : "Barcha bildirishnomalarni o'qib bo'lgansiz!" }}
+          </p>
+          <p v-else>
+            {{ isRus ? 'У вас пока нет новых уведомлений. Пригласите друзей на дуэль или пройдите тест!' : 'Hozircha sizda yangi bildirishnomalar yo\'q. Do\'stlaringizni duelga chorlang yoki test topshiring!' }}
+          </p>
         </div>
 
         <!-- Cards List -->
@@ -50,6 +56,7 @@
             :key="item.feedId"
             :item="item"
             :isRead="isRead(item.feedId)"
+            :isRus="isRus"
             @click-card="handleCardClick"
             @toggle-read="toggleReadState"
             @accept-duel="acceptDuel"
@@ -191,10 +198,14 @@ const allFeedItems = computed(() => {
       id: d.id,
       type: 'duel_challenge',
       category: 'duels',
-      categoryLabel: '1v1 Duel',
+      categoryLabel: isRus.value ? '1v1 Дуэль' : '1v1 Duel',
       icon: 'fas fa-bolt',
-      title: `${d.challengerName || 'Do\'st'} sizni 1v1 duelga chaqirdi!`,
-      message: `${d.subjectName || 'Fan'} bo'yicha ${d.questionCount || 10} ta savollik test jangida bellashing!`,
+      title: isRus.value 
+        ? `${d.challengerName || 'Друг'} вызвал вас на 1v1 дуэль!` 
+        : `${d.challengerName || 'Do\'st'} sizni 1v1 duelga chaqirdi!`,
+      message: isRus.value 
+        ? `Сразитесь в тестовой дуэли по предмету "${d.subjectName || 'Предмет'}" (${d.questionCount || 10} вопросов)!` 
+        : `${d.subjectName || 'Fan'} bo'yicha ${d.questionCount || 10} ta savollik test jangida bellashing!`,
       timestamp: d.createdAt,
       data: d
     });
@@ -206,10 +217,14 @@ const allFeedItems = computed(() => {
       id: r.id,
       type: 'friend_request',
       category: 'social',
-      categoryLabel: 'Do\'stlik',
+      categoryLabel: isRus.value ? 'Дружба' : 'Do\'stlik',
       icon: 'fas fa-user-plus',
-      title: `${r.fromName || 'Foydalanuvchi'} sizga do'stlik so'rovi yubordi`,
-      message: `Do'stlar ro'yxatiga qo'shing va birgalikda o'rganing!`,
+      title: isRus.value 
+        ? `${r.fromName || 'Пользователь'} отправил вам запрос в друзья` 
+        : `${r.fromName || 'Foydalanuvchi'} sizga do'stlik so'rovi yubordi`,
+      message: isRus.value 
+        ? 'Добавьте в список друзей и развивайтесь вместе!' 
+        : 'Do\'stlar ro\'yxatiga qo\'shing va birgalikda o\'rganing!',
       timestamp: r.timestamp,
       data: r
     });
@@ -217,20 +232,20 @@ const allFeedItems = computed(() => {
 
   systemNotifications.value.forEach(s => {
     let cat = 'system';
-    let catLabel = 'Platforma';
+    let catLabel = isRus.value ? 'Платформа' : 'Platforma';
     let icon = 'fas fa-bullhorn';
 
     if (s.type === 'promo') {
       cat = 'rewards';
-      catLabel = 'Aksiya / Sovg\'a';
+      catLabel = isRus.value ? 'Акция / Подарок' : 'Aksiya / Sovg\'a';
       icon = 'fas fa-gift';
     } else if (s.type === 'update') {
       cat = 'system';
-      catLabel = 'Yangilik';
+      catLabel = isRus.value ? 'Обновление' : 'Yangilik';
       icon = 'fas fa-rocket';
     } else if (s.type === 'warning') {
       cat = 'system';
-      catLabel = 'Muhim';
+      catLabel = isRus.value ? 'Важное' : 'Muhim';
       icon = 'fas fa-triangle-exclamation';
     }
 
@@ -241,11 +256,11 @@ const allFeedItems = computed(() => {
       category: cat,
       categoryLabel: catLabel,
       icon,
-      title: s.title || 'Platforma bildirishnomasi',
+      title: s.title || (isRus.value ? 'Уведомление платформы' : 'Platforma bildirishnomasi'),
       message: s.message || s.content || '',
       timestamp: s.createdAt,
       link: s.link || null,
-      linkText: s.linkText || "Ko'rish",
+      linkText: s.linkText || (isRus.value ? 'Посмотреть' : "Ko'rish"),
       author: s.author || 'Test.me Team',
       data: s
     });

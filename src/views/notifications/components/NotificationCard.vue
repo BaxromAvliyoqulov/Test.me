@@ -30,14 +30,14 @@
       <div v-if="item.type === 'duel_challenge'" class="card-interactive-row" @click.stop>
         <div class="duel-wager-pill">
           <i class="fas fa-coins text-warning"></i>
-          <span>{{ item.data?.wager ? item.data.wager + ' TP garov' : 'Do\'stona sinov' }}</span>
+          <span>{{ item.data?.wager ? (isRus ? item.data.wager + ' TP ставка' : item.data.wager + ' TP garov') : (isRus ? 'Дружеский вызов' : 'Do\'stona sinov') }}</span>
         </div>
         <div class="actions-buttons">
           <button class="btn-action duel-accept" @click="$emit('accept-duel', item.data)">
-            <i class="fas fa-play"></i> Qabul qilish
+            <i class="fas fa-play"></i> {{ isRus ? 'Принять' : 'Qabul qilish' }}
           </button>
           <button class="btn-action duel-reject" @click="$emit('reject-duel', item.data.id)">
-            <i class="fas fa-times"></i> Rad etish
+            <i class="fas fa-times"></i> {{ isRus ? 'Отклонить' : 'Rad etish' }}
           </button>
         </div>
       </div>
@@ -46,10 +46,10 @@
       <div v-else-if="item.type === 'friend_request'" class="card-interactive-row" @click.stop>
         <div class="actions-buttons">
           <button class="btn-action friend-accept" @click="$emit('accept-friend', item.data)">
-            <i class="fas fa-user-check"></i> Do'stlikni Qabul Qilish
+            <i class="fas fa-user-check"></i> {{ isRus ? 'Принять в друзья' : "Do'stlikni Qabul Qilish" }}
           </button>
           <button class="btn-action friend-reject" @click="$emit('reject-friend', item.data.id)">
-            <i class="fas fa-user-xmark"></i> Rad etish
+            <i class="fas fa-user-xmark"></i> {{ isRus ? 'Отклонить' : 'Rad etish' }}
           </button>
         </div>
       </div>
@@ -57,7 +57,7 @@
       <!-- Quick action for System Links -->
       <div v-else-if="item.link" class="card-link-row">
         <router-link :to="item.link" class="action-link">
-          <span>{{ item.linkText || "Ko'rish" }}</span>
+          <span>{{ item.linkText || (isRus ? 'Посмотреть' : "Ko'rish") }}</span>
           <i class="fas fa-arrow-right"></i>
         </router-link>
       </div>
@@ -67,7 +67,7 @@
     <div class="card-controls" @click.stop>
       <button 
         class="control-btn toggle-read" 
-        :title="isRead ? 'O\'qilmagan qilish' : 'O\'qilgan deb belgilash'"
+        :title="isRead ? (isRus ? 'Отметить как непрочитанное' : 'O\'qilmagan qilish') : (isRus ? 'Отметить как прочитанное' : 'O\'qilgan deb belgilash')"
         @click="$emit('toggle-read', item.feedId)"
       >
         <i :class="isRead ? 'far fa-envelope' : 'fas fa-check'"></i>
@@ -81,7 +81,8 @@ import { computed } from 'vue';
 
 const props = defineProps({
   item: { type: Object, required: true },
-  isRead: { type: Boolean, default: false }
+  isRead: { type: Boolean, default: false },
+  isRus: { type: Boolean, default: false }
 });
 
 defineEmits([
@@ -95,18 +96,24 @@ defineEmits([
 
 const formattedTime = computed(() => {
   const ts = props.item.timestamp;
-  if (!ts) return 'Yaqinda';
+  if (!ts) return props.isRus ? 'Недавно' : 'Yaqinda';
   try {
     const d = ts.toDate ? ts.toDate() : new Date(ts);
     const now = new Date();
     const diffSec = Math.floor((now - d) / 1000);
 
-    if (diffSec < 60) return 'Hozirgina';
-    if (diffSec < 3600) return `${Math.floor(diffSec / 60)} daqiqa oldin`;
-    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} soat oldin`;
-    return d.toLocaleDateString('uz-UZ', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    if (diffSec < 60) return props.isRus ? 'Только что' : 'Hozirgina';
+    if (diffSec < 3600) {
+      const mins = Math.floor(diffSec / 60);
+      return props.isRus ? `${mins} мин назад` : `${mins} daqiqa oldin`;
+    }
+    if (diffSec < 86400) {
+      const hrs = Math.floor(diffSec / 3600);
+      return props.isRus ? `${hrs} ч назад` : `${hrs} soat oldin`;
+    }
+    return d.toLocaleDateString(props.isRus ? 'ru-RU' : 'uz-UZ', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   } catch (e) {
-    return 'Yaqinda';
+    return props.isRus ? 'Недавно' : 'Yaqinda';
   }
 });
 </script>

@@ -1,7 +1,9 @@
 <template>
   <div class="header-section">
     <div class="header-content">
-      <div class="title-badge"><i class="fas fa-users-rays"></i> Hamjamiyat & Do'stlar</div>
+      <div class="title-badge">
+        <i class="fas fa-users-rays"></i> {{ isRus ? 'Сообщество & Друзья' : "Hamjamiyat & Do'stlar" }}
+      </div>
       <h2>{{ isRus ? 'Друзья и Тестовые Дуэли' : "Do'stlar va 1v1 Test Duellari" }}</h2>
       <p>{{ isRus ? 'Находите единомышленников, соревнуйтесь в 1v1 дуэлях и делитесь знаниями!' : "Bilimdon do'stlaringizni toping, 1v1 musobaqalarda bellashing va o'zaro tajriba almashing!" }}</p>
     </div>
@@ -9,18 +11,18 @@
     <div class="header-stats-row">
       <div class="stat-pill">
         <span class="pill-num">{{ friendsCount }}</span>
-        <span class="pill-label">Do'stlar</span>
+        <span class="pill-label">{{ isRus ? 'Друзей' : "Do'stlar" }}</span>
       </div>
       <div class="stat-pill" v-if="pendingCount > 0">
         <span class="pill-num highlight">{{ pendingCount }}</span>
-        <span class="pill-label">Yangi so'rov</span>
+        <span class="pill-label">{{ isRus ? 'Запросов' : "Yangi so'rov" }}</span>
       </div>
       <div class="stat-pill" v-if="duelsCount > 0">
         <span class="pill-num fire">⚔️ {{ duelsCount }}</span>
-        <span class="pill-label">Chaqiruv</span>
+        <span class="pill-label">{{ isRus ? 'Вызовов' : "Chaqiruv" }}</span>
       </div>
       <button class="duel-launch-btn" @click="$emit('open-duel')">
-        <span>⚔️ 1v1 Duel Boshlash</span>
+        <span>⚔️ {{ isRus ? 'Начать 1v1 Дуэль' : '1v1 Duel Boshlash' }}</span>
       </button>
     </div>
   </div>

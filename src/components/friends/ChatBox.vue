@@ -12,15 +12,21 @@
           />
           <span v-else>{{ getUserInitials(friend) }}</span>
         </div>
-        <h3>{{ getUserDisplayName(friend) }}</h3>
+        <div>
+          <h3>{{ getUserDisplayName(friend) }}</h3>
+          <span class="chat-header-presence" :class="isUserOnline(friend) ? 'online' : 'offline'">
+            <span class="presence-dot"></span>
+            {{ getUserLastSeenText(friend, isRus ? 'RUS' : 'UZB') }}
+          </span>
+        </div>
       </div>
-      <button @click="$emit('close')" class="close-btn"><i class="fas fa-times"></i></button>
+      <button @click="$emit('close')" class="close-btn" :title="isRus ? 'Закрыть' : 'Yopish'"><i class="fas fa-times"></i></button>
     </div>
 
     <div class="messages-container" ref="messagesContainer">
-      <div v-if="loading" class="loading">Loading messages...</div>
+      <div v-if="loading" class="loading">{{ isRus ? 'Загрузка сообщений...' : 'Xabarlar yuklanmoqda...' }}</div>
       <div v-else-if="messages.length === 0" class="empty">
-        Say hi to {{ getUserDisplayName(friend) }}!
+        {{ isRus ? `Поздоровайтесь с ${getUserDisplayName(friend)}! 👋` : `${getUserDisplayName(friend)} bilan salomlashing! 👋` }}
       </div>
       <div 
         v-for="msg in messages" 
@@ -38,7 +44,7 @@
     <form @submit.prevent="sendMessage" class="input-area">
       <input 
         v-model="newMessage" 
-        placeholder="Type a message..." 
+        :placeholder="isRus ? 'Введите сообщение...' : 'Xabar yozing...'" 
         ref="chatInput" 
         required 
       />
@@ -51,13 +57,20 @@
 import { ref, computed, watch, onUnmounted, nextTick } from 'vue';
 import { db } from '@/config/firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { getUserDisplayName, getUserAvatar, getUserInitials } from '@/utils/userHelpers';
+import { 
+  getUserDisplayName, 
+  getUserAvatar, 
+  getUserInitials,
+  isUserOnline,
+  getUserLastSeenText
+} from '@/utils/userHelpers';
 
 const avatarFailed = ref(false);
 
 const props = defineProps({
   friend: { type: Object, required: true },
-  currentUser: { type: Object, required: true }
+  currentUser: { type: Object, required: true },
+  isRus: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['close']);
@@ -148,7 +161,22 @@ const formatTime = (ts) => {
 .header-info { display: flex; align-items: center; gap: 12px; }
 .avatar { width: 36px; height: 36px; border-radius: 50%; background: #a855f7; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
 .avatar-img { width: 100%; height: 100%; object-fit: cover; }
-.header-info h3 { margin: 0; font-size: 1.1rem; color: #1e293b; }
+.header-info h3 { margin: 0; font-size: 1.05rem; color: #1e293b; line-height: 1.2; }
+.chat-header-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.chat-header-presence.online { color: #10b981; }
+.chat-header-presence.offline { color: #94a3b8; }
+.chat-header-presence .presence-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
 .close-btn { background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; }
 .close-btn:hover { color: #ef4444; }
 

@@ -48,10 +48,12 @@ import { db } from '@/config/firebase';
 import defaultUserImage from '@/assets/img/user.png';
 import HeaderNotificationModal from '@/components/layout/HeaderNotificationModal.vue';
 import { useNotifications } from '@/composables/useNotifications';
+import { useI18n } from '@/utils/i18n';
 
 const emit = defineEmits(['toggle-sidebar']);
 
 const route = useRoute();
+const { locale: currentLocale } = useI18n();
 
 const username = ref(null);
 const profileImage = ref(defaultUserImage);
@@ -88,13 +90,13 @@ const openNotifModal = async () => {
   showNotifModal.value = true;
   document.body.style.overflow = 'hidden';
   // Mark all as read when opening
-  if (unreadCount.value > 0 && currentUserId) {
+  if (unreadCount.value > 0 && currentUserId?.value) {
     const unreadIds = filteredNotifications.value
       .filter(n => !readNotifications.value.includes(n.id))
       .map(n => n.id);
     if (unreadIds.length > 0) {
       try {
-        await updateDoc(doc(db, 'users', currentUserId), {
+        await updateDoc(doc(db, 'users', currentUserId.value), {
           readNotifications: arrayUnion(...unreadIds)
         });
       } catch (e) {
@@ -114,18 +116,19 @@ const handleKeyDown = (e) => {
 };
 
 const currentRouteName = computed(() => {
+  const isRu = currentLocale.value === 'RUS';
   const pathMap = {
-    '/': 'Bosh sahifa',
-    '/points': 'Ballar & Coinlar',
-    '/shop': 'Do\'kon',
-    '/badges': 'Yutuqlar',
-    '/certificates': 'Sertifikatlar',
-    '/dashboard': 'Statistika',
-    '/friends': 'Do\'stlar',
-    '/about': 'Biz haqimizda',
-    '/contactUs': 'Aloqa & Yordam',
-    '/editProfile': 'Profilni tahrirlash',
-    '/notifications': 'Bildirishnomalar',
+    '/': isRu ? 'Главная' : 'Bosh sahifa',
+    '/points': isRu ? 'Баллы & Коины' : 'Ballar & Coinlar',
+    '/shop': isRu ? 'Магазин' : "Do'kon",
+    '/badges': isRu ? 'Достижения' : 'Yutuqlar',
+    '/certificates': isRu ? 'Сертификаты' : 'Sertifikatlar',
+    '/dashboard': isRu ? 'Статистика' : 'Statistika',
+    '/friends': isRu ? 'Друзья' : "Do'stlar",
+    '/about': isRu ? 'О нас' : 'Biz haqimizda',
+    '/contactUs': isRu ? 'Контакты & Помощь' : 'Aloqa & Yordam',
+    '/editProfile': isRu ? 'Настройки профиля' : 'Profilni tahrirlash',
+    '/notifications': isRu ? 'Уведомления' : 'Bildirishnomalar',
   };
   return route.path ? (pathMap[route.path] || '') : '';
 });
@@ -161,21 +164,10 @@ const initializeAuth = () => {
           readNotifications.value = data.readNotifications || [];
         }
       });
-
-      // Fetch notifications in real-time
-      currentUserId = user.uid;
-      if (notifsUnsub) notifsUnsub();
-      const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'));
-      notifsUnsub = onSnapshot(q, (snapshot) => {
-        notifications.value = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        loadingNotifs.value = false;
-      });
     } else {
       username.value = null;
       profileImage.value = defaultUserImage;
       if (pointsUnsub) pointsUnsub();
-      if (notifsUnsub) notifsUnsub();
-      currentUserId = null;
     }
   });
 };
@@ -190,7 +182,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('profile-updated', handleProfileUpdated);
   window.removeEventListener('keydown', handleKeyDown);
   if (pointsUnsub) pointsUnsub();
-  if (notifsUnsub) notifsUnsub();
   document.body.style.overflow = '';
 });
 </script>

@@ -4,21 +4,26 @@
       <div class="title-wrap">
         <i class="fas fa-compass header-icon"></i>
         <div>
-          <h3 class="results-title">{{ isQuerySearch ? 'Qidiruv natijalari' : 'Tavsiya etilgan o\'quvchilar' }}</h3>
+          <h3 class="results-title">
+            {{ isQuerySearch ? (isRus ? 'Результаты поиска' : 'Qidiruv natijalari') : (isRus ? 'Рекомендованные ученики' : 'Tavsiya etilgan o\'quvchilar') }}
+          </h3>
           <p class="results-sub">
-            {{ isQuerySearch ? `"${query}" bo'yicha ${searchResults.length} nafar foydalanuvchi topildi` : 'Test.me hamjamiyatidagi faol o\'rganuvchilar bilan do\'stlashish imkoniyati' }}
+            {{ isQuerySearch 
+              ? (isRus ? `По запросу "${query}" найдено пользователей: ${searchResults.length}` : `"${query}" bo'yicha ${searchResults.length} nafar foydalanuvchi topildi`)
+              : (isRus ? 'Возможность найти единомышленников и подружиться в Test.me!' : 'Test.me hamjamiyatidagi faol o\'rganuvchilar bilan do\'stlashish imkoniyati') 
+            }}
           </p>
         </div>
       </div>
-      <span class="count-badge">{{ searchResults.length }} ta</span>
+      <span class="count-badge">{{ searchResults.length }} {{ isRus ? 'чел.' : 'ta' }}</span>
     </div>
 
     <div v-if="searchResults.length === 0" class="empty-search">
       <div class="empty-orb">
         <i class="fas fa-user-slash"></i>
       </div>
-      <h4>Foydalanuvchi topilmadi</h4>
-      <p>Iltimos, ism, email yoki unikal #ID kodini to'g'ri kiritganingizni tekshiring.</p>
+      <h4>{{ isRus ? 'Пользователь не найден' : 'Foydalanuvchi topilmadi' }}</h4>
+      <p>{{ isRus ? 'Пожалуйста, проверьте правильность ввода имени, email или уникального #ID кода.' : 'Iltimos, ism, email yoki unikal #ID kodini to\'g\'ri kiritganingizni tekshiring.' }}</p>
     </div>
 
     <div v-else class="grid">
@@ -49,6 +54,17 @@
           {{ getUserDisplayName(user) }}
         </h4>
 
+        <!-- Online Presence & Activity Status -->
+        <div class="presence-badge-row">
+          <span 
+            class="user-presence-tag" 
+            :class="isUserOnline(user) ? 'online' : 'offline'"
+          >
+            <span class="status-indicator-dot"></span>
+            {{ getUserLastSeenText(user, isRus ? 'RUS' : 'UZB') }}
+          </span>
+        </div>
+
         <div class="badges-row">
           <span class="user-id-badge">
             <i class="fas fa-hashtag"></i> {{ user.shortId || user.referralCode || (user.id || user.uid).slice(0, 6).toUpperCase() }}
@@ -62,13 +78,33 @@
           {{ getRankName(user.points || 0) }}
         </div>
 
+        <!-- Quick Interaction Actions: Instant Chat & Duel -->
+        <div class="quick-social-actions" v-if="!isSelf(user.id || user.uid)">
+          <button 
+            class="quick-action-btn chat" 
+            :title="isRus ? 'Написать сообщение' : 'Xabar yozish'"
+            @click.stop="$emit('open-chat', user)"
+          >
+            <i class="fas fa-comment-dots"></i>
+            <span>{{ isRus ? 'Чат' : 'Xabar' }}</span>
+          </button>
+          <button 
+            class="quick-action-btn duel" 
+            :title="isRus ? 'Вызвать на дуэль' : 'Duelga chorlash'"
+            @click.stop="$emit('start-duel', user)"
+          >
+            <i class="fas fa-bolt text-danger"></i>
+            <span>{{ isRus ? 'Дуэль' : 'Duel' }}</span>
+          </button>
+        </div>
+
         <div class="btn-actions">
           <button 
             v-if="isSelf(user.id || user.uid)"
             class="btn-state self"
             disabled
           >
-            <i class="fas fa-user-check"></i> Sizning profilingiz
+            <i class="fas fa-user-check"></i> {{ isRus ? 'Ваш профиль' : 'Sizning profilingiz' }}
           </button>
 
           <button 
@@ -76,7 +112,7 @@
             class="btn-state friend"
             @click="$emit('view-profile', user)"
           >
-            <i class="fas fa-user-group"></i> Do'stingiz
+            <i class="fas fa-user-group"></i> {{ isRus ? 'Ваш друг' : "Do'stingiz" }}
           </button>
 
           <button 
@@ -84,7 +120,7 @@
             class="btn-state pending"
             disabled
           >
-            <i class="fas fa-hourglass-half"></i> So'rov yuborilgan
+            <i class="fas fa-hourglass-half"></i> {{ isRus ? 'Запрос отправлен' : "So'rov yuborilgan" }}
           </button>
 
           <button 
@@ -92,7 +128,7 @@
             class="btn-add-premium"
             @click="$emit('send-request', user)"
           >
-            <i class="fas fa-user-plus"></i> + Do'stlik So'rovi
+            <i class="fas fa-user-plus"></i> {{ isRus ? '+ Запрос в друзья' : '+ Do\'stlik So\'rovi' }}
           </button>
         </div>
       </div>
@@ -103,7 +139,13 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { getRankName, getRankClass, getRankIcon } from '@/utils/ranks';
-import { getUserDisplayName, getUserAvatar, getUserInitials } from '@/utils/userHelpers';
+import { 
+  getUserDisplayName, 
+  getUserAvatar, 
+  getUserInitials, 
+  isUserOnline, 
+  getUserLastSeenText 
+} from '@/utils/userHelpers';
 
 const failedAvatars = ref(new Set());
 const handleAvatarError = (id) => {
@@ -120,7 +162,7 @@ const props = defineProps({
   isRus: { type: Boolean, default: false }
 });
 
-defineEmits(['send-request', 'view-profile']);
+defineEmits(['send-request', 'view-profile', 'open-chat', 'start-duel']);
 
 const isQuerySearch = computed(() => !!props.query.trim());
 
@@ -310,6 +352,91 @@ const isPending = (uid) => {
   font-size: 0.75rem;
   font-weight: 700;
   margin-bottom: 1.1rem;
+}
+
+.presence-badge-row {
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+.user-presence-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.user-presence-tag.online {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.user-presence-tag.offline {
+  background: rgba(148, 163, 184, 0.12);
+  color: #64748b;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.status-indicator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.user-presence-tag.online .status-indicator-dot {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.user-presence-tag.offline .status-indicator-dot {
+  background: #94a3b8;
+}
+
+.quick-social-actions {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  margin-bottom: 0.6rem;
+}
+
+.quick-action-btn {
+  flex: 1;
+  padding: 0.45rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: white;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-action-btn:hover {
+  transform: translateY(-1px);
+}
+
+.quick-action-btn.chat:hover {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #93c5fd;
+}
+
+.quick-action-btn.duel:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fca5a5;
 }
 
 .btn-actions {

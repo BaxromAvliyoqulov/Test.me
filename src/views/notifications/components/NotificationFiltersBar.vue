@@ -8,7 +8,7 @@
         @click="$emit('update:currentTab', 'all')"
       >
         <i class="fas fa-layer-group"></i>
-        <span>Barchasi</span>
+        <span>{{ isRus ? 'Все' : 'Barchasi' }}</span>
         <span class="tab-count">{{ totalCount }}</span>
       </button>
 
@@ -18,7 +18,7 @@
         @click="$emit('update:currentTab', 'unread')"
       >
         <i class="fas fa-envelope"></i>
-        <span>O'qilmagan</span>
+        <span>{{ isRus ? 'Непрочитанные' : "O'qilmagan" }}</span>
         <span class="tab-count danger" v-if="unreadCount > 0">{{ unreadCount }}</span>
       </button>
 
@@ -28,7 +28,7 @@
         @click="$emit('update:currentTab', 'duels')"
       >
         <i class="fas fa-bolt text-danger"></i>
-        <span>Duellar</span>
+        <span>{{ isRus ? 'Дуэли' : 'Duellar' }}</span>
         <span class="tab-count warning" v-if="duelsCount > 0">{{ duelsCount }}</span>
       </button>
 
@@ -38,7 +38,7 @@
         @click="$emit('update:currentTab', 'social')"
       >
         <i class="fas fa-user-group text-primary"></i>
-        <span>Do'stlar</span>
+        <span>{{ isRus ? 'Друзья' : "Do'stlar" }}</span>
         <span class="tab-count primary" v-if="requestsCount > 0">{{ requestsCount }}</span>
       </button>
 
@@ -48,7 +48,7 @@
         @click="$emit('update:currentTab', 'rewards')"
       >
         <i class="fas fa-coins text-warning"></i>
-        <span>Mukofotlar</span>
+        <span>{{ isRus ? 'Награды' : 'Mukofotlar' }}</span>
       </button>
 
       <button 
@@ -57,7 +57,7 @@
         @click="$emit('update:currentTab', 'system')"
       >
         <i class="fas fa-bullhorn text-info"></i>
-        <span>Tizim</span>
+        <span>{{ isRus ? 'Система' : 'Tizim' }}</span>
       </button>
     </div>
 

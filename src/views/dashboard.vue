@@ -48,17 +48,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
-import { db } from '@/config/firebase';
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  deleteDoc,
-  doc,
-} from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { authService, resultService } from '@/services/supabaseService';
+import { supabase } from '@/config/supabase';
 import * as XLSX from 'xlsx';
 import { useI18n } from '@/utils/i18n';
 import { confirmDelete } from '@/utils/sweetalert';
@@ -204,17 +195,20 @@ const levelStats = computed(() => {
 const fetchResults = async () => {
   loading.value = true;
   try {
-    const auth = getAuth();
-    const user = auth.currentUser;
+    const user = await authService.getUser();
     if (!user) return;
-    const q = query(
-      collection(db, 'results'),
-      where('userId', '==', user.uid)
-    );
-    const snapshot = await getDocs(q);
-    items.value = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+    const res = await resultService.getUserResults(user.id);
+    items.value = (res || []).map((r, index) => ({
+      id: r.id,
+      userId: r.user_id,
+      username: user.user_metadata?.username || user.email?.split('@')[0] || 'Foydalanuvchi',
+      subject: r.subject_id || 'Umumiy',
+      test_level: r.test_level || 'Standart',
+      score: r.score,
+      total: r.total,
+      percentage: r.percentage || Math.round((r.score / (r.total || 1)) * 100),
+      timestamp: r.created_at,
+      test_number: index + 1,
     }));
   } catch (error) {
     console.error('Error fetching results:', error);
@@ -243,7 +237,7 @@ const sortBy = (key) => {
 const deleteItem = async (item) => {
   if (!(await confirmDelete(t('deleteConfirm'), "Bu amalni ortga qaytarib bo'lmaydi!"))) return;
   try {
-    await deleteDoc(doc(db, 'results', item.id));
+    await supabase.from('results').delete().eq('id', item.id);
     fetchResults();
   } catch (error) {
     console.error('Error deleting result:', error);

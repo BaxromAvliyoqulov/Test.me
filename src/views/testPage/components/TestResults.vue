@@ -87,8 +87,8 @@ const shareResult = async () => {
         text: shareText,
         url: window.location.origin
       });
-    } catch (err) {
-      console.log('Error sharing:', err);
+    } catch {
+      // User cancelled share dialog
     }
   } else {
     // Fallback if Web Share API is not supported

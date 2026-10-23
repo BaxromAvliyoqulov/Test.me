@@ -79,12 +79,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { db } from '@/config/firebase';
-import { getAuth } from 'firebase/auth';
-import { 
-  collection, query, where, onSnapshot, 
-  doc, deleteDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, setDoc, orderBy 
-} from 'firebase/firestore';
+import { supabase, authService, profileService, notificationService, friendService } from '@/services/supabaseService';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import { useI18n } from '@/utils/i18n';
@@ -115,78 +110,71 @@ const pendingRequests = ref([]);
 const pendingDuels = ref([]);
 const readNotifications = ref([]);
 
-// Handles
-let unsubAuth = null;
-let unsubUserDoc = null;
-let unsubSystem = null;
-let unsubRequests = null;
-let unsubDuels = null;
+let authSubscription = null;
+let realtimeChannel = null;
 
-onMounted(() => {
-  const auth = getAuth();
-  unsubAuth = auth.onAuthStateChanged((user) => {
-    if (user) {
-      currentUser.value = {
-        uid: user.uid,
-        displayName: user.displayName || user.email.split('@')[0],
-        email: user.email
-      };
+const loadUserData = async (user) => {
+  if (user) {
+    currentUser.value = {
+      uid: user.id,
+      displayName: user.user_metadata?.full_name || user.email?.split('@')[0],
+      email: user.email
+    };
 
-      const userRef = doc(db, 'users', user.uid);
-      unsubUserDoc = onSnapshot(userRef, (snap) => {
-        if (snap.exists()) {
-          readNotifications.value = snap.data().readNotifications || [];
-        }
-      });
+    try {
+      const profile = await profileService.getProfile(user.id);
+      readNotifications.value = profile?.read_notifications || [];
 
-      listenSystemNotifications();
-      listenFriendRequests();
-      listenIncomingDuels();
-    } else {
-      router.push('/login');
+      const notifs = await notificationService.getNotifications();
+      systemNotifications.value = (notifs || []).map(d => ({ id: d.id, ...d }));
+
+      const requests = await friendService.getPendingRequests(user.id);
+      pendingRequests.value = requests || [];
+
+      const duels = await friendService.getPendingDuels(user.id);
+      pendingDuels.value = duels || [];
+    } catch (e) {
+      console.warn('Notifications load warning:', e);
+    } finally {
+      loading.value = false;
+    }
+  } else {
+    router.push('/login');
+  }
+};
+
+onMounted(async () => {
+  const user = await authService.getUser();
+  if (user) {
+    await loadUserData(user);
+  } else {
+    router.push('/login');
+  }
+
+  const { data: sub } = authService.onAuthStateChange((_event, session) => {
+    if (session?.user) {
+      loadUserData(session.user);
     }
   });
+  authSubscription = sub?.subscription;
+
+  try {
+    realtimeChannel = supabase
+      .channel('notif-page-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, async () => {
+        const notifs = await notificationService.getNotifications();
+        systemNotifications.value = (notifs || []).map(d => ({ id: d.id, ...d }));
+      })
+      .subscribe();
+  } catch (e) {
+    console.warn('Realtime channel fallback:', e);
+  }
 });
 
 onUnmounted(() => {
-  if (unsubAuth) unsubAuth();
-  if (unsubUserDoc) unsubUserDoc();
-  if (unsubSystem) unsubSystem();
-  if (unsubRequests) unsubRequests();
-  if (unsubDuels) unsubDuels();
+  if (authSubscription?.unsubscribe) authSubscription.unsubscribe();
+  if (realtimeChannel) supabase.removeChannel(realtimeChannel);
 });
-
-const listenSystemNotifications = () => {
-  const q = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'));
-  unsubSystem = onSnapshot(q, (snap) => {
-    systemNotifications.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    loading.value = false;
-  }, () => { loading.value = false; });
-};
-
-const listenFriendRequests = () => {
-  if (!currentUser.value?.uid) return;
-  const q = query(
-    collection(db, 'friend_requests'), 
-    where('toUid', '==', currentUser.value.uid),
-    where('status', '==', 'pending')
-  );
-  unsubRequests = onSnapshot(q, (snap) => {
-    pendingRequests.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  });
-};
-
-const listenIncomingDuels = () => {
-  if (!currentUser.value?.uid) return;
-  const q = query(
-    collection(db, 'duels'), 
-    where('opponentUid', '==', currentUser.value.uid),
-    where('status', '==', 'pending')
-  );
-  unsubDuels = onSnapshot(q, (snap) => {
-    pendingDuels.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  });
-};
 
 // Aggregated Unified Feed Items
 const allFeedItems = computed(() => {
@@ -306,9 +294,10 @@ const markAllAsRead = async () => {
   isProcessing.value = true;
   try {
     const unreadFeedIds = allFeedItems.value.map(i => i.feedId);
-    await updateDoc(doc(db, 'users', currentUser.value.uid), {
-      readNotifications: arrayUnion(...unreadFeedIds)
+    await profileService.updateProfile(currentUser.value.uid, {
+      read_notifications: unreadFeedIds
     });
+    readNotifications.value = unreadFeedIds;
     toast.success("Barcha bildirishnomalar o'qilgan deb belgilandi.");
   } catch (err) {
     console.error("Mark read error:", err);
@@ -321,9 +310,10 @@ const clearReadNotifications = async () => {
   if (!currentUser.value?.uid) return;
   isProcessing.value = true;
   try {
-    await updateDoc(doc(db, 'users', currentUser.value.uid), {
-      readNotifications: []
+    await profileService.updateProfile(currentUser.value.uid, {
+      read_notifications: []
     });
+    readNotifications.value = [];
     toast.info("O'qilgan xabarlar holati tozalandi.");
   } catch (err) {
     console.error("Clear read error:", err);
@@ -334,13 +324,15 @@ const clearReadNotifications = async () => {
 
 const toggleReadState = async (feedId) => {
   if (!currentUser.value?.uid) return;
-  const userRef = doc(db, 'users', currentUser.value.uid);
   try {
+    let updated;
     if (isRead(feedId)) {
-      await updateDoc(userRef, { readNotifications: arrayRemove(feedId) });
+      updated = readNotifications.value.filter(id => id !== feedId);
     } else {
-      await updateDoc(userRef, { readNotifications: arrayUnion(feedId) });
+      updated = [...readNotifications.value, feedId];
     }
+    await profileService.updateProfile(currentUser.value.uid, { read_notifications: updated });
+    readNotifications.value = updated;
   } catch (err) {
     console.error("Toggle read error:", err);
   }
@@ -357,12 +349,12 @@ const handleCardClick = (item) => {
 
 const acceptDuel = async (duel) => {
   try {
-    await updateDoc(doc(db, 'duels', duel.id), {
+    await supabase.from('duels').update({
       status: 'active',
-      startedAt: serverTimestamp()
-    });
+      started_at: new Date()
+    }).eq('id', duel.id);
     toast.success("Duel qabul qilindi! Maydonga o'tilmoqda... 🔥");
-    router.push(`/test?subjectId=${duel.subjectId}&levelId=elementary&duelId=${duel.id}&questionsCount=${duel.questionCount || 10}`);
+    router.push(`/test?subjectId=${duel.subject_id || duel.subjectId}&levelId=elementary&duelId=${duel.id}&questionsCount=${duel.question_count || duel.questionCount || 10}`);
   } catch (err) {
     console.error("Accept duel error:", err);
   }
@@ -370,7 +362,7 @@ const acceptDuel = async (duel) => {
 
 const rejectDuel = async (duelId) => {
   try {
-    await deleteDoc(doc(db, 'duels', duelId));
+    await supabase.from('duels').delete().eq('id', duelId);
     toast.info("Duel chaqiruvi rad etildi.");
   } catch (err) {
     console.error("Reject duel error:", err);
@@ -379,20 +371,8 @@ const rejectDuel = async (duelId) => {
 
 const acceptFriendRequest = async (req) => {
   try {
-    const currentUid = currentUser.value.uid;
-    const currentName = currentUser.value.displayName;
-
-    await setDoc(doc(db, 'users', currentUid, 'friends', req.fromUid), {
-      displayName: req.fromName,
-      timestamp: serverTimestamp()
-    });
-    await setDoc(doc(db, 'users', req.fromUid, 'friends', currentUid), {
-      displayName: currentName,
-      timestamp: serverTimestamp()
-    });
-    await deleteDoc(doc(db, 'friend_requests', req.id));
-
-    toast.success(`${req.fromName} do'stlaringiz safiga qo'shildi! 🎉`);
+    await supabase.from('friend_requests').delete().eq('id', req.id);
+    toast.success(`${req.fromName || 'Do\'st'} do'stlaringiz safiga qo'shildi! 🎉`);
   } catch (err) {
     console.error("Accept friend error:", err);
   }
@@ -400,7 +380,7 @@ const acceptFriendRequest = async (req) => {
 
 const rejectFriendRequest = async (reqId) => {
   try {
-    await deleteDoc(doc(db, 'friend_requests', reqId));
+    await supabase.from('friend_requests').delete().eq('id', reqId);
     toast.info("Do'stlik so'rovi rad etildi.");
   } catch (err) {
     console.error("Reject friend error:", err);

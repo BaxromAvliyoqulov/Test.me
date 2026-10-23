@@ -42,10 +42,20 @@ import MobileBottomNav from "@/components/layout/MobileBottomNav.vue";
 const route = useRoute();
 const pageContentRef = ref(null);
 
-watch(() => route.path, () => {
+const resetLayoutScroll = () => {
   if (pageContentRef.value) {
     pageContentRef.value.scrollTop = 0;
+    pageContentRef.value.scrollLeft = 0;
   }
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  if (document.documentElement) document.documentElement.scrollTop = 0;
+  if (document.body) document.body.scrollTop = 0;
+};
+
+watch(() => route.fullPath, () => {
+  resetLayoutScroll();
+  requestAnimationFrame(resetLayoutScroll);
+  setTimeout(resetLayoutScroll, 60);
 });
 
 const isSidebarCollapsed = ref(false);

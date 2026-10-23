@@ -46,14 +46,16 @@
 - [ ] Dark / Light mode ranglar kontrastini va Glassmorphism fonlarini Linear/Apple standartiga moslash.
 
 ### 🎮 3-Faza: Test Yechish Jarayoni va AI Mentors Tizimi (Core Experience)
-- [ ] Test savollarini yuklashda kesh va offline ishlash imkoniyatini kuchaytirish.
-- [ ] AI maslahatchisi (Hint) so'rovlarida token tejamkorligi va xatolikdan himoyalanish (`try/catch/fallback`).
-- [ ] Test yakunlanganda sertifikat generatsiyasi va natijalarni avtomatik saqlash barqarorligi.
-- [ ] 1v1 Duel challenge taklifnomasida real-vaqt rejimini mustahkamlash.
+- [x] Test savollarini yuklashda kesh va offline ishlash imkoniyatini kuchaytirish (IndexedDB `questions_cache` & `pending_results` navbati).
+- [x] Firebase qoldiqlarini to'liq tozalash va Supabase'ga o'tkazish (`vendor-firebase` o'chirildi, bundle ~1.2 MB ga qisqardi).
+- [x] AI maslahatchisi (Hint) so'rovlarida token tejamkorligi va xatolikdan himoyalanish (`try/catch/fallback`).
+- [x] Test yakunlanganda sertifikat generatsiyasi va natijalarni avtomatik saqlash barqarorligi.
+- [x] 1v1 Duel challenge taklifnomasida real-vaqt rejimini mustahkamlash (Supabase Realtime broadcast).
 
 ### 🛡️ 4-Faza: Avtonom Testlash, Build va Git Checkpoint (Zero-Defect Release)
-- [x] Vitest testlarini ishga tushirish (11/11 muvaffaqiyatli).
-- [x] Vite production build tekshiruvi.
+- [x] Vitest testlarini ishga tushirish (37/37 muvaffaqiyatli, 7 ta test to'plami).
+- [x] Vite production build tekshiruvi (to'liq muvaffaqiyatli, 9.72s).
+- [x] PWA Service Worker offline kesh generatsiyasi (`mode: generateSW`).
 - [ ] Barcha o'zgarishlarni Git orqali `origin/main` ga xavfsiz push qilish.
 - [ ] Tonggi soat 08:00 hisobotini to'liq tayyorlash.
 
@@ -79,3 +81,7 @@
 - [x] 2026-10-11: Media aktivlar optimallashtirildi: `TPcoinAi.png` (5.68 MB -> 106 KB + WebP) va barcha qutilar WebP ga o'tkazilib, hajm 12 MB dan <1.8 MB ga tushirildi.
 - [x] 2026-10-11: KaTeX integratsiya qilindi: Matematika, fizika va kimyo formulalari (`$...$` va `$$...$$`) `TestQuestionCard.vue` da professional LaTeX formatida renderlandi.
 - [x] 2026-10-11: Vitest test qamrovi 11 tadan 31 taga yetkazildi (6 ta test fayli, 100% yashil).
+- [x] 2026-10-24: Login & SignUp UX: Tugmalar va formalar uchun animatsiyali yuklanish (`isRedirecting`, `isLoading`, spinner) qo'shildi, qotib qolish effekti bartaraf etildi.
+- [x] 2026-10-24: Sahifalararo navigatsiya loaderi: `TopProgressBar.vue` va `usePageProgress` (Linear/YouTube uslubidagi progress bar + ambient toast) joriy etildi.
+- [x] 2026-10-24: Scroll Reset to Top: `savedPosition` xatosi olib tashlandi, har qanday sahifaga o'tganda yoki qaytganda `window` va `.page-content` doim yuqoriga (`top: 0`) o'tishi kafolatlandi.
+- [x] 2026-10-24: Sensitive Data Leak & Console Privacy Guard: Barcha shaxsiy loglar (`user.uid`, `results`, `FCM Token`, `coinsEarned`) olib tashlandi; Hardcoded Gemini API kaliti tozalandi va 403 Forbidden spam to'xtatildi; `main.js` ga Enterprise Console Sanitizer o'rnatildi.

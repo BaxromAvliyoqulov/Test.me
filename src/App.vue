@@ -1,4 +1,7 @@
 <template>
+  <!-- Global Top Page Navigation Progress Bar -->
+  <TopProgressBar />
+
   <transition name="fade">
     <div v-if="isGlobalLoading" class="global-page-loader">
       <div class="spinner-xl"></div>
@@ -24,11 +27,10 @@
 import { ref, computed, onErrorCaptured, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainLayout from '@/layout/mainLayout.vue';
+import TopProgressBar from '@/components/common/TopProgressBar.vue';
 import PwaInstallPrompt from '@/components/common/PwaInstallPrompt.vue';
 import AppUpdatePrompt from '@/components/common/AppUpdatePrompt.vue';
 import { useToast } from 'vue-toastification';
-import { messaging } from '@/config/firebase';
-import { getToken, onMessage } from 'firebase/messaging';
 import { useUserPresence } from '@/composables/useUserPresence';
 
 const route = useRoute();
@@ -53,34 +55,10 @@ onErrorCaptured((err, instance, info) => {
 
 // Artificial global loading delay removed. Individual components use Skeleton Loaders for better UX.
 
-// FCM Setup
+// Native Web / PWA Notification Permission
 onMounted(() => {
-  if (messaging) {
-    // Request permission
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        console.log('Notification permission granted.');
-        // Get registration token. Replace VAPID_KEY with your actual key from Firebase Console
-        getToken(messaging, { vapidKey: 'BKhQ_vPjTItvFh0N98B6OQ7gXF6l9U_zF2Q9Z2y_G8wE0G9F8O6OQ7gXF6l9U_zF2Q9Z2y_G8wE0G9F' }).then((currentToken) => {
-          if (currentToken) {
-             console.log('FCM Token:', currentToken);
-             // TODO: Save token to Firestore for the current user to send specific push notifications
-          } else {
-             console.log('No registration token available. Request permission to generate one.');
-          }
-        }).catch((err) => {
-          console.log('An error occurred while retrieving token. ', err);
-        });
-      }
-    });
-
-    // Handle incoming messages when the app is in the foreground
-    onMessage(messaging, (payload) => {
-      console.log('Message received. ', payload);
-      const title = payload.notification?.title || 'Yangi Xabar';
-      const body = payload.notification?.body || '';
-      toast.info(`${title}\n${body}`);
-    });
+  if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {});
   }
 });
 </script>

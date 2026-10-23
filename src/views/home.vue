@@ -121,10 +121,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick, onErrorCaptured, defineAsyncComponent } from 'vue';
-import { db, auth } from '@/config/firebase';
-import { subjectService } from '@/services/supabaseService';
-import { collection, doc, getDocs, addDoc, getDoc, query, where } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { supabase, authService, profileService, subjectService, resultService } from '@/services/supabaseService';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import defaultUserImage from '../assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
@@ -280,20 +277,12 @@ const fetchSubjects = async () => {
         description: s.description,
       }));
       return;
-    }
-
-    // 2. Fallback to Firestore
-    const querySnapshot = await getDocs(collection(db, 'subjects'));
-    subjects.value = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    if (subjects.value.length === 0) {
-      status.value = {
-        type: 'info',
-        message: '⚠️ No subjects found. Please add a subject first.',
-      };
+      if (subjects.value.length === 0) {
+        status.value = {
+          type: 'info',
+          message: '⚠️ No subjects found. Please add a subject first.',
+        };
+      }
     }
   } catch (error) {
     console.error('❌ Error fetching subjects:', error);
@@ -309,13 +298,12 @@ const fetchSubjects = async () => {
 const fetchSpecialTests = async () => {
   loadingSpecial.value = true;
   try {
-    const querySnapshot = await getDocs(collection(db, 'special_tests'));
-    specialTests.value = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })).sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
+    const { data, error } = await supabase.from('special_tests').select('*').order('created_at', { ascending: false });
+    if (!error && data) {
+      specialTests.value = data;
+    }
   } catch (error) {
-    console.error('Error fetching special tests:', error);
+    console.warn('Error fetching special tests:', error);
   } finally {
     loadingSpecial.value = false;
   }
@@ -349,18 +337,10 @@ const fetchLevels = async () => {
     // 1. Try Supabase first
     const sbLevels = await subjectService.getLevels(selectedSubject.value.id);
     if (sbLevels && sbLevels.length > 0) {
-      levels.value = sbLevels.map(l => l.id || l.name);
+      const fetchedLevels = sbLevels.map(l => l.name || l.id);
+      levels.value = sortLevels(fetchedLevels);
       return;
     }
-
-    // 2. Fallback to Firestore
-    const subjectRef = doc(db, 'subjects', selectedSubject.value.id);
-    const levelsCollection = await getDocs(
-      collection(subjectRef, 'levels')
-    );
-
-    const fetchedLevels = levelsCollection.docs.map((doc) => doc.id);
-    levels.value = sortLevels(fetchedLevels);
 
     if (levels.value.length === 0) {
       status.value = {
@@ -389,24 +369,17 @@ const startTestWithFilters = async () => {
   loading.value = true;
 
   try {
+    const user = await authService.getUser();
     const testSession = {
       subjectId: selectedSubject.value.id,
       levelId: selectedLevel.value,
       questionCount: selectedQuestionCount.value,
-      userId: auth.currentUser?.uid,
+      userId: user?.id,
       startedAt: new Date(),
       status: 'in-progress',
     };
 
-    let sessionId = 'local_' + Math.random().toString(36).substring(2, 9);
-    try {
-      const sessionsRef = collection(db, 'testSessions');
-      const docRef = await addDoc(sessionsRef, testSession);
-      sessionId = docRef.id;
-    } catch (dbErr) {
-      console.warn('⚠️ Could not save testSession to Firestore (likely permission rules), using local fallback ID:', dbErr);
-    }
-
+    const sessionId = 'session_' + Math.random().toString(36).substring(2, 9);
     startTest.value = true;
     showTestWizard.value = false;
 
@@ -432,7 +405,6 @@ const goBackToSelection = () => {
 };
 
 const handleTestCompletion = (results) => {
-  console.log('Test completed with results:', results);
   status.value = {
     type: 'success',
     message: `✅ Test completed! You got ${results.correctAnswers} out of ${results.totalQuestions} questions correct.`,
@@ -743,7 +715,12 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
   "recommendedLevel": "Exact recommended level (e.g. 'Beginner', 'Elementary', 'Intermediate', 'Advanced', 'Easy', 'Medium', 'Hard')"
 }`;
 
-    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
+    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('CHHiOonsKHa1Ds0k92cgl1wd')) {
+      // Kalit mavjud emas yoki eskirgan, offline mentor tavsiyasi ishlatiladi
+      return;
+    }
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
@@ -768,66 +745,62 @@ Return a valid JSON object matching this schema exactly (no markdown formatting,
     
     if (response.ok) {
       const resData = await response.json();
-      const resText = resData.candidates[0].content.parts[0].text;
-      const adviceData = JSON.parse(resText.trim());
-      
-      if (adviceData.text && adviceData.badge) {
-        aiAdvice.value = {
-          text: adviceData.text,
-          badge: adviceData.badge,
-          recommendedSubject: adviceData.recommendedSubject,
-          recommendedLevel: adviceData.recommendedLevel
-        };
-        aiAdviceType.value = 'gemini';
+      const resText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (resText) {
+        const adviceData = JSON.parse(resText.trim());
+        if (adviceData.text && adviceData.badge) {
+          aiAdvice.value = {
+            text: adviceData.text,
+            badge: adviceData.badge,
+            recommendedSubject: adviceData.recommendedSubject,
+            recommendedLevel: adviceData.recommendedLevel
+          };
+          aiAdviceType.value = 'gemini';
+        }
       }
     }
-  } catch (err) {
-    console.error("Failed to generate dynamic AI advice with Gemini:", err);
+  } catch {
+    // Sokin fallback: konsolni qizil xatoliklar bilan to'ldirmaydi
   } finally {
     aiAdviceLoading.value = false;
   }
 };
 
-const fetchUserStats = () => {
-  onAuthStateChanged(auth, async (user) => {
+const fetchUserStats = async () => {
+  try {
+    const user = await authService.getUser();
     if (user) {
-      userDisplayName.value = user.displayName || user.email.split('@')[0];
-      try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          userPoints.value = userData.points || 0;
-          if (userData.preferences) {
-            applyUserPreferences(userData.preferences);
-            mentorType.value = userData.preferences.mentorType || 'standard';
-          } else {
-            mentorType.value = 'standard';
-          }
+      userDisplayName.value = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Foydalanuvchi';
+      
+      const profile = await profileService.getProfile(user.id);
+      if (profile) {
+        userPoints.value = profile.points || 0;
+        if (profile.preferences) {
+          applyUserPreferences(profile.preferences);
+          mentorType.value = profile.preferences.mentorType || 'standard';
+        } else {
+          mentorType.value = 'standard';
         }
-
-        const resultsRef = collection(db, 'results');
-        const q = query(resultsRef, where('userId', '==', user.uid));
-        const querySnapshot = await getDocs(q);
-        const results = querySnapshot.docs
-          .map((doc) => doc.data())
-          .sort((a, b) => {
-            const timeA = a.timestamp ? a.timestamp.toDate() : 0;
-            const timeB = b.timestamp ? b.timestamp.toDate() : 0;
-            return timeB - timeA;
-          });
-
-        fetchAiAdviceFromGemini(results);
-        userStreak.value = calculateStreak(results);
-
-        const totalTests = results.length;
-        const perfectCount = results.filter(r => r.score === r.total).length;
-        const allBadges = getBadges(totalTests, perfectCount, userPoints.value, results);
-        unlockedBadges.value = allBadges.filter(b => b.unlocked);
-      } catch (e) {
-        console.error('Error fetching user stats:', e);
       }
+
+      const results = (await resultService.getUserResults(user.id)) || [];
+      results.sort((a, b) => {
+        const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
+        const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
+        return timeB - timeA;
+      });
+
+      fetchAiAdviceFromGemini(results);
+      userStreak.value = calculateStreak(results);
+
+      const totalTests = results.length;
+      const perfectCount = results.filter(r => r.score === r.total).length;
+      const allBadges = getBadges(totalTests, perfectCount, userPoints.value, results);
+      unlockedBadges.value = allBadges.filter(b => b.unlocked);
     }
-  });
+  } catch (e) {
+    console.error('Error fetching user stats:', e);
+  }
 };
 
 const handleAiBadgeClick = () => {

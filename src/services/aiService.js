@@ -1,7 +1,5 @@
 import { getMentorConfig } from '@/config/mentors';
 
-const GEMINI_API_KEY = "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
-
 /**
  * Calls Gemini API to generate dynamic AI mentor responses.
  */
@@ -22,6 +20,15 @@ export const generateMentorMessage = async ({ mentorId, context, locale, data })
       badge: isRus ? 'Начать' : 'Boshlash',
       mentor
     };
+  }
+
+  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('CHHiOonsKHa1Ds0k92cgl1wd')) {
+    let fallbackText = isRus ? "Продолжайте практиковаться, результаты обязательно улучшатся!" : "Mashq qilishda davom eting, natijalar albatta yaxshilanadi!";
+    if (context === 'hint') {
+      fallbackText = isRus ? "Внимательно прочитайте вопрос и исключите явно неверные варианты." : "Savol shartiga diqqat qiling va aniq xato variantlarni chiqarib tashlang.";
+    }
+    return { text: fallbackText, mentor };
   }
 
   // Dynamic Generation using Gemini
@@ -80,8 +87,7 @@ Your task: Provide a brief review and emotional reaction to this score based ent
       text: generatedText.trim(),
       mentor
     };
-  } catch (error) {
-    console.error("AI Generation Error:", error);
+  } catch {
     return {
       text: isRus ? "Извините, у меня временные технические проблемы." : "Uzur, menda hozircha texnik nosozlik bor.",
       mentor

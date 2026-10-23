@@ -101,9 +101,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { authService, resultService, certificateService } from '@/services/supabaseService';
-import { db, auth } from '@/config/firebase';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
 import { useI18n } from '@/utils/i18n';
 import { getCertificates } from '@/utils/certificates';
 import CertStats from '@/components/certificates/CertStats.vue';
@@ -130,12 +127,11 @@ const unlockedCount = computed(() => certificates.value.filter(c => c.unlocked).
 
 const certId = computed(() => {
   if (!selectedCert.value) return 'CERT-XXXX-XXXX';
-  const issued = issuedCertificates.value.find(c => c.certType === selectedCert.value.id);
-  if (issued) return issued.certId;
+  const issued = issuedCertificates.value.find(c => c.certType === selectedCert.value.id || c.cert_type === selectedCert.value.id);
+  if (issued) return issued.certId || issued.cert_code;
   
-  const uidPart = (auth.currentUser ? auth.currentUser.uid : 'USER').substring(0, 8).toUpperCase();
   const certPart = selectedCert.value.id.replace(/_/g, '').substring(0, 4).toUpperCase();
-  return `CERT-${uidPart}-${certPart}`;
+  return `CERT-TEST-${certPart}`;
 });
 
 const formattedDate = computed(() => {
@@ -184,72 +180,73 @@ const resetFilters = () => {
   activeFilter.value = 'all';
 };
 
-const fetchStats = () => {
-  onAuthStateChanged(auth, async (user) => {
+const fetchStats = async () => {
+  try {
+    const user = await authService.getUser();
     if (user) {
-      userDisplayName.value = user.displayName || user.email.split('@')[0];
-      try {
-        const resultsRef = collection(db, 'results');
-        const q = query(resultsRef, where('userId', '==', user.uid));
-        const querySnapshot = await getDocs(q);
+      userDisplayName.value = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Foydalanuvchi';
 
-        results.value = querySnapshot.docs.map(doc => doc.data());
-        
-        results.value.sort((a, b) => {
-          const timeA = a.timestamp ? (a.timestamp.toMillis ? a.timestamp.toMillis() : new Date(a.timestamp).getTime()) : 0;
-          const timeB = b.timestamp ? (b.timestamp.toMillis ? b.timestamp.toMillis() : new Date(b.timestamp).getTime()) : 0;
-          return timeB - timeA;
-        });
+      const res = await resultService.getUserResults(user.id);
+      results.value = res || [];
 
-        totalCount.value = results.value.length;
+      totalCount.value = results.value.length;
 
-        elementaryCount.value = results.value.filter(r => {
-          const l = (r.test_level || '').toLowerCase();
-          return l.includes('elem') || l.includes('beg') || l.includes('boshlang');
-        }).length;
-        intermediateCount.value = results.value.filter(r => {
-          const l = (r.test_level || '').toLowerCase();
-          return l.includes('inter') || l.includes('o\'rta') || l.includes('orta');
-        }).length;
-        advancedCount.value = results.value.filter(r => {
-          const l = (r.test_level || '').toLowerCase();
-          return l.includes('adv') || l.includes('yuqori') || l.includes('prof');
-        }).length;
+      elementaryCount.value = results.value.filter(r => {
+        const l = (r.test_level || '').toLowerCase();
+        return l.includes('elem') || l.includes('beg') || l.includes('boshlang');
+      }).length;
+      intermediateCount.value = results.value.filter(r => {
+        const l = (r.test_level || '').toLowerCase();
+        return l.includes('inter') || l.includes('o\'rta') || l.includes('orta');
+      }).length;
+      advancedCount.value = results.value.filter(r => {
+        const l = (r.test_level || '').toLowerCase();
+        return l.includes('adv') || l.includes('yuqori') || l.includes('prof');
+      }).length;
 
-        const certsRef = collection(db, 'certificates');
-        const certsQ = query(certsRef, where('userId', '==', user.uid));
-        const certsSnapshot = await getDocs(certsQ);
-        issuedCertificates.value = certsSnapshot.docs.map(doc => doc.data());
+      const certs = await certificateService.getUserCertificates(user.id);
+      issuedCertificates.value = (certs || []).map(c => ({
+        ...c,
+        certType: c.cert_type || c.certType,
+        certId: c.cert_code || c.certId,
+        issuedAt: c.issued_at || c.issuedAt
+      }));
 
-        const newlyUnlocked = certificates.value.filter(
-          c => c.unlocked && !issuedCertificates.value.some(ic => ic.certType === c.id)
-        );
+      const newlyUnlocked = certificates.value.filter(
+        c => c.unlocked && !issuedCertificates.value.some(ic => (ic.certType || ic.cert_type) === c.id)
+      );
 
-        for (const cert of newlyUnlocked) {
-          const uidPart = user.uid.substring(0, 8).toUpperCase();
-          const certCode = `CERT-${uidPart}-${cert.id.substring(0, 4).toUpperCase().replace(/_/g, '')}`;
-          const newCertObj = {
-            certId: certCode,
-            userId: user.uid,
-            userName: user.displayName || user.email || 'Foydalanuvchi',
+      for (const cert of newlyUnlocked) {
+        const uidPart = user.id.substring(0, 8).toUpperCase();
+        const certCode = `CERT-${uidPart}-${cert.id.substring(0, 4).toUpperCase().replace(/_/g, '')}`;
+        const newCertObj = {
+          cert_code: certCode,
+          user_id: user.id,
+          user_name: userDisplayName.value,
+          cert_type: cert.id,
+          name_uz: cert.nameUz,
+          name_ru: cert.nameRu,
+          desc_uz: cert.descUz,
+          desc_ru: cert.descRu
+        };
+        try {
+          const savedCert = await certificateService.issueCertificate(newCertObj);
+          issuedCertificates.value.push({
+            ...(savedCert || newCertObj),
             certType: cert.id,
-            nameUz: cert.nameUz,
-            nameRu: cert.nameRu,
-            descUz: cert.descUz,
-            descRu: cert.descRu,
-            issuedAt: new Date()
-          };
-          await addDoc(collection(db, 'certificates'), newCertObj);
-          issuedCertificates.value.push(newCertObj);
-          console.log(`Auto-synchronized certificate: ${cert.id}`);
+            certId: certCode,
+            issuedAt: savedCert?.issued_at || new Date()
+          });
+        } catch (err) {
+          console.warn('Certificate issue warning:', err);
         }
-      } catch (e) {
-        console.error('Error fetching statistics:', e);
-      } finally {
-        loading.value = false;
       }
     }
-  });
+  } catch (e) {
+    console.error('Error fetching statistics:', e);
+  } finally {
+    loading.value = false;
+  }
 };
 
 const openCertificateModal = (cert) => {

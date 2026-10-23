@@ -92,8 +92,13 @@
             </a>
           </div>
 
-          <button type="submit" class="auth-primary-btn" :disabled="isLoading">
-            <span v-if="isLoading"><i class="fas fa-spinner fa-spin"></i> Kutmoqda...</span>
+          <button type="submit" class="auth-primary-btn" :disabled="isLoading || isRedirecting || isGoogleLoading">
+            <span v-if="isRedirecting" class="btn-loading-content">
+              <i class="fas fa-circle-notch fa-spin"></i> Tizimga yo'naltirilmoqda...
+            </span>
+            <span v-else-if="isLoading" class="btn-loading-content">
+              <i class="fas fa-spinner fa-spin"></i> Ma'lumotlar tekshirilmoqda...
+            </span>
             <span v-else>Kirish</span>
           </button>
 
@@ -102,8 +107,10 @@
           </div>
 
           <div class="google-login">
-            <button @click.prevent="handleGoogleLog" type="button" class="google-btn" :disabled="isGoogleLoading">
-              <span v-if="isGoogleLoading"><i class="fas fa-spinner fa-spin"></i> Kutmoqda...</span>
+            <button @click.prevent="handleGoogleLog" type="button" class="google-btn" :disabled="isGoogleLoading || isLoading || isRedirecting">
+              <span v-if="isGoogleLoading" class="btn-loading-content">
+                <i class="fas fa-spinner fa-spin"></i> Google tizimiga ulanmoqda...
+              </span>
               <template v-else>
                 <img src="@/assets/img/googleIcon.svg" alt="Google Icon" />
                 Google orqali kirish
@@ -179,6 +186,7 @@ const globalError = ref('');
 const showPassword = ref(false);
 const isLoading = ref(false);
 const isGoogleLoading = ref(false);
+const isRedirecting = ref(false);
 
 // Forgot Password Modal State
 const showForgotModal = ref(false);
@@ -224,28 +232,33 @@ const clearError = (field) => {
 
 // Handlers
 const handleLogin = async () => {
-  if (!validateForm()) return;
+  if (!validateForm() || isLoading.value || isRedirecting.value) return;
 
   isLoading.value = true;
   globalError.value = '';
   
   try {
     await authService.signIn(form.email, form.password);
+    isRedirecting.value = true;
     toast.success("Tizimga muvaffaqiyatli kirdingiz!");
-    router.push('/');
+    await router.push('/dashboard');
   } catch (error) {
     console.error("Login Error:", error);
+    isRedirecting.value = false;
     if (error.message?.includes('Invalid login credentials') || error.code === 'invalid_credentials') {
       globalError.value = "Elektron pochta yoki parol noto'g'ri.";
     } else {
       globalError.value = error.message || "Tizimga kirishda xatolik yuz berdi.";
     }
   } finally {
-    isLoading.value = false;
+    if (!isRedirecting.value) {
+      isLoading.value = false;
+    }
   }
 };
 
 const handleGoogleLog = async () => {
+  if (isGoogleLoading.value || isLoading.value || isRedirecting.value) return;
   isGoogleLoading.value = true;
   globalError.value = '';
   try {
@@ -253,7 +266,6 @@ const handleGoogleLog = async () => {
   } catch (error) {
     console.error('Google Auth Error:', error);
     globalError.value = error.message || "Google orqali kirishda xatolik yuz berdi.";
-  } finally {
     isGoogleLoading.value = false;
   }
 };

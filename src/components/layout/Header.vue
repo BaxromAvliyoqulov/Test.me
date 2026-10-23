@@ -42,9 +42,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute } from 'vue-router';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot, collection, query, orderBy, updateDoc, arrayUnion } from 'firebase/firestore';
-import { db } from '@/config/firebase';
+import { authService, profileService, notificationService } from '@/services/supabaseService';
 import defaultUserImage from '@/assets/img/user.png';
 import HeaderNotificationModal from '@/components/layout/HeaderNotificationModal.vue';
 import { useNotifications } from '@/composables/useNotifications';
@@ -58,7 +56,7 @@ const { locale: currentLocale } = useI18n();
 const username = ref(null);
 const profileImage = ref(defaultUserImage);
 const userPoints = ref(0);
-let pointsUnsub = null;
+let authListener = null;
 
 // Notifications Centralized State
 const { 
@@ -96,9 +94,8 @@ const openNotifModal = async () => {
       .map(n => n.id);
     if (unreadIds.length > 0) {
       try {
-        await updateDoc(doc(db, 'users', currentUserId.value), {
-          readNotifications: arrayUnion(...unreadIds)
-        });
+        await notificationService.markAsRead(currentUserId.value, unreadIds);
+        readNotifications.value.push(...unreadIds);
       } catch (e) {
         console.error('Error marking as read:', e);
       }
@@ -139,37 +136,37 @@ const handleProfileUpdated = (event) => {
   if (photoURL) profileImage.value = photoURL;
 };
 
-const initializeAuth = () => {
-  const auth = getAuth();
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      username.value = user.displayName || user.email || 'User';
-      profileImage.value = user.photoURL || defaultUserImage;
+const syncUserData = async (user) => {
+  if (user) {
+    username.value = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    profileImage.value = user.user_metadata?.avatar_url || defaultUserImage;
 
-      if (pointsUnsub) pointsUnsub();
-      pointsUnsub = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          userPoints.value = data.points || 0;
-          isAdmin.value = data.isAdmin || false;
-          adminRole.value = data.adminRole || null;
-          
-          if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
-            isAdmin.value = true;
-            adminRole.value = 'super_admin';
-          }
-
-          if (data.displayName) username.value = data.displayName;
-          if (data.photoURL) profileImage.value = data.photoURL;
-          readNotifications.value = data.readNotifications || [];
-        }
-      });
-    } else {
-      username.value = null;
-      profileImage.value = defaultUserImage;
-      if (pointsUnsub) pointsUnsub();
+    const profile = await profileService.getProfile(user.id);
+    if (profile) {
+      userPoints.value = profile.points || 0;
+      isAdmin.value = profile.is_admin || false;
+      adminRole.value = profile.admin_role || null;
+      if (profile.full_name) username.value = profile.full_name;
+      if (profile.avatar_url) profileImage.value = profile.avatar_url;
+      readNotifications.value = profile.read_notifications || [];
     }
+
+    if (user.email === 'avliyoqulovbaxrom99@gmail.com') {
+      isAdmin.value = true;
+      adminRole.value = 'super_admin';
+    }
+  } else {
+    username.value = null;
+    profileImage.value = defaultUserImage;
+  }
+};
+
+const initializeAuth = () => {
+  authService.getUser().then(syncUserData);
+  const { data } = authService.onAuthStateChange((_event, session) => {
+    syncUserData(session?.user || null);
   });
+  authListener = data?.subscription;
 };
 
 onMounted(() => {
@@ -181,7 +178,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('profile-updated', handleProfileUpdated);
   window.removeEventListener('keydown', handleKeyDown);
-  if (pointsUnsub) pointsUnsub();
+  if (authListener?.unsubscribe) authListener.unsubscribe();
   document.body.style.overflow = '';
 });
 </script>

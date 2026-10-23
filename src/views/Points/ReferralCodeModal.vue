@@ -73,21 +73,8 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { db } from '@/config/firebase';
-import { getAuth } from 'firebase/auth';
+import { supabase, authService, profileService } from '@/services/supabaseService';
 import { useI18n } from '@/utils/i18n';
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  updateDoc,
-  increment,
-  setDoc,
-  getDoc,
-  Timestamp,
-} from 'firebase/firestore';
 
 const emit = defineEmits(['close']);
 const { locale } = useI18n();
@@ -104,8 +91,7 @@ const activateCode = async () => {
   successMessage.value = '';
   loading.value = true;
 
-  const auth = getAuth();
-  const currentUser = auth.currentUser;
+  const currentUser = await authService.getUser();
 
   if (!currentUser) {
     errorMessage.value = isRus.value ? 'Войдите в аккаунт.' : 'Iltimos, avval tizimga kiring.';
@@ -124,17 +110,9 @@ const activateCode = async () => {
   }
 
   try {
-    // 1. Check if current user already activated a referral code
-    const currentUserRef = doc(db, 'users', currentUser.uid);
-    const currentUserDoc = await getDoc(currentUserRef);
+    const profile = await profileService.getProfile(currentUser.id);
 
-    if (!currentUserDoc.exists()) {
-      errorMessage.value = isRus.value ? 'Профиль не найден.' : 'Profil topilmadi.';
-      loading.value = false;
-      return;
-    }
-
-    if (currentUserDoc.data().referredBy) {
+    if (profile?.referred_by) {
       errorMessage.value = isRus.value
         ? 'Вы уже активировали пригласительный код.'
         : 'Siz allaqachon taklif kodini faollashtirgansiz.';
@@ -142,14 +120,12 @@ const activateCode = async () => {
       return;
     }
 
-    // 2. Find the referrer by their referral code
-    const q = query(
-      collection(db, 'users'),
-      where('referralCode', '==', code)
-    );
-    const querySnapshot = await getDocs(q);
+    const { data: referrers, error } = await supabase
+      .from('profiles')
+      .select('id, referral_code')
+      .eq('referral_code', code);
 
-    if (querySnapshot.empty) {
+    if (error || !referrers?.length) {
       errorMessage.value = isRus.value
         ? 'Пригласительный код не найден.'
         : 'Taklif kodi topilmadi.';
@@ -157,11 +133,9 @@ const activateCode = async () => {
       return;
     }
 
-    const referrerDoc = querySnapshot.docs[0];
-    const referrerId = referrerDoc.id;
+    const referrerId = referrers[0].id;
 
-    // 3. Prevent self-referral
-    if (referrerId === currentUser.uid) {
+    if (referrerId === currentUser.id) {
       errorMessage.value = isRus.value
         ? 'Вы не можете активировать собственный код.'
         : 'O\'zingizning taklif kodingizni faollashtira olmaysiz.';
@@ -169,52 +143,18 @@ const activateCode = async () => {
       return;
     }
 
-    // 4. Award referrer (taklif qilgan kishi): +50 TP
-    const referrerRef = doc(db, 'users', referrerId);
-    await updateDoc(referrerRef, {
-      points: increment(50),
-    });
+    // Award referrer +50 TP
+    await profileService.addPoints(referrerId, 50, 'Referral bonusi: do\'st kodni faollashtirdi');
 
-    // Log referrer transaction
-    const referrerTxRef = collection(referrerRef, 'transactions');
-    await setDoc(doc(referrerTxRef), {
-      action: isRus.value
-        ? `Реферальный бонус: код активирован другом`
-        : `Referral bonusi: do'st kodni faollashtirdi`,
-      points: 50,
-      timestamp: Timestamp.now(),
-    });
-
-    // 5. Award current user (taklif qilingan): +50 TP & mark as referred
-    await updateDoc(currentUserRef, {
-      points: increment(50),
-      referredBy: code,
-    });
-
-    // Log invited user transaction
-    const invitedTxRef = collection(currentUserRef, 'transactions');
-    await setDoc(doc(invitedTxRef), {
-      action: isRus.value
-        ? `Бонус за регистрацию по реферальной ссылке`
-        : `Taklif kodi orqali ro'yxatdan o'tish bonusi`,
-      points: 50,
-      timestamp: Timestamp.now(),
-    });
-
-    // Log referral event for current user (for audit trail)
-    const referralLogRef = collection(currentUserRef, 'referral-logs');
-    await setDoc(doc(referralLogRef), {
-      referredBy: code,
-      referrerId: referrerId,
-      timestamp: Timestamp.now(),
-    });
+    // Award invited +50 TP & mark referred_by
+    await profileService.addPoints(currentUser.id, 50, 'Taklif kodi orqali ro\'yxatdan o\'tish bonusi');
+    await profileService.updateProfile(currentUser.id, { referred_by: code });
 
     successMessage.value = isRus.value
       ? '🎉 Код успешно активирован! Вы и ваш друг получили по 50 TP Coins!'
       : '🎉 Taklif kodi muvaffaqiyatli faollashtirildi! Siz va do\'stingiz 50 TP Coins oldingiz!';
 
     referralCode.value = '';
-
   } catch (err) {
     console.error('Referral activation error:', err);
     errorMessage.value = isRus.value

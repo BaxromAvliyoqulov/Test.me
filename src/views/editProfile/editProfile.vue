@@ -130,9 +130,7 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
-import { getAuth, updatePassword, updateProfile, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../../config/firebase.js';
+import { supabase, authService, profileService, subjectService, resultService } from '@/services/supabaseService';
 import { useI18n } from '@/utils/i18n';
 import { getRankName, getRankClass, getRankIcon, getNextRankInfo, ranksData } from '@/utils/ranks.js';
 import { sortLevels } from '@/utils/sorters';
@@ -260,9 +258,8 @@ const fetchLevelsForSubject = async (subjectId, preserveLevel = null) => {
   if (!subjectId) return;
   loadingLevels.value = true;
   try {
-    const querySnapshot = await getDocs(collection(db, `subjects/${subjectId}/levels`));
-    const fetchedLevels = querySnapshot.docs.map(doc => ({ id: doc.id }));
-    const rawIds = fetchedLevels.map(l => l.id);
+    const sbLevels = await subjectService.getLevels(subjectId);
+    const rawIds = (sbLevels || []).map(l => l.name || l.id);
     const sortedIds = sortLevels(rawIds);
     levelsList.value = sortedIds.map(id => ({ id }));
     
@@ -281,10 +278,13 @@ const fetchLevelsForSubject = async (subjectId, preserveLevel = null) => {
 
 const fetchSubjects = async () => {
   try {
-    const querySnapshot = await getDocs(collection(db, 'subjects'));
-    subjectsList.value = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
+    const sbSubjects = await subjectService.getSubjects();
+    subjectsList.value = (sbSubjects || []).map((s) => ({
+      id: s.id,
+      name: s.title_uz || s.name || s.title,
+      nameUz: s.title_uz || s.name || s.title,
+      nameRu: s.title_ru || s.name || s.title,
+      icon: s.icon_url || s.icon || 'fas fa-book'
     }));
   } catch (err) {
     console.error('Error fetching subjects list:', err);
@@ -293,10 +293,7 @@ const fetchSubjects = async () => {
 
 const fetchUserResults = async (userId) => {
   try {
-    const q = query(collection(db, 'results'), where('userId', '==', userId));
-    const querySnapshot = await getDocs(q);
-    const results = querySnapshot.docs.map(doc => doc.data());
-    
+    const results = (await resultService.getUserResults(userId)) || [];
     rawResults.value = results;
     stats.totalTests = results.length;
     if (results.length > 0) {
@@ -310,9 +307,10 @@ const fetchUserResults = async (userId) => {
       const subjectSums = {};
       const subjectCounts = {};
       results.forEach(item => {
+        const sub = item.subject_id || item.subject || 'Test';
         const pct = Math.round((item.score / item.total) * 100);
-        subjectSums[item.subject] = (subjectSums[item.subject] || 0) + pct;
-        subjectCounts[item.subject] = (subjectCounts[item.subject] || 0) + 1;
+        subjectSums[sub] = (subjectSums[sub] || 0) + pct;
+        subjectCounts[sub] = (subjectCounts[sub] || 0) + 1;
       });
       
       let bestSub = '—';
@@ -325,9 +323,9 @@ const fetchUserResults = async (userId) => {
         }
       }
       stats.bestSubject = bestSub;
-      
+
       const sorted = results
-        .map(r => r.timestamp?.toDate ? r.timestamp.toDate() : new Date(r.timestamp || Date.now()))
+        .map(r => new Date(r.created_at || r.timestamp || Date.now()))
         .sort((a, b) => b - a);
       
       let currentStreak = 0;
@@ -356,65 +354,57 @@ const fetchUserResults = async (userId) => {
   }
 };
 
-const initializeProfileData = () => {
-  const auth = getAuth();
-  onAuthStateChanged(auth, async (user) => {
+const initializeProfileData = async () => {
+  try {
+    const user = await authService.getUser();
     if (user) {
-      userEmail.value = user.email;
-      memberSince.value = user.metadata.creationTime;
+      userEmail.value = user.email || '';
+      memberSince.value = user.created_at || null;
       
-      try {
-        fetchUserResults(user.uid);
-        await store.dispatch('user/fetchUserData');
-        if (store.state.user.goals) {
-          goalsList.value = JSON.parse(JSON.stringify(store.state.user.goals));
-        }
+      await fetchUserResults(user.id);
+      await store.dispatch('user/fetchUserData');
+      if (store.state.user?.goals) {
+        goalsList.value = JSON.parse(JSON.stringify(store.state.user.goals));
+      }
 
-        const docSnap = await getDoc(doc(db, 'users', user.uid));
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          profile.username = data.displayName || data.username || user.displayName || '';
-          selectedPhotoURL.value = data.photoURL || user.photoURL || '';
-          userPoints.value = data.points || 0;
-          shortId.value = data.shortId || user.uid.substring(0, 8).toUpperCase();
-          profile.isPremium = true;
+      const data = await profileService.getProfile(user.id);
+      if (data) {
+        profile.username = data.full_name || data.username || user.user_metadata?.full_name || user.email?.split('@')[0] || '';
+        selectedPhotoURL.value = data.avatar_url || user.user_metadata?.avatar_url || '';
+        userPoints.value = data.points || 0;
+        shortId.value = data.short_id || user.id.substring(0, 8).toUpperCase();
+        profile.isPremium = true;
 
-          if (data.preferences) {
-            let prefSub = data.preferences.defaultSubject;
-            if (typeof prefSub === 'string') {
-              preferences.defaultSubject = prefSub ? [prefSub] : [];
-            } else if (Array.isArray(prefSub)) {
-              preferences.defaultSubject = prefSub;
-            } else {
-              preferences.defaultSubject = [];
-            }
-
-            preferences.defaultLevel = data.preferences.defaultLevel || '';
-            preferences.dailyGoal = data.preferences.defaultGoal || data.preferences.dailyGoal || 10;
-            preferences.defaultLocale = data.preferences.defaultLocale || currentLocale.value;
-            preferences.mentorType = data.preferences.mentorType || 'friendly';
-            preferences.offlineMode = data.preferences.offlineMode || false;
-            preferences.unlockedMentors = data.preferences.unlockedMentors || ['friendly'];
-            
-            if (preferences.defaultSubject.length > 0) {
-              fetchLevelsForSubject(preferences.defaultSubject[0], preferences.defaultLevel);
-            }
+        if (data.preferences) {
+          let prefSub = data.preferences.defaultSubject;
+          if (typeof prefSub === 'string') {
+            preferences.defaultSubject = prefSub ? [prefSub] : [];
+          } else if (Array.isArray(prefSub)) {
+            preferences.defaultSubject = prefSub;
           } else {
-            preferences.defaultLocale = currentLocale.value;
+            preferences.defaultSubject = [];
+          }
+
+          preferences.defaultLevel = data.preferences.defaultLevel || '';
+          preferences.dailyGoal = data.preferences.defaultGoal || data.preferences.dailyGoal || 10;
+          preferences.defaultLocale = data.preferences.defaultLocale || currentLocale.value;
+          preferences.mentorType = data.preferences.mentorType || 'friendly';
+          preferences.offlineMode = data.preferences.offlineMode || false;
+          preferences.unlockedMentors = data.preferences.unlockedMentors || ['friendly'];
+          
+          if (preferences.defaultSubject.length > 0) {
+            fetchLevelsForSubject(preferences.defaultSubject[0], preferences.defaultLevel);
           }
         } else {
-          profile.username = user.displayName || '';
-          selectedPhotoURL.value = user.photoURL || '';
-          userPoints.value = 0;
           preferences.defaultLocale = currentLocale.value;
         }
-      } catch (error) {
-        console.error('Error fetching user document:', error);
       }
     } else {
       router.push('/login');
     }
-  });
+  } catch (error) {
+    console.error('Error fetching user document:', error);
+  }
 };
 
 onMounted(() => {
@@ -455,43 +445,28 @@ const saveProfile = async () => {
   if (loading.value || passwordError.value) return;
   loading.value = true;
   try {
-    const auth = getAuth();
-    const user = auth.currentUser;
+    const user = await authService.getUser();
     if (!user) {
       showToast('User session expired', 'error');
       return;
     }
 
-    const isBase64Photo = selectedPhotoURL.value && selectedPhotoURL.value.startsWith('data:');
-    const authPhotoURL = isBase64Photo ? (user.photoURL || '') : (selectedPhotoURL.value || '');
-
-    await setDoc(
-      doc(db, 'users', user.uid),
-      {
-        username: profile.username,
-        displayName: profile.username,
-        photoURL: selectedPhotoURL.value,
-        preferences: {
-          defaultSubject: preferences.defaultSubject,
-          defaultLevel: preferences.defaultLevel,
-          dailyGoal: Number(preferences.dailyGoal),
-          defaultLocale: preferences.defaultLocale,
-          mentorType: preferences.mentorType,
-          offlineMode: preferences.offlineMode,
-          unlockedMentors: preferences.unlockedMentors,
-        },
-        updatedAt: new Date(),
-      },
-      { merge: true }
-    );
-
-    await updateProfile(user, {
-      displayName: profile.username,
-      photoURL: authPhotoURL,
+    await profileService.updateProfile(user.id, {
+      full_name: profile.username,
+      avatar_url: selectedPhotoURL.value,
+      preferences: {
+        defaultSubject: preferences.defaultSubject,
+        defaultLevel: preferences.defaultLevel,
+        dailyGoal: Number(preferences.dailyGoal),
+        defaultLocale: preferences.defaultLocale,
+        mentorType: preferences.mentorType,
+        offlineMode: preferences.offlineMode,
+        unlockedMentors: preferences.unlockedMentors,
+      }
     });
 
     if (profile.password && profile.password.trim() !== '') {
-      await updatePassword(user, profile.password);
+      await supabase.auth.updateUser({ password: profile.password });
     }
 
     await store.dispatch('user/saveGoals', goalsList.value);
@@ -504,7 +479,7 @@ const saveProfile = async () => {
     }));
 
     localStorage.setItem('user', JSON.stringify({
-      uid: user.uid,
+      uid: user.id,
       email: user.email,
       displayName: profile.username,
       photoURL: selectedPhotoURL.value,

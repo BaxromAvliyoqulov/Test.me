@@ -1,9 +1,5 @@
 import { ref, computed } from 'vue';
-import { db } from '@/config/firebase';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { 
-  collection, query, where, onSnapshot, orderBy, doc 
-} from 'firebase/firestore';
+import { supabase, authService, profileService, notificationService, friendService } from '@/services/supabaseService';
 import { playNotificationSound, playDuelChallengeSound } from '@/utils/soundEffects';
 
 // Shared Reactive Singleton State
@@ -16,11 +12,8 @@ const pendingRequests = ref([]);
 const pendingDuels = ref([]);
 const loading = ref(true);
 
-let unsubAuth = null;
-let unsubUserDoc = null;
-let unsubBroadcast = null;
-let unsubRequests = null;
-let unsubDuels = null;
+let authSubscription = null;
+let realtimeChannel = null;
 
 let prevDuelsCount = 0;
 let prevRequestsCount = 0;
@@ -68,71 +61,84 @@ export function useNotifications() {
   };
 }
 
-function initNotificationListeners() {
-  const auth = getAuth();
-  unsubAuth = onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currentUserId.value = user.uid;
+async function loadNotificationsForUser(user) {
+  if (!user) {
+    currentUserId.value = null;
+    broadcastNotifications.value = [];
+    readNotificationIds.value = [];
+    pendingRequests.value = [];
+    pendingDuels.value = [];
+    loading.value = false;
+    return;
+  }
 
-      // 1. Listen to user doc for read notifications
-      const userRef = doc(db, 'users', user.uid);
-      if (unsubUserDoc) unsubUserDoc();
-      unsubUserDoc = onSnapshot(userRef, (snap) => {
-        if (snap.exists()) {
-          readNotificationIds.value = snap.data().readNotifications || [];
-        }
-      });
+  currentUserId.value = user.id;
 
-      // 2. Listen to system broadcast notifications
-      const bCastQ = query(collection(db, 'notifications'), orderBy('createdAt', 'desc'));
-      if (unsubBroadcast) unsubBroadcast();
-      unsubBroadcast = onSnapshot(bCastQ, (snap) => {
-        broadcastNotifications.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        loading.value = false;
-      }, () => { loading.value = false; });
-
-      // 3. Listen to incoming friend requests
-      const reqQ = query(
-        collection(db, 'friend_requests'),
-        where('toUid', '==', user.uid),
-        where('status', '==', 'pending')
-      );
-      if (unsubRequests) unsubRequests();
-      unsubRequests = onSnapshot(reqQ, (snap) => {
-        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        if (list.length > prevRequestsCount && prevRequestsCount > 0) {
-          playNotificationSound();
-        }
-        prevRequestsCount = list.length;
-        pendingRequests.value = list;
-      });
-
-      // 4. Listen to incoming 1v1 duels
-      const duelQ = query(
-        collection(db, 'duels'),
-        where('opponentUid', '==', user.uid),
-        where('status', '==', 'pending')
-      );
-      if (unsubDuels) unsubDuels();
-      unsubDuels = onSnapshot(duelQ, (snap) => {
-        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        if (list.length > prevDuelsCount && prevDuelsCount > 0) {
-          playDuelChallengeSound();
-        }
-        prevDuelsCount = list.length;
-        pendingDuels.value = list;
-      });
-
-    } else {
-      currentUserId.value = null;
-      broadcastNotifications.value = [];
-      readNotificationIds.value = [];
-      pendingRequests.value = [];
-      pendingDuels.value = [];
-      if (unsubUserDoc) unsubUserDoc();
-      if (unsubBroadcast) unsubBroadcast();
-      if (unsubRequests) unsubRequests();
-      if (unsubDuels) unsubDuels();
+  try {
+    const profile = await profileService.getProfile(user.id);
+    if (profile) {
+      readNotificationIds.value = profile.read_notifications || [];
     }
+
+    const notifs = await notificationService.getNotifications();
+    broadcastNotifications.value = (notifs || []).map(n => ({
+      id: n.id,
+      title: n.title,
+      message: n.message || n.text,
+      target: n.target || 'all',
+      createdAt: n.created_at,
+      ...n
+    }));
+
+    const requests = await friendService.getPendingRequests(user.id);
+    if (requests.length > prevRequestsCount && prevRequestsCount > 0) {
+      playNotificationSound();
+    }
+    prevRequestsCount = requests.length;
+    pendingRequests.value = requests;
+
+    const duels = await friendService.getPendingDuels(user.id);
+    if (duels.length > prevDuelsCount && prevDuelsCount > 0) {
+      playDuelChallengeSound();
+    }
+    prevDuelsCount = duels.length;
+    pendingDuels.value = duels;
+  } catch (err) {
+    console.warn('Notifications fetch warning:', err);
+  } finally {
+    loading.value = false;
+  }
+}
+
+function initNotificationListeners() {
+  authService.getUser().then((user) => {
+    loadNotificationsForUser(user);
   });
+
+  const { data: sub } = authService.onAuthStateChange((event, session) => {
+    loadNotificationsForUser(session?.user || null);
+  });
+  authSubscription = sub?.subscription;
+
+  // Realtime subscription via Supabase Channel
+  try {
+    realtimeChannel = supabase
+      .channel('notifications-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications' },
+        (payload) => {
+          if (payload.new) {
+            broadcastNotifications.value.unshift({
+              id: payload.new.id,
+              ...payload.new
+            });
+            playNotificationSound();
+          }
+        }
+      )
+      .subscribe();
+  } catch (e) {
+    console.warn('Realtime channel fallback:', e);
+  }
 }

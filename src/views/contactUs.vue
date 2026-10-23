@@ -251,18 +251,19 @@ const formatPhone = (event) => {
 const handleSubmit = async () => {
   submitting.value = true;
   try {
-    const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
-    const { db } = await import('@/config/firebase');
-
-    await addDoc(collection(db, 'supportMessages'), {
+    const { supabase } = await import('@/config/supabase');
+    const { error: insertError } = await supabase.from('support_messages').insert({
       name: formData.value.name,
       phone: formData.value.phone,
-      requestType: formData.value.requestType,
+      request_type: formData.value.requestType,
       subject: formData.value.subject || null,
       message: formData.value.message,
-      createdAt: serverTimestamp(),
+      created_at: new Date().toISOString(),
       status: 'new'
     });
+    if (insertError) {
+      console.warn("Support message save note:", insertError.message);
+    }
 
     toast.success(
       isRus.value

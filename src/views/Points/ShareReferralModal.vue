@@ -41,20 +41,24 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { getAuth } from 'firebase/auth';
+import { ref, computed, onMounted } from 'vue';
+import { authService } from '@/services/supabaseService';
 import { useToast } from 'vue-toastification';
 import { useI18n } from '@/utils/i18n';
 
 const emit = defineEmits(['close']);
 const toast = useToast();
 const { locale } = useI18n();
-const user = getAuth().currentUser;
+const user = ref(null);
+
+onMounted(async () => {
+  user.value = await authService.getUser();
+});
 
 const isRus = computed(() => locale.value === 'RUS');
 
 const referralCode = computed(() => {
-  return user ? user.uid.slice(0, 8).toUpperCase() : '';
+  return user.value ? user.value.id.slice(0, 8).toUpperCase() : '';
 });
 
 const telegramShareUrl = computed(() => {

@@ -59,6 +59,14 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "firebase/app": fileURLToPath(new URL("./src/compat/firebaseCompat.js", import.meta.url)),
+      "firebase/auth": fileURLToPath(new URL("./src/compat/firebaseCompat.js", import.meta.url)),
+      "firebase/firestore": fileURLToPath(new URL("./src/compat/firebaseCompat.js", import.meta.url)),
+      "firebase/storage": fileURLToPath(new URL("./src/compat/firebaseCompat.js", import.meta.url)),
+      "firebase/functions": fileURLToPath(new URL("./src/compat/firebaseCompat.js", import.meta.url)),
+      "firebase/messaging": fileURLToPath(new URL("./src/compat/firebaseCompat.js", import.meta.url)),
+      "firebase/analytics": fileURLToPath(new URL("./src/compat/firebaseCompat.js", import.meta.url)),
+      "firebase": fileURLToPath(new URL("./src/compat/firebaseCompat.js", import.meta.url)),
     },
   },
   build: {
@@ -66,8 +74,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Firebase - eng katta kutubxona, alohida chunk
-          "vendor-firebase": ["firebase/app", "firebase/auth", "firebase/firestore", "firebase/storage"],
           // Google AI
           "vendor-ai": ["@google/generative-ai"],
           // Excel export

@@ -51,9 +51,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useToast } from 'vue-toastification';
-import { getAuth } from 'firebase/auth';
-import { db } from '@/config/firebase';
-import { doc, updateDoc, increment, collection, addDoc, Timestamp } from 'firebase/firestore';
+import { authService, profileService } from '@/services/supabaseService';
 import { useI18n } from '@/utils/i18n';
 
 const emit = defineEmits(['close']);
@@ -80,32 +78,20 @@ const selectOption = (option) => {
 };
 
 const simulatePurchase = async () => {
-  const auth = getAuth();
-  const user = auth.currentUser;
+  const user = await authService.getUser();
   if (!user) {
     toast.error(isRus.value ? "Войдите, чтобы совершить покупку." : "Xarid qilish uchun tizimga kirishingiz kerak.");
     return;
   }
 
   try {
-    const userDocRef = doc(db, 'users', user.uid);
     const bonusMultiplier = 1 + (selected.value.bonus / 100);
     const earnedPoints = Math.round(selected.value.points * bonusMultiplier);
+    const desc = isRus.value 
+      ? `Покупка ${selected.value.points} TP Coins (+${selected.value.bonus}% Бонус)`
+      : `Sotib olindi ${selected.value.points} TP Coins (+${selected.value.bonus}% Bonus)`;
 
-    // Update user points
-    await updateDoc(userDocRef, {
-      points: increment(earnedPoints)
-    });
-
-    // Record transaction
-    const txRef = collection(userDocRef, 'transactions');
-    await addDoc(txRef, {
-      action: isRus.value 
-        ? `Покупка ${selected.value.points} TP Coins (+${selected.value.bonus}% Бонус)`
-        : `Sotib olindi ${selected.value.points} TP Coins (+${selected.value.bonus}% Bonus)`,
-      points: earnedPoints,
-      timestamp: Timestamp.now()
-    });
+    await profileService.addPoints(user.id, earnedPoints, desc);
 
     toast.success(isRus.value ? `Баланс успешно пополнен на ${earnedPoints} TP Coins!` : `${earnedPoints} TP Coins balansingizga muvaffaqiyatli qo'shildi!`);
     emit('close');

@@ -5,6 +5,7 @@
  * yagona, xavfsiz va defensive arxitektura qatlami.
  */
 import { supabase } from '@/config/supabase';
+export { supabase };
 
 // ==============================================================================
 // 1. AUTH SERVICE
@@ -395,4 +396,346 @@ export const goalService = {
     if (error) throw error;
     return data || [];
   },
+};
+
+// ==============================================================================
+// 7. NOTIFICATIONS & FRIENDS SERVICE
+// ==============================================================================
+export const notificationService = {
+  async getNotifications() {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      return [];
+    }
+    return data || [];
+  },
+
+  async markAsRead(userId, notificationIds) {
+    if (!userId || !notificationIds?.length) return;
+    try {
+      const profile = await profileService.getProfile(userId);
+      const existing = profile?.read_notifications || [];
+      const updated = Array.from(new Set([...existing, ...notificationIds]));
+      await profileService.updateProfile(userId, { read_notifications: updated });
+    } catch (e) {
+      console.warn('markAsRead error:', e);
+    }
+  }
+};
+
+export const friendService = {
+  async getFriends(userId) {
+    if (!userId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('friends')
+        .select('*')
+        .or(`user_id.eq.${userId},friend_id.eq.${userId}`);
+      
+      if (!error && data?.length) {
+        const friendIds = data.map(f => f.user_id === userId ? f.friend_id : f.user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, full_name, email, points, rank, streak, avatar_url, short_id')
+          .in('id', friendIds);
+
+        const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+        return friendIds.map(fId => {
+          const p = profileMap.get(fId) || {};
+          return {
+            id: fId,
+            uid: fId,
+            displayName: p.display_name || p.full_name || p.email?.split('@')[0] || 'Foydalanuvchi',
+            email: p.email || '',
+            points: p.points || 0,
+            rank: p.rank || 'Newbie',
+            streak: p.streak || 1,
+            profileImage: p.avatar_url || null,
+            shortId: p.short_id || fId.slice(0, 6).toUpperCase()
+          };
+        });
+      }
+
+      // Fallback: check profile.friends JSON/Array
+      const profile = await profileService.getProfile(userId);
+      if (Array.isArray(profile?.friends) && profile.friends.length) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, full_name, email, points, rank, streak, avatar_url, short_id')
+          .in('id', profile.friends);
+
+        return (profiles || []).map(p => ({
+          id: p.id,
+          uid: p.id,
+          displayName: p.display_name || p.full_name || p.email?.split('@')[0] || 'Foydalanuvchi',
+          email: p.email || '',
+          points: p.points || 0,
+          rank: p.rank || 'Newbie',
+          streak: p.streak || 1,
+          profileImage: p.avatar_url || null,
+          shortId: p.short_id || p.id.slice(0, 6).toUpperCase()
+        }));
+      }
+      return [];
+    } catch (e) {
+      console.warn('getFriends error:', e);
+      return [];
+    }
+  },
+
+  async getPendingRequests(userId) {
+    if (!userId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('friend_requests')
+        .select('*')
+        .eq('receiver_id', userId)
+        .eq('status', 'pending');
+      if (error) return [];
+      return (data || []).map(r => ({
+        id: r.id,
+        fromUid: r.sender_id,
+        fromName: r.sender_name || 'Foydalanuvchi',
+        toUid: r.receiver_id,
+        toName: r.receiver_name || '',
+        status: r.status,
+        createdAt: r.created_at,
+        ...r
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async getOutgoingRequests(userId) {
+    if (!userId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('friend_requests')
+        .select('*')
+        .eq('sender_id', userId)
+        .eq('status', 'pending');
+      if (error) return [];
+      return (data || []).map(r => ({
+        id: r.id,
+        fromUid: r.sender_id,
+        fromName: r.sender_name || '',
+        toUid: r.receiver_id,
+        toName: r.receiver_name || 'Foydalanuvchi',
+        status: r.status,
+        createdAt: r.created_at,
+        ...r
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async sendFriendRequest(fromUser, targetUser) {
+    const fromId = fromUser.id || fromUser.uid;
+    const targetId = targetUser.id || targetUser.uid;
+    const { error } = await supabase.from('friend_requests').insert({
+      sender_id: fromId,
+      sender_name: fromUser.displayName || fromUser.name || 'Foydalanuvchi',
+      receiver_id: targetId,
+      receiver_name: targetUser.displayName || targetUser.name || 'Foydalanuvchi',
+      status: 'pending'
+    });
+    if (error) {
+      // Fallback: direct friendship in friends table if request table not supported
+      await supabase.from('friends').insert([
+        { user_id: fromId, friend_id: targetId },
+        { user_id: targetId, friend_id: fromId }
+      ]);
+    }
+    return true;
+  },
+
+  async acceptFriendRequest(req) {
+    const fromId = req.sender_id || req.fromUid;
+    const toId = req.receiver_id || req.toUid;
+    try {
+      await supabase.from('friend_requests').update({ status: 'accepted' }).eq('id', req.id);
+      await supabase.from('friends').insert([
+        { user_id: toId, friend_id: fromId },
+        { user_id: fromId, friend_id: toId }
+      ]);
+    } catch (e) {
+      console.warn('acceptFriendRequest fallback:', e);
+    }
+    return true;
+  },
+
+  async rejectFriendRequest(reqId) {
+    try {
+      await supabase.from('friend_requests').delete().eq('id', reqId);
+    } catch (e) {
+      console.warn('rejectFriendRequest note:', e);
+    }
+    return true;
+  },
+
+  async removeFriend(userId, friendId) {
+    try {
+      await supabase.from('friends').delete().or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`);
+    } catch (e) {
+      console.warn('removeFriend note:', e);
+    }
+    return true;
+  },
+
+  async getPendingDuels(userId) {
+    if (!userId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('duels')
+        .select('*')
+        .eq('opponent_id', userId)
+        .eq('status', 'pending');
+      if (error) return [];
+      return (data || []).map(d => ({
+        id: d.id,
+        opponentUid: d.opponent_id,
+        challengerUid: d.challenger_id,
+        challengerName: d.challenger_name || 'Raqib',
+        opponentName: d.opponent_name || '',
+        subjectId: d.subject_id,
+        subjectName: d.subject_name || 'Fan',
+        questionCount: d.question_count || 10,
+        wager: d.wager || 0,
+        status: d.status,
+        createdAt: d.created_at,
+        ...d
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async getOutgoingDuels(userId) {
+    if (!userId) return [];
+    try {
+      const { data, error } = await supabase
+        .from('duels')
+        .select('*')
+        .eq('challenger_id', userId)
+        .eq('status', 'pending');
+      if (error) return [];
+      return (data || []).map(d => ({
+        id: d.id,
+        challengerUid: d.challenger_id,
+        opponentUid: d.opponent_id,
+        opponentName: d.opponent_name || 'Raqib',
+        subjectId: d.subject_id,
+        subjectName: d.subject_name || 'Fan',
+        questionCount: d.question_count || 10,
+        wager: d.wager || 0,
+        status: d.status,
+        ...d
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async createDuel(challenger, duelData) {
+    const { error } = await supabase.from('duels').insert({
+      challenger_id: challenger.id || challenger.uid,
+      challenger_name: challenger.displayName || challenger.email,
+      opponent_id: duelData.opponentUid,
+      opponent_name: duelData.opponentName,
+      subject_id: duelData.subjectId,
+      subject_name: duelData.subjectName,
+      question_count: duelData.questionCount || 10,
+      wager: duelData.wager || 0,
+      status: 'pending'
+    });
+    if (error) throw error;
+    return true;
+  },
+
+  async acceptDuel(duelId) {
+    const { error } = await supabase
+      .from('duels')
+      .update({ status: 'active', started_at: new Date().toISOString() })
+      .eq('id', duelId);
+    if (error) throw error;
+    return true;
+  },
+
+  async rejectDuel(duelId) {
+    await supabase.from('duels').delete().eq('id', duelId);
+    return true;
+  },
+
+  async sendGift(fromUser, toUser, amount, message = '') {
+    const fromId = fromUser.id || fromUser.uid;
+    const toId = toUser.id || toUser.uid;
+    await profileService.addPoints(fromId, -amount);
+    await profileService.addPoints(toId, amount);
+
+    try {
+      await supabase.from('transactions').insert([
+        { user_id: fromId, type: 'gift_sent', amount: -amount, target_name: toUser.displayName || toUser.email, message },
+        { user_id: toId, type: 'gift_received', amount, from_name: fromUser.displayName || fromUser.email, message }
+      ]);
+    } catch (e) {
+      console.warn('Gift transaction log note:', e);
+    }
+    return true;
+  },
+
+  async getSuggestedUsers(currentUserId) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, full_name, email, points, rank, streak, avatar_url, short_id')
+        .neq('id', currentUserId || '')
+        .limit(20);
+      if (error) return [];
+      return (data || []).map(p => ({
+        id: p.id,
+        uid: p.id,
+        displayName: p.display_name || p.full_name || p.email?.split('@')[0] || 'Foydalanuvchi',
+        email: p.email || '',
+        points: p.points || 0,
+        rank: p.rank || 'Newbie',
+        streak: p.streak || 1,
+        profileImage: p.avatar_url || null,
+        shortId: p.short_id || p.id.slice(0, 6).toUpperCase()
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async searchUsers(queryTerm, currentUserId) {
+    if (!queryTerm?.trim()) return [];
+    try {
+      const term = queryTerm.trim();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, full_name, email, points, rank, streak, avatar_url, short_id')
+        .neq('id', currentUserId || '')
+        .or(`display_name.ilike.%${term}%,full_name.ilike.%${term}%,email.ilike.%${term}%,short_id.ilike.%${term}%`)
+        .limit(30);
+      if (error) return [];
+      return (data || []).map(p => ({
+        id: p.id,
+        uid: p.id,
+        displayName: p.display_name || p.full_name || p.email?.split('@')[0] || 'Foydalanuvchi',
+        email: p.email || '',
+        points: p.points || 0,
+        rank: p.rank || 'Newbie',
+        streak: p.streak || 1,
+        profileImage: p.avatar_url || null,
+        shortId: p.short_id || p.id.slice(0, 6).toUpperCase()
+      }));
+    } catch {
+      return [];
+    }
+  }
 };

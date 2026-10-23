@@ -120,16 +120,13 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from '@/utils/i18n';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { doc, updateDoc, increment, arrayUnion, onSnapshot } from 'firebase/firestore';
-import { db } from '@/config/firebase';
+import { authService, profileService } from '@/services/supabaseService';
 import { ranksData, getRankName, getNextRankInfo } from '@/utils/ranks';
 import { useToast } from 'vue-toastification';
 
 const router = useRouter();
 const { locale } = useI18n();
 const toast = useToast();
-const auth = getAuth();
 
 const isRus = computed(() => locale.value === 'RUS');
 const ranksList = ref(ranksData);
@@ -138,7 +135,6 @@ const userPoints = ref(0);
 const claimedRanks = ref([]);
 const claiming = ref(null);
 let authUnsub = null;
-let docUnsub = null;
 
 const currentRankName = computed(() => {
   return getRankName(userPoints.value, locale.value);
@@ -182,7 +178,7 @@ const getLineFillHeight = (index) => {
 const claimReward = async (rank) => {
   if (claiming.value) return;
   
-  const user = auth.currentUser;
+  const user = await authService.getUser();
   if (!user) {
     toast.error(isRus.value ? 'Войдите в систему' : 'Tizimga kiring');
     return;
@@ -191,18 +187,17 @@ const claimReward = async (rank) => {
   claiming.value = rank.id;
   
   try {
-    const userRef = doc(db, 'users', user.uid);
-    await updateDoc(userRef, {
-      points: increment(rank.reward),
-      claimedRanks: arrayUnion(rank.id)
-    });
+    const updatedClaimed = Array.from(new Set([...claimedRanks.value, rank.id]));
+    const profile = await profileService.getProfile(user.id);
+    const prefs = profile?.preferences || {};
+    prefs.claimedRanks = updatedClaimed;
+    await profileService.updateProfile(user.id, { preferences: prefs });
+    await profileService.addPoints(user.id, rank.reward, `Daraja mukofoti: ${rank.nameUz || rank.id}`);
     
+    userPoints.value += rank.reward;
+    claimedRanks.value = updatedClaimed;
+
     toast.success(isRus.value ? `Вы получили ${rank.reward} TP Coins!` : `Siz ${rank.reward} TP Coins oldingiz!`);
-    
-    // Optimistic UI update (optional, since onSnapshot will trigger anyway)
-    if (!claimedRanks.value.includes(rank.id)) {
-      claimedRanks.value.push(rank.id);
-    }
   } catch (err) {
     console.error(err);
     toast.error(err.message);
@@ -211,24 +206,30 @@ const claimReward = async (rank) => {
   }
 };
 
-onMounted(() => {
-  authUnsub = onAuthStateChanged(auth, (user) => {
-    if (user) {
-      const userRef = doc(db, 'users', user.uid);
-      docUnsub = onSnapshot(userRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          userPoints.value = data.points || 0;
-          claimedRanks.value = data.claimedRanks || [];
-        }
-      });
+const loadRankData = async (user) => {
+  if (!user) return;
+  try {
+    const profile = await profileService.getProfile(user.id);
+    if (profile) {
+      userPoints.value = profile.points || 0;
+      claimedRanks.value = profile.preferences?.claimedRanks || [];
     }
+  } catch (e) {
+    console.warn('Rank data load error:', e);
+  }
+};
+
+onMounted(async () => {
+  const user = await authService.getUser();
+  if (user) loadRankData(user);
+  const { data } = authService.onAuthStateChange((_event, session) => {
+    if (session?.user) loadRankData(session.user);
   });
+  authUnsub = data?.subscription;
 });
 
 onUnmounted(() => {
-  if (authUnsub) authUnsub();
-  if (docUnsub) docUnsub();
+  if (authUnsub?.unsubscribe) authUnsub.unsubscribe();
 });
 </script>
 

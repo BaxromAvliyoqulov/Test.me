@@ -51,17 +51,8 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { db } from '@/config/firebase';
-import { getAuth } from 'firebase/auth';
+import { supabase, authService, profileService } from '@/services/supabaseService';
 import { useI18n } from '@/utils/i18n';
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  getDoc,
-} from 'firebase/firestore';
 
 const emit = defineEmits(['close']);
 const { locale } = useI18n();
@@ -71,26 +62,29 @@ const loading = ref(true);
 const isRus = computed(() => locale.value === 'RUS');
 
 onMounted(async () => {
-  const auth = getAuth();
-  const user = auth.currentUser;
-  if (!user) return;
+  const user = await authService.getUser();
+  if (!user) {
+    loading.value = false;
+    return;
+  }
 
   try {
-    const userRef = doc(db, 'users', user.uid);
-    const userSnap = await getDoc(userRef);
-    const myReferralCode = userSnap.data()?.referralCode;
+    const profile = await profileService.getProfile(user.id);
+    const myReferralCode = profile?.referral_code || user.id.slice(0, 8).toUpperCase();
 
-    if (!myReferralCode) {
-      loading.value = false;
-      return;
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, username, created_at, referred_by')
+      .eq('referred_by', myReferralCode);
+
+    if (!error && data) {
+      users.value = data.map(d => ({
+        uid: d.id,
+        displayName: d.full_name || d.username || 'Foydalanuvchi',
+        email: d.username ? `@${d.username}` : '',
+        createdAt: d.created_at
+      }));
     }
-
-    const q = query(
-      collection(db, 'users'),
-      where('referredBy', '==', myReferralCode)
-    );
-    const snap = await getDocs(q);
-    users.value = snap.docs.map((doc) => ({ ...doc.data(), uid: doc.id }));
   } catch (err) {
     console.error(err);
   } finally {

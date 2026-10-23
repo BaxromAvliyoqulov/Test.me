@@ -55,8 +55,7 @@
 
 <script setup>
 import { ref, computed, watch, onUnmounted, nextTick } from 'vue';
-import { db } from '@/config/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase } from '@/services/supabaseService';
 import { 
   getUserDisplayName, 
   getUserAvatar, 
@@ -85,7 +84,8 @@ let unsub = null;
 
 const chatId = computed(() => {
   const fId = props.friend.uid || props.friend.id;
-  return [props.currentUser.uid, fId].sort().join('_');
+  const myId = props.currentUser.uid || props.currentUser.id;
+  return [myId, fId].sort().join('_');
 });
 
 const scrollToBottom = () => {
@@ -97,20 +97,27 @@ const scrollToBottom = () => {
 };
 
 const listenToMessages = () => {
-  if (unsub) unsub();
+  if (unsub) {
+    supabase.removeChannel(unsub);
+    unsub = null;
+  }
   loading.value = true;
   messages.value = [];
   
-  const q = query(
-    collection(db, 'chats', chatId.value, 'messages'),
-    orderBy('timestamp', 'asc')
-  );
-  
-  unsub = onSnapshot(q, snap => {
-    messages.value = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  unsub = supabase.channel(`chat_${chatId.value}`)
+    .on('broadcast', { event: 'msg' }, ({ payload }) => {
+      messages.value.push(payload);
+      scrollToBottom();
+    })
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        loading.value = false;
+      }
+    });
+
+  setTimeout(() => {
     loading.value = false;
-    scrollToBottom();
-  });
+  }, 400);
 };
 
 watch(() => props.friend, () => {
@@ -118,30 +125,31 @@ watch(() => props.friend, () => {
 }, { immediate: true });
 
 onUnmounted(() => {
-  if (unsub) unsub();
+  if (unsub) supabase.removeChannel(unsub);
 });
 
 const sendMessage = async () => {
-  if (!newMessage.value.trim()) return;
-  const text = newMessage.value;
+  if (!newMessage.value.trim() || !unsub) return;
+  const text = newMessage.value.trim();
   newMessage.value = '';
-  
+
+  const payload = {
+    id: 'msg_' + Date.now(),
+    text,
+    senderId: props.currentUser.uid || props.currentUser.id,
+    timestamp: new Date().toISOString()
+  };
+
+  messages.value.push(payload);
+  scrollToBottom();
+
   try {
-    const fId = props.friend.uid || props.friend.id;
-    await addDoc(collection(db, 'chats', chatId.value, 'messages'), {
-      text,
-      senderId: props.currentUser.uid,
-      timestamp: serverTimestamp()
+    await unsub.send({
+      type: 'broadcast',
+      event: 'msg',
+      payload
     });
-
-    await setDoc(doc(db, 'chats', chatId.value), {
-      lastMessage: text,
-      lastSenderId: props.currentUser.uid,
-      lastTimestamp: serverTimestamp(),
-      participants: [props.currentUser.uid, fId]
-    }, { merge: true });
-
-    chatInput.value.focus();
+    chatInput.value?.focus();
   } catch (err) {
     console.error("Error sending message", err);
   }

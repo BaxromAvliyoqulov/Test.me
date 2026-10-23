@@ -17,15 +17,9 @@
 </template>
 
 <script setup>
-import { watch } from 'vue';
-
 const props = defineProps({
     question: Object,
     selectedAnswer: Number
-});
-
-watch(() => props.question, (val) => {
-    console.log('🧠 Question received in component:', val);
 });
 </script>
 

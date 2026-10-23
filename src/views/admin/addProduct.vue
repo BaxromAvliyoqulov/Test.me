@@ -44,15 +44,11 @@ const addProduct = () => {
     description: description.value,
   };
 
-  // Simulate saving the product (e.g., API call)
-  console.log("Product added:", newProduct);
-
   // Reset form fields
   productName.value = "";
   price.value = 0;
   description.value = "";
   alert("Product added successfully!");
-  console.log(`Adding product: ${productName.value}, Price: ${price.value}`);
 };
 </script>
 

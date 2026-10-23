@@ -99,16 +99,29 @@
             </div>
           </div>
 
-          <button type="submit" class="auth-primary-btn">Ro'yxatdan o'tish</button>
+          <button type="submit" class="auth-primary-btn" :disabled="isLoading || isRedirecting || isGoogleLoading">
+            <span v-if="isRedirecting" class="btn-loading-content">
+              <i class="fas fa-circle-notch fa-spin"></i> Tizimga yo'naltirilmoqda...
+            </span>
+            <span v-else-if="isLoading" class="btn-loading-content">
+              <i class="fas fa-spinner fa-spin"></i> Ro'yxatdan o'tilmoqda...
+            </span>
+            <span v-else>Ro'yxatdan o'tish</span>
+          </button>
 
           <div class="divider">
             <span>yoki quyidagilar orqali</span>
           </div>
 
           <div class="google-signup">
-            <button @click.prevent="handleGoogleSignUp" type="button" class="google-btn">
-              <img src="@/assets/img/googleIcon.svg" alt="Google Icon" />
-              Google orqali ro'yxatdan o'tish
+            <button @click.prevent="handleGoogleSignUp" type="button" class="google-btn" :disabled="isGoogleLoading || isLoading || isRedirecting">
+              <span v-if="isGoogleLoading" class="btn-loading-content">
+                <i class="fas fa-spinner fa-spin"></i> Google tizimiga ulanmoqda...
+              </span>
+              <template v-else>
+                <img src="@/assets/img/googleIcon.svg" alt="Google Icon" />
+                Google orqali ro'yxatdan o'tish
+              </template>
             </button>
           </div>
 
@@ -138,6 +151,10 @@ const password = ref('');
 const showPassword = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
+const isLoading = ref(false);
+const isGoogleLoading = ref(false);
+const isRedirecting = ref(false);
+
 const router = useRouter();
 const toast = useToast();
 
@@ -146,6 +163,7 @@ const togglePasswordVisibility = () => {
 };
 
 const handleSubmit = async () => {
+  if (isLoading.value || isRedirecting.value) return;
   errorMessage.value = '';
   successMessage.value = '';
 
@@ -155,6 +173,8 @@ const handleSubmit = async () => {
     return;
   }
 
+  isLoading.value = true;
+
   try {
     await authService.signUp(
       email.value,
@@ -162,18 +182,27 @@ const handleSubmit = async () => {
       username.value
     );
 
+    isRedirecting.value = true;
     successMessage.value = 'Ro\'yxatdan muvaffaqiyatli o\'tdingiz!';
     toast.success('Ro\'yxatdan muvaffaqiyatli o\'tdingiz!');
-    router.push('/dashboard');
+    await router.push('/dashboard');
   } catch (error) {
+    console.error('SignUp Error:', error);
+    isRedirecting.value = false;
     errorMessage.value = error.message || 'Ro\'yxatdan o\'tishda xatolik yuz berdi.';
     toast.error(errorMessage.value);
+  } finally {
+    if (!isRedirecting.value) {
+      isLoading.value = false;
+    }
   }
 };
 
 const handleGoogleSignUp = async () => {
+  if (isGoogleLoading.value || isLoading.value || isRedirecting.value) return;
   errorMessage.value = '';
   successMessage.value = '';
+  isGoogleLoading.value = true;
 
   try {
     await authService.signInWithGoogle();
@@ -181,6 +210,7 @@ const handleGoogleSignUp = async () => {
     errorMessage.value = error.message || 'Google orqali ro\'yxatdan o\'tishda xatolik yuz berdi.';
     toast.error(errorMessage.value);
     console.error(error);
+    isGoogleLoading.value = false;
   }
 };
 </script>
@@ -437,12 +467,21 @@ const handleGoogleSignUp = async () => {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.auth-primary-btn:hover {
+.auth-primary-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
   background: linear-gradient(to right, #2563eb, #1d4ed8);
+}
+
+.auth-primary-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .divider {

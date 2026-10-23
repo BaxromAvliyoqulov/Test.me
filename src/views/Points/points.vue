@@ -63,9 +63,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { db } from '@/config/firebase';
-import { onSnapshot, doc, collection, updateDoc, increment, addDoc, query, where } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { authService, profileService, shopService } from '@/services/supabaseService';
 import { useToast } from 'vue-toastification';
 import { useI18n } from '@/utils/i18n';
 
@@ -89,7 +87,7 @@ const showReferralCodeModal = ref(false);
 
 const toast = useToast();
 const { locale } = useI18n();
-const auth = getAuth();
+let currentUser = null;
 
 const rewardItems = [
   {
@@ -124,42 +122,35 @@ const rewardItems = [
   }
 ];
 
-onMounted(() => {
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      const userDoc = doc(db, 'users', user.uid);
-      const txRef = collection(userDoc, 'transactions');
-
-      onSnapshot(userDoc, async (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          points.value = data.points || 0;
-          
-          const myReferralCode = data.referralCode || user.uid.slice(0, 8).toUpperCase();
-          if (!data.referralCode) {
-            await updateDoc(userDoc, {
-              referralCode: myReferralCode
-            });
-          }
-
-          // Listen to referral counts
-          const referralsQuery = query(
-            collection(db, 'users'),
-            where('referredBy', '==', myReferralCode)
-          );
-          onSnapshot(referralsQuery, (refSnap) => {
-            referralCount.value = refSnap.size;
-          });
-        }
-      });
-
-      onSnapshot(txRef, (querySnapshot) => {
-        transactions.value = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-      });
+const loadUserData = async (user) => {
+  if (!user) return;
+  currentUser = user;
+  try {
+    const profile = await profileService.getProfile(user.id);
+    if (profile) {
+      points.value = profile.points || 0;
+      const myReferralCode = profile.referral_code || user.id.slice(0, 8).toUpperCase();
+      if (!profile.referral_code) {
+        await profileService.updateProfile(user.id, { referral_code: myReferralCode });
+      }
     }
+    const txs = await shopService.getUserTransactions(user.id);
+    transactions.value = (txs || []).map(t => ({
+      id: t.id,
+      action: t.description,
+      points: t.points,
+      timestamp: t.created_at
+    }));
+  } catch (e) {
+    console.warn('Error loading points data:', e);
+  }
+};
+
+onMounted(async () => {
+  const user = await authService.getUser();
+  if (user) loadUserData(user);
+  authService.onAuthStateChange((_event, session) => {
+    if (session?.user) loadUserData(session.user);
   });
 });
 
@@ -205,7 +196,7 @@ const totalEarned = computed(() => {
 });
 
 const exchangeItem = async (item) => {
-  const user = auth.currentUser;
+  const user = currentUser || await authService.getUser();
   if (!user) {
     toast.error(isRus.value ? 'Войдите в аккаунт' : 'Tizimga kiring');
     return;
@@ -217,17 +208,14 @@ const exchangeItem = async (item) => {
   }
 
   try {
-    const userDocRef = doc(db, 'users', user.uid);
-    const txRef = collection(userDocRef, 'transactions');
-
-    await updateDoc(userDocRef, {
-      points: increment(-item.cost)
-    });
-
-    await addDoc(txRef, {
-      action: isRus.value ? `Обмен: ${item.nameRu}` : `Almashtirildi: ${item.nameUz}`,
+    const desc = isRus.value ? `Обмен: ${item.nameRu}` : `Almashtirildi: ${item.nameUz}`;
+    await profileService.addPoints(user.id, -item.cost, desc);
+    points.value -= item.cost;
+    transactions.value.unshift({
+      id: Date.now(),
+      action: desc,
       points: -item.cost,
-      timestamp: new Date()
+      timestamp: new Date().toISOString()
     });
 
     toast.success(isRus.value ? `Вы успешно обменяли на "${item.nameRu}"!` : `"${item.nameUz}" muvaffaqiyatli almashtirildi!`);

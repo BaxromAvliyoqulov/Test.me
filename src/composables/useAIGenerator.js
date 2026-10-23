@@ -1,8 +1,6 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { db, auth, functions } from '@/config/firebase';
-import { httpsCallable } from 'firebase/functions';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase, authService } from '@/services/supabaseService';
 import { useToast } from 'vue-toastification';
 
 export function useAIGenerator(mentorType, isRus) {
@@ -83,7 +81,10 @@ export function useAIGenerator(mentorType, isRus) {
   };
 
   const generateQuestionsClientSide = async (subject, level, topic, systemPersona) => {
-    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyCHHiOonsKHa1Ds0k92cgl1wd-syjEZK4g";
+    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('CHHiOonsKHa1Ds0k92cgl1wd')) {
+      return getOfflineFallbackQuestions(subject, level, topic);
+    }
     try {
       const promptText = `You are acting as the following persona: ${systemPersona}
 
@@ -112,13 +113,11 @@ Ensure all questions are grammatically correct and return ONLY raw JSON matching
 
       if (response.ok) {
         const resData = await response.json();
-        const text = resData.candidates[0].content.parts[0].text;
-        return JSON.parse(text.trim());
-      } else {
-        throw new Error(`Gemini API status ${response.status}`);
+        const text = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return JSON.parse(text.trim());
       }
-    } catch (err) {
-      console.warn("Direct Gemini API call failed, using offline fallback:", err);
+      return getOfflineFallbackQuestions(subject, level, topic);
+    } catch {
       return getOfflineFallbackQuestions(subject, level, topic);
     }
   };
@@ -127,19 +126,19 @@ Ensure all questions are grammatically correct and return ONLY raw JSON matching
     startLoadingAnimations();
 
     try {
-      // Dastlabki urinish Cloud Function orqali qilinishi mumkin, 
-      // Lekin biz har bir persona promptini moslashtirish uchun klient tomonda chaqiramiz
       const questions = await generateQuestionsClientSide(subject, level, topic, customPrompt);
-      
-      const aiTestRef = await addDoc(collection(db, 'ai_tests'), {
-        creatorId: auth.currentUser?.uid || 'anonymous',
+      const user = await authService.getUser();
+
+      const { data: aiTest } = await supabase.from('ai_tests').insert({
+        creator_id: user?.id || null,
         subject: subject,
         level: level,
         topic: topic,
-        mentorType: mentorType,
-        questions: questions,
-        createdAt: serverTimestamp()
-      });
+        mentor_type: mentorType,
+        questions: questions
+      }).select().maybeSingle();
+
+      const testId = aiTest?.id || 'gen_' + Date.now();
 
       stopLoadingAnimations();
       toast.success(isRus.value ? 'Тест успешно сгенерирован!' : 'Test muvaffaqiyatli yaratildi!');
@@ -152,7 +151,7 @@ Ensure all questions are grammatically correct and return ONLY raw JSON matching
             subjectId: 'ai',
             levelId: 'ai',
             questionCount: 10,
-            aiTestId: aiTestRef.id
+            aiTestId: testId
           }
         });
       }, 800);

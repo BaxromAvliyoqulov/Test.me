@@ -23,14 +23,28 @@ const RankSystemPage = () => import('@/views/Ranks/RankSystemPage.vue');
 const PlatformStats = () => import('@/views/PlatformStats.vue');
 const NotificationsPage = () => import('@/views/notifications/NotificationsPage.vue');
 
+import { usePageProgress } from '@/composables/usePageProgress';
+
+const { startNavigation, finishNavigation, failNavigation } = usePageProgress();
+
+const resetAllScrolls = () => {
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  if (document.documentElement) document.documentElement.scrollTop = 0;
+  if (document.body) document.body.scrollTop = 0;
+  const scrollables = document.querySelectorAll(
+    '.page-content, main, .admin-page-content, .admin-wrapper, .main-layout-container'
+  );
+  scrollables.forEach((el) => {
+    el.scrollTop = 0;
+    el.scrollLeft = 0;
+  });
+};
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition;
-    } else {
-      return { top: 0, behavior: 'smooth' };
-    }
+  scrollBehavior() {
+    // Har doim sahifaga kirganda eng yuqoriga (top: 0) o'tishi kerak
+    return { top: 0, left: 0, behavior: 'instant' };
   },
   routes: [
     {
@@ -163,8 +177,21 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+  startNavigation();
   document.title = to.meta.title || 'Test.me';
   authGuard(to, from, next);
+});
+
+router.afterEach(() => {
+  finishNavigation();
+  resetAllScrolls();
+  requestAnimationFrame(resetAllScrolls);
+  setTimeout(resetAllScrolls, 50);
+});
+
+router.onError((error) => {
+  console.error('Router navigatsiya xatosi:', error);
+  failNavigation();
 });
 
 export default router;

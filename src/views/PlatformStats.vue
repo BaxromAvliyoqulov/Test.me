@@ -103,8 +103,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { db } from '@/config/firebase';
-import { collection, query, where, getCountFromServer, getDocs, collectionGroup } from 'firebase/firestore';
+import { supabase } from '@/services/supabaseService';
 
 // Chart.js registration
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale, BarElement } from 'chart.js';
@@ -131,58 +130,48 @@ const fetchStats = async () => {
   loading.value = true;
   try {
     // 1. Users count
-    const usersCol = collection(db, 'users');
-    const usersCountSnap = await getCountFromServer(usersCol);
-    stats.value.totalUsers = usersCountSnap.data().count;
+    const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+    stats.value.totalUsers = usersCount || 0;
 
     // 2. Premium Users
-    const premiumQuery = query(usersCol, where('isPremium', '==', true));
-    const premiumCountSnap = await getCountFromServer(premiumQuery);
-    stats.value.premiumUsers = premiumCountSnap.data().count;
+    const { count: premiumCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_premium', true);
+    stats.value.premiumUsers = premiumCount || 0;
 
     // 3. Total Tests Taken
-    const resultsCol = collection(db, 'results');
-    const resultsCountSnap = await getCountFromServer(resultsCol);
-    stats.value.totalTestsTaken = resultsCountSnap.data().count;
+    const { count: resultsCount } = await supabase.from('results').select('*', { count: 'exact', head: true });
+    stats.value.totalTestsTaken = resultsCount || 0;
 
-    // 4. Total Questions in DB (using collectionGroup)
-    const allTestsQuery = collectionGroup(db, 'tests');
-    const allTestsCountSnap = await getCountFromServer(allTestsQuery);
-    stats.value.totalQuestionsInDb = allTestsCountSnap.data().count;
+    // 4. Total Questions in DB
+    const { count: questionsCount } = await supabase.from('questions').select('*', { count: 'exact', head: true });
+    stats.value.totalQuestionsInDb = questionsCount || 0;
 
     // 5. Special Tests Count
-    const specialTestsCol = collection(db, 'special_tests');
-    const specialCountSnap = await getCountFromServer(specialTestsCol);
-    stats.value.specialTests = specialCountSnap.data().count;
+    const { count: specialCount } = await supabase.from('special_tests').select('*', { count: 'exact', head: true });
+    stats.value.specialTests = specialCount || 0;
 
-    // 6. Devices Info (Read all users - cost effective for small/medium DBs)
-    const usersSnap = await getDocs(usersCol);
+    // 6. Devices Info
+    const { data: profiles } = await supabase.from('profiles').select('device_os');
     const devices = { 'Windows': 0, 'macOS': 0, 'Android': 0, 'iOS': 0, 'Linux': 0, 'Unknown': 0 };
-    usersSnap.forEach(doc => {
-      const data = doc.data();
-      const os = data.deviceOS || 'Unknown';
+    (profiles || []).forEach(p => {
+      const os = p.device_os || 'Unknown';
       if (devices[os] !== undefined) devices[os]++;
       else devices['Unknown']++;
     });
     stats.value.deviceStats = devices;
 
     // 7. Tests taken by Subject
-    const subjectsCol = collection(db, 'subjects');
-    const subjectsSnap = await getDocs(subjectsCol);
-    
-    const subjectStatsPromises = subjectsSnap.docs.map(async (docSnap) => {
-      const subjectId = docSnap.id;
-      const subQuery = query(resultsCol, where('subjectId', '==', subjectId));
-      const subCountSnap = await getCountFromServer(subQuery);
-      return {
-        subject: subjectId,
-        count: subCountSnap.data().count
-      };
-    });
-
-    stats.value.subjectStats = await Promise.all(subjectStatsPromises);
-    stats.value.subjectStats.sort((a, b) => b.count - a.count);
-
+    const { data: subjects } = await supabase.from('subjects').select('id, title_uz, name');
+    if (subjects && subjects.length > 0) {
+      const subjectStatsPromises = subjects.map(async (s) => {
+        const { count } = await supabase.from('results').select('*', { count: 'exact', head: true }).eq('subject_id', s.id);
+        return {
+          subject: s.title_uz || s.name || s.id,
+          count: count || 0
+        };
+      });
+      stats.value.subjectStats = await Promise.all(subjectStatsPromises);
+      stats.value.subjectStats.sort((a, b) => b.count - a.count);
+    }
   } catch (error) {
     console.error("Error fetching stats:", error);
   } finally {

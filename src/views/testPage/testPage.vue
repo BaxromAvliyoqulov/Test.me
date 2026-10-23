@@ -134,9 +134,15 @@ import TestQuestionCard from './components/TestQuestionCard.vue';
 import TestResults from './components/TestResults.vue';
 import AIBubble from '@/components/common/AIBubble.vue';
 import { generateMentorMessage } from '@/services/aiService';
-import { db } from '@/config/firebase';
-import { collection, getDocs, addDoc, Timestamp, query, where, doc, getDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { 
+  supabase,
+  authService, 
+  profileService, 
+  resultService, 
+  certificateService,
+  subjectService 
+} from '@/services/supabaseService';
+import { offlineDb } from '@/services/offlineDb';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from '@/utils/i18n';
 import { useToast } from 'vue-toastification';
@@ -339,19 +345,10 @@ const use5050 = async () => {
   state.using5050 = true;
 
   try {
-    const auth = getAuth();
-    if (auth.currentUser) {
-      const userRef = doc(db, 'users', auth.currentUser.uid);
-      if (hasInventory) {
-        await updateDoc(userRef, { 'tools.tool_5050': increment(-1) });
-      } else {
-        await updateDoc(userRef, { points: increment(-20) });
-        await addDoc(collection(userRef, 'transactions'), {
-          action: isRus.value ? 'Покупка подсказки 50/50' : '50/50 yordamini sotib olish',
-          points: -20,
-          timestamp: Timestamp.now()
-        });
-      }
+    const user = await authService.getUser();
+    if (user) {
+      await profileService.addPoints(user.id, -20, isRus.value ? 'Покупка подсказки 50/50' : '50/50 yordamini sotib olish');
+      state.userPoints = Math.max(0, state.userPoints - 20);
     }
   } catch (err) {
     console.error("Failed to process 5050 tool", err);
@@ -382,19 +379,10 @@ const useAiHint = async () => {
     if (response && response.text) {
       state.hintText = response.text;
       
-      const auth = getAuth();
-      if (auth.currentUser) {
-        const userRef = doc(db, 'users', auth.currentUser.uid);
-        if (hasInventory) {
-          await updateDoc(userRef, { 'tools.tool_ai_hint': increment(-1) });
-        } else {
-          await updateDoc(userRef, { points: increment(-50) });
-          await addDoc(collection(userRef, 'transactions'), {
-            action: isRus.value ? 'Покупка AI подсказки' : 'AI Yordamini sotib olish',
-            points: -50,
-            timestamp: Timestamp.now()
-          });
-        }
+      const user = await authService.getUser();
+      if (user) {
+        await profileService.addPoints(user.id, -50, isRus.value ? 'Покупка AI подсказки' : 'AI Yordamini sotib olish');
+        state.userPoints = Math.max(0, state.userPoints - 50);
       }
     } else {
       throw new Error('AI Service Error');
@@ -466,15 +454,17 @@ const fetchQuestions = async (options) => {
         throw new Error(isRus.value ? "Идентификатор AI теста не указан" : "AI Test ID ko'rsatilmagan");
       }
 
-      const docRef = doc(db, 'ai_tests', aiTestId);
-      const docSnap = await getDoc(docRef);
+      const { data: aiData, error: aiErr } = await supabase
+        .from('ai_tests')
+        .select('*')
+        .eq('id', aiTestId)
+        .maybeSingle();
 
-      if (!docSnap.exists()) {
+      if (aiErr || !aiData || !aiData.questions) {
         throw new Error(isRus.value ? "Тесты AI не найдены" : "AI Test savollari topilmadi");
       }
 
-      const testData = docSnap.data();
-      state.questions = testData.questions;
+      state.questions = aiData.questions;
       state.selectedAnswers = Array(state.questions.length).fill(null);
       state.currentPage = 0;
       state.selectedAnswer = null;
@@ -487,11 +477,14 @@ const fetchQuestions = async (options) => {
       const specialId = props.specialTestId || route?.query?.specialTestId;
       if (!specialId) throw new Error("Maxsus test ID topilmadi");
 
-      const docRef = doc(db, 'special_tests', specialId);
-      const docSnap = await getDoc(docRef);
-      if (!docSnap.exists()) throw new Error("Maxsus test bazadan topilmadi");
+      const { data: testData, error: spErr } = await supabase
+        .from('special_tests')
+        .select('*')
+        .eq('id', specialId)
+        .maybeSingle();
 
-      const testData = docSnap.data();
+      if (spErr || !testData) throw new Error("Maxsus test bazadan topilmadi");
+
       const flatQuestions = [];
       if (testData.sections) {
         testData.sections.forEach(section => {
@@ -516,31 +509,57 @@ const fetchQuestions = async (options) => {
       return;
     }
 
-    // Standard local tests query
-    const testsRef = collection(
-      db,
-      'subjects',
-      activeSubjectId.value,
-      'levels',
-      activeLevelId.value,
-      'tests'
-    );
-    const snapshot = await getDocs(testsRef);
+    // 1. Oflayn keshni tekshirish (IndexedDB)
+    const cachedQuestions = await offlineDb.getCachedQuestions(activeSubjectId.value, activeLevelId.value);
+    if (!navigator.onLine && cachedQuestions && cachedQuestions.length > 0) {
+      state.questions = shuffleArray(cachedQuestions).slice(0, activeQuestionCount.value);
+      state.selectedAnswers = Array(state.questions.length).fill(null);
+      state.currentPage = 0;
+      state.selectedAnswer = null;
+      state.testFinished = false;
+      toast.info(isRus.value ? "Тесты загружены из оффлайн-кэша" : "Testlar oflayn keshdan yuklandi");
+      return;
+    }
 
-    // Support both document lists containing questions directly and package document formats
-    const questionsList = [];
-    snapshot.docs.forEach((doc) => {
-      const data = doc.data();
-      if (Array.isArray(data.questions)) {
-        questionsList.push(...data.questions);
-      } else if (data.question && Array.isArray(data.options)) {
-        questionsList.push(data);
+    let questionsList = [];
+
+    // 2. Supabase bazasidan testlarni olishga urinish
+    try {
+      const tests = await subjectService.getTests(activeSubjectId.value, activeLevelId.value);
+      if (tests && tests.length > 0) {
+        for (const t of tests) {
+          const qs = await subjectService.getQuestions(t.id);
+          if (qs && qs.length > 0) {
+            questionsList.push(...qs);
+          }
+        }
       }
-    });
+    } catch {
+      // Offline yoki tarmoq uzilishi
+    }
+
+    // 3. Agar Supabase'da savollar bo'lmasa, keshdan yoki lokal test.json dan olish
+    if (!questionsList.length) {
+      if (cachedQuestions && cachedQuestions.length > 0) {
+        questionsList = cachedQuestions;
+      } else {
+        try {
+          const res = await fetch('/test.json');
+          if (res.ok) {
+            questionsList = await res.json();
+          }
+        } catch {
+          // fetch error
+        }
+      }
+    }
 
     if (!questionsList.length) {
       throw new Error(isRus.value ? 'Тесты не найдены' : 'Testlar topilmadi');
     }
+
+    // 4. Savollarni darhol kelajakda oflayn ishlash uchun IndexedDB keshiga yozish
+    offlineDb.cacheQuestions(activeSubjectId.value, activeLevelId.value, questionsList);
 
     state.questions = shuffleArray(questionsList).slice(
       0,
@@ -563,31 +582,8 @@ const finishTest = async () => {
     state.testFinished = true;
     clearInterval(intervalId);
 
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (!user) throw new Error(isRus.value ? 'Пользователь не авторизован' : 'Foydalanuvchi tizimga kirmagan');
-
-    // Get count of user's previous test results for test_number
-    const resultsRef = collection(db, 'results');
-    const q = query(resultsRef, where('userId', '==', user.uid));
-    const snapshot = await getDocs(q);
-    const testNumber = snapshot.size + 1;
-
-    // Build results object without undefined keys
-    const resultData = {
-      userId: user.uid,
-      username: user.displayName || user.email || 'User',
-      sessionId: state.sessionId || 'fallback_local',
-      subject: activeSubjectId.value || 'General',
-      test_level: activeLevelId.value || 'General',
-      score: score.value,
-      total: state.questions.length,
-      answers: state.selectedAnswers.map((idx, i) => idx !== null && idx !== undefined ? state.questions[i].options[idx] : null),
-      timestamp: Timestamp.now(),
-      test_number: testNumber,
-    };
-
-    await addDoc(collection(db, 'results'), resultData);
+    const user = await authService.getUser();
+    const userId = user?.id || 'offline_user';
 
     // Reward TP Coins
     const isSpecial = activeSubjectId.value === 'special';
@@ -599,108 +595,68 @@ const finishTest = async () => {
       perfectScoreBonus = 5;
       coinsEarned += perfectScoreBonus;
     }
-    
-    if (coinsEarned > 0) {
+
+    const resultPayload = {
+      user_id: userId,
+      subject_id: activeSubjectId.value || 'General',
+      test_level: activeLevelId.value || 'General',
+      score: score.value,
+      total: state.questions.length,
+      duration_seconds: timeSpent.value || 0,
+      coinsEarned,
+      created_at: new Date().toISOString()
+    };
+
+    // Agar internet bo'lmasa yoki tarmoq uzilsa:
+    if (!navigator.onLine || !user) {
+      await offlineDb.queuePendingResult(resultPayload);
+      toast.info(
+        isRus.value
+          ? "Тест завершен оффлайн. Ваши баллы синхронизируются при подключении к сети."
+          : "Test oflayn yakunlandi. Natijangiz internet ulanganda avtomatik hisobingizga qo'shiladi!"
+      );
+    } else {
       try {
-        const userDocRef = doc(db, 'users', user.uid);
-        await updateDoc(userDocRef, {
-          points: increment(coinsEarned)
+        await resultService.saveResult({
+          user_id: userId,
+          subject_id: resultPayload.subject_id,
+          test_level: resultPayload.test_level,
+          score: score.value,
+          total: state.questions.length,
+          duration_seconds: timeSpent.value || 0
         });
 
-        // Record transaction
-        const txRef = collection(userDocRef, 'transactions');
-        let actionMsg = isRus.value
-            ? `Награда за тест (${displaySubject.value} - ${displayLevel.value})`
-            : `Test yechish mukofoti (${displaySubject.value} - ${displayLevel.value})`;
-            
-        if (perfectScoreBonus > 0) {
-          actionMsg += isRus.value ? " + Бонус за идеальный результат!" : " + Perfect Score Bonus!";
+        if (coinsEarned > 0) {
+          await profileService.addPoints(
+            userId, 
+            coinsEarned, 
+            `Test mukofoti (${displaySubject.value} - ${displayLevel.value})`
+          );
         }
 
-        await addDoc(txRef, {
-          action: actionMsg,
-          points: coinsEarned,
-          timestamp: Timestamp.now()
-        });
-        console.log(`Successfully rewarded ${coinsEarned} TP Coins to user.`);
-      } catch (coinErr) {
-        console.error("Error rewarding TP Coins:", coinErr);
-      }
-    }
-
-    // Client-side fallback for certificate evaluation
-    if (score.value / state.questions.length >= 0.8) {
-      try {
-        const prevResults = snapshot.docs.map(doc => doc.data());
-        prevResults.push(resultData);
-
-        const elementaryCount = prevResults.filter(r => r.test_level && r.test_level.toLowerCase().includes('elem')).length;
-        const intermediateCount = prevResults.filter(r => r.test_level && r.test_level.toLowerCase().includes('inter')).length;
-        const advancedCount = prevResults.filter(r => r.test_level && r.test_level.toLowerCase().includes('adv')).length;
-        const totalCount = prevResults.length;
-
-        const certsToCheck = [
-          {
-            id: 'elementary_graduate',
-            condition: elementaryCount >= 3,
-            nameUz: 'Boshlang\'ich Savodxon',
-            nameRu: 'Начальный Грамотей',
-            descUz: 'Elementary darajasida kamida 3 ta test yechganda beriladi.',
-            descRu: 'Выдается за решение не менее 3 тестов на уровне Elementary.'
-          },
-          {
-            id: 'intermediate_expert',
-            condition: intermediateCount >= 5,
-            nameUz: 'O\'rta darajali Mutaxassis',
-            nameRu: 'Средний Эксперт',
-            descUz: 'Intermediate darajasida kamida 5 ta test yechganda beriladi.',
-            descRu: 'Выдается за решение не менее 5 тестов на уровне Intermediate.'
-          },
-          {
-            id: 'advanced_professional',
-            condition: advancedCount >= 3,
-            nameUz: 'Professional Bilimdon',
-            nameRu: 'Продвинутый Профи',
-            descUz: 'Advanced darajasida kamida 3 ta test yechganda beriladi.',
-            descRu: 'Выдается за решение не менее 3 тестов на уровне Advanced.'
-          },
-          {
-            id: 'ai_enthusiast',
-            condition: totalCount >= 5,
-            nameUz: 'Aktiv Bilim Oluvchi',
-            nameRu: 'Активный Ученик',
-            descUz: 'Platformada jami 5 tadan ortiq test yechganingizda beriladi.',
-            descRu: 'Выдается за прохождение более 5 тестов на платформе.'
-          }
-        ];
-
-        for (const cert of certsToCheck) {
-          if (cert.condition) {
-            const certsRef = collection(db, 'certificates');
-            const certQ = query(certsRef, where('userId', '==', user.uid), where('certType', '==', cert.id));
-            const certSnap = await getDocs(certQ);
-
-            if (certSnap.empty) {
-              const uidPart = user.uid.substring(0, 8).toUpperCase();
-              const certCode = `CERT-${uidPart}-${cert.id.substring(0, 4).toUpperCase()}`;
-
-              await addDoc(collection(db, 'certificates'), {
-                certId: certCode,
-                userId: user.uid,
-                userName: user.displayName || user.email || 'Foydalanuvchi',
-                certType: cert.id,
-                nameUz: cert.nameUz,
-                nameRu: cert.nameRu,
-                descUz: cert.descUz,
-                descRu: cert.descRu,
-                issuedAt: Timestamp.now(),
-              });
-              console.log(`Issued cert ${cert.id} client-side`);
-            }
+        // Sertifikat berish
+        if (score.value / state.questions.length >= 0.8) {
+          try {
+            const uidPart = userId.substring(0, 8).toUpperCase();
+            const certCode = `CERT-${uidPart}-${Date.now().toString().slice(-4)}`;
+            await certificateService.issueCertificate({
+              cert_code: certCode,
+              user_id: userId,
+              user_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Bilimdon',
+              cert_type: 'achievement',
+              name_uz: `${displaySubject.value} Muvaffaqiyat Sertifikati`,
+              name_ru: `Сертификат Успеха (${displaySubject.value})`,
+              desc_uz: `${displayLevel.value} darajasidagi test sinovidan muvaffaqiyatli o'tganligi uchun.`,
+              desc_ru: `За успешное прохождение теста на уровне ${displayLevel.value}.`
+            });
+          } catch {
+            // Ignored cert error
           }
         }
-      } catch (certErr) {
-        console.error("Error evaluating client-side certificate issuance:", certErr);
+      } catch {
+        // Tarmoq xatosi yuz berganda avtomatik oflayn navbatga saqlash
+        await offlineDb.queuePendingResult(resultPayload);
+        toast.info("Natija oflayn saqlandi va internet ulanganda bazaga yuboriladi.");
       }
     }
   } catch (err) {
@@ -710,34 +666,25 @@ const finishTest = async () => {
 };
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   fetchQuestions();
   intervalId = setInterval(() => {
     if (state.timer > 0) state.timer--;
     else finishTest();
   }, 1000);
 
-  const auth = getAuth();
-  onAuthStateChanged(auth, (user) => {
+  try {
+    const user = await authService.getUser();
     if (user) {
-      const userRef = doc(db, 'users', user.uid);
-      onSnapshot(userRef, (snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          state.userTools = data.tools || {};
-          state.userPoints = data.points || 0;
-          state.mentorType = data.preferences?.mentorType || 'standard';
-          
-          if (data.goals && Array.isArray(data.goals)) {
-            const activeGoals = data.goals.filter(g => g.status === 'active');
-            if (activeGoals.length > 0) {
-              state.activeGoal = activeGoals[0].title;
-            }
-          }
-        }
-      });
+      const profile = await profileService.getProfile(user.id);
+      if (profile) {
+        state.userPoints = profile.points || 0;
+        state.mentorType = 'standard';
+      }
     }
-  });
+  } catch {
+    // Offline user
+  }
 });
 
 onUnmounted(() => clearInterval(intervalId));

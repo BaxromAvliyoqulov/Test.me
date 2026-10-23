@@ -184,9 +184,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { db } from '@/config/firebase';
-import { doc, getDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { authService, profileService } from '@/services/supabaseService';
 import { useToast } from 'vue-toastification';
 import { useI18n } from '@/utils/i18n';
 import { getBadges } from '@/utils/badges';
@@ -196,7 +194,6 @@ const points = ref(0);
 const { locale } = useI18n();
 const isRus = ref(locale.value === 'RUS');
 const toast = useToast();
-const auth = getAuth();
 
 const activeTab = ref('mentors');
 const allMentors = Object.values(AIMentors);
@@ -238,15 +235,17 @@ const isThemeOwned = (id) => unlockedThemes.value.includes(id);
 const buyTheme = async (theme) => {
   if (!currentUser) return;
   if (points.value < theme.price) {
-    showToast(isRus.value ? 'TP Coins yetarli emas!' : 'TP Coins yetarli emas!', 'error');
+    showToast(isRus.value ? 'Недостаточно TP Coins!' : 'TP Coins yetarli emas!', 'error');
     return;
   }
   try {
     const newList = [...unlockedThemes.value, theme.id];
-    await updateDoc(doc(db, 'users', currentUser.uid), {
-      points: increment(-theme.price),
-      'preferences.unlockedThemes': newList
-    });
+    const profile = await profileService.getProfile(currentUser.id);
+    const prefs = profile?.preferences || {};
+    prefs.unlockedThemes = newList;
+    await profileService.updateProfile(currentUser.id, { preferences: prefs });
+    await profileService.addPoints(currentUser.id, -theme.price, `${theme.name.UZB} mavzusi`);
+    points.value -= theme.price;
     unlockedThemes.value = newList;
     transactions.value.unshift({
       id: Date.now(),
@@ -255,7 +254,7 @@ const buyTheme = async (theme) => {
       amount: theme.price,
       date: 'Hozir'
     });
-    showToast(isRus.value ? 'Тема разблокирована! 🎉' : 'Mavzu razblokiruy qilindi! 🎉', 'success');
+    showToast(isRus.value ? 'Тема разблокирована! 🎉' : 'Mavzu razblokirovka qilindi! 🎉', 'success');
   } catch (e) {
     showToast('Xatolik yuz berdi!', 'error');
   }
@@ -265,57 +264,71 @@ const activateTheme = async (id) => {
   if (!currentUser) return;
   activeThemeId.value = id;
   try {
-    await updateDoc(doc(db, 'users', currentUser.uid), {
-      'preferences.themeId': id
-    });
+    const profile = await profileService.getProfile(currentUser.id);
+    const prefs = profile?.preferences || {};
+    prefs.themeId = id;
+    await profileService.updateProfile(currentUser.id, { preferences: prefs });
     showToast(isRus.value ? 'Тема применена!' : 'Mavzu qo\'llanildi! ✨', 'success');
   } catch (e) {
     showToast('Xatolik!', 'error');
   }
 };
 
-onMounted(async () => {
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      currentUser = user;
-      onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          points.value = data.points || 0;
-          const prefs = data.preferences || {};
-          unlockedMentors.value = prefs.unlockedMentors || ['standard', 'friendly'];
-          activeMentorId.value = prefs.mentorType || 'standard';
-        }
-      });
+const loadUserShopData = async (user) => {
+  if (!user) return;
+  currentUser = user;
+  try {
+    const profile = await profileService.getProfile(user.id);
+    if (profile) {
+      points.value = profile.points || 0;
+      const prefs = profile.preferences || {};
+      unlockedMentors.value = prefs.unlockedMentors || ['standard', 'friendly'];
+      activeMentorId.value = prefs.mentorType || 'standard';
+      unlockedThemes.value = prefs.unlockedThemes || ['default'];
+      activeThemeId.value = prefs.themeId || 'default';
     }
+  } catch (e) {
+    console.warn('Error loading shop data:', e);
+  }
+};
+
+onMounted(async () => {
+  const user = await authService.getUser();
+  if (user) loadUserShopData(user);
+  authService.onAuthStateChange((_event, session) => {
+    if (session?.user) loadUserShopData(session.user);
   });
 });
 
 const buyMentor = async (mentor) => {
   if (!currentUser) return;
   if (mentor.price === 0) {
-    // Free mentor вЂ” just unlock
     if (!isOwned(mentor.id)) {
       const newList = [...unlockedMentors.value, mentor.id];
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        'preferences.unlockedMentors': newList
-      });
-      showToast(isRus.value ? 'РќР°СЃС‚Р°РІРЅРёРє СЂР°Р·Р±Р»РѕРєРёСЂРѕРІР°РЅ!' : "Ustoz qo'shildi!", 'success');
+      const profile = await profileService.getProfile(currentUser.id);
+      const prefs = profile?.preferences || {};
+      prefs.unlockedMentors = newList;
+      await profileService.updateProfile(currentUser.id, { preferences: prefs });
+      unlockedMentors.value = newList;
+      showToast(isRus.value ? 'Наставник разблокирован!' : "Ustoz qo'shildi!", 'success');
     }
     return;
   }
   if (points.value < mentor.price) {
-    showToast(isRus.value ? 'TP Coins yetarli emas!' : 'TP Coins yetarli emas!', 'error');
+    showToast(isRus.value ? 'Недостаточно TP Coins!' : 'TP Coins yetarli emas!', 'error');
     return;
   }
   buying.value = mentor.id;
   try {
     const newList = [...unlockedMentors.value, mentor.id];
-    await updateDoc(doc(db, 'users', currentUser.uid), {
-      points: increment(-mentor.price),
-      'preferences.unlockedMentors': newList
-    });
-    showToast(isRus.value ? `${mentor.name.RUS} razblokРёСЂРѕРІР°РЅ! рџЋ‰` : `${mentor.name.UZB} qo'shildi! рџЋ‰`, 'success');
+    const profile = await profileService.getProfile(currentUser.id);
+    const prefs = profile?.preferences || {};
+    prefs.unlockedMentors = newList;
+    await profileService.updateProfile(currentUser.id, { preferences: prefs });
+    await profileService.addPoints(currentUser.id, -mentor.price, `${mentor.name.UZB} ustozi`);
+    points.value -= mentor.price;
+    unlockedMentors.value = newList;
+    showToast(isRus.value ? `${mentor.name.RUS} разблокирован! 🎉` : `${mentor.name.UZB} qo'shildi! 🎉`, 'success');
   } catch (e) {
     console.error(e);
     showToast('Xatolik yuz berdi!', 'error');
@@ -328,10 +341,12 @@ const activateMentor = async (id) => {
   if (!currentUser) return;
   activating.value = true;
   try {
-    await updateDoc(doc(db, 'users', currentUser.uid), {
-      'preferences.mentorType': id
-    });
-    showToast(isRus.value ? 'РќР°СЃС‚Р°РІРЅРёРє Р°РєС‚РёРІРёСЂРѕРІР°РЅ!' : 'Ustoz faollashtirildi! вњ…', 'success');
+    const profile = await profileService.getProfile(currentUser.id);
+    const prefs = profile?.preferences || {};
+    prefs.mentorType = id;
+    await profileService.updateProfile(currentUser.id, { preferences: prefs });
+    activeMentorId.value = id;
+    showToast(isRus.value ? 'Наставник активирован!' : 'Ustoz faollashtirildi! ✅', 'success');
   } catch (e) {
     showToast('Xatolik!', 'error');
   } finally {

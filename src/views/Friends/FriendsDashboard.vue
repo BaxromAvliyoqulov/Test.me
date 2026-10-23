@@ -126,16 +126,11 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { db } from '@/config/firebase';
-import { getAuth } from 'firebase/auth';
-import { 
-  collection, query, where, getDocs, addDoc, onSnapshot, 
-  doc, deleteDoc, serverTimestamp, setDoc, updateDoc, increment, getDoc, limit 
-} from 'firebase/firestore';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import { confirmDelete } from '@/utils/sweetalert';
 import { useI18n } from '@/utils/i18n';
+import { supabase, authService, profileService, friendService } from '@/services/supabaseService';
 
 // Modular Child Components
 import FriendsHeaderBanner from './components/FriendsHeaderBanner.vue';
@@ -176,167 +171,102 @@ const selectedDuelFriend = ref(null);
 const showGiftModal = ref(false);
 const selectedGiftFriend = ref(null);
 
-// Unsubscribe handles
-let unsubAuth = null;
-let unsubFriends = null;
-let unsubIncomingReq = null;
-let unsubOutgoingReq = null;
-let unsubIncomingDuels = null;
-let unsubOutgoingDuels = null;
-let unsubUserDoc = null;
-let unsubChats = null;
+let pollInterval = null;
+let realtimeChannel = null;
 
 const displayedSearchResults = computed(() => {
   if (searchQuery.value.trim().length > 0) return searchResults.value;
   return suggestedUsers.value;
 });
 
-onMounted(() => {
-  const auth = getAuth();
-  unsubAuth = auth.onAuthStateChanged((user) => {
-    if (user) {
+const loadAllFriendData = async () => {
+  if (!currentUser.value?.uid) return;
+  const uid = currentUser.value.uid;
+
+  try {
+    const [friendsList, inReq, outReq, inDuels, outDuels] = await Promise.all([
+      friendService.getFriends(uid),
+      friendService.getPendingRequests(uid),
+      friendService.getOutgoingRequests(uid),
+      friendService.getPendingDuels(uid),
+      friendService.getOutgoingDuels(uid)
+    ]);
+
+    friends.value = friendsList;
+    pendingRequests.value = inReq;
+    outgoingRequests.value = outReq;
+    incomingDuels.value = inDuels;
+    outgoingDuels.value = outDuels;
+  } catch (err) {
+    console.warn("Friend data loading note:", err);
+  }
+};
+
+const refreshCurrentUserProfile = async () => {
+  if (!currentUser.value?.uid) return;
+  try {
+    const profile = await profileService.getProfile(currentUser.value.uid);
+    if (profile) {
       currentUser.value = {
-        uid: user.uid,
-        id: user.uid,
-        displayName: user.displayName || user.email.split('@')[0],
-        email: user.email,
-        points: 0
+        ...currentUser.value,
+        points: profile.points || 0,
+        shortId: profile.short_id || profile.referral_code || currentUser.value.uid.slice(0, 6).toUpperCase(),
+        displayName: profile.display_name || profile.full_name || currentUser.value.displayName,
+        profileImage: profile.avatar_url || null,
+        streak: profile.streak || 1
       };
-
-      const userRef = doc(db, 'users', user.uid);
-      unsubUserDoc = onSnapshot(userRef, (snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          currentUser.value = {
-            ...currentUser.value,
-            points: data.points || 0,
-            shortId: data.shortId || data.referralCode || user.uid.slice(0, 6).toUpperCase(),
-            displayName: data.displayName || user.displayName || user.email.split('@')[0],
-            profileImage: data.profileImage || null,
-            streak: data.streak || 1
-          };
-        }
-      });
-
-      listenForFriends();
-      listenForRequests();
-      listenForDuels();
-      listenForChats();
-      loadSuggestedUsers();
-    } else {
-      router.push('/login');
     }
-  });
+  } catch (e) {
+    console.warn("Profile fetch note:", e);
+  }
+};
+
+onMounted(async () => {
+  const user = await authService.getCurrentUser();
+  if (user) {
+    currentUser.value = {
+      uid: user.id,
+      id: user.id,
+      displayName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Foydalanuvchi',
+      email: user.email,
+      points: 0
+    };
+
+    await refreshCurrentUserProfile();
+    await loadAllFriendData();
+    await loadSuggestedUsers();
+
+    // Subscribe to realtime changes for friend_requests & duels
+    try {
+      realtimeChannel = supabase
+        .channel(`friends_${user.id}`)
+        .on('broadcast', { event: 'refresh' }, () => {
+          loadAllFriendData();
+        })
+        .subscribe();
+    } catch (e) {
+      console.warn("Realtime channel note:", e);
+    }
+
+    // Light polling every 12s for fresh state
+    pollInterval = setInterval(() => {
+      loadAllFriendData();
+    }, 12000);
+  } else {
+    router.push('/login');
+  }
 });
 
 onUnmounted(() => {
-  if (unsubAuth) unsubAuth();
-  if (unsubFriends) unsubFriends();
-  if (unsubIncomingReq) unsubIncomingReq();
-  if (unsubOutgoingReq) unsubOutgoingReq();
-  if (unsubIncomingDuels) unsubIncomingDuels();
-  if (unsubOutgoingDuels) unsubOutgoingDuels();
-  if (unsubUserDoc) unsubUserDoc();
-  if (unsubChats) unsubChats();
+  if (pollInterval) clearInterval(pollInterval);
+  if (realtimeChannel) {
+    supabase.removeChannel(realtimeChannel);
+  }
 });
-
-const listenForFriends = () => {
-  if (!currentUser.value?.uid) return;
-  const q = query(collection(db, 'users', currentUser.value.uid, 'friends'));
-  unsubFriends = onSnapshot(q, async (snap) => {
-    const friendList = [];
-    for (const d of snap.docs) {
-      const data = d.data();
-      let friendPoints = data.points || 0;
-      let friendRank = data.rank || 'Newbie';
-      let friendStreak = data.streak || 1;
-      let extraData = {};
-      
-      try {
-        const uDoc = await getDoc(doc(db, 'users', d.id));
-        if (uDoc.exists()) {
-          const uData = uDoc.data();
-          friendPoints = uData.points || friendPoints;
-          friendRank = uData.rank || friendRank;
-          friendStreak = uData.streak || friendStreak;
-          extraData = uData;
-        }
-      } catch (e) { /* fallback */ }
-
-      friendList.push({
-        uid: d.id,
-        id: d.id,
-        ...data,
-        ...extraData,
-        points: friendPoints,
-        rank: friendRank,
-        streak: friendStreak
-      });
-    }
-    friends.value = friendList;
-  });
-};
-
-const listenForChats = () => {
-  if (!currentUser.value?.uid) return;
-  const qChats = query(
-    collection(db, 'chats'),
-    where('participants', 'array-contains', currentUser.value.uid)
-  );
-  unsubChats = onSnapshot(qChats, (snap) => {
-    const map = {};
-    snap.docs.forEach((docSnap) => {
-      const chatData = docSnap.data();
-      const otherUid = (chatData.participants || []).find((id) => id !== currentUser.value.uid);
-      if (otherUid) {
-        map[otherUid] = {
-          lastMessage: chatData.lastMessage || '',
-          lastTimestamp: chatData.lastTimestamp || null,
-          lastSenderId: chatData.lastSenderId || null
-        };
-      }
-    });
-    chatSummaries.value = map;
-  });
-};
-
-const listenForRequests = () => {
-  if (!currentUser.value?.uid) return;
-  const qIn = query(collection(db, 'friend_requests'), where('toUid', '==', currentUser.value.uid), where('status', '==', 'pending'));
-  unsubIncomingReq = onSnapshot(qIn, (snap) => {
-    pendingRequests.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  });
-
-  const qOut = query(collection(db, 'friend_requests'), where('fromUid', '==', currentUser.value.uid), where('status', '==', 'pending'));
-  unsubOutgoingReq = onSnapshot(qOut, (snap) => {
-    outgoingRequests.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  });
-};
-
-const listenForDuels = () => {
-  if (!currentUser.value?.uid) return;
-  const qIn = query(collection(db, 'duels'), where('opponentUid', '==', currentUser.value.uid), where('status', '==', 'pending'));
-  unsubIncomingDuels = onSnapshot(qIn, (snap) => {
-    incomingDuels.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  });
-
-  const qOut = query(collection(db, 'duels'), where('challengerUid', '==', currentUser.value.uid), where('status', '==', 'pending'));
-  unsubOutgoingDuels = onSnapshot(qOut, (snap) => {
-    outgoingDuels.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  });
-};
 
 const loadSuggestedUsers = async () => {
   try {
-    const q = query(collection(db, 'users'), limit(15));
-    const snap = await getDocs(q);
-    const users = [];
-    snap.forEach((d) => {
-      if (d.id !== currentUser.value?.uid) {
-        users.push({ id: d.id, uid: d.id, ...d.data() });
-      }
-    });
-    suggestedUsers.value = users;
+    suggestedUsers.value = await friendService.getSuggestedUsers(currentUser.value?.uid);
   } catch (err) {
     console.error("Suggested users error:", err);
   }
@@ -367,35 +297,22 @@ const searchUsers = async () => {
     if (u.id === currentUser.value?.uid || u.uid === currentUser.value?.uid) return;
     const name = (u.displayName || '').toLowerCase();
     const email = (u.email || '').toLowerCase();
-    const shortId = (u.shortId || u.referralCode || u.id || u.uid || '').toLowerCase();
+    const shortId = (u.shortId || u.id || u.uid || '').toLowerCase();
 
     if (name.includes(term) || email.includes(term) || shortId.includes(term)) {
       matchedMap.set(u.id || u.uid, u);
     }
   });
 
-  // Set instant results so UI is instantly responsive
   searchResults.value = Array.from(matchedMap.values());
 
-  // 2. Query Firestore with higher limit
+  // 2. Query Supabase
   try {
-    const q = query(collection(db, 'users'), limit(60));
-    const snap = await getDocs(q);
-
-    snap.forEach((d) => {
-      if (d.id === currentUser.value?.uid) return;
-      const data = d.data();
-      const name = (data.displayName || '').toLowerCase();
-      const email = (data.email || '').toLowerCase();
-      const shortId = (data.shortId || data.referralCode || d.id).toLowerCase();
-
-      if (name.includes(term) || email.includes(term) || shortId.includes(term)) {
-        matchedMap.set(d.id, { id: d.id, uid: d.id, ...data });
-      }
-    });
+    const remote = await friendService.searchUsers(term, currentUser.value?.uid);
+    remote.forEach(u => matchedMap.set(u.id || u.uid, u));
     searchResults.value = Array.from(matchedMap.values());
   } catch (err) {
-    console.error("Firestore search error:", err);
+    console.warn("Search users note:", err);
   }
 };
 
@@ -409,75 +326,44 @@ const sendRequest = async (targetUser) => {
   const targetName = targetUser.displayName || targetUser.email || (isRus.value ? 'Пользователь' : 'Foydalanuvchi');
 
   try {
-    await addDoc(collection(db, 'friend_requests'), {
-      fromUid: currentUser.value.uid,
-      fromName: currentUser.value.displayName,
-      toUid: targetUid,
-      toName: targetName,
-      status: 'pending',
-      timestamp: serverTimestamp()
-    });
+    await friendService.sendFriendRequest(currentUser.value, targetUser);
     toast.success(isRus.value ? `Запрос в друзья отправлен пользователю ${targetName}!` : `${targetName}ga do'stlik so'rovi yuborildi!`);
+    await loadAllFriendData();
   } catch (err) {
-    // Zero-Defect Fallback: Directly establish friendship in subcollection if root requests rule is locked
-    console.warn("Direct friend add fallback due to friend_requests permission:", err);
-    try {
-      const currentUid = currentUser.value.uid;
-      const currentName = currentUser.value.displayName;
-
-      await setDoc(doc(db, 'users', currentUid, 'friends', targetUid), {
-        displayName: targetName,
-        points: targetUser.points || 0,
-        rank: targetUser.rank || 'Newbie',
-        streak: targetUser.streak || 1,
-        profileImage: targetUser.profileImage || null,
-        timestamp: serverTimestamp()
-      }, { merge: true });
-
-      // Immediate reactive update to friends list
-      if (!friends.value.some(f => (f.uid || f.id) === targetUid)) {
-        friends.value.push({
-          uid: targetUid,
-          id: targetUid,
-          ...targetUser
-        });
-      }
-
-      toast.success(isRus.value ? `🎉 ${targetName} добавлен в список друзей!` : `🎉 ${targetName} do'stlar safiga qo'shildi!`);
-    } catch (fallbackErr) {
-      console.error("Friends fallback error:", fallbackErr);
-      toast.error(isRus.value ? "Ошибка при добавлении в друзья" : "So'rov yuborishda xatolik yuz berdi");
-    }
+    console.error("Send request error:", err);
+    toast.error(isRus.value ? "Ошибка при отправке запроса" : "So'rov yuborishda xatolik yuz berdi");
   }
 };
 
 const acceptRequest = async (req) => {
   try {
-    const currentUid = currentUser.value.uid;
-    const currentName = currentUser.value.displayName;
-
-    await setDoc(doc(db, 'users', currentUid, 'friends', req.fromUid), { displayName: req.fromName, timestamp: serverTimestamp() });
-    await setDoc(doc(db, 'users', req.fromUid, 'friends', currentUid), { displayName: currentName, timestamp: serverTimestamp() });
-    await deleteDoc(doc(db, 'friend_requests', req.id));
-
-    toast.success(`${req.fromName} bilan do'stlik o'rnatildi! 🎉`);
+    await friendService.acceptFriendRequest(req);
+    toast.success(`${req.fromName || req.sender_name || 'Do\'stingiz'} bilan do'stlik o'rnatildi! 🎉`);
+    await loadAllFriendData();
   } catch (err) {
+    console.error("Accept request error:", err);
     toast.error("So'rovni qabul qilishda xatolik");
   }
 };
 
 const rejectRequest = async (reqId) => {
   try {
-    await deleteDoc(doc(db, 'friend_requests', reqId));
+    await friendService.rejectFriendRequest(reqId);
     toast.info("Do'stlik so'rovi rad etildi");
-  } catch (err) { /* error */ }
+    await loadAllFriendData();
+  } catch (err) {
+    console.warn("Reject request note:", err);
+  }
 };
 
 const cancelOutgoingRequest = async (reqId) => {
   try {
-    await deleteDoc(doc(db, 'friend_requests', reqId));
+    await friendService.rejectFriendRequest(reqId);
     toast.info("Yuborilgan so'rov bekor qilindi");
-  } catch (err) { /* error */ }
+    await loadAllFriendData();
+  } catch (err) {
+    console.warn("Cancel outgoing note:", err);
+  }
 };
 
 const handleUnfriend = async (friend) => {
@@ -487,14 +373,15 @@ const handleUnfriend = async (friend) => {
   if (!confirmed) return;
 
   try {
-    await deleteDoc(doc(db, 'users', currentUser.value.uid, 'friends', fId));
-    await deleteDoc(doc(db, 'users', fId, 'friends', currentUser.value.uid));
+    await friendService.removeFriend(currentUser.value.uid, fId);
     showProfileModal.value = false;
     if (activeChat.value?.uid === fId || activeChat.value?.id === fId) {
       activeChat.value = null;
     }
     toast.success(`${fName} do'stlar safidan chiqarildi.`);
+    await loadAllFriendData();
   } catch (err) {
+    console.error("Unfriend error:", err);
     toast.error("Do'stlikdan chiqarishda xatolik");
   }
 };
@@ -506,30 +393,21 @@ const openDuelModal = (friend = null) => {
 
 const handleCreateDuel = async (duelData) => {
   try {
-    await addDoc(collection(db, 'duels'), {
-      challengerUid: currentUser.value.uid,
-      challengerName: currentUser.value.displayName,
-      opponentUid: duelData.opponentUid,
-      opponentName: duelData.opponentName,
-      subjectId: duelData.subjectId,
-      subjectName: duelData.subjectName,
-      questionCount: duelData.questionCount,
-      wager: duelData.wager,
-      status: 'pending',
-      createdAt: serverTimestamp()
-    });
+    await friendService.createDuel(currentUser.value, duelData);
     showDuelModal.value = false;
     toast.success(`⚔️ ${duelData.opponentName}ga 1v1 duel chaqiruvi yuborildi!`);
+    await loadAllFriendData();
   } catch (err) {
+    console.error("Create duel error:", err);
     toast.error("Duel chaqiruvini yuborishda xatolik");
   }
 };
 
 const acceptDuel = async (duel) => {
   try {
-    await updateDoc(doc(db, 'duels', duel.id), { status: 'active', startedAt: serverTimestamp() });
+    await friendService.acceptDuel(duel.id);
     toast.success("Duel qabul qilindi! Sinov maydoniga o'tmoqdasiz... 🔥");
-    router.push(`/test?subjectId=${duel.subjectId}&levelId=elementary&duelId=${duel.id}&questionsCount=${duel.questionCount || 10}`);
+    router.push(`/test?subjectId=${duel.subjectId || duel.subject_id}&levelId=elementary&duelId=${duel.id}&questionsCount=${duel.questionCount || duel.question_count || 10}`);
   } catch (err) {
     console.error("Accept duel error:", err);
   }
@@ -537,9 +415,12 @@ const acceptDuel = async (duel) => {
 
 const rejectDuel = async (duelId) => {
   try {
-    await deleteDoc(doc(db, 'duels', duelId));
+    await friendService.rejectDuel(duelId);
     toast.info("Duel chaqiruvi bekor qilindi");
-  } catch (err) { /* error */ }
+    await loadAllFriendData();
+  } catch (err) {
+    console.warn("Reject duel note:", err);
+  }
 };
 
 const openGiftModal = (friend) => {
@@ -553,22 +434,12 @@ const handleSendGift = async ({ friend, amount, message }) => {
     return;
   }
   try {
-    const currentUid = currentUser.value.uid;
-    const friendUid = friend.uid || friend.id;
-
-    await updateDoc(doc(db, 'users', currentUid), { points: increment(-amount) });
-    await updateDoc(doc(db, 'users', friendUid), { points: increment(amount) });
-
-    await addDoc(collection(db, 'users', currentUid, 'transactions'), {
-      type: 'gift_sent', amount: -amount, targetName: friend.displayName || friend.email, message, timestamp: serverTimestamp()
-    });
-    await addDoc(collection(db, 'users', friendUid, 'transactions'), {
-      type: 'gift_received', amount, fromName: currentUser.value.displayName, message, timestamp: serverTimestamp()
-    });
-
+    await friendService.sendGift(currentUser.value, friend, amount, message);
+    await refreshCurrentUserProfile();
     showGiftModal.value = false;
     toast.success(`🎉 ${friend.displayName || 'Do\'stingiz'}ga ${amount} TP coin sovg'a qilindi!`);
   } catch (err) {
+    console.error("Send gift error:", err);
     toast.error("Sovg'a yuborishda xatolik yuz berdi");
   }
 };

@@ -358,7 +358,6 @@ const seedMockPayments = async () => {
   }
   
   await Promise.all(promises);
-  console.log("Seeded 80 realistic payment transactions into Firestore!");
 };
 
 const fetchData = async () => {

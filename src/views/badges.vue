@@ -148,9 +148,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { db, auth } from '@/config/firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { authService, profileService, resultService } from '@/services/supabaseService';
 import { useI18n } from '@/utils/i18n';
 import { getBadges } from '@/utils/badges';
 
@@ -223,33 +221,29 @@ const createConfettiBurst = (x, y) => {
   }
 };
 
-const fetchStats = () => {
-  onAuthStateChanged(auth, async (user) => {
+const fetchStats = async () => {
+  try {
+    const user = await authService.getUser();
     if (user) {
-      try {
-        // Fetch points
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          userPoints.value = userDoc.data().points || 0;
-        }
-
-        // Fetch results
-        const resultsRef = collection(db, 'results');
-        const q = query(resultsRef, where('userId', '==', user.uid));
-        const querySnapshot = await getDocs(q);
-        
-        results.value = querySnapshot.docs.map(doc => doc.data());
-        totalTestsSolved.value = results.value.length;
-        
-        // Calculate perfect scores
-        perfectScoresCount.value = results.value.filter(r => r.score === r.total).length;
-      } catch (e) {
-        console.error('Error fetching statistics:', e);
-      } finally {
-        loading.value = false;
+      // Fetch points from profile
+      const profile = await profileService.getProfile(user.id);
+      if (profile) {
+        userPoints.value = profile.points || 0;
       }
+
+      // Fetch results
+      const res = await resultService.getUserResults(user.id);
+      results.value = res || [];
+      totalTestsSolved.value = results.value.length;
+
+      // Calculate perfect scores
+      perfectScoresCount.value = results.value.filter(r => r.score === r.total).length;
     }
-  });
+  } catch (e) {
+    console.error('Error fetching statistics:', e);
+  } finally {
+    loading.value = false;
+  }
 };
 
 onMounted(() => {

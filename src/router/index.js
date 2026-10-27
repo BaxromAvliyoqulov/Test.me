@@ -22,6 +22,7 @@ const FriendsDashboard = () => import('@/views/Friends/FriendsDashboard.vue');
 const RankSystemPage = () => import('@/views/Ranks/RankSystemPage.vue');
 const PlatformStats = () => import('@/views/PlatformStats.vue');
 const NotificationsPage = () => import('@/views/notifications/NotificationsPage.vue');
+const TeacherDashboard = () => import('@/views/teacher/TeacherDashboard.vue');
 
 import { usePageProgress } from '@/composables/usePageProgress';
 
@@ -172,6 +173,12 @@ const router = createRouter({
       name: 'notifications',
       component: NotificationsPage,
       meta: { title: 'Bildirishnomalar | Test.me' }
+    },
+    {
+      path: '/teacher',
+      name: 'teacherDashboard',
+      component: TeacherDashboard,
+      meta: { title: 'O\'qituvchilar Kabineti | Test.me' }
     },
   ],
 });

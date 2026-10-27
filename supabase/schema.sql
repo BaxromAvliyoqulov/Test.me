@@ -257,3 +257,118 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ==============================================================================
+-- 🛡️ PRIVILEGE ESCALATION GUARD (Zero-Defect Security Audit Fix)
+-- Oddiy foydalanuvchilar o'zini admin (is_admin=true) yoki premium qila olmaydi
+-- ==============================================================================
+CREATE OR REPLACE FUNCTION public.protect_profile_privileges()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (OLD.is_admin IS DISTINCT FROM NEW.is_admin OR 
+      OLD.admin_role IS DISTINCT FROM NEW.admin_role OR
+      OLD.is_premium IS DISTINCT FROM NEW.is_premium) THEN
+    -- Faqat service_role tokeni imtiyozlarni o'zgartira oladi
+    IF COALESCE(current_setting('request.jwt.claim.role', true), '') <> 'service_role' THEN
+      NEW.is_admin := OLD.is_admin;
+      NEW.admin_role := OLD.admin_role;
+      NEW.is_premium := OLD.is_premium;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_protect_profile_privileges ON public.profiles;
+CREATE TRIGGER trg_protect_profile_privileges
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.protect_profile_privileges();
+
+-- ==============================================================================
+-- 👨‍🏫 TEACHER LMS (O'QITUVCHILAR KABINETI & SINFLAR TIZIMI)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.classes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  teacher_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  subject_id TEXT REFERENCES public.subjects(id) ON DELETE SET NULL,
+  grade TEXT, -- Masalan: '9-A', '11-B', 'IELTS Foundation'
+  join_code VARCHAR(8) UNIQUE NOT NULL, -- 6-8 xonali qisqa taklif kodi
+  academic_year TEXT DEFAULT '2026-2027',
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.class_students (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  class_id UUID NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
+  student_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  joined_at TIMESTAMPTZ DEFAULT NOW(),
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'pending', 'blocked')),
+  UNIQUE(class_id, student_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.class_assignments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  class_id UUID NOT NULL REFERENCES public.classes(id) ON DELETE CASCADE,
+  teacher_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  test_id UUID REFERENCES public.tests(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  deadline TIMESTAMPTZ,
+  max_attempts INT DEFAULT 1,
+  time_limit_minutes INT DEFAULT 30,
+  show_answers_immediately BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS for Teacher LMS
+ALTER TABLE public.classes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.class_students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.class_assignments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Teachers manage their own classes" ON public.classes;
+CREATE POLICY "Teachers manage their own classes" ON public.classes 
+  FOR ALL USING (auth.uid() = teacher_id);
+
+DROP POLICY IF EXISTS "Students can view classes they joined" ON public.classes;
+CREATE POLICY "Students can view classes they joined" ON public.classes 
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.class_students 
+      WHERE class_students.class_id = classes.id 
+      AND class_students.student_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Teachers manage class students" ON public.class_students;
+CREATE POLICY "Teachers manage class students" ON public.class_students 
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.classes 
+      WHERE classes.id = class_students.class_id 
+      AND classes.teacher_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Students can join and view their enrollment" ON public.class_students;
+CREATE POLICY "Students can join and view their enrollment" ON public.class_students 
+  FOR ALL USING (auth.uid() = student_id);
+
+DROP POLICY IF EXISTS "Teachers manage assignments" ON public.class_assignments;
+CREATE POLICY "Teachers manage assignments" ON public.class_assignments 
+  FOR ALL USING (auth.uid() = teacher_id);
+
+DROP POLICY IF EXISTS "Enrolled students can view assignments" ON public.class_assignments;
+CREATE POLICY "Enrolled students can view assignments" ON public.class_assignments 
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.class_students 
+      WHERE class_students.class_id = class_assignments.class_id 
+      AND class_students.student_id = auth.uid()
+      AND class_students.status = 'active'
+    )
+  );
+

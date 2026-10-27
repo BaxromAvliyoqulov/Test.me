@@ -7,10 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Firebase secret file (❗ MUHIM)
-src/config/admin/serviceAccountKey.json
+# Firebase & Secret Keys (❗ CRITICAL SECURITY)
+src/config/admin/serviceAccountKey*.json*
+*serviceAccountKey*
 firebase-config.json
-serviceAccountKey.json
 
 # Environment files
 *.env*

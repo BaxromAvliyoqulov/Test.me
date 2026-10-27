@@ -42,6 +42,7 @@
                 :selectedSubject="selectedSubject"
                 :defaultSubjectId="defaultSubjectId"
                 @select="selectSubjectCard"
+                @reload="fetchSubjects"
               />
 
               <!-- SPECIAL TESTS TAB -->
@@ -129,6 +130,8 @@ import { getRankName, getRankClass, getRankIcon, getNextRankInfo } from '@/utils
 import { sortLevels } from '@/utils/sorters';
 import { getMentorConfig } from '@/config/mentors';
 import { getBadges } from '@/utils/badges';
+import { DEFAULT_SUBJECTS, DEFAULT_SPECIAL_TESTS, getFallbackLevelsForSubject } from '@/config/defaultSubjects';
+import { offlineDb } from '@/services/offlineDb';
 const TestPage = defineAsyncComponent(() => import('./testPage/testPage.vue'));
 import WelcomeBanner from '@/components/home/WelcomeBanner.vue';
 import SubjectSelection from '@/components/home/SubjectSelection.vue';
@@ -204,6 +207,7 @@ const aiMentorInfo = computed(() => {
 });
 
 watch(currentLocale, () => {
+  aiAdvice.value = getFallbackAdvice([]);
   fetchUserStats();
 });
 
@@ -276,20 +280,24 @@ const fetchSubjects = async () => {
         color: s.color,
         description: s.description,
       }));
+      offlineDb.cacheMetadata('subjects', subjects.value);
       return;
-      if (subjects.value.length === 0) {
-        status.value = {
-          type: 'info',
-          message: '⚠️ No subjects found. Please add a subject first.',
-        };
-      }
     }
+
+    // 2. Try IndexedDB offline cache
+    const cached = await offlineDb.getCachedMetadata('subjects');
+    if (cached && cached.length > 0) {
+      subjects.value = cached;
+      return;
+    }
+
+    // 3. Guaranteed Default Fallback
+    subjects.value = [...DEFAULT_SUBJECTS];
+    offlineDb.cacheMetadata('subjects', DEFAULT_SUBJECTS);
   } catch (error) {
-    console.error('❌ Error fetching subjects:', error);
-    status.value = {
-      type: 'error',
-      message: `❌ Error fetching subjects: ${error.message}`,
-    };
+    console.warn('⚠️ Serverdan fanlarni yuklashda ogohlantirish, oflayn zaxira ishlatilmoqda:', error);
+    const cached = await offlineDb.getCachedMetadata('subjects');
+    subjects.value = (cached && cached.length > 0) ? cached : [...DEFAULT_SUBJECTS];
   } finally {
     loadingSubjects.value = false;
   }
@@ -299,11 +307,22 @@ const fetchSpecialTests = async () => {
   loadingSpecial.value = true;
   try {
     const { data, error } = await supabase.from('special_tests').select('*').order('created_at', { ascending: false });
-    if (!error && data) {
+    if (!error && data && data.length > 0) {
       specialTests.value = data;
+      offlineDb.cacheMetadata('special_tests', data);
+      return;
     }
+
+    const cached = await offlineDb.getCachedMetadata('special_tests');
+    if (cached && cached.length > 0) {
+      specialTests.value = cached;
+      return;
+    }
+
+    specialTests.value = [...DEFAULT_SPECIAL_TESTS];
   } catch (error) {
-    console.warn('Error fetching special tests:', error);
+    console.warn('⚠️ Maxsus testlar oflayn zaxiradan yuklandi:', error);
+    specialTests.value = [...DEFAULT_SPECIAL_TESTS];
   } finally {
     loadingSpecial.value = false;
   }
@@ -317,7 +336,7 @@ const startSpecialTest = (test) => {
     testPage.value?.initializeTest({
       sessionId: 'special_' + Math.random().toString(36).substring(2, 9),
       subjectId: 'special',
-      levelId: test.category,
+      levelId: test.category || 'DTM',
       specialTestId: test.id,
       title: test.title
     });
@@ -339,21 +358,25 @@ const fetchLevels = async () => {
     if (sbLevels && sbLevels.length > 0) {
       const fetchedLevels = sbLevels.map(l => l.name || l.id);
       levels.value = sortLevels(fetchedLevels);
+      offlineDb.cacheMetadata(`levels_${selectedSubject.value.id}`, levels.value);
       return;
     }
 
-    if (levels.value.length === 0) {
-      status.value = {
-        type: 'info',
-        message: '⚠️ No levels found for this subject.',
-      };
+    // 2. Try IndexedDB offline cache
+    const cached = await offlineDb.getCachedMetadata(`levels_${selectedSubject.value.id}`);
+    if (cached && cached.length > 0) {
+      levels.value = sortLevels(cached);
+      return;
     }
+
+    // 3. Fallback to default levels
+    const fallbacks = getFallbackLevelsForSubject(selectedSubject.value.id || selectedSubject.value.name);
+    levels.value = sortLevels(fallbacks);
+    offlineDb.cacheMetadata(`levels_${selectedSubject.value.id}`, levels.value);
   } catch (error) {
-    console.error('❌ Error fetching levels:', error);
-    status.value = {
-      type: 'error',
-      message: `❌ Error fetching levels: ${error.message}`,
-    };
+    console.warn('⚠️ Darajalarni olishda ogohlantirish, zaxira darajalar ishlatilmoqda:', error);
+    const fallbacks = getFallbackLevelsForSubject(selectedSubject.value.id || selectedSubject.value.name);
+    levels.value = sortLevels(fallbacks);
   } finally {
     loadingLevels.value = false;
   }
@@ -797,9 +820,13 @@ const fetchUserStats = async () => {
       const perfectCount = results.filter(r => r.score === r.total).length;
       const allBadges = getBadges(totalTests, perfectCount, userPoints.value, results);
       unlockedBadges.value = allBadges.filter(b => b.unlocked);
+    } else {
+      userDisplayName.value = t('username') || 'Foydalanuvchi';
+      aiAdvice.value = getFallbackAdvice([]);
     }
   } catch (e) {
     console.error('Error fetching user stats:', e);
+    aiAdvice.value = getFallbackAdvice([]);
   }
 };
 
@@ -848,6 +875,7 @@ const handleAiBadgeClick = () => {
 };
 
 onMounted(() => {
+  aiAdvice.value = getFallbackAdvice([]);
   fetchSubjects();
   fetchSpecialTests();
   fetchUserStats();

@@ -119,6 +119,17 @@
         </router-link>
       </div>
 
+      <!-- O'QITUVCHI SECTION -->
+      <div class="nav-section-title mt-sec" v-if="!effectiveCollapsed">{{ currentLocale === 'RUS' ? 'ПРЕПОДАВАНИЕ' : "O'QITUVCHI" }}</div>
+      <div class="nav-links-list">
+        <router-link to="/teacher" class="sidebar-link teacher-link" v-tooltip="currentLocale === 'RUS' ? 'Кабинет Учителя' : 'O\'qituvchi Kabineti'" @click="navigateTo('/teacher')">
+          <div class="link-icon"><i class="fas fa-chalkboard-user"></i></div>
+          <transition name="fade-slide">
+            <span v-if="!effectiveCollapsed" class="link-text">{{ currentLocale === 'RUS' ? 'Кабинет Учителя' : 'O\'qituvchi Kabineti' }}</span>
+          </transition>
+        </router-link>
+      </div>
+
       <!-- ADMIN SECTION -->
       <template v-if="adminRole || isAdmin">
         <div class="nav-section-title mt-sec" v-if="!effectiveCollapsed">ADMIN</div>

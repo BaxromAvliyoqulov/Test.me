@@ -6,7 +6,7 @@
           <div class="modal-title-wrapper">
             <div class="m-icon-wrapper"><i :class="getSubjectIcon(selectedSubject?.id)"></i></div>
             <div class="m-title-info">
-              <h3>{{ selectedSubject?.id }}</h3>
+              <h3>{{ getSubjectTitle(selectedSubject) }}</h3>
               <span>{{ currentLocale === 'RUS' ? 'Настройки Теста' : 'Test Sozlamalari' }}</span>
             </div>
           </div>
@@ -103,6 +103,14 @@ const getSubjectIcon = (name) => {
   if (lower.includes('geografiya') || lower.includes('geography')) return 'fas fa-globe-americas';
   if (lower.includes('adabiyot') || lower.includes('literature')) return 'fas fa-feather-alt';
   return 'fas fa-graduation-cap';
+};
+
+const getSubjectTitle = (subject) => {
+  if (!subject) return '';
+  if (props.currentLocale === 'RUS') {
+    return subject.nameRu || subject.name || subject.nameUz || subject.id;
+  }
+  return subject.nameUz || subject.name || subject.id;
 };
 </script>
 

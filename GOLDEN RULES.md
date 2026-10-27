@@ -85,3 +85,7 @@
 - [x] 2026-10-24: Sahifalararo navigatsiya loaderi: `TopProgressBar.vue` va `usePageProgress` (Linear/YouTube uslubidagi progress bar + ambient toast) joriy etildi.
 - [x] 2026-10-24: Scroll Reset to Top: `savedPosition` xatosi olib tashlandi, har qanday sahifaga o'tganda yoki qaytganda `window` va `.page-content` doim yuqoriga (`top: 0`) o'tishi kafolatlandi.
 - [x] 2026-10-24: Sensitive Data Leak & Console Privacy Guard: Barcha shaxsiy loglar (`user.uid`, `results`, `FCM Token`, `coinsEarned`) olib tashlandi; Hardcoded Gemini API kaliti tozalandi va 403 Forbidden spam to'xtatildi; `main.js` ga Enterprise Console Sanitizer o'rnatildi.
+- [x] 2026-10-27: Zero-Glitch Home & Guaranteed Subjects Engine: Bosh sahifada server/Supabase aloqasi uzilganda fanlar yo'qolib qolishi bartaraf etildi; `DEFAULT_SUBJECTS` va `DEFAULT_LEVELS` offline-first zaxira tizimi, `SubjectSelection` uchun 6-talik skelet animatsiyasi, bo'sh holat himoyasi hamda `AiCoach` bo'sh qo'shtirnoq `""` chiqarishi bartaraf etildi.
+- [x] 2026-10-27: P0 Security & Teacher LMS Core Release: `serviceAccountKey.json.json` git indexidan chiqarilib `.gitignore` da to'liq bloklandi; Supabase'da `protect_profile_privileges` triggeri qo'yilib admin huquqlarini o'zboshimchalik bilan o'zgartirish yopildi; O'qituvchilar Kabineti (`/teacher`, `TeacherDashboard.vue`, `teacherService.js`) va Sinflar boshqaruvi (`classes`, `join_code`, `class_assignments`) yaratildi; Vitest testlari 40/40 ga yetkazildi.
+
+

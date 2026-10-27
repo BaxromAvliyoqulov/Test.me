@@ -159,7 +159,7 @@ const selectedLevel = ref('');
 const selectedQuestionCount = ref('');
 const showTestWizard = ref(false);
 const questionCounts = ref([5, 10, 15, 20, 25, 30]);
-const subjects = ref([]);
+const subjects = ref([...DEFAULT_SUBJECTS]);
 const levels = ref([]);
 const loading = ref(false);
 const loadingSubjects = ref(false);
@@ -167,7 +167,7 @@ const loadingLevels = ref(false);
 const status = ref(null);
 const startTest = ref(false);
 const currentTab = ref('standard');
-const specialTests = ref([]);
+const specialTests = ref([...DEFAULT_SPECIAL_TESTS]);
 const loadingSpecial = ref(false);
 
 const userDisplayName = ref('');
@@ -265,11 +265,18 @@ const closeWizard = () => {
 };
 
 const fetchSubjects = async () => {
-  loadingSubjects.value = true;
+  if (!subjects.value || subjects.value.length === 0) {
+    loadingSubjects.value = true;
+  }
   status.value = null;
+
   try {
-    // 1. Try Supabase first
-    const sbSubjects = await subjectService.getSubjects();
+    // 1. Try Supabase with strict 1s timeout
+    const fetchPromise = subjectService.getSubjects();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Supabase timeout')), 1000)
+    );
+    const sbSubjects = await Promise.race([fetchPromise, timeoutPromise]);
     if (sbSubjects && sbSubjects.length > 0) {
       subjects.value = sbSubjects.map(s => ({
         id: s.id,
@@ -294,19 +301,26 @@ const fetchSubjects = async () => {
     // 3. Guaranteed Default Fallback
     subjects.value = [...DEFAULT_SUBJECTS];
     offlineDb.cacheMetadata('subjects', DEFAULT_SUBJECTS);
-  } catch (error) {
-    console.warn('⚠️ Serverdan fanlarni yuklashda ogohlantirish, oflayn zaxira ishlatilmoqda:', error);
-    const cached = await offlineDb.getCachedMetadata('subjects');
-    subjects.value = (cached && cached.length > 0) ? cached : [...DEFAULT_SUBJECTS];
+  } catch {
+    // Sokin fallback: tarmoq sekin bo'lsa darhol DEFAULT_SUBJECTS taqdim etiladi
+    if (!subjects.value || subjects.value.length === 0) {
+      subjects.value = [...DEFAULT_SUBJECTS];
+    }
   } finally {
     loadingSubjects.value = false;
   }
 };
 
 const fetchSpecialTests = async () => {
-  loadingSpecial.value = true;
+  if (!specialTests.value || specialTests.value.length === 0) {
+    loadingSpecial.value = true;
+  }
   try {
-    const { data, error } = await supabase.from('special_tests').select('*').order('created_at', { ascending: false });
+    const fetchPromise = supabase.from('special_tests').select('*').order('created_at', { ascending: false });
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Special tests timeout')), 1000)
+    );
+    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
     if (!error && data && data.length > 0) {
       specialTests.value = data;
       offlineDb.cacheMetadata('special_tests', data);
@@ -320,9 +334,10 @@ const fetchSpecialTests = async () => {
     }
 
     specialTests.value = [...DEFAULT_SPECIAL_TESTS];
-  } catch (error) {
-    console.warn('⚠️ Maxsus testlar oflayn zaxiradan yuklandi:', error);
-    specialTests.value = [...DEFAULT_SPECIAL_TESTS];
+  } catch {
+    if (!specialTests.value || specialTests.value.length === 0) {
+      specialTests.value = [...DEFAULT_SPECIAL_TESTS];
+    }
   } finally {
     loadingSpecial.value = false;
   }
@@ -347,14 +362,20 @@ const startSpecialTest = (test) => {
 const fetchLevels = async () => {
   if (!selectedSubject.value) return;
 
+  const defaultLvls = sortLevels(getFallbackLevelsForSubject(selectedSubject.value.id || selectedSubject.value.name));
+  levels.value = defaultLvls; // Darhol ko'rsatish
+
   loadingLevels.value = true;
   selectedLevel.value = '';
-  levels.value = [];
   status.value = null;
 
   try {
-    // 1. Try Supabase first
-    const sbLevels = await subjectService.getLevels(selectedSubject.value.id);
+    // 1. Try Supabase with strict 1s timeout
+    const fetchPromise = subjectService.getLevels(selectedSubject.value.id);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Levels timeout')), 1000)
+    );
+    const sbLevels = await Promise.race([fetchPromise, timeoutPromise]);
     if (sbLevels && sbLevels.length > 0) {
       const fetchedLevels = sbLevels.map(l => l.name || l.id);
       levels.value = sortLevels(fetchedLevels);
@@ -369,14 +390,10 @@ const fetchLevels = async () => {
       return;
     }
 
-    // 3. Fallback to default levels
-    const fallbacks = getFallbackLevelsForSubject(selectedSubject.value.id || selectedSubject.value.name);
-    levels.value = sortLevels(fallbacks);
+    levels.value = defaultLvls;
     offlineDb.cacheMetadata(`levels_${selectedSubject.value.id}`, levels.value);
-  } catch (error) {
-    console.warn('⚠️ Darajalarni olishda ogohlantirish, zaxira darajalar ishlatilmoqda:', error);
-    const fallbacks = getFallbackLevelsForSubject(selectedSubject.value.id || selectedSubject.value.name);
-    levels.value = sortLevels(fallbacks);
+  } catch {
+    levels.value = defaultLvls;
   } finally {
     loadingLevels.value = false;
   }

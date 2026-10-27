@@ -5,7 +5,7 @@
       <h3>{{ isRus ? 'Специальные тесты и ДТМ' : 'DTM va Maxsus Imtihonlar' }}</h3>
     </div>
     
-    <div v-if="loadingSpecial" class="loading-state">
+    <div v-if="loadingSpecial && (!specialTests || specialTests.length === 0)" class="loading-state">
       <div class="spinner"></div>
       <p>{{ isRus ? 'Загрузка специальных тестов...' : 'Maxsus testlar yuklanmoqda...' }}</p>
     </div>

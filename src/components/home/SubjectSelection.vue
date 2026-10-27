@@ -5,8 +5,8 @@
       <h3>{{ t('chooseSubject') }}</h3>
     </div>
     
-    <!-- Skeleton loader for world-class loading experience -->
-    <div v-if="loadingSubjects" class="subject-grid skeleton-grid">
+    <!-- Skeleton loader faqat ro'yxat bo'sh bo'lganda ko'rinadi -->
+    <div v-if="loadingSubjects && (!subjects || subjects.length === 0)" class="subject-grid skeleton-grid">
       <div v-for="i in 6" :key="i" class="subject-card skeleton-card">
         <div class="skeleton-shimmer"></div>
         <div class="card-content">

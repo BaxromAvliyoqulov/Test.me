@@ -1,26 +1,26 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { authGuard } from './guards/authGuard';
 
-import home from '@/views/home.vue';
+import home from '@/views/home/home.vue';
 const Login = () => import('@/views/auth/Login.vue');
 const SignUP = () => import('@/views/auth/SignUp.vue');
 const testPage = () => import('@/views/testPage/testPage.vue');
 const admin = () => import('@/views/admin/index.vue');
-const about = () => import('@/views/about.vue');
-const contactUs = () => import('@/views/contactUs.vue');
-const dashboard = () => import('@/views/dashboard.vue');
+const about = () => import('@/views/about/about.vue');
+const contactUs = () => import('@/views/contact/contactUs.vue');
+const dashboard = () => import('@/views/dashboard/dashboard.vue');
 const points = () => import('@/views/Points/points.vue');
-const NotFound = () => import('@/views/404.vue');
+const NotFound = () => import('@/views/error/404.vue');
 const EditProfile = () => import('@/views/editProfile/editProfile.vue');
-const Badges = () => import('@/views/badges.vue');
-const Certificates = () => import('@/views/certificates.vue');
+const Badges = () => import('@/views/badges/badges.vue');
+const Certificates = () => import('@/views/certificates/certificates.vue');
 const AiTestSetup = () => import('@/views/testPage/aiTestSetup.vue');
 import MentorContainer from '@/views/testPage/MentorContainer.vue';
-const AdminSeeder = () => import('@/views/AdminSeeder.vue');
+const AdminSeeder = () => import('@/views/admin/AdminSeeder.vue');
 const ShopPage = () => import('@/views/shop/ShopPage.vue');
 const FriendsDashboard = () => import('@/views/Friends/FriendsDashboard.vue');
 const RankSystemPage = () => import('@/views/Ranks/RankSystemPage.vue');
-const PlatformStats = () => import('@/views/PlatformStats.vue');
+const PlatformStats = () => import('@/views/stats/PlatformStats.vue');
 const NotificationsPage = () => import('@/views/notifications/NotificationsPage.vue');
 const TeacherDashboard = () => import('@/views/teacher/TeacherDashboard.vue');
 

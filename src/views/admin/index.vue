@@ -69,7 +69,7 @@ import AdminFinance from './components/AdminFinance.vue';
 import AddAdminComponent from './addAdmin.vue';
 import UploadExcelComponent from './uploadExcel.vue';
 import AddSubjectComponent from './addSubject.vue';
-import AdminSeederComponent from '@/views/AdminSeeder.vue';
+import AdminSeederComponent from './AdminSeeder.vue';
 
 const VIEW_MAP = {
   overview:      AdminOverview,

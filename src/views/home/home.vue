@@ -124,7 +124,7 @@
 import { ref, computed, watch, onMounted, nextTick, onErrorCaptured, defineAsyncComponent } from 'vue';
 import { supabase, authService, profileService, subjectService, resultService } from '@/services/supabaseService';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import defaultUserImage from '../assets/img/user.png';
+import defaultUserImage from '@/assets/img/user.png';
 import { useI18n } from '@/utils/i18n';
 import { getRankName, getRankClass, getRankIcon, getNextRankInfo } from '@/utils/ranks';
 import { sortLevels } from '@/utils/sorters';
@@ -132,7 +132,7 @@ import { getMentorConfig } from '@/config/mentors';
 import { getBadges } from '@/utils/badges';
 import { DEFAULT_SUBJECTS, DEFAULT_SPECIAL_TESTS, getFallbackLevelsForSubject } from '@/config/defaultSubjects';
 import { offlineDb } from '@/services/offlineDb';
-const TestPage = defineAsyncComponent(() => import('./testPage/testPage.vue'));
+const TestPage = defineAsyncComponent(() => import('@/views/testPage/testPage.vue'));
 import WelcomeBanner from '@/components/home/WelcomeBanner.vue';
 import SubjectSelection from '@/components/home/SubjectSelection.vue';
 import SpecialTests from '@/components/home/SpecialTests.vue';

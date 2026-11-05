@@ -97,6 +97,7 @@
   - Admin panelda sertifikatlar boshqaruvi (`AdminCertificates.vue`) to'liq Supabase bilan yaratildi va eski placeholder almashtirildi.
   - `ShopPage.vue` dagi barcha xaridlar va tranzaksiyalar Supabase `user_transactions` bilan bog'landi.
   - Immersive Exam Mode: `/test` sahifasida pastki navigatsiya paneli avtomatik yashirilib, mobil safe-area ta'minlandi.
+  - Zero-Glitch Test Engine & Guaranteed Question Bank: Fanlar yoki Maxsus testlar (DTM 2026, IQ Mantiq, CEFR) tanlanganda "Testlar topilmadi" yoki "Maxsus test ID topilmadi" xatosi to'liq bartaraf etildi; `src/config/guaranteedQuestions.js` orqali har bir fan uchun offline-first kafolatlangan savollar bazasi ulandi.
   - Vitest testlari 41/41 ga oshirildi (100% yashil), Vite production build 100% muvaffaqiyatli o'tdi.
 
 

@@ -92,9 +92,11 @@
       <TestPage
         v-if="startTest"
         ref="testPage"
-        :subjectId="selectedSubject?.id || 'special'"
+        :subjectId="selectedSubject?.id || (activeSpecialTest ? 'special' : 'matematika')"
         :levelId="selectedLevel"
         :questionCount="selectedQuestionCount"
+        :specialTestId="activeSpecialTest?.id || ''"
+        :title="activeSpecialTest?.title || ''"
         @test-completed="handleTestCompletion"
         @exit-test="goBackToSelection"
       />
@@ -169,6 +171,7 @@ const startTest = ref(false);
 const currentTab = ref('standard');
 const specialTests = ref([...DEFAULT_SPECIAL_TESTS]);
 const loadingSpecial = ref(false);
+const activeSpecialTest = ref(null);
 
 const userDisplayName = ref('');
 const userPoints = ref(0);
@@ -344,6 +347,7 @@ const fetchSpecialTests = async () => {
 };
 
 const startSpecialTest = (test) => {
+  activeSpecialTest.value = test;
   loading.value = true;
   startTest.value = true;
   showTestWizard.value = false;
@@ -442,6 +446,7 @@ const startTestWithFilters = async () => {
 
 const goBackToSelection = () => {
   startTest.value = false;
+  activeSpecialTest.value = null;
 };
 
 const handleTestCompletion = (results) => {

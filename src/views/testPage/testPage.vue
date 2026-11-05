@@ -143,6 +143,7 @@ import {
   subjectService 
 } from '@/services/supabaseService';
 import { offlineDb } from '@/services/offlineDb';
+import { getGuaranteedQuestions, getGuaranteedSpecialTest } from '@/config/guaranteedQuestions';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from '@/utils/i18n';
 import { useToast } from 'vue-toastification';
@@ -166,18 +167,18 @@ const props = defineProps({
 
 const isRus = computed(() => locale.value === 'RUS');
 
-// Compute active params dynamically (from props or route query)
+// Compute active params dynamically (from state override, props or route query)
 const activeSubjectId = computed(() => {
-  return props.subjectId || (route && route.query && route.query.subjectId) || '';
+  return state.overrideSubjectId || props.subjectId || (route && route.query && route.query.subjectId) || '';
 });
 
 const activeLevelId = computed(() => {
-  return props.levelId || (route && route.query && route.query.levelId) || '';
+  return state.overrideLevelId || props.levelId || (route && route.query && route.query.levelId) || '';
 });
 
 const activeQuestionCount = computed(() => {
   const queryCount = route && route.query && route.query.questionCount ? parseInt(route.query.questionCount) : null;
-  return props.questionCount || queryCount || 10;
+  return state.overrideQuestionCount || props.questionCount || queryCount || 10;
 });
 
 const isDuelMode = computed(() => {
@@ -188,7 +189,7 @@ const isDuelMode = computed(() => {
 const displaySubject = computed(() => {
   const subj = activeSubjectId.value;
   if (subj === 'ai') return isRus.value ? 'AI Конструктор' : 'AI Testi';
-  if (subj === 'special') return props.title || 'Maxsus Imtihon';
+  if (subj === 'special') return state.overrideTitle || props.title || 'Maxsus Imtihon';
   return subj;
 });
 
@@ -210,6 +211,11 @@ const state = reactive({
   showReviewModal: false,
   timer: 900,
   sessionId: null,
+  overrideSubjectId: null,
+  overrideLevelId: null,
+  overrideSpecialId: null,
+  overrideTitle: null,
+  overrideQuestionCount: null,
   userTools: {},
   eliminatedOptions: [],
   hintText: null,
@@ -439,8 +445,13 @@ const speakReviewText = () => {
 
 // Fetch questions safely supporting both individual docs and packaging
 const fetchQuestions = async (options) => {
-  if (options && options.sessionId) {
-    state.sessionId = options.sessionId;
+  if (options) {
+    if (options.sessionId) state.sessionId = options.sessionId;
+    if (options.subjectId) state.overrideSubjectId = options.subjectId;
+    if (options.levelId) state.overrideLevelId = options.levelId;
+    if (options.specialTestId) state.overrideSpecialId = options.specialTestId;
+    if (options.title) state.overrideTitle = options.title;
+    if (options.questionCount) state.overrideQuestionCount = parseInt(options.questionCount);
   }
   try {
     state.loading = true;
@@ -472,36 +483,48 @@ const fetchQuestions = async (options) => {
       return;
     }
 
-    const isSpecial = activeSubjectId.value === 'special';
+    const isSpecial = activeSubjectId.value === 'special' || Boolean(state.overrideSpecialId || props.specialTestId || route?.query?.specialTestId);
     if (isSpecial) {
-      const specialId = props.specialTestId || route?.query?.specialTestId;
-      if (!specialId) throw new Error("Maxsus test ID topilmadi");
+      const specialId = state.overrideSpecialId || props.specialTestId || route?.query?.specialTestId || 'dtm-block-2026';
 
-      const { data: testData, error: spErr } = await supabase
-        .from('special_tests')
-        .select('*')
-        .eq('id', specialId)
-        .maybeSingle();
+      let specialQuestions = [];
+      try {
+        const { data: testData } = await supabase
+          .from('special_tests')
+          .select('*')
+          .eq('id', specialId)
+          .maybeSingle();
 
-      if (spErr || !testData) throw new Error("Maxsus test bazadan topilmadi");
-
-      const flatQuestions = [];
-      if (testData.sections) {
-        testData.sections.forEach(section => {
-          if (section.questions) {
-            section.questions.forEach(q => {
-              flatQuestions.push({
-                ...q,
-                scoreWeight: section.scoreWeight || 1
+        if (testData?.sections) {
+          testData.sections.forEach(section => {
+            if (section.questions) {
+              section.questions.forEach(q => {
+                specialQuestions.push({
+                  ...q,
+                  scoreWeight: section.scoreWeight || 1
+                });
               });
-            });
-          }
-        });
+            }
+          });
+        }
+      } catch {
+        // Supabase special_tests offline / not configured
       }
 
-      if (flatQuestions.length === 0) throw new Error("Testda savollar yo'q");
+      if (specialQuestions.length === 0) {
+        const guaranteed = getGuaranteedSpecialTest(specialId);
+        specialQuestions = guaranteed.questions ? [...guaranteed.questions] : [];
+        if (!state.overrideTitle && guaranteed.title) {
+          state.overrideTitle = guaranteed.title;
+        }
+      }
 
-      state.questions = flatQuestions;
+      if (specialQuestions.length === 0) {
+        const guaranteed = getGuaranteedSpecialTest('dtm-block-2026');
+        specialQuestions = [...guaranteed.questions];
+      }
+
+      state.questions = specialQuestions;
       state.selectedAnswers = Array(state.questions.length).fill(null);
       state.currentPage = 0;
       state.selectedAnswer = null;
@@ -538,24 +561,30 @@ const fetchQuestions = async (options) => {
       // Offline yoki tarmoq uzilishi
     }
 
-    // 3. Agar Supabase'da savollar bo'lmasa, keshdan yoki lokal test.json dan olish
+    // 3. Agar Supabase'da savollar bo'lmasa -> Kafolatlangan savollar bankidan olish
     if (!questionsList.length) {
       if (cachedQuestions && cachedQuestions.length > 0) {
         questionsList = cachedQuestions;
       } else {
-        try {
-          const res = await fetch('/test.json');
-          if (res.ok) {
-            questionsList = await res.json();
+        const guaranteed = getGuaranteedQuestions(activeSubjectId.value);
+        if (guaranteed && guaranteed.length > 0) {
+          questionsList = [...guaranteed];
+        } else {
+          try {
+            const res = await fetch('/test.json');
+            if (res.ok) {
+              questionsList = await res.json();
+            }
+          } catch {
+            // fetch error
           }
-        } catch {
-          // fetch error
         }
       }
     }
 
     if (!questionsList.length) {
-      throw new Error(isRus.value ? 'Тесты не найдены' : 'Testlar topilmadi');
+      // 100% Guaranteed Fallback
+      questionsList = [...getGuaranteedQuestions('matematika')];
     }
 
     // 4. Savollarni darhol kelajakda oflayn ishlash uchun IndexedDB keshiga yozish

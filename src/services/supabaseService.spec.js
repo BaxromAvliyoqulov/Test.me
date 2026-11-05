@@ -58,6 +58,13 @@ describe('Unified Supabase Service Layer', () => {
       const res = await profileService.addPoints(null, 100);
       expect(res).toBeNull();
     });
+
+    it('throws error when subtracting more points than available', async () => {
+      vi.spyOn(profileService, 'getProfile').mockResolvedValue({ id: 'u1', points: 30 });
+      await expect(
+        profileService.addPoints('u1', -50, 'Xarid')
+      ).rejects.toThrow("Mablag' yetarli emas");
+    });
   });
 
   describe('Shop Service', () => {

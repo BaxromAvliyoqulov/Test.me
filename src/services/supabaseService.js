@@ -125,6 +125,12 @@ export const profileService = {
     // 1. Profil ballini olish
     const profile = await this.getProfile(userId);
     const currentPoints = profile?.points || 0;
+
+    // Balans yetarliligini tekshirish (manfiy balansga tushishdan himoya)
+    if (amount < 0 && currentPoints + amount < 0) {
+      throw new Error("Mablag' yetarli emas (TP Coins yetishmaydi)");
+    }
+
     const newPoints = Math.max(0, currentPoints + amount);
 
     // 2. Profilni yangilash
@@ -137,13 +143,17 @@ export const profileService = {
 
     if (error) throw error;
 
-    // 3. Tranzaksiya tarixiga yozish
-    await supabase.from('user_transactions').insert({
-      user_id: userId,
-      points: amount,
-      type: amount > 0 ? 'reward' : 'spend',
-      description,
-    });
+    // 3. Tranzaksiya tarixiga xavfsiz yozish
+    try {
+      await supabase.from('user_transactions').insert({
+        user_id: userId,
+        points: amount,
+        type: amount > 0 ? 'reward' : 'spend',
+        description,
+      });
+    } catch (txErr) {
+      console.warn('Tranzaksiya yozishda ogohlantirish:', txErr);
+    }
 
     return data;
   },

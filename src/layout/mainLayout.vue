@@ -22,12 +22,12 @@
       />
 
       <!-- Content Area -->
-      <main ref="pageContentRef" :class="['page-content', { 'admin-page-content': isAdmin }]">
+      <main ref="pageContentRef" :class="['page-content', { 'admin-page-content': isAdmin, 'exam-page-content': isExamMode }]">
         <slot />
       </main>
 
       <!-- Mobile Bottom Floating Navigation -->
-      <MobileBottomNav v-if="showNavbar" />
+      <MobileBottomNav v-if="showBottomNav" />
     </div>
   </div>
 </template>
@@ -69,6 +69,21 @@ const isAdmin = computed(() => {
 const showNavbar = computed(() => {
   const hideOnPaths = ['/login', '/signup', '/SignUp'];
   return route && route.path ? !hideOnPaths.includes(route.path) && !isAdmin.value : true;
+});
+
+const isExamMode = computed(() => {
+  return route && route.path ? route.path === '/test' || route.path.startsWith('/test/') : false;
+});
+
+const showBottomNav = computed(() => {
+  if (!showNavbar.value) return false;
+  const hideBottomOn = ['/test', '/ai-setup'];
+  if (route && route.path) {
+    if (hideBottomOn.some(p => route.path === p || route.path.startsWith(p + '/'))) {
+      return false;
+    }
+  }
+  return true;
 });
 
 const checkIfMobile = () => {
@@ -193,6 +208,10 @@ onBeforeUnmount(() => {
     padding: 6px 10px calc(80px + env(safe-area-inset-bottom, 0px)) 10px;
     max-width: 100vw;
     box-sizing: border-box;
+  }
+
+  .page-content.exam-page-content {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 </style>

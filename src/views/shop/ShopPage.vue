@@ -5,8 +5,8 @@
 
     <div class="shop-container">
       <div class="header-section">
-        <h1>рџ›ЌпёЏ {{ isRus ? 'РњР°РіР°Р·РёРЅ' : "Do'kon" }}</h1>
-        <p>{{ isRus ? 'РћР±РјРµРЅРёРІР°Р№С‚Рµ TP Coins РЅР° РЅР°СЃС‚Р°РІРЅРёРєРѕРІ Рё РЅР°РіСЂР°РґС‹!' : "TP Coin larni AI ustozlar va sovg'alarga almashtiring!" }}</p>
+        <h1>🛍️ {{ isRus ? 'Магазин' : "Do'kon" }}</h1>
+        <p>{{ isRus ? 'Обменивайте TP Coins на наставников и награды!' : "TP Coin larni AI ustozlar va sovg'alarga almashtiring!" }}</p>
       </div>
 
       <div class="shop-content">
@@ -184,7 +184,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { authService, profileService } from '@/services/supabaseService';
+import { authService, profileService, shopService } from '@/services/supabaseService';
 import { useToast } from 'vue-toastification';
 import { useI18n } from '@/utils/i18n';
 import { getBadges } from '@/utils/badges';
@@ -210,16 +210,13 @@ const activeThemeId = ref('default');
 const unlockedThemes = ref(['default']);
 const availableThemes = [
   { id: 'default', name: { UZB: 'Minimal SaaS', RUS: 'Минимал SaaS' }, desc: { UZB: 'Standart zamonaviy oq-ko\'k dizayn', RUS: 'Стандартный современный дизайн' }, price: 0, color: '#3b82f6', icon: 'fas fa-sun' },
-  { id: 'cyberpunk', name: { UZB: 'Cyberpunk Neon', RUS: 'Киберпанк Неон' }, desc: { UZB: 'Neonnli va zamonaviy kelajak mavzusi', RUS: 'Футуристическая неоновая тема' }, price: 150, color: '#ec4899', icon: 'fas fa-bolt' },
+  { id: 'cyberpunk', name: { UZB: 'Cyberpunk Neon', RUS: 'Киберпанк Неон' }, desc: { UZB: 'Neonli va zamonaviy kelajak mavzusi', RUS: 'Футуристическая неоновая тема' }, price: 150, color: '#ec4899', icon: 'fas fa-bolt' },
   { id: 'emerald', name: { UZB: 'Emerald Glass', RUS: 'Изумрудный Глянец' }, desc: { UZB: 'Yashil va tinchlantiruvchi tabiat mavzusi', RUS: 'Экологичная зеленая тема' }, price: 200, color: '#10b981', icon: 'fas fa-leaf' },
   { id: 'midnight', name: { UZB: 'Midnight Violet', RUS: 'Полночный Фиолет' }, desc: { UZB: 'Tungi to\'q binafsha rangli VIP uslub', RUS: 'Темный фиолетовый премиум стиль' }, price: 300, color: '#8b5cf6', icon: 'fas fa-moon' },
 ];
 
 // Transactions history list
-const transactions = ref([
-  { id: 't1', type: 'earn', description: 'Test topshirildi (IQ Math)', amount: 50, date: 'Bugun, 12:40' },
-  { id: 't2', type: 'spend', description: 'Comedian AI Mentor xarid qilindi', amount: 100, date: 'Kecha, 18:20' }
-]);
+const transactions = ref([]);
 
 let currentUser = null;
 
@@ -254,9 +251,9 @@ const buyTheme = async (theme) => {
       amount: theme.price,
       date: 'Hozir'
     });
-    showToast(isRus.value ? 'Тема разблокирована! 🎉' : 'Mavzu razblokirovka qilindi! 🎉', 'success');
+    showToast(isRus.value ? 'Тема разблокирована! 🎉' : 'Mavzu ochildi! 🎉', 'success');
   } catch (e) {
-    showToast('Xatolik yuz berdi!', 'error');
+    showToast(e.message || 'Xatolik yuz berdi!', 'error');
   }
 };
 
@@ -286,6 +283,25 @@ const loadUserShopData = async (user) => {
       activeMentorId.value = prefs.mentorType || 'standard';
       unlockedThemes.value = prefs.unlockedThemes || ['default'];
       activeThemeId.value = prefs.themeId || 'default';
+    }
+
+    // Real tranzaksiyalar tarixini Supabase'dan olish
+    const userTx = await shopService.getUserTransactions(user.id);
+    if (userTx && userTx.length > 0) {
+      transactions.value = userTx.map(t => ({
+        id: t.id,
+        type: t.points > 0 ? 'earn' : 'spend',
+        description: t.description || 'Tranzaksiya',
+        amount: Math.abs(t.points),
+        date: new Date(t.created_at).toLocaleDateString('uz-UZ', { 
+          month: 'short', 
+          day: 'numeric', 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })
+      }));
+    } else {
+      transactions.value = [];
     }
   } catch (e) {
     console.warn('Error loading shop data:', e);
@@ -328,10 +344,17 @@ const buyMentor = async (mentor) => {
     await profileService.addPoints(currentUser.id, -mentor.price, `${mentor.name.UZB} ustozi`);
     points.value -= mentor.price;
     unlockedMentors.value = newList;
+    transactions.value.unshift({
+      id: Date.now(),
+      type: 'spend',
+      description: `${mentor.name.UZB} ustozi xarid qilindi`,
+      amount: mentor.price,
+      date: 'Hozir'
+    });
     showToast(isRus.value ? `${mentor.name.RUS} разблокирован! 🎉` : `${mentor.name.UZB} qo'shildi! 🎉`, 'success');
   } catch (e) {
     console.error(e);
-    showToast('Xatolik yuz berdi!', 'error');
+    showToast(e.message || 'Xatolik yuz berdi!', 'error');
   } finally {
     buying.value = null;
   }

@@ -6,7 +6,45 @@
         <p>Admin huquqlari tekshirilmoqda...</p>
       </div>
     </template>
-    <template v-else-if="authenticated">
+    <template v-else-if="authenticated && !pinVerified">
+      <div class="pin-guard-overlay">
+        <div class="pin-card animate-pop-in">
+          <div class="pin-icon-wrap">
+            <i class="fas fa-shield-halved"></i>
+          </div>
+          <h2>Admin PIN Xavfsizlik</h2>
+          <p>Admin panelga kirish uchun maxfiy PIN kodni kiriting.</p>
+
+          <div class="pin-inputs">
+            <input 
+              v-for="(_, idx) in 4" 
+              :key="idx"
+              ref="pinInputRefs"
+              type="password"
+              maxlength="1"
+              inputmode="numeric"
+              class="pin-digit-box"
+              :class="{ 'pin-error': pinError }"
+              v-model="enteredPin[idx]"
+              @input="onPinInput(idx, $event)"
+              @keydown="onPinKeydown(idx, $event)"
+            />
+          </div>
+
+          <p v-if="pinError" class="pin-error-text">{{ pinErrorMessage }}</p>
+
+          <div class="pin-actions">
+            <button class="pin-back-btn" @click="router.push('/')">
+              <i class="fas fa-arrow-left"></i> Bosh sahifa
+            </button>
+            <button class="pin-verify-btn" :disabled="enteredPin.join('').length < 4" @click="verifyPin">
+              Tasdiqlash <i class="fas fa-key"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+    <template v-else-if="authenticated && pinVerified">
       <!-- Sidebar -->
       <AdminSidebar
         :currentView="currentView"
@@ -65,6 +103,7 @@ import AdminNotifications from './components/AdminNotifications.vue';
 import AdminSettings from './components/AdminSettings.vue';
 import AdminAnalytics from './components/AdminAnalytics.vue';
 import AdminFinance from './components/AdminFinance.vue';
+import AdminCertificates from './components/AdminCertificates.vue';
 
 import AddAdminComponent from './addAdmin.vue';
 import UploadExcelComponent from './uploadExcel.vue';
@@ -83,7 +122,7 @@ const VIEW_MAP = {
   aiSeeder:      AdminSeederComponent,
   addAdmin:      AddAdminComponent,
   notifications: AdminNotifications,
-  certificates:  { template: '<div style="padding:2rem;text-align:center;color:#64748b"><i class="fas fa-certificate" style="font-size:3rem;color:#f59e0b;display:block;margin-bottom:1rem"></i><h3>Sertifikatlar boshqaruvi</h3><p>Firebase Firestore > "certificates" kolleksiyasini tekshiring.</p></div>' },
+  certificates:  AdminCertificates,
   analytics:     AdminAnalytics,
   finance:       AdminFinance,
   settings:      AdminSettings,
@@ -105,6 +144,15 @@ const sidebarCollapsed = ref(false);
 const currentView = ref('overview');
 const currentTime = ref('');
 const adminRole = ref('admin');
+
+// PIN Code Security State
+const pinVerified = ref(sessionStorage.getItem('admin_pin_verified') === 'true');
+const enteredPin = ref(['', '', '', '']);
+const pinInputRefs = ref([]);
+const pinError = ref(false);
+const pinErrorMessage = ref('');
+const attemptsLeft = ref(5);
+let expectedPin = '2026';
 
 let timeInterval = null;
 
@@ -136,13 +184,57 @@ const navigate = (view) => {
 
 const logout = async () => {
   try {
+    sessionStorage.removeItem('admin_pin_verified');
     await authService.signOut();
   } catch (e) {
     console.warn('Sign out warning:', e);
   }
   authenticated.value = false;
+  pinVerified.value = false;
   adminRole.value = null;
   router.push('/');
+};
+
+const onPinInput = (idx, event) => {
+  pinError.value = false;
+  const val = event.target.value.replace(/\D/g, '');
+  enteredPin.value[idx] = val;
+  if (val && idx < 3 && pinInputRefs.value && pinInputRefs.value[idx + 1]) {
+    pinInputRefs.value[idx + 1].focus();
+  }
+  if (enteredPin.value.join('').length === 4) {
+    verifyPin();
+  }
+};
+
+const onPinKeydown = (idx, event) => {
+  if (event.key === 'Backspace' && !enteredPin.value[idx] && idx > 0 && pinInputRefs.value && pinInputRefs.value[idx - 1]) {
+    pinInputRefs.value[idx - 1].focus();
+  }
+};
+
+const verifyPin = () => {
+  const pin = enteredPin.value.join('');
+  if (pin === expectedPin) {
+    pinVerified.value = true;
+    sessionStorage.setItem('admin_pin_verified', 'true');
+    pinError.value = false;
+  } else {
+    attemptsLeft.value--;
+    pinError.value = true;
+    enteredPin.value = ['', '', '', ''];
+    if (pinInputRefs.value && pinInputRefs.value[0]) {
+      pinInputRefs.value[0].focus();
+    }
+    if (attemptsLeft.value <= 0) {
+      pinErrorMessage.value = "Urinishlar tugadi. Kirish bloklandi!";
+      setTimeout(() => {
+        router.push('/');
+      }, 1200);
+    } else {
+      pinErrorMessage.value = `Noto'g'ri PIN kod! Qolgan urinishlar: ${attemptsLeft.value}`;
+    }
+  }
 };
 
 const checkAdminAuth = async () => {
@@ -161,6 +253,9 @@ const checkAdminAuth = async () => {
     if (hasAdminAccess) {
       authenticated.value = true;
       adminRole.value = profile?.admin_role || (profile?.is_admin ? 'super_admin' : 'admin');
+      if (profile?.admin_pin) {
+        expectedPin = String(profile.admin_pin);
+      }
     } else {
       authenticated.value = false;
       router.push('/');
@@ -273,6 +368,156 @@ onBeforeUnmount(() => {
 
 /* Page Transition */
 .page-fade-enter-active, .page-fade-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.page-fade-enter-from { opacity: 0; transform: translateY(6px); }
+.page-fade-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* PIN Code Guard Styles */
+.pin-guard-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #1e293b, #0f172a);
+  z-index: 9999;
+  padding: 16px;
+}
+
+.pin-card {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  border-radius: 28px;
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.pin-icon-wrap {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  margin: 0 auto 20px auto;
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.35);
+}
+
+.pin-card h2 {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 8px 0;
+}
+
+.pin-card p {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0 0 28px 0;
+}
+
+.pin-inputs {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.pin-digit-box {
+  width: 58px;
+  height: 64px;
+  border-radius: 16px;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.pin-digit-box:focus {
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+.pin-digit-box.pin-error {
+  border-color: #ef4444;
+  background: #fef2f2;
+  color: #ef4444;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.pin-error-text {
+  color: #ef4444 !important;
+  font-size: 0.85rem !important;
+  font-weight: 700;
+  margin-bottom: 20px !important;
+}
+
+.pin-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.pin-back-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #475569;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pin-back-btn:hover {
+  background: #f1f5f9;
+}
+
+.pin-verify-btn {
+  flex: 1.4;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+.pin-verify-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.pin-verify-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .page-fade-enter-from, .page-fade-leave-to { opacity: 0; transform: translateY(8px); }
 
 /* Mobile */

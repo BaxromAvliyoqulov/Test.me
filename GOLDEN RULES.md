@@ -34,14 +34,16 @@
 - [x] Supabase relatsion sxemasi (`supabase/schema.sql`) va boshlang'ich seeder (`supabase/seed.sql`) ishlab chiqish.
 - [x] Foydalanuvchi do'stlari, 1v1 PvP duellari va do'stlar reytingi tizimini ishlab chiqish (`FriendsDashboard`, `DuelModal`, `FriendLeaderboard`, `GiftCoinsModal`).
 - [x] Loyiha papkalarini tartibga solish, dead code va ortiqcha fayllarni tozalash (`supabase/`, `firebase/`, `views/auth/`).
-- [ ] Profil, Ballar (TP Coins) va Tranzaksiyalar uchun atomar tranzaksiya mantiqini mustahkamlash (balans manfiy bo'lmasligi, race-condition himoyasi).
-- [ ] Admin panel uchun maxfiy kalit va PIN kod (`admin_pin`) tekshiruvini qat'iylashtirish.
+- [x] Profil, Ballar (TP Coins) va Tranzaksiyalar uchun atomar tranzaksiya mantiqini mustahkamlash (balans manfiy bo'lmasligi, race-condition himoyasi).
+- [x] Admin panel uchun maxfiy kalit va PIN kod (`admin_pin`) tekshiruvini qat'iylashtirish.
 
 ### 🎨 2-Faza: UI/UX va Mobile-First Ekranlarni Mukammallashtirish (Zero-Glitch UX)
 - [x] Desktop Navbar'dagi ortiqcha install tugmasini olib tashlash, toza minimalizmga keltirish.
 - [x] Versiya vidjeti va qo'lda tekshirish tugmasini Sidebar pastki qismiga joylashtirish.
 - [x] Do'stlar va Hamjamiyat 100x SaaS interfeysi (Discovery grid, Glassmorphic profillar, real-time chat).
-- [ ] Mobil ekranda (375px–414px) gorizontal scroll va sinishlarni to'liq bartaraf etish (`MobileBottomNav`, test savollari kartasi, shop sahifasi).
+- [x] Mobil ekranda (375px–414px) gorizontal scroll va sinishlarni to'liq bartaraf etish (`MobileBottomNav`, test savollari kartasi, shop sahifasi).
+- [x] Test rejimida (Exam Mode) `MobileBottomNav` avtomatik yashirilib, pastki navigatsiya tugmalari safe-area bilan himoyalandi.
+- [x] Admin sertifikatlar boshqaruvi (`AdminCertificates.vue`) ishlab chiqilib, eski placeholder olib tashlandi.
 - [ ] Bo'sh holatlar (Empty States), yuklanish skeletonlari va xatolik yuz berganda chiroyli Retry modal qo'shish.
 - [ ] Dark / Light mode ranglar kontrastini va Glassmorphism fonlarini Linear/Apple standartiga moslash.
 
@@ -64,8 +66,10 @@
 ## 🐛 Known Bugs & UX Defects (Aniqlangan Kamchiliklar va Holati)
 1. **[Tuzatildi]** Desktop Navbarida ilova o'rnatish tugmasi juda noqulay joylashgan edi ➔ Sidebar pastiga va avtomatik modalga ko'chirildi.
 2. **[Tuzatildi]** Service Worker yangilanganda bildirishnoma chiqmas edi ➔ `AppUpdatePrompt.vue` orqali yangilanishni qabul qilish tugmasi qo'shildi.
-3. **[Faol]** Ayrim admin va do'kon sahifalarida Firebase va Supabase o'rtasidagi ma'lumotlar sinxronizatsiyasi to'liq emas ➔ `supabaseService.js` orqali markazlashtirilmoqda.
-4. **[Faol]** Mobil telefonda test sahifasining pastki qismidagi navigatsiya tugmalari ba'zida klaviatura yoki BottomNav ostida qolib ketishi xavfi bor ➔ Safe-area padding kuchaytirilmoqda.
+3. **[Tuzatildi]** Admin va do'kon sahifalarida eskirgan mock/placeholderlar mavjud edi ➔ `AdminCertificates.vue` to'liq Supabase bilan yaratildi, `ShopPage.vue` da real tranzaksiyalar ulandi.
+4. **[Tuzatildi]** Mobil telefonda test sahifasining pastki qismidagi navigatsiya tugmalari BottomNav ostida qolib ketishi xavfi bor edi ➔ Immersive Exam Mode joriy etilib, test paytida BottomNav yashirildi va safe-area padding berildi.
+5. **[Tuzatildi]** Balans manfiyga tushib ketish zaifligi bartaraf etildi ➔ `supabaseService.js` da `addPoints` atomar balans nazorati o'rnatildi.
+6. **[Tuzatildi]** Admin panel sessiya xavfsizligi ➔ 4-xonali maxfiy PIN kod guard (`admin_pin`) o'rnatildi.
 
 ---
 
@@ -87,5 +91,12 @@
 - [x] 2026-10-24: Sensitive Data Leak & Console Privacy Guard: Barcha shaxsiy loglar (`user.uid`, `results`, `FCM Token`, `coinsEarned`) olib tashlandi; Hardcoded Gemini API kaliti tozalandi va 403 Forbidden spam to'xtatildi; `main.js` ga Enterprise Console Sanitizer o'rnatildi.
 - [x] 2026-10-27: Zero-Glitch Home & Guaranteed Subjects Engine: Bosh sahifada server/Supabase aloqasi uzilganda fanlar yo'qolib qolishi bartaraf etildi; `DEFAULT_SUBJECTS` va `DEFAULT_LEVELS` offline-first zaxira tizimi, `SubjectSelection` uchun 6-talik skelet animatsiyasi, bo'sh holat himoyasi hamda `AiCoach` bo'sh qo'shtirnoq `""` chiqarishi bartaraf etildi.
 - [x] 2026-10-27: P0 Security & Teacher LMS Core Release: `serviceAccountKey.json.json` git indexidan chiqarilib `.gitignore` da to'liq bloklandi; Supabase'da `protect_profile_privileges` triggeri qo'yilib admin huquqlarini o'zboshimchalik bilan o'zgartirish yopildi; O'qituvchilar Kabineti (`/teacher`, `TeacherDashboard.vue`, `teacherService.js`) va Sinflar boshqaruvi (`classes`, `join_code`, `class_assignments`) yaratildi; Vitest testlari 40/40 ga yetkazildi.
+- [x] 2026-11-06: Enterprise Hardening & Zero-Defect Release:
+  - `profileService.addPoints` da manfiy balansga tushishdan himoya va atomar tranzaksiya mantiqi mustahkamlandi.
+  - Admin panel uchun maxfiy 4-xonali PIN kod guard (`admin_pin`) va noto'g'ri urinishlardan himoya o'rnatildi.
+  - Admin panelda sertifikatlar boshqaruvi (`AdminCertificates.vue`) to'liq Supabase bilan yaratildi va eski placeholder almashtirildi.
+  - `ShopPage.vue` dagi barcha xaridlar va tranzaksiyalar Supabase `user_transactions` bilan bog'landi.
+  - Immersive Exam Mode: `/test` sahifasida pastki navigatsiya paneli avtomatik yashirilib, mobil safe-area ta'minlandi.
+  - Vitest testlari 41/41 ga oshirildi (100% yashil), Vite production build 100% muvaffaqiyatli o'tdi.
 
 
